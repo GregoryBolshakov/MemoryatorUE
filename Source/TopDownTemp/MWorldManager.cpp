@@ -11,8 +11,12 @@ UMWorldManager::UMWorldManager()
 	LoadConfig();
 	UE_LOG(LogWorldManager, Log, TEXT("Booting using Input data table at: %s"), *SettingsDataAssetPath);
 	static ConstructorHelpers::FObjectFinder<UDataAsset> ActionDataTableFinder(*SettingsDataAssetPath);
-	ensure(ActionDataTableFinder.Succeeded());
-	ensure(ActionDataTableFinder.Object);
+	if (!ensure(ActionDataTableFinder.Succeeded()) ||
+		!ensure(ActionDataTableFinder.Object))
+	{
+		return;
+	}
+	
 	auto* DataAsset = ActionDataTableFinder.Object;
 
 	SettingsDataAsset = dynamic_cast<UWorldManagerSettingsDataAsset*>(DataAsset);

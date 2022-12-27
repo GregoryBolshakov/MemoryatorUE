@@ -65,7 +65,10 @@
     <projectFile>Intermediate/ProjectFiles/Memoryator.vcxproj</projectFile>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="" />
+    <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.cpp" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -92,14 +95,15 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "settings.editor.selected.configurable": "editor.preferences.tabs",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="C++ Project.Memoryator">
     <configuration name="BaseTextureBuildWorker" type="CppProject" factoryName="C++ Project" folderName="Programs">
       <configuration_1>
@@ -22810,12 +22814,16 @@
       <workItem from="1671887164708" duration="6019000" />
       <workItem from="1671915901325" duration="3770000" />
       <workItem from="1671971575702" duration="1734000" />
+      <workItem from="1672062099669" duration="2149000" />
+      <workItem from="1672079843614" duration="1258000" />
+      <workItem from="1672143112392" duration="1417000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
   <component name="UnityUnitTestConfiguration" currentTestLauncher="NUnit" />
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
