@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "PaperSpriteActor.h"
 #include "MActor.generated.h"
 
 UCLASS()
@@ -14,12 +13,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite) 
 	TObjectPtr<USceneComponent> OriginPointComponent;
-	
-	UPROPERTY(Category=Shape, EditAnywhere, BlueprintReadWrite) 
-	TObjectPtr<class UCapsuleComponent> CapsuleComponent;
-
-	UPROPERTY(Category=Sprite, EditAnywhere, BlueprintReadWrite)
-	TObjectPtr<class UPaperSpriteComponent> RenderComponent;
 
 	UFUNCTION()
 	virtual void BeginPlay() override;
@@ -34,6 +27,12 @@ public:
 #endif
 	
 private:
+
+	UPROPERTY(Category=Shape, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) 
+	TArray<class UCapsuleComponent*> CapsuleComponentArray;
+	
+	UPROPERTY(Category=Sprite, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TArray<class UPaperSpriteComponent*> RenderComponentArray;
 	
 	UPROPERTY()
 	APlayerCameraManager *CameraManager;

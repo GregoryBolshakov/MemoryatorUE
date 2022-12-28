@@ -14,13 +14,13 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	OriginPointComponent = CreateDefaultSubobject<USceneComponent>(TEXT("OriginPoint"));
 	//RootComponent = OriginPointComponent;
 	
-	RenderComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("RenderComponent"));
+	/*RenderComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("RenderComponent"));
 	RenderComponent->SetCollisionProfileName(UCollisionProfile::BlockAll_ProfileName);
 	RenderComponent->Mobility = EComponentMobility::Movable;
 	RenderComponent->AttachToComponent(OriginPointComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("RenderSocket"));
 	
 	CapsuleComponent = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComponent"));
-	CapsuleComponent->AttachToComponent(OriginPointComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("RenderSocket"));
+	CapsuleComponent->AttachToComponent(OriginPointComponent, FAttachmentTransformRules::KeepRelativeTransform, TEXT("RenderSocket"));*/
 
 	SetRootComponent(OriginPointComponent);
 	
@@ -32,6 +32,9 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 void AMActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	GetComponents<UPaperSpriteComponent>(RenderComponentArray);
+	GetComponents<UCapsuleComponent>(CapsuleComponentArray);
 	
 	CameraManager = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 }
@@ -49,11 +52,28 @@ void AMActor::FaceToCamera()
 	const auto PlayerLocation = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetTransform().GetLocation();
 	auto FarCameraLocation = CameraLocation + (CameraLocation - PlayerLocation);
 	FarCameraLocation.Z = 0;
-	
-	const auto DirectionVector = (this->GetTransform().GetLocation() - FarCameraLocation);
 
-	const FRotator Rotation = FRotationMatrix::MakeFromX(DirectionVector).Rotator();
-	this->SetActorRotation(Rotation);
+	for (const auto& RenderComponent : RenderComponentArray)
+	{
+		TArray<USceneComponent*> RenderComponentChildren;
+		RenderComponent->GetChildrenComponents(false, RenderComponentChildren);
+		
+		for (const auto& Child : RenderComponentChildren)
+		{
+			if (Child->GetClass() == USceneComponent::StaticClass())
+			{
+				auto ChildLocation = Child->GetComponentTransform().GetLocation();
+				ChildLocation.Z = 0;
+				const auto DirectionVector = ChildLocation - FarCameraLocation;
+				
+				const FRotator Rotation = FRotationMatrix::MakeFromX(DirectionVector).Rotator();
+				RenderComponent->SetWorldRotation(Rotation);
+				RenderComponent->AddLocalRotation(FRotator(0.f, 90.f, 0.f));
+				
+				break;
+			}
+		}
+	}
 }
 
 #if WITH_EDITOR
@@ -61,9 +81,12 @@ bool AMActor::GetReferencedContentObjects(TArray<UObject*>& Objects) const
 {
 	Super::GetReferencedContentObjects(Objects);
 
-	if (UPaperSprite* SourceSprite = RenderComponent->GetSprite())
+	for (const auto& RenderComponent : RenderComponentArray)
 	{
-		Objects.Add(SourceSprite);
+		if (UPaperSprite* SourceSprite = RenderComponent->GetSprite())
+		{
+			Objects.Add(SourceSprite);
+		}
 	}
 	return true;
 }
