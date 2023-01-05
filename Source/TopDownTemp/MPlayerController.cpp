@@ -5,12 +5,38 @@
 #include "Runtime/Engine/Classes/Components/DecalComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "MCharacter.h"
-#include "Engine/World.h"
+#include "Navigation/PathFollowingComponent.h"
 
-AMPlayerController::AMPlayerController()
+AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializer) :
+	Super(ObjectInitializer),
+	bMoveToMouseCursor(0),
+	PathFollowingComponent(nullptr)
 {
 	bShowMouseCursor = true;
 	DefaultMouseCursor = EMouseCursor::Crosshairs;
+
+	PathFollowingComponent = FindComponentByClass<UPathFollowingComponent>();
+	if (PathFollowingComponent == nullptr)
+	{
+		PathFollowingComponent = CreateDefaultSubobject<UPathFollowingComponent>(TEXT("PathFollowingComponent"));
+		PathFollowingComponent->Initialize();
+	}
+}
+
+bool AMPlayerController::IsMovingByAI() const
+{
+	if (!IsValid(PathFollowingComponent))
+		return false;
+
+	return PathFollowingComponent->GetStatus() != EPathFollowingStatus::Idle;
+}
+
+void AMPlayerController::StopAIMovement()
+{
+	if (!IsValid(PathFollowingComponent))
+		return;
+
+	PathFollowingComponent->AbortMove(*this, FPathFollowingResultFlags::OwnerFinished);
 }
 
 void AMPlayerController::PlayerTick(float DeltaTime)
@@ -64,13 +90,20 @@ void AMPlayerController::MoveForward(float Value)
 
 void AMPlayerController::MoveToMouseCursor()
 {
+	APawn* const MyPawn = GetPawn();
+	// We don't start AI route while player is moving by manual controls
+	if (!MyPawn->GetVelocity().IsZero() && !IsMovingByAI())
+	{
+		return;
+	}
+
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
 	{
-		if (AMCharacter* MyPawn = Cast<AMCharacter>(GetPawn()))
+		if (AMCharacter* MyCharacter = Cast<AMCharacter>(MyPawn))
 		{
-			if (MyPawn->GetCursorToWorld())
+			if (MyCharacter->GetCursorToWorld())
 			{
-				UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, MyPawn->GetCursorToWorld()->GetComponentLocation());
+				UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, MyCharacter->GetCursorToWorld()->GetComponentLocation());
 			}
 		}
 	}
@@ -90,6 +123,13 @@ void AMPlayerController::MoveToMouseCursor()
 
 void AMPlayerController::MoveToTouchLocation(const ETouchIndex::Type FingerIndex, const FVector Location)
 {
+	APawn* const MyPawn = GetPawn();
+	// We don't start AI route while player is moving by manual controls
+	if (!MyPawn->GetVelocity().IsZero() && !IsMovingByAI())
+	{
+		return;
+	}
+
 	FVector2D ScreenSpaceLocation(Location);
 
 	// Trace to see what is under the touch location

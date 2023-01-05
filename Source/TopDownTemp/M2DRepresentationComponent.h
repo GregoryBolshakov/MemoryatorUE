@@ -24,7 +24,7 @@ private:
 	TArray<class UCapsuleComponent*> CapsuleComponentArray;
 	
 	UPROPERTY(Category=Sprite, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	TArray<class UPaperSpriteComponent*> RenderComponentArray;
+	TArray<class UMeshComponent*> RenderComponentArray;
 	
 	UPROPERTY()
 	APlayerCameraManager* CameraManager;

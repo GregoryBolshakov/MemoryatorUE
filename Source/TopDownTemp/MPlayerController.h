@@ -9,14 +9,20 @@
 UCLASS()
 class AMPlayerController : public APlayerController
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
 public:
-	AMPlayerController();
 
-protected:
+	bool IsMovingByAI() const;
+
+	void StopAIMovement();
+
+private:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
+
+	UPROPERTY()
+	class UPathFollowingComponent* PathFollowingComponent;
 
 	// Begin PlayerController interface
 	virtual void PlayerTick(float DeltaTime) override;

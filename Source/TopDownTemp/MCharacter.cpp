@@ -9,13 +9,19 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "M2DRepresentationComponent.h"
+#include "MPlayerController.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
 
-AMCharacter::AMCharacter()
+AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer) :
+	Super(
+		ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0"))
+		 )
 {
-	// Set size for player capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	// Collection of sprites or flipbooks representing the character. It's not the Root Component!
+	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("2DRepresentation"));
+	RepresentationComponent->SetupAttachment(RootComponent);
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
@@ -23,7 +29,7 @@ AMCharacter::AMCharacter()
 	bUseControllerRotationRoll = false;
 
 	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Rotate character to moving direction
+	GetCharacterMovement()->bOrientRotationToMovement = false; // Rotate character to moving direction
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
 	GetCharacterMovement()->bConstrainToPlane = true;
 	GetCharacterMovement()->bSnapToPlaneAtStart = true;
@@ -61,6 +67,26 @@ void AMCharacter::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
+	HandleCursor();
+
+	HandleAnimations();
+}
+
+void AMCharacter::AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce)
+{
+	if (!FMath::IsNearlyZero(ScaleValue))
+	{
+		const auto PlayerController = Cast<AMPlayerController>(Controller);
+		if (IsValid(PlayerController) && PlayerController->IsMovingByAI())
+		{
+			PlayerController->StopAIMovement();
+		}
+	}
+	Super::AddMovementInput(WorldDirection, ScaleValue, bForce);
+}
+
+void AMCharacter::HandleCursor() const
+{
 	if (CursorToWorld != nullptr)
 	{
 		if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
@@ -86,5 +112,22 @@ void AMCharacter::Tick(float DeltaSeconds)
 			CursorToWorld->SetWorldLocation(TraceHitResult.Location);
 			CursorToWorld->SetWorldRotation(CursorR);
 		}
+	}
+}
+
+void AMCharacter::HandleAnimations() 
+{
+	// TODO: Send this logic to custom Movement Component
+	const auto Velocity = GetVelocity();
+
+	if (IsMoving && Velocity == FVector::ZeroVector)
+	{
+		IsMoving = false;
+		UpdateAnimation();
+	}
+	if (!IsMoving && Velocity != FVector::ZeroVector)
+	{
+		IsMoving = true;
+		UpdateAnimation();
 	}
 }

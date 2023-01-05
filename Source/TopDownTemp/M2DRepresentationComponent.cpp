@@ -2,7 +2,6 @@
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
 #include "Camera/CameraComponent.h"
-#include "Engine/CollisionProfile.h"
 #include "Kismet/GameplayStatics.h"
 
 UM2DRepresentationComponent::UM2DRepresentationComponent(const FObjectInitializer& ObjectInitializer) :
@@ -11,6 +10,7 @@ UM2DRepresentationComponent::UM2DRepresentationComponent(const FObjectInitialize
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
+	PrimaryComponentTick.TickGroup = TG_PostUpdateWork;
 }
 
 void UM2DRepresentationComponent::BeginPlay()
@@ -22,9 +22,9 @@ void UM2DRepresentationComponent::BeginPlay()
 
 	for (const auto& ChildComponent : ChildComponents)
 	{
-		if (ChildComponent->GetClass() == UPaperSpriteComponent::StaticClass())
+		if (ChildComponent->GetClass()->IsChildOf(UMeshComponent::StaticClass()))
 		{
-			RenderComponentArray.Add(dynamic_cast<UPaperSpriteComponent*>(ChildComponent));
+			RenderComponentArray.Add(dynamic_cast<UMeshComponent*>(ChildComponent));
 		}
 		if (ChildComponent->GetClass() == UCapsuleComponent::StaticClass())
 		{
@@ -46,6 +46,7 @@ void UM2DRepresentationComponent::TickComponent(float DeltaTime, ELevelTick Tick
 void UM2DRepresentationComponent::FaceToCamera()
 {
 	const auto CameraLocation = CameraManager->GetCameraLocation();
+	//TODO: Not to get Pawn reference every tick; Remember this field and update by event (CPU)
 	const auto PlayerLocation = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetTransform().GetLocation();
 	auto FarCameraLocation = CameraLocation + (CameraLocation - PlayerLocation);
 	FarCameraLocation.Z /= 2; //TODO: bring the option out to the editor 
