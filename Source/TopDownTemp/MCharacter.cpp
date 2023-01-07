@@ -74,7 +74,9 @@ void AMCharacter::Tick(float DeltaSeconds)
 
 void AMCharacter::AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce)
 {
-	if (!FMath::IsNearlyZero(ScaleValue))
+	Super::AddMovementInput(WorldDirection, ScaleValue, bForce);
+
+	if (!FMath::IsNearlyZero(ScaleValue)) // Got movement from Input
 	{
 		const auto PlayerController = Cast<AMPlayerController>(Controller);
 		if (IsValid(PlayerController) && PlayerController->IsMovingByAI())
@@ -82,7 +84,6 @@ void AMCharacter::AddMovementInput(FVector WorldDirection, float ScaleValue, boo
 			PlayerController->StopAIMovement();
 		}
 	}
-	Super::AddMovementInput(WorldDirection, ScaleValue, bForce);
 }
 
 void AMCharacter::HandleCursor() const

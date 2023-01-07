@@ -92,7 +92,7 @@ void AMPlayerController::MoveToMouseCursor()
 {
 	APawn* const MyPawn = GetPawn();
 	// We don't start AI route while player is moving by manual controls
-	if (!MyPawn->GetVelocity().IsZero() && !IsMovingByAI())
+	if ((MyPawn->GetVelocity().Size() > 0 || MyPawn->GetPendingMovementInputVector().Size() > 0) && !IsMovingByAI())
 	{
 		return;
 	}
@@ -125,7 +125,7 @@ void AMPlayerController::MoveToTouchLocation(const ETouchIndex::Type FingerIndex
 {
 	APawn* const MyPawn = GetPawn();
 	// We don't start AI route while player is moving by manual controls
-	if (!MyPawn->GetVelocity().IsZero() && !IsMovingByAI())
+	if ((MyPawn->GetVelocity().Size() > 0 || MyPawn->GetPendingMovementInputVector().Size() > 0) && !IsMovingByAI())
 	{
 		return;
 	}
