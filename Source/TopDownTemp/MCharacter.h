@@ -52,6 +52,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UDecalComponent* CursorToWorld;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Markers, meta = (AllowPrivateAccess = "true"))
+	class UPaperSpriteComponent* DirectionMarkerComponent;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
 	bool IsDying;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))

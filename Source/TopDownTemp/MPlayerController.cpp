@@ -58,12 +58,17 @@ void AMPlayerController::SetupInputComponent()
 	InputComponent->BindAction("SetDestination", IE_Pressed, this, &AMPlayerController::OnSetDestinationPressed);
 	InputComponent->BindAction("SetDestination", IE_Released, this, &AMPlayerController::OnSetDestinationReleased);
 
+	InputComponent->BindAction("ToggleIsTurningAround", IE_Pressed, this, &AMPlayerController::OnToggleTurnAroundPressed);
+	InputComponent->BindAction("ToggleIsTurningAround", IE_Released, this, &AMPlayerController::OnToggleTurnAroundReleased);
+
 	// support touch devices 
 	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AMPlayerController::MoveToTouchLocation);
 	InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &AMPlayerController::MoveToTouchLocation);
 
 	InputComponent->BindAxis("MoveForward", this, &AMPlayerController::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &AMPlayerController::MoveRight);
+
+	InputComponent->BindAxis("TurnAround", this, &AMPlayerController::TurnAround);
 }
 
 void AMPlayerController::MoveRight(float Value)
@@ -79,12 +84,27 @@ void AMPlayerController::MoveRight(float Value)
 
 void AMPlayerController::MoveForward(float Value)
 {
-	const FRotator PitchRotation = FRotator(0, GetControlRotation().Pitch, 0);
+	const FRotator YawRotation = FRotator(0, GetControlRotation().Yaw, 0);
 
 	AMCharacter* MyPawn = Cast<AMCharacter>(GetPawn());
 	if (IsValid(MyPawn))
 	{
-		MyPawn->AddMovementInput(FRotationMatrix(PitchRotation).GetUnitAxis(EAxis::X), Value);
+		MyPawn->AddMovementInput(FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X), Value);
+	}
+}
+
+void AMPlayerController::TurnAround(float Value)
+{
+	if (bIsTurningAround)
+	{
+		AMCharacter* MyPawn = Cast<AMCharacter>(GetPawn());
+		if (IsValid(MyPawn))
+		{
+			const FRotator Rotation(0.0f, Value, 0.0f);
+			
+			AddYawInput(Rotation.Yaw); // Rotate Controller, to change the direction of the Pawn movement
+			MyPawn->SetActorRotation(GetControlRotation()); // Pawn visual rotation only
+		}
 	}
 }
 
@@ -167,4 +187,14 @@ void AMPlayerController::OnSetDestinationReleased()
 {
 	// clear flag to indicate we should stop updating the destination
 	bMoveToMouseCursor = false;
+}
+
+void AMPlayerController::OnToggleTurnAroundPressed()
+{
+	bIsTurningAround = true;
+}
+
+void AMPlayerController::OnToggleTurnAroundReleased()
+{
+	bIsTurningAround = false;
 }

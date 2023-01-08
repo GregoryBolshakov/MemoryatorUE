@@ -20,6 +20,7 @@ public:
 private:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
+	bool bIsTurningAround = false;
 
 	UPROPERTY()
 	class UPathFollowingComponent* PathFollowingComponent;
@@ -31,6 +32,8 @@ private:
 
 	void MoveRight(float Value);
 	void MoveForward(float Value);
+
+	void TurnAround(float Value);
 
 	/** Navigate player to the current mouse cursor location. */
 	void MoveToMouseCursor();
@@ -44,6 +47,9 @@ private:
 	/** Input handlers for SetDestination action. */
 	void OnSetDestinationPressed();
 	void OnSetDestinationReleased();
+	
+	void OnToggleTurnAroundPressed();
+	void OnToggleTurnAroundReleased();
 };
 
 
