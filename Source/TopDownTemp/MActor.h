@@ -8,13 +8,16 @@ UCLASS()
 class TOPDOWNTEMP_API AMActor : public AActor
 {
 	GENERATED_UCLASS_BODY()
-	
+
 public:
-	
+
 	virtual void BeginPlay() override;
-	
+
 private:
 
 	UPROPERTY(Category=Representation, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) 
 	class UM2DRepresentationComponent* RepresentationComponent;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;
 };

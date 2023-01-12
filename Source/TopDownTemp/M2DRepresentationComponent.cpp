@@ -10,7 +10,6 @@ UM2DRepresentationComponent::UM2DRepresentationComponent(const FObjectInitialize
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
-	PrimaryComponentTick.TickGroup = TG_PostUpdateWork;
 }
 
 void UM2DRepresentationComponent::BeginPlay()

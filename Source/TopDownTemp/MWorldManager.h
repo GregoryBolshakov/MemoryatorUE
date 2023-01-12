@@ -15,7 +15,7 @@ class TOPDOWNTEMP_API UWorldManagerSettingsDataAsset : public UDataAsset
 	GENERATED_BODY()
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Settings")
-		TSubclassOf<class UMWorldGenerator> WorldGeneratorBlueprint;
+		TSubclassOf<class AMWorldGenerator> WorldGeneratorBlueprint;
 };
 
 /**
@@ -25,16 +25,17 @@ UCLASS(Config = WorldManager)
 class TOPDOWNTEMP_API UMWorldManager : public UWorldSubsystem
 {
 	GENERATED_BODY()
+
 private:
 
 	UMWorldManager();
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 
-	void OnWorldBeginPlay();
+	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 
 	UPROPERTY()
-	UMWorldGenerator* WorldGenerator;
+	AMWorldGenerator* WorldGenerator;
 
 	UPROPERTY(Config)
 	FString SettingsDataAssetPath;
