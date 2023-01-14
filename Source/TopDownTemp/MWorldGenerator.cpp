@@ -26,10 +26,17 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer) 
 void AMWorldGenerator::GenerateWorld()
 {
 	auto* pWorld = GetWorld();
-	
-	for (int x = -WorldSize.X / 2; x < WorldSize.X / 2; x += 400)
+	if (!pWorld)
 	{
-		for (int y = -WorldSize.Y / 2; y < WorldSize.Y / 2; y += 400)
+		check(false);
+		return;
+	}
+
+	const auto GroundBlockSize = ToSpawnGroundBlock.GetDefaultObject()->GetSize();
+
+	for (int x = -WorldSize.X / 2; x < WorldSize.X / 2; x += GroundBlockSize.X)
+	{
+		for (int y = -WorldSize.Y / 2; y < WorldSize.Y / 2; y += GroundBlockSize.Z)
 		{
 			FVector Location(x, y, 0);
 			FRotator Rotation;

@@ -14,15 +14,19 @@ class TOPDOWNTEMP_API UMIsActiveCheckerComponent : public UActorComponent
 public:
 	bool GetIsActive() const { return bIsActive; }
 
+	UPrimitiveComponent* GetPrimitive() const { return CollisionPrimitive; }
+	
 	void Disable();
 
 	void Enable();
 
-	virtual void BeginPlay() override;
+	//** It will find a UPrimitiveComponent tagged with IsActiveChecker and set it up. Should be called in owner's PostInitializeComponents */
+	virtual void SetUpCollisionPrimitive();
 
 private:
 	bool bIsActive;
 
+	//* Determines the bounds of the object. If it doesnt overlap the World active zone, the object is disabled */
 	UPROPERTY(meta = (AllowPrivateAccess = "true"))
-	class UShapeComponent* Scope;
+	class UPrimitiveComponent* CollisionPrimitive;
 };

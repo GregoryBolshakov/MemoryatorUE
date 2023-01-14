@@ -11,9 +11,9 @@ class TOPDOWNTEMP_API AMActor : public AActor
 
 public:
 
-	virtual void BeginPlay() override;
+	virtual void PostInitializeComponents() override;
 
-private:
+protected:
 
 	UPROPERTY(Category=Representation, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) 
 	class UM2DRepresentationComponent* RepresentationComponent;

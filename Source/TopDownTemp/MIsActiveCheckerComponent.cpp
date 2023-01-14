@@ -1,17 +1,22 @@
 #include "MIsActiveCheckerComponent.h"
-#include "MWorldManager.h"
+
+#include "Components/PrimitiveComponent.h"
 
 UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer),
 	bIsActive(false),
-	Scope(nullptr)
+	CollisionPrimitive(nullptr)
 {
 }
 
 void UMIsActiveCheckerComponent::Disable()
 {
 	auto pOwner = GetOwner();
-	check(pOwner);
+	if (!pOwner)
+	{
+		check(false);
+		return;
+	}
 
 	pOwner->SetActorHiddenInGame(true);
 	pOwner->SetActorTickEnabled(false);
@@ -22,7 +27,11 @@ void UMIsActiveCheckerComponent::Disable()
 void UMIsActiveCheckerComponent::Enable()
 {
 	auto pOwner = GetOwner();
-	check(pOwner);
+	if (!pOwner)
+	{
+		check(false);
+		return;
+	}
 
 	pOwner->SetActorHiddenInGame(false);
 	pOwner->SetActorTickEnabled(true);
@@ -30,18 +39,24 @@ void UMIsActiveCheckerComponent::Enable()
 	bIsActive = true;
 }
 
-void UMIsActiveCheckerComponent::BeginPlay()
+void UMIsActiveCheckerComponent::SetUpCollisionPrimitive()
 {
-	Super::BeginPlay();
-	
-	auto MarkedComponents = GetOwner()->GetComponentsByTag(UShapeComponent::StaticClass(), "IsActiveChecker");
-	check(!MarkedComponents.IsEmpty());
+	auto MarkedComponents = GetOwner()->GetComponentsByTag(UPrimitiveComponent::StaticClass(), "IsActiveChecker");
+	if (MarkedComponents.IsEmpty())
+	{
+		check(false);
+		return;
+	}
 
-	Scope = Cast<UShapeComponent>(MarkedComponents[0]);
-	check(Scope);
+	CollisionPrimitive = Cast<UPrimitiveComponent>(MarkedComponents[0]);
+	if (!CollisionPrimitive)
+	{
+		check(false);
+		return;
+	}
 
-	Scope->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	Scope->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
-	Scope->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
-	Scope->SetGenerateOverlapEvents(true);
+	CollisionPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CollisionPrimitive->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Overlap);
+	CollisionPrimitive->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
+	CollisionPrimitive->SetGenerateOverlapEvents(true);
 }

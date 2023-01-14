@@ -14,10 +14,11 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
 }
 
-void AMActor::BeginPlay()
+void AMActor::PostInitializeComponents()
 {
-	Super::BeginPlay();
+	Super::PostInitializeComponents();
 	SetActorHiddenInGame(true);
 	SetActorTickEnabled(false);
+	IsActiveCheckerComponent->SetUpCollisionPrimitive();
 }
 

@@ -63,6 +63,8 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer) :
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	//TODO: Make Z position constant. Now there is a performance loss due to floor collisions.
 }
 
 void AMCharacter::Tick(float DeltaSeconds)

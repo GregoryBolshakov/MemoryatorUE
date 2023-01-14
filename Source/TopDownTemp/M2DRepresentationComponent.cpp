@@ -44,6 +44,9 @@ void UM2DRepresentationComponent::TickComponent(float DeltaTime, ELevelTick Tick
 
 void UM2DRepresentationComponent::FaceToCamera()
 {
+	if (!bFaceToCamera)
+		return;
+
 	const auto CameraLocation = CameraManager->GetCameraLocation();
 	//TODO: Not to get Pawn reference every tick; Remember this field and update by event (CPU)
 	const auto PlayerLocation = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetTransform().GetLocation();
