@@ -19,7 +19,7 @@ public:
 	
 	virtual void PostInitializeComponents() override;
 
-	FVector GetSize() const { return Size; }
+	FVector2D GetSize() const { return {Size.X, Size.Z}; }
 private:
 
 	/** Align real size with the Size, which is adjusted in the Editor.

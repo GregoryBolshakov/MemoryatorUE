@@ -6,6 +6,19 @@
 #include "Engine/EngineTypes.h"
 #include "MIsActiveCheckerComponent.generated.h"
 
+USTRUCT()
+struct FDisabledComponentInfo
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	UActorComponent* Component;
+
+	bool bCanEverTick = false;
+
+	TOptional<ECollisionEnabled::Type> CollisionType;
+};
+
 UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent, IgnoreCategoryKeywordsInSubclasses, ShortTooltip="A component that tuns on/off entie object. For example when the object was culled"))
 class TOPDOWNTEMP_API UMIsActiveCheckerComponent : public UActorComponent
 {
@@ -25,6 +38,13 @@ public:
 
 private:
 	bool bIsActive;
+
+	bool bActorWasHiddenInGame = true;
+
+	bool bActorHadTickEnabled = false;
+
+	UPROPERTY()
+	TArray<FDisabledComponentInfo> DisabledComponentsInfo;
 
 	//* Determines the bounds of the object. If it doesnt overlap the World active zone, the object is disabled */
 	UPROPERTY(meta = (AllowPrivateAccess = "true"))

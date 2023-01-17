@@ -3,6 +3,8 @@
   <component name="UserContentModel">
     <attachedFolders />
     <explicitIncludes>
+      <Path>Source/TopDownTemp/MIsActiveCheckerComponent.cpp</Path>
+      <Path>Source/TopDownTemp/MIsActiveCheckerComponent.h</Path>
       <Path>Source/TopDownTemp/MPawn.cpp</Path>
       <Path>Source/TopDownTemp/MPawn.h</Path>
     </explicitIncludes>

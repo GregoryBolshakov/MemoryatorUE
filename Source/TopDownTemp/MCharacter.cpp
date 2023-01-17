@@ -10,6 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "M2DRepresentationComponent.h"
+#include "MIsActiveCheckerComponent.h"
 #include "MPlayerController.h"
 #include "PaperSpriteComponent.h"
 #include "Materials/Material.h"
@@ -20,9 +21,20 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer) :
 		ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0"))
 		 )
 {
+	const auto CollisionPrimitive = Cast<UPrimitiveComponent>(RootComponent);
+	check(CollisionPrimitive);
+	CollisionPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	CollisionPrimitive->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	CollisionPrimitive->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
+	CollisionPrimitive->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
+	CollisionPrimitive->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block);
+	CollisionPrimitive->SetGenerateOverlapEvents(false);
+
 	// Collection of sprites or flipbooks representing the character. It's not the Root Component!
 	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("2DRepresentation"));
 	RepresentationComponent->SetupAttachment(RootComponent);
+
+	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
@@ -88,6 +100,13 @@ void AMCharacter::AddMovementInput(FVector WorldDirection, float ScaleValue, boo
 			PlayerController->StopAIMovement();
 		}
 	}
+}
+
+void AMCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	//TODO: there is usually IsActiveCheckerComponent->Disable();
+	IsActiveCheckerComponent->SetUpCollisionPrimitive();
 }
 
 void AMCharacter::HandleCursor() const

@@ -66,34 +66,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/indexLayout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/indexLayout.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultInput.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultInput.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/body_down-left.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/body_down.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/body_left.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/body_up-left.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/body_up.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/legs_down-left.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/legs_down.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/legs_left.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/legs_up-left.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/legs_up.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/lines_1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/lines_2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/lines_3.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/lines_4.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/lines_5.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_GroundBlock.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_GroundBlock.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Character.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Character.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap_BuiltData.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap_BuiltData.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/TopDownTemp.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/TopDownTemp.Build.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -101,19 +89,23 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Intermediate/Build/Win64/UnrealEditor/Inc/Engine/GameModeBase.gen.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/2D/Paper2D/Source/Paper2D/Classes/PaperSpriteActor.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/2D/Paper2D/Source/Paper2D/Private/PaperSpriteActor.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Programs/Enterprise/Datasmith/DatasmithSolidworksExporter/Private/DatasmithExporter.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Classes/Engine/EngineBaseTypes.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Navmesh/Private/Detour/DetourCommon.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/ThirdParty/GoogleTest/include/gtest/internal/gtest-port.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/TopDownTemp/MCharacter.gen.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/TopDownTemp/MIsActiveCheckerComponent.gen.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Nakama/Source/NakamaUnreal/Public/NakamaClient.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MActor.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MPawn.cpp" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MPawn.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -22864,6 +22856,27 @@
       <workItem from="1672848795038" duration="1000" />
       <workItem from="1672848831994" duration="3339000" />
       <workItem from="1672934432705" duration="3490000" />
+      <workItem from="1673121048611" duration="1802000" />
+      <workItem from="1673175718395" duration="6193000" />
+      <workItem from="1673202794356" duration="2331000" />
+      <workItem from="1673279594479" duration="3369000" />
+      <workItem from="1673294519088" duration="5155000" />
+      <workItem from="1673367587146" duration="15114000" />
+      <workItem from="1673461232626" duration="2096000" />
+      <workItem from="1673465018398" duration="2000" />
+      <workItem from="1673470641452" duration="3842000" />
+      <workItem from="1673529354511" duration="20730000" />
+      <workItem from="1673605134997" duration="21818000" />
+      <workItem from="1673690203131" duration="7310000" />
+      <workItem from="1673702060933" duration="10281000" />
+      <workItem from="1673718141108" duration="1107000" />
+      <workItem from="1673775627273" duration="12977000" />
+      <workItem from="1673813488614" duration="6614000" />
+      <workItem from="1673870179952" duration="2988000" />
+      <workItem from="1673875421437" duration="156000" />
+      <workItem from="1673880866150" duration="14047000" />
+      <workItem from="1673905954683" duration="1343000" />
+      <workItem from="1673957791896" duration="12265000" />
     </task>
     <servers />
   </component>
@@ -22885,5 +22898,21 @@
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/KismetSystemLibrary.cpp</url>
+          <line>1438</line>
+          <option name="timeStamp" value="26" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/TickTaskManager.cpp</url>
+          <line>1902</line>
+          <option name="timeStamp" value="57" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

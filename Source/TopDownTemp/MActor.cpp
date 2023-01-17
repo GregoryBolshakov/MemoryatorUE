@@ -17,8 +17,7 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 void AMActor::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
-	SetActorHiddenInGame(true);
-	SetActorTickEnabled(false);
+	IsActiveCheckerComponent->Disable();
 	IsActiveCheckerComponent->SetUpCollisionPrimitive();
 }
 

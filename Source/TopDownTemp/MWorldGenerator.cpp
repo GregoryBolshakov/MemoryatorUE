@@ -5,9 +5,10 @@
 #include "Math/UnrealMathUtility.h"
 #include "MGroundBlock.h"
 #include "MActor.h" 
+#include "MCharacter.h"
 #include "MIsActiveCheckerComponent.h"
+#include "MWorldManager.h"
 #include "Components/BoxComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -25,6 +26,12 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer) 
 
 void AMWorldGenerator::GenerateWorld()
 {
+	//TODO: Remove it from here
+	auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	const auto Block = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
+	GridOfActors.Add(Block, {}).DynamicActors.Emplace(pPlayer->GetName(), pPlayer);
+	ActorsMetadata.Add(FName(pPlayer->GetName()), {pPlayer, Block});
+
 	auto* pWorld = GetWorld();
 	if (!pWorld)
 	{
@@ -36,66 +43,152 @@ void AMWorldGenerator::GenerateWorld()
 
 	for (int x = -WorldSize.X / 2; x < WorldSize.X / 2; x += GroundBlockSize.X)
 	{
-		for (int y = -WorldSize.Y / 2; y < WorldSize.Y / 2; y += GroundBlockSize.Z)
+		for (int y = -WorldSize.Y / 2; y < WorldSize.Y / 2; y += GroundBlockSize.Y)
 		{
 			FVector Location(x, y, 0);
 			FRotator Rotation;
-			FActorSpawnParameters SpawnParameters;
-			//SpawnParameters.Name = FName(GetStringByClass<AMGroundBlock>() + "_" + FString::FromInt(x) + "_" + FString::FromInt(y));
-			SpawnParameters.Name = FName(FString::FromInt(x) + FString::FromInt(y));
 
-			auto* GroundBlock = pWorld->SpawnActor<AMGroundBlock>(ToSpawnGroundBlock, Location, Rotation, SpawnParameters);
+			auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock, Location, Rotation, FName(FString::FromInt(x) + FString::FromInt(y)));
 
 			int TreeSpawnRate = FMath::RandRange(1, 5);
 			//if (TreeSpawnRate == 1)
 			{
 				const auto TreeDefault = GetDefault<AMActor>(ToSpawnTree);
 				FVector TreeLocation(x, y, 0);
-				auto* Tree = pWorld->SpawnActor<AMActor>(ToSpawnTree, TreeLocation, Rotation);
+
+				auto* Tree = SpawnActor<AMActor>(ToSpawnTree, TreeLocation, Rotation, FName("Tree_" + FString::FromInt(x) + FString::FromInt(y)));
 			}
 		}
 	}
+}
+
+void AMWorldGenerator::BeginPlay()
+{
+	Super::BeginPlay();
+	UpdateActiveZone();
+}
+
+void AMWorldGenerator::UpdateActiveZone()
+{
+	const auto PlayerLocation = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetTransform().GetLocation();
+	//TODO: Think how to fit the Active zone to the screen size
+	PlayerActiveZone->SetWorldLocation(PlayerLocation);
+
+	const FTransform BoxTransform = PlayerActiveZone->GetComponentToWorld();
+	const FVector BoxExtent = PlayerActiveZone->GetUnscaledBoxExtent();
+
+	const auto StartBlock = GetGroundBlockIndex(BoxTransform.GetLocation() - BoxExtent);
+	const auto FinishBlock = GetGroundBlockIndex(BoxTransform.GetLocation() + BoxExtent);
+
+	//TODO: For now we don't process DynamicActors. It is not clear how they will be spawned.
+	//TODO: They also might require bigger Active Zone that just visible square
+	//TODO: Dynamic Actors will need to update their metadata (GroundBlockIndex is changing while moving, etc.) 
+
+	// Enable all the objects within PlayerActiveZone. ActiveBlocksMap is considered as from the previous check.
+	TMap<FIntPoint, bool> ActiveBlocksMap_New;
+	for (auto X = StartBlock.X; X <= FinishBlock.X; ++X)
+	{
+		for (auto Y = StartBlock.Y; Y <= FinishBlock.Y; ++Y)
+		{
+			ActiveBlocksMap_New.Add(FIntPoint(X, Y), true);
+			ActiveBlocksMap.Remove(FIntPoint(X, Y));
+			if (const auto Block = GridOfActors.Find(FIntPoint(X, Y)))
+			{
+				for (const auto& [Index, Data] : Block->StaticActors)
+				{
+					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+					{
+						IsActiveCheckerComponent->Enable();
+					}
+				}
+			}
+		}
+	}
+
+	// Disable all the rest of objects that were in PlayerActiveZone in the previous check but no longer there.
+	for (const auto& [BlockIndex, IsActive] : ActiveBlocksMap)
+	{
+		if (const auto Block = GridOfActors.Find(BlockIndex))
+		{
+			for (const auto& [Index, Data] : Block->StaticActors)
+			{
+				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+				{
+					IsActiveCheckerComponent->Disable();
+				}
+			}
+		}
+	}
+
+	// All and only ActiveBlocksMap_New forms the new ActiveBlocksMap collection.
+	ActiveBlocksMap = ActiveBlocksMap_New;
+}
+
+FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position) const
+{
+	const auto GroundBlockSize = ToSpawnGroundBlock.GetDefaultObject()->GetSize();
+	return FIntPoint(UE4::SSE::FloorToInt32(Position.X/GroundBlockSize.X), UE4::SSE::FloorToInt32(Position.Y/GroundBlockSize.Y));
 }
 
 void AMWorldGenerator::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	//TODO: Put the PlayerActiveZone handling to a separate function.
-	const auto PlayerLocation = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetTransform().GetLocation();
-	//TODO: Think how to fit the Active zone to the screen size
-	PlayerActiveZone->SetWorldLocation(PlayerLocation);
-
-	UClass* ActorClassFilter = AMActor::StaticClass();
-
-	// Perform the overlap query
-	TArray<AActor*> OverlappingActors;
-	UKismetSystemLibrary::BoxOverlapActors(this, PlayerActiveZone->GetComponentLocation(), PlayerActiveZone->GetScaledBoxExtent(), { ObjectTypeQuery1 }, ActorClassFilter, {}, OverlappingActors);
-
-	// Enable all the objects within PlayerActiveZone. ActiveActors is considered as from the previous check.
-	for (const auto& Actor : OverlappingActors)
+	const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	if (!pPlayer)
 	{
-		if (const auto IsActiveCheckerComponent = Actor->FindComponentByClass<UMIsActiveCheckerComponent>())
-		{
-			ActiveActors.Remove(Actor->GetName());
-			IsActiveCheckerComponent->Enable();
-		}
+		check(false);
+		return;
 	}
 
-	// All the rest of objects that were in PlayerActiveZone in the previous check but no longer there.
-	for (auto& [Name, Actor] : ActiveActors)
+	const auto PlayerMetadata = ActorsMetadata.Find(FName(pPlayer->GetName()));
+	if (!PlayerMetadata)
 	{
-		const auto IsActiveCheckerComponent = Actor->FindComponentByClass<UMIsActiveCheckerComponent>();
-		if (IsActiveCheckerComponent && IsActiveCheckerComponent->GetIsActive())
-		{
-			IsActiveCheckerComponent->Disable();
-		}
+		check(false);
+		return;
 	}
 
-	// All and only OverlappingActors forms the new ActiveActors collection.
-	ActiveActors.Empty();
-	for (const auto& Actor : OverlappingActors)
+	if (PlayerMetadata->GroundBlockIndex != GetGroundBlockIndex(pPlayer->GetTransform().GetLocation()))
 	{
-		ActiveActors.Add(Actor->GetName(), Actor);
+		UpdateActiveZone();
+		PlayerMetadata->GroundBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
 	}
+}
+
+AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation,
+	const FActorSpawnParameters& SpawnParameters)
+{
+	const auto pWorld = GetWorld();
+	if (!pWorld || SpawnParameters.Name == "")
+	{
+		check(false);
+		return nullptr;
+	}
+
+	const auto GroundBlockIndex = GetGroundBlockIndex(Location);
+
+	// If there's an empty block, add it to the map
+	auto BlockOfActors = GridOfActors.Find(GroundBlockIndex);
+	if (!BlockOfActors)
+	{
+		BlockOfActors = &GridOfActors.Add(GroundBlockIndex, {});
+	}
+
+	// Determine whether the object is static or movable
+	auto& ListToAdd = Class->GetSuperClass()->IsChildOf<APawn>() ? BlockOfActors->DynamicActors : BlockOfActors->StaticActors;
+
+	//TODO: If this check is of no use, should be removed
+	if (const auto ExistingActor = ListToAdd.Find(SpawnParameters.Name))
+	{
+		UE_LOG(LogWorldManager, Warning, TEXT("Trying to spawn already existing actor"));
+		return *ExistingActor;
+	}
+
+	const auto Actor = pWorld->SpawnActor(Class, &Location, &Rotation, SpawnParameters);
+
+	// We also store the mapping between the Name and metadata (actor's GroundBlock index, etc.)
+	const FActorWorldMetadata Metadata{ListToAdd.Add(SpawnParameters.Name, Actor), GroundBlockIndex};
+	ActorsMetadata.Add(SpawnParameters.Name, Metadata);
+
+	return Metadata.Actor;
 }

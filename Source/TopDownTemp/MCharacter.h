@@ -23,6 +23,8 @@ public:
 
 	virtual void AddMovementInput(FVector WorldDirection, float ScaleValue = 1.0f, bool bForce = false) override;
 
+	virtual void PostInitializeComponents() override;
+
 	/** Returns TopDownCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
 	/** Returns CameraBoom subobject **/
@@ -39,7 +41,10 @@ private:
 	/** Representation (collection of sprites) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Representation, meta = (AllowPrivateAccess = "true"))
 	class UM2DRepresentationComponent* RepresentationComponent;
-	
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;
+
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* TopDownCameraComponent;

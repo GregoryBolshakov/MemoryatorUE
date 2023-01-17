@@ -9,6 +9,29 @@
 class AMGroundBlock;
 class AMTree;
 
+USTRUCT()
+struct FBlockOfActors
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	TMap<FName, AActor*> StaticActors;
+
+	UPROPERTY()
+	TMap<FName, AActor*> DynamicActors;
+};
+
+USTRUCT()
+struct FActorWorldMetadata
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY()
+	AActor* Actor;
+
+	FIntPoint GroundBlockIndex;
+};
+
 /**
  * 
  */
@@ -20,7 +43,20 @@ public:
 
 	void GenerateWorld();
 
+	virtual void BeginPlay() override;
+
 	virtual void Tick(float DeltaSeconds) override;
+
+	AActor* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters());
+
+	//TODO: Add another templated SpawnActor with SpawnParameters argument
+	template< class T >
+	T* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, FName const& Name)
+	{
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.Name = Name;
+		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters),ECastCheckedType::NullAllowed);
+	}
 
 	template<typename T>
 	static FString GetStringByClass();
@@ -34,6 +70,10 @@ public:
 
 private:
 
+	void UpdateActiveZone();
+
+	FIntPoint GetGroundBlockIndex(FVector Position) const;
+
 	UPROPERTY(EditAnywhere)
 	FVector2D WorldSize{10000, 10000};
 	
@@ -42,7 +82,12 @@ private:
 	class UBoxComponent* PlayerActiveZone;
 
 	UPROPERTY()
-	TMap<FString, AActor*> ActiveActors;
+	TMap<FIntPoint, FBlockOfActors> GridOfActors;
+
+	UPROPERTY()
+	TMap<FName, FActorWorldMetadata> ActorsMetadata;
+
+	TMap<FIntPoint, bool> ActiveBlocksMap;
 };
 
 template <typename T>
