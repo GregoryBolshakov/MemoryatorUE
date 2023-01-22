@@ -17,6 +17,7 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 void AMActor::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+
 	IsActiveCheckerComponent->Disable();
 	IsActiveCheckerComponent->SetUpCollisionPrimitive();
 }

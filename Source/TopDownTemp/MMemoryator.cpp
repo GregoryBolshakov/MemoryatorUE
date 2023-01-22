@@ -16,7 +16,7 @@
 #include "Materials/Material.h"
 #include "Engine/World.h"
 
-AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer) :
+AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
 	Super(
 		ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0"))
 		 )
@@ -79,7 +79,7 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer) :
 	//TODO: Make Z position constant. Now there is a performance loss due to floor collisions.
 }
 
-void AMCharacter::Tick(float DeltaSeconds)
+void AMMemoryator::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
 
@@ -91,7 +91,7 @@ void AMCharacter::Tick(float DeltaSeconds)
 	RepresentationComponent->SetMeshByRotation(Angle);
 }
 
-void AMCharacter::AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce)
+void AMMemoryator::AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce)
 {
 	Super::AddMovementInput(WorldDirection, ScaleValue, bForce);
 
@@ -105,7 +105,7 @@ void AMCharacter::AddMovementInput(FVector WorldDirection, float ScaleValue, boo
 	}
 }
 
-void AMCharacter::PostInitializeComponents()
+void AMMemoryator::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
@@ -113,7 +113,7 @@ void AMCharacter::PostInitializeComponents()
 	IsActiveCheckerComponent->SetUpCollisionPrimitive();
 }
 
-void AMCharacter::HandleCursor() const
+void AMMemoryator::HandleCursor() const
 {
 	if (CursorToWorld != nullptr)
 	{
@@ -143,7 +143,7 @@ void AMCharacter::HandleCursor() const
 	}
 }
 
-void AMCharacter::HandleAnimationStates() 
+void AMMemoryator::HandleAnimationStates() 
 {
 	// TODO: Send this logic to custom Movement Component
 	const auto Velocity = GetVelocity();

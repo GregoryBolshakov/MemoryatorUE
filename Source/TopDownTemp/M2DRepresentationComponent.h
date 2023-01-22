@@ -12,21 +12,27 @@ class TOPDOWNTEMP_API UM2DRepresentationComponent : public USceneComponent
 
 public:
 
-	UPROPERTY(Category=Rendering, EditAnywhere, BlueprintReadWrite)
-	bool bFaceToCamera = true;
+	virtual void BeginPlay() override;
 
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	void SetMeshByRotation(float Angle, const FName& Tag = "");
+
+	static float GetCameraDeflectionAngle(const UObject* WorldContextObject, const FVector Location, const FVector GazeDirection);
+
+	UPROPERTY(Category=Rendering, EditAnywhere, BlueprintReadWrite)
+	bool bFaceToCamera = true;
+
 private:
 
-	virtual void BeginPlay() override;
-	
 	void FaceToCamera();
 
-	UPROPERTY(Category=Shape, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) 
+	void SetUpSprites();
+
+	UPROPERTY() 
 	TArray<class UCapsuleComponent*> CapsuleComponentArray;
-	
-	UPROPERTY(Category=Sprite, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+
+	UPROPERTY()
 	TArray<class UMeshComponent*> RenderComponentArray;
 	
 	UPROPERTY()

@@ -44,7 +44,7 @@ private:
 	bool bActorHadTickEnabled = false;
 
 	UPROPERTY()
-	TArray<FDisabledComponentInfo> DisabledComponentsInfo;
+	TArray<FDisabledComponentInfo> DisabledComponentsData;
 
 	//* Determines the bounds of the object. If it doesnt overlap the World active zone, the object is disabled */
 	UPROPERTY(meta = (AllowPrivateAccess = "true"))

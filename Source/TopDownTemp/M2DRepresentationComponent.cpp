@@ -3,6 +3,7 @@
 #include "PaperSpriteComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "MRotatableFlipbookComponent.h"
 
 UM2DRepresentationComponent::UM2DRepresentationComponent(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer),
@@ -16,22 +17,27 @@ void UM2DRepresentationComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	SetUpSprites();
+
+	CameraManager = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
+}
+
+void UM2DRepresentationComponent::SetUpSprites()
+{
 	TArray<USceneComponent*> ChildComponents;
 	GetChildrenComponents(false, ChildComponents);
 
 	for (const auto& ChildComponent : ChildComponents)
 	{
-		if (ChildComponent->GetClass()->IsChildOf(UMeshComponent::StaticClass()))
+		if (const auto RenderComponent = Cast<UMeshComponent>(ChildComponent))
 		{
-			RenderComponentArray.Add(dynamic_cast<UMeshComponent*>(ChildComponent));
+			RenderComponentArray.Add(RenderComponent);
 		}
-		if (ChildComponent->GetClass() == UCapsuleComponent::StaticClass())
+		if (const auto CapsuleComponent = Cast<UCapsuleComponent>(ChildComponent))
 		{
-			CapsuleComponentArray.Add(dynamic_cast<UCapsuleComponent*>(ChildComponent));
+			CapsuleComponentArray.Add(CapsuleComponent);
 		}
 	}
-	
-	CameraManager = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 }
 
 void UM2DRepresentationComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -42,10 +48,53 @@ void UM2DRepresentationComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	FaceToCamera();
 }
 
+void UM2DRepresentationComponent::SetMeshByRotation(float Angle, const FName& Tag)
+{
+	for (const auto RenderComponent : RenderComponentArray)
+	{
+		if (const auto RotatableFlipbook = Cast<UMRotatableFlipbookComponent>(RenderComponent);
+			Tag == "" || RotatableFlipbook->ComponentTags.Contains(FName(Tag)))
+		{
+			RotatableFlipbook->SetFlipbookByRotation(Angle);
+		}
+	}
+}
+
+float UM2DRepresentationComponent::GetCameraDeflectionAngle(const UObject* WorldContextObject, FVector Location, FVector GazeDirection)
+{
+	const UWorld* pWorld = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
+	if (!pWorld)
+	{
+		return 0.f;
+	}
+
+	auto CameraLocation = pWorld->GetFirstPlayerController()->PlayerCameraManager->GetCameraLocation();
+	CameraLocation.Z = 0;
+
+	Location.Z = 0;
+
+	const auto CameraVector = Location - CameraLocation;
+	GazeDirection.Z = 0;
+
+	const FVector CrossProduct = FVector::CrossProduct(CameraVector, GazeDirection);
+	float Angle = FMath::RadiansToDegrees(FMath::Atan2(CrossProduct.Size(), FVector::DotProduct(CameraVector, GazeDirection)));
+	const FVector UpVector(0.f, 0.f, 1.f);
+	float Sign = FVector::DotProduct(UpVector, CrossProduct) < 0.f ? -1.f : 1.f;
+	Angle *= Sign;
+
+	return Angle;
+}
+
 void UM2DRepresentationComponent::FaceToCamera()
 {
 	if (!bFaceToCamera)
 		return;
+
+	if (!CameraManager)
+	{
+		check(false);
+		return;
+	}
 
 	const auto CameraLocation = CameraManager->GetCameraLocation();
 	//TODO: Not to get Pawn reference every tick; Remember this field and update by event (CPU)

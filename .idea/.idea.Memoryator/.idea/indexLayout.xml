@@ -7,6 +7,8 @@
       <Path>Source/TopDownTemp/MIsActiveCheckerComponent.h</Path>
       <Path>Source/TopDownTemp/MPawn.cpp</Path>
       <Path>Source/TopDownTemp/MPawn.h</Path>
+      <Path>Source/TopDownTemp/MRotatableFlipbookComponent.cpp</Path>
+      <Path>Source/TopDownTemp/MRotatableFlipbookComponent.h</Path>
     </explicitIncludes>
     <explicitExcludes />
   </component>
