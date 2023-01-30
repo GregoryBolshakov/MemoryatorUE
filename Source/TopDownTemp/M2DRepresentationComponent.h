@@ -18,7 +18,7 @@ public:
 
 	void SetMeshByRotation(float Angle, const FName& Tag = "");
 
-	static float GetCameraDeflectionAngle(const UObject* WorldContextObject, const FVector Location, const FVector GazeDirection);
+	static float GetCameraDeflectionAngle(const UObject* WorldContextObject, const FVector GazeDirection);
 
 	UPROPERTY(Category=Rendering, EditAnywhere, BlueprintReadWrite)
 	bool bFaceToCamera = true;

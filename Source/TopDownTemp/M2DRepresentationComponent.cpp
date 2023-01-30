@@ -25,7 +25,7 @@ void UM2DRepresentationComponent::BeginPlay()
 void UM2DRepresentationComponent::SetUpSprites()
 {
 	TArray<USceneComponent*> ChildComponents;
-	GetChildrenComponents(false, ChildComponents);
+	GetChildrenComponents(true, ChildComponents);
 
 	for (const auto& ChildComponent : ChildComponents)
 	{
@@ -60,7 +60,7 @@ void UM2DRepresentationComponent::SetMeshByRotation(float Angle, const FName& Ta
 	}
 }
 
-float UM2DRepresentationComponent::GetCameraDeflectionAngle(const UObject* WorldContextObject, FVector Location, FVector GazeDirection)
+float UM2DRepresentationComponent::GetCameraDeflectionAngle(const UObject* WorldContextObject, FVector GazeDirection)
 {
 	const UWorld* pWorld = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
 	if (!pWorld)
@@ -68,12 +68,9 @@ float UM2DRepresentationComponent::GetCameraDeflectionAngle(const UObject* World
 		return 0.f;
 	}
 
-	auto CameraLocation = pWorld->GetFirstPlayerController()->PlayerCameraManager->GetCameraLocation();
-	CameraLocation.Z = 0;
+	auto CameraVector = pWorld->GetFirstPlayerController()->PlayerCameraManager->GetActorForwardVector();
+	CameraVector.Z = 0;
 
-	Location.Z = 0;
-
-	const auto CameraVector = Location - CameraLocation;
 	GazeDirection.Z = 0;
 
 	const FVector CrossProduct = FVector::CrossProduct(CameraVector, GazeDirection);

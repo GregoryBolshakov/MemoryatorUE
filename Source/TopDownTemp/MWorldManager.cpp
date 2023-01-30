@@ -3,25 +3,13 @@
 
 #include "MWorldManager.h"
 #include "MWorldGenerator.h"
+#include "MAICrowdManager.h"
 #include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogWorldManager);
 
 UMWorldManager::UMWorldManager()
 {
-	LoadConfig();
-	//TODO: Consider removing this code. WorldGenerator now is an AActor, not a subsystem.
-	UE_LOG(LogWorldManager, Log, TEXT("Booting using Input data table at: %s"), *SettingsDataAssetPath);
-	static ConstructorHelpers::FObjectFinder<UDataAsset> ActionDataTableFinder(*SettingsDataAssetPath);
-	if (!ensure(ActionDataTableFinder.Succeeded()) ||
-		!ensure(ActionDataTableFinder.Object))
-	{
-		return;
-	}
-	
-	auto* DataAsset = ActionDataTableFinder.Object;
-
-	SettingsDataAsset = dynamic_cast<UWorldManagerSettingsDataAsset*>(DataAsset);
 }
 
 void UMWorldManager::Initialize(FSubsystemCollectionBase& Collection)
@@ -35,6 +23,9 @@ void UMWorldManager::OnWorldBeginPlay(UWorld& InWorld)
 	
 	WorldGenerator = Cast<AMWorldGenerator>(UGameplayStatics::GetActorOfClass(Cast<UObject>(&InWorld), AMWorldGenerator::StaticClass()));
 	check(WorldGenerator);
+	
+	CrowdManager = Cast<AMAICrowdManager>(UGameplayStatics::GetActorOfClass(Cast<UObject>(&InWorld), AMAICrowdManager::StaticClass()));
+	check(CrowdManager);
 
 	WorldGenerator->GenerateWorld();
 }

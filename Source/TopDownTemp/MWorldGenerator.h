@@ -33,7 +33,7 @@ public:
 };
 
 /**
- * 
+ * The class responsible for world generation. At the moment it must be placed in the world manually..
  */
 UCLASS(Blueprintable)
 class TOPDOWNTEMP_API AMWorldGenerator : public AActor
@@ -58,6 +58,8 @@ public:
 		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters),ECastCheckedType::NullAllowed);
 	}
 
+	TMap<FName, FActorWorldMetadata> GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic);
+
 	template<typename T>
 	static FString GetStringByClass();
 
@@ -65,8 +67,13 @@ public:
 	TSubclassOf<class AMGroundBlock> ToSpawnGroundBlock;
 
 	UPROPERTY(EditAnywhere)
-	
 	TSubclassOf<class AMActor> ToSpawnTree;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AMCharacter> ToSpawnNightmare;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AMMemoryator> ToSpawnMemoryator;
 
 private:
 

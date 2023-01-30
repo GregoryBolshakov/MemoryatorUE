@@ -5,6 +5,8 @@
     <explicitIncludes>
       <Path>Source/TopDownTemp/MIsActiveCheckerComponent.cpp</Path>
       <Path>Source/TopDownTemp/MIsActiveCheckerComponent.h</Path>
+      <Path>Source/TopDownTemp/MMemoryator.cpp</Path>
+      <Path>Source/TopDownTemp/MMemoryator.h</Path>
       <Path>Source/TopDownTemp/MPawn.cpp</Path>
       <Path>Source/TopDownTemp/MPawn.h</Path>
       <Path>Source/TopDownTemp/MRotatableFlipbookComponent.cpp</Path>

@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "MCharacter.h"
+#include "MMemoryator.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/DecalComponent.h"
@@ -21,42 +21,18 @@ AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
 		ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0"))
 		 )
 {
-	const auto CollisionPrimitive = Cast<UPrimitiveComponent>(RootComponent);
-	check(CollisionPrimitive);
-	CollisionPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	CollisionPrimitive->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	CollisionPrimitive->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
-	CollisionPrimitive->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
-	CollisionPrimitive->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block);
-	CollisionPrimitive->SetGenerateOverlapEvents(false);
-
-	// Collection of sprites or flipbooks representing the character. It's not the Root Component!
-	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("2DRepresentation"));
-	RepresentationComponent->SetupAttachment(RootComponent);
-
-	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
-
-	// Don't rotate character to camera direction
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
-	bUseControllerRotationRoll = false;
-
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = false; // Rotate character to moving direction
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);
-	GetCharacterMovement()->bConstrainToPlane = true;
-	GetCharacterMovement()->bSnapToPlaneAtStart = true;
-
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 800.f;
 	CameraBoom->bDoCollisionTest = false; // Don't want to pull camera in when it collides with level
+	CameraBoom->SetRelativeRotation(FRotator(0.f, -35.f, 0.f));
 
 	// Create a camera...
 	TopDownCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("TopDownCamera"));
 	TopDownCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	TopDownCameraComponent->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+	TopDownCameraComponent->FieldOfView = 60.f;
 
 	// Create a decal in the world to show the cursor's location
 	CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
@@ -71,24 +47,6 @@ AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
 
 	DirectionMarkerComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("DirectionMarker"));
 	DirectionMarkerComponent->SetupAttachment(RootComponent);
-
-	// Activate ticking in order to update the cursor every frame.
-	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.bStartWithTickEnabled = true;
-
-	//TODO: Make Z position constant. Now there is a performance loss due to floor collisions.
-}
-
-void AMMemoryator::Tick(float DeltaSeconds)
-{
-    Super::Tick(DeltaSeconds);
-
-	HandleCursor();
-
-	HandleAnimationStates();
-
-	const auto Angle = UM2DRepresentationComponent::GetCameraDeflectionAngle(this, GetTransform().GetLocation(), GetVelocity());
-	RepresentationComponent->SetMeshByRotation(Angle);
 }
 
 void AMMemoryator::AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce)
@@ -105,12 +63,11 @@ void AMMemoryator::AddMovementInput(FVector WorldDirection, float ScaleValue, bo
 	}
 }
 
-void AMMemoryator::PostInitializeComponents()
+void AMMemoryator::Tick(float DeltaSeconds)
 {
-	Super::PostInitializeComponents();
+	Super::Tick(DeltaSeconds);
 
-	//TODO: there is usually IsActiveCheckerComponent->Disable();
-	IsActiveCheckerComponent->SetUpCollisionPrimitive();
+	HandleCursor();
 }
 
 void AMMemoryator::HandleCursor() const
@@ -145,17 +102,7 @@ void AMMemoryator::HandleCursor() const
 
 void AMMemoryator::HandleAnimationStates() 
 {
-	// TODO: Send this logic to custom Movement Component
-	const auto Velocity = GetVelocity();
+	Super::HandleAnimationStates();
 
-	if (IsMoving && Velocity == FVector::ZeroVector)
-	{
-		IsMoving = false;
-		UpdateAnimation();
-	}
-	if (!IsMoving && Velocity != FVector::ZeroVector)
-	{
-		IsMoving = true;
-		UpdateAnimation();
-	}
+	//TODO: Add personal logic
 }

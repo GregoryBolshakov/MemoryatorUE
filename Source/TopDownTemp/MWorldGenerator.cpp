@@ -6,6 +6,8 @@
 #include "MGroundBlock.h"
 #include "MActor.h" 
 #include "MCharacter.h"
+#include "MMemoryator.h"
+#include "MAICrowdManager.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MWorldManager.h"
 #include "Components/BoxComponent.h"
@@ -60,6 +62,8 @@ void AMWorldGenerator::GenerateWorld()
 			}
 		}
 	}
+
+	SpawnActor<AActor>(ToSpawnNightmare, {380.f, 380.f, 100.f}, {}, FName("Nightmare"));
 }
 
 void AMWorldGenerator::BeginPlay()
@@ -92,7 +96,7 @@ void AMWorldGenerator::UpdateActiveZone()
 		{
 			ActiveBlocksMap_New.Add(FIntPoint(X, Y), true);
 			ActiveBlocksMap.Remove(FIntPoint(X, Y));
-			if (const auto Block = GridOfActors.Find(FIntPoint(X, Y)))
+			if (const auto Block = GridOfActors.Find(FIntPoint(X, Y)); !Block->StaticActors.IsEmpty())
 			{
 				for (const auto& [Index, Data] : Block->StaticActors)
 				{
@@ -159,7 +163,7 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRo
 	const FActorSpawnParameters& SpawnParameters)
 {
 	const auto pWorld = GetWorld();
-	if (!pWorld || SpawnParameters.Name == "")
+	if (!pWorld || SpawnParameters.Name == "" || !Class)
 	{
 		check(false);
 		return nullptr;
@@ -175,7 +179,8 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRo
 	}
 
 	// Determine whether the object is static or movable
-	auto& ListToAdd = Class->GetSuperClass()->IsChildOf<APawn>() ? BlockOfActors->DynamicActors : BlockOfActors->StaticActors;
+	bool bDynamic = Class->GetSuperClass()->IsChildOf<APawn>();
+	auto& ListToAdd = bDynamic ? BlockOfActors->DynamicActors : BlockOfActors->StaticActors;
 
 	//TODO: If this check is of no use, should be removed
 	if (const auto ExistingActor = ListToAdd.Find(SpawnParameters.Name))
@@ -186,9 +191,55 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRo
 
 	const auto Actor = pWorld->SpawnActor(Class, &Location, &Rotation, SpawnParameters);
 
+	// Spawn an AI controller for a spawned creature
+	if (bDynamic)
+	{
+		if (const auto pCrowdManager = pWorld->GetSubsystem<UMWorldManager>()->GetCrowdManager())
+		{
+			if (const auto Controller = pCrowdManager->SpawnAIController(SpawnParameters.Name, *Class, Location, Rotation)) //TODO: Add valid spawn parameters
+			{
+				Controller->Possess(Cast<APawn>(Actor));
+				//TODO: there should be other options besides MMobController
+			}
+			else
+			{
+				check(false);
+			}
+		}
+	}
+
 	// We also store the mapping between the Name and metadata (actor's GroundBlock index, etc.)
 	const FActorWorldMetadata Metadata{ListToAdd.Add(SpawnParameters.Name, Actor), GroundBlockIndex};
 	ActorsMetadata.Add(SpawnParameters.Name, Metadata);
 
 	return Metadata.Actor;
+}
+
+TMap<FName, FActorWorldMetadata> AMWorldGenerator::GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic)
+{
+	const auto StartBlock = GetGroundBlockIndex(UpperLeft);
+	const auto FinishBlock = GetGroundBlockIndex(BottomRight);
+
+	TMap<FName, FActorWorldMetadata> Result;
+
+	for (auto X = StartBlock.X; X <= FinishBlock.X; ++X)
+	{
+		for (auto Y = StartBlock.Y; Y <= FinishBlock.Y; ++Y)
+		{
+			if (const auto Block = GridOfActors.Find({X, Y}))
+			{
+				if (const auto& Actors = bDynamic ? Block->DynamicActors : Block->StaticActors;
+					!Actors.IsEmpty())
+				{
+					for (const auto& [Name, Actor] : Actors)
+					{
+						if (const auto Metadata = ActorsMetadata.Find(Name))
+							Result.Add(Name, *Metadata);
+					}
+				}
+			}
+		}
+	}
+
+	return Result;
 }

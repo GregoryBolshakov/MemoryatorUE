@@ -9,15 +9,6 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogWorldManager, Log, All);
 
-UCLASS()
-class TOPDOWNTEMP_API UWorldManagerSettingsDataAsset : public UDataAsset
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Settings")
-		TSubclassOf<class AMWorldGenerator> WorldGeneratorBlueprint;
-};
-
 /**
 World subsystem that manages the main world entities
  */
@@ -26,6 +17,11 @@ class TOPDOWNTEMP_API UMWorldManager : public UWorldSubsystem
 {
 	GENERATED_BODY()
 
+public:
+
+	class AMWorldGenerator* GetWorldGenerator() const { return WorldGenerator; }
+
+	class AMAICrowdManager* GetCrowdManager() const { return CrowdManager; }
 private:
 
 	UMWorldManager();
@@ -37,9 +33,9 @@ private:
 	UPROPERTY()
 	AMWorldGenerator* WorldGenerator;
 
+	UPROPERTY()
+	AMAICrowdManager* CrowdManager;
+
 	UPROPERTY(Config)
 	FString SettingsDataAssetPath;
-
-	UPROPERTY()
-	UWorldManagerSettingsDataAsset* SettingsDataAsset;
 };

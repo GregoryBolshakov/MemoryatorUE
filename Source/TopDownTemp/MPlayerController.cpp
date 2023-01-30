@@ -4,7 +4,7 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Runtime/Engine/Classes/Components/DecalComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
-#include "MCharacter.h"
+#include "MMemoryator.h"
 #include "Navigation/PathFollowingComponent.h"
 
 AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializer) :
@@ -119,7 +119,7 @@ void AMPlayerController::MoveToMouseCursor()
 
 	if (UHeadMountedDisplayFunctionLibrary::IsHeadMountedDisplayEnabled())
 	{
-		if (AMCharacter* MyCharacter = Cast<AMCharacter>(MyPawn))
+		if (auto* MyCharacter = Cast<AMMemoryator>(MyPawn))
 		{
 			if (MyCharacter->GetCursorToWorld())
 			{

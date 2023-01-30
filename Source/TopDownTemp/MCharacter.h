@@ -13,7 +13,15 @@ class AMCharacter : public ACharacter
 
 public:
 
-	bool GetIsMoving() const { return IsMoving; }
+	bool GetIsFighting() const { return IsFighting; }
+
+	float GetSightRange() const { return SightRange; }
+
+	float GetFightRange() const { return FightRange; }
+
+	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; }
+
+	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
@@ -21,22 +29,15 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Animation")
 	void UpdateAnimation();
 
-	virtual void AddMovementInput(FVector WorldDirection, float ScaleValue = 1.0f, bool bForce = false) override;
-
 	virtual void PostInitializeComponents() override;
 
-	/** Returns TopDownCameraComponent subobject **/
-	FORCEINLINE class UCameraComponent* GetTopDownCameraComponent() const { return TopDownCameraComponent; }
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns CursorToWorld subobject **/
-	FORCEINLINE class UDecalComponent* GetCursorToWorld() { return CursorToWorld; }
+protected:
+	virtual void HandleAnimationStates();
 
-private:
+	void UpdateLastNonZeroDirection();
 
-	void HandleCursor() const;
-
-	void HandleAnimationStates();
+	UFUNCTION(BlueprintCallable, Category="Animation", meta = (AllowPrivateAccess = "true"))
+	virtual void OnFightingAnimationFinished() { /*TODO: if there is still no logic, make pure virtual*/ };
 
 	/** Representation (collection of sprites) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Representation, meta = (AllowPrivateAccess = "true"))
@@ -45,21 +46,10 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;
 
-	/** Top down camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* TopDownCameraComponent;
+	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);
+	FVector ForcedGazeVector;
 
-	/** Camera boom positioning the camera above the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
-
-	/** A decal that projects to the cursor location. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UDecalComponent* CursorToWorld;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Markers, meta = (AllowPrivateAccess = "true"))
-	class UPaperSpriteComponent* DirectionMarkerComponent;
-
+	//TODO: It's hard to say if these booleans should be here or in Controller
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
 	bool IsDying;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
@@ -70,5 +60,10 @@ private:
 	bool IsMoving;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
 	bool IsPicking;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float SightRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float FightRange;
 };
 
