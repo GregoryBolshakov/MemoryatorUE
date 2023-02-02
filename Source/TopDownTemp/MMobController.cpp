@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "MWorldManager.h"
 #include "MWorldGenerator.h"
+#include "NavigationSystem.h"
 
 AMMobController::AMMobController(const FObjectInitializer& ObjectInitializer) :
 	  Super(ObjectInitializer)
@@ -59,6 +60,11 @@ void AMMobController::Tick(float DeltaSeconds)
 	{
 		// Fight the victim and return to the Idle behavior
 		DoFightBehavior(*pWorld, *MyCharacter);
+	}
+	if (CurrentBehavior == EMobBehaviors::Retreat)
+	{
+		// Run away from the victim until move away by a set range
+		DoRetreatBehavior(*pWorld, *MyCharacter);
 	}
 }
 
@@ -134,6 +140,23 @@ void AMMobController::DoFightBehavior(const UWorld& World, AMCharacter& MyCharac
 	//TODO: Add a logic to do during fight (shouts, effects, etc.)
 }
 
+void AMMobController::DoRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter)
+{
+	if (!Victim)
+	{
+		check(false);
+		SetIdleBehavior(World, MyCharacter);
+		return;
+	}
+
+	// if we have already run back a sufficient length, then there is no need to run away anymore
+	const auto DistanceToVictim = FVector::Distance(Victim->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
+	if (DistanceToVictim >= MyCharacter.GetRetreatRange())
+	{
+		SetChaseBehavior(World, MyCharacter);
+	}
+}
+
 void AMMobController::SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	MyCharacter.SetIsFighting(false);
@@ -173,22 +196,57 @@ void AMMobController::SetFightBehavior(const UWorld& World, AMCharacter& MyChara
 	}
 
 	MyCharacter.SetIsFighting(true);
-	// Face the victim during the strike
-	const auto GazeVector = Victim->GetTransform().GetLocation() - MyCharacter.GetTransform().GetLocation();
-	MyCharacter.SetForcedGazeVector(GazeVector);
 
 	CurrentBehavior = EMobBehaviors::Fight;
 
 	OnBehaviorChanged(MyCharacter);
+
+	// Face the victim during the strike
+	const auto GazeVector = Victim->GetTransform().GetLocation() - MyCharacter.GetTransform().GetLocation();
+	MyCharacter.SetForcedGazeVector(GazeVector);
 }
 
 void AMMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
+	MyCharacter.SetIsFighting(false);
+
+	CurrentBehavior = EMobBehaviors::Retreat;
+
+	if (!Victim)
+	{
+		// We need to know who are we running from
+		check(false);
+		SetIdleBehavior(World, MyCharacter);
+		return;
+	}
+
+	// Calculate end point of retreat
+	const auto MyLocation = MyCharacter.GetTransform().GetLocation();
+	auto RetreatDirection = MyLocation - Victim->GetTransform().GetLocation();
+	RetreatDirection.Normalize();
+	RetreatDirection *= MyCharacter.GetRetreatRange();
+	const auto RetreatLocation = MyLocation + RetreatDirection;
+
+	// Project the point of retreat to navigation mesh to find the closest reachable node
+	FVector NavigatedRetreatLocation;
+	if (UNavigationSystemV1::K2_ProjectPointToNavigation(const_cast<UWorld*>(&World), RetreatLocation, NavigatedRetreatLocation, nullptr, nullptr))
+	{
+		MoveToLocation(NavigatedRetreatLocation);
+	}
+	else
+	{
+		SetIdleBehavior(World, MyCharacter);
+		return;
+	}
+
+	OnBehaviorChanged(MyCharacter);
 }
 
 void AMMobController::OnBehaviorChanged(AMCharacter& MyCharacter)
 {
 	CurrentTimeBetweenDecisions = DefaultTimeBetweenDecisions;
+	
+	MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
 
 	MyCharacter.UpdateAnimation();
 }
@@ -202,7 +260,7 @@ void AMMobController::OnFightEnd()
 		return;
 	}
 
-	SetIdleBehavior(*GetWorld(), *MyCharacter);
+	SetRetreatBehavior(*GetWorld(), *MyCharacter);
 }
 
 void AMMobController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
@@ -233,6 +291,9 @@ void AMMobController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowi
 	case EMobBehaviors::Chase:
 	default:
 		SetFightBehavior(*pWold, *MyCharacter);
+		return;
+	case EMobBehaviors::Retreat:
+		SetChaseBehavior(*pWold, *MyCharacter);
 		return;
 	case EMobBehaviors::Follow:
 		SetIdleBehavior(*pWold, *MyCharacter);

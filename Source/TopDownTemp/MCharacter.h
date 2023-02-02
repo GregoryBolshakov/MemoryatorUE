@@ -19,6 +19,8 @@ public:
 
 	float GetFightRange() const { return FightRange; }
 
+	float GetRetreatRange() const { return RetreatRange; }
+
 	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; }
 
 	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
@@ -65,5 +67,7 @@ protected:
 	float SightRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float FightRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float RetreatRange;
 };
 

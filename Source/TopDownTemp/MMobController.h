@@ -40,6 +40,8 @@ private:
 
 	void DoFightBehavior(const UWorld& World, AMCharacter& MyCharacter);
 
+	void DoRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter);
+
 	void SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter);
 
 	void SetChaseBehavior(const UWorld& World, AMCharacter& MyCharacter);

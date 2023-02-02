@@ -46,17 +46,39 @@ void UMRotatableFlipbookComponent::SetFlipbookByRotation(float ViewingAngle)
 
 		if (SourceFlipbook != FlipbookArray->Flipbooks[FlipbookIndex])
 		{
+			const auto PlaybackPosition = GetPlaybackPosition();
 			SetFlipbook(FlipbookArray->Flipbooks[FlipbookIndex]);
+			SetPlaybackPosition(PlaybackPosition, false);
 		}
 
 		// Mirror the flipbook if needed
 		FVector Scale = GetRelativeScale3D();
-		Scale.X = sign == -1.f ? abs(Scale.X) : -abs(Scale.X);
+		if (sign == -1.f && FlipbookIndex != 0 && FlipbookIndex != FlipbooksCount - 1)
+		{
+			Scale.X = abs(Scale.X);
+		}
+		else
+		{
+			Scale.X = -abs(Scale.X);
+		}
 		SetRelativeScale3D(Scale);
 	}
 	else
 	{
 		SetFlipbook(nullptr);
+	}
+}
+
+void UMRotatableFlipbookComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
+{
+	const int32 LastCachedFrame = CachedFrameIndex;
+
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
+	if (CachedFrameIndex != LastCachedFrame)
+	{
+		//fire on frame changed event
 	}
 }
 
