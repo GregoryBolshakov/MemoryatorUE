@@ -71,6 +71,9 @@ public:
 	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AMCharacter> ToSpawnNightmare;
+	
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AMCharacter> ToSpawnNightmareMedium;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AMMemoryator> ToSpawnMemoryator;

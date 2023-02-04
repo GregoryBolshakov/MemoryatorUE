@@ -63,7 +63,7 @@ void AMWorldGenerator::GenerateWorld()
 		}
 	}
 
-	SpawnActor<AActor>(ToSpawnNightmare, {380.f, 380.f, 100.f}, {}, FName("Nightmare"));
+	SpawnActor<AActor>(ToSpawnNightmareMedium, {380.f, 380.f, 100.f}, {}, FName("Nightmare"));
 }
 
 void AMWorldGenerator::BeginPlay()

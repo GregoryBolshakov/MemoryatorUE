@@ -14,12 +14,24 @@ struct FFlipbooksArray
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(Category=Sprite, EditAnywhere, meta=(DisplayThumbnail = "true"))
+	UPROPERTY(Category=Flipbooks, EditAnywhere, meta=(DisplayThumbnail = "true"))
 	TArray<TObjectPtr<UPaperFlipbook>> Flipbooks;
+
+	/** Play rate of the flipbook */
+	UPROPERTY(Category=Flipbooks, EditAnywhere)
+	float PlayRate = 1.f;
+
+	/** Whether the flipbook should loop when it reaches the end, or stop */
+	UPROPERTY(Category=Flipbooks, EditAnywhere)
+	uint32 bLooping:1;
+
+	/** If playback should move the current position backwards instead of forwards */
+	UPROPERTY(Category=Flipbooks, EditAnywhere)
+	uint32 bReversePlayback:1;
 };
 
 //TODO: Add a minimum playing time for every flipbook to avoid flickering due to frequent animation changes
-UCLASS(meta=(BlueprintSpawnableComponent))
+UCLASS(HideCategories=(Sprite), meta=(BlueprintSpawnableComponent))
 class TOPDOWNTEMP_API UMRotatableFlipbookComponent : public UPaperFlipbookComponent
 {
 	GENERATED_UCLASS_BODY()
@@ -39,16 +51,9 @@ private:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-
 	/** The action currently being played */
 	FName Action = FName("Idle");
 
-	UPROPERTY(Category=Sprite, EditAnywhere, meta=(DisplayThumbnail = "true"))
+	UPROPERTY(Category=Flipbooks, EditAnywhere, meta=(DisplayThumbnail = "true"))
 	TMap<FName, FFlipbooksArray> FlipbookByAction;
-
-	/** For inner use of PostEditChangeProperty */
-	bool bIsPropertyChanging = false;
-
-	//TODO: Hide the UPaperFlipbookComponent::SourceFlipbook property of the parent 
 };

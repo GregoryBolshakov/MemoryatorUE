@@ -6,7 +6,6 @@
 UMRotatableFlipbookComponent::UMRotatableFlipbookComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-	
 }
 
 void UMRotatableFlipbookComponent::SetFlipbookByRotation(float ViewingAngle)
@@ -49,6 +48,10 @@ void UMRotatableFlipbookComponent::SetFlipbookByRotation(float ViewingAngle)
 			const auto PlaybackPosition = GetPlaybackPosition();
 			SetFlipbook(FlipbookArray->Flipbooks[FlipbookIndex]);
 			SetPlaybackPosition(PlaybackPosition, false);
+
+			SetPlayRate(FlipbookArray->PlayRate);
+			SetLooping(FlipbookArray->bLooping);
+			bReversePlayback = FlipbookArray->bReversePlayback;
 		}
 
 		// Mirror the flipbook if needed
@@ -80,30 +83,22 @@ void UMRotatableFlipbookComponent::TickComponent(float DeltaTime, ELevelTick Tic
 	{
 		//fire on frame changed event
 	}
-}
 
-void UMRotatableFlipbookComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	// Temporary solution. Substitute first valid flipbook to the SourceFlipbook field.
-	if (PropertyChangedEvent.Property != nullptr)
+#if WITH_EDITOR
+	if (!GIsPlayInEditorWorld)
 	{
-		FName PropertyName = PropertyChangedEvent.MemberProperty->GetFName();
-
-		// Triggers only when the FlipbookByAction property changes
-		if (PropertyName == GET_MEMBER_NAME_CHECKED(UMRotatableFlipbookComponent, FlipbookByAction) && !bIsPropertyChanging)
+		// Update displayed flipbook using the first valid one
+		if (FlipbookByAction.Num() != 0)
 		{
-			if (!SourceFlipbook && FlipbookByAction.Num() != 0)
+			const auto FirstValidAction = TMap<FName, FFlipbooksArray>::TIterator(FlipbookByAction).Value();
+			if (FirstValidAction.Flipbooks.Num() > 0 && SourceFlipbook != FirstValidAction.Flipbooks[0])
 			{
-				const auto FirstValidAction = TMap<FName, FFlipbooksArray>::TIterator(FlipbookByAction).Value();
-				if (FirstValidAction.Flipbooks.Num() > 0)
-				{
-					bIsPropertyChanging = true;
-					SetFlipbook(FirstValidAction.Flipbooks[0]);
-					bIsPropertyChanging = false;
-				}
+				SetFlipbook(FirstValidAction.Flipbooks[0]);
+				SetPlayRate(FirstValidAction.PlayRate);
+				SetLooping(FirstValidAction.bLooping);
+				bReversePlayback = FirstValidAction.bReversePlayback;
 			}
 		}
 	}
+#endif
 }
