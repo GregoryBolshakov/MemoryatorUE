@@ -11,6 +11,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBlockChanged);
 class AMGroundBlock;
 class AMTree;
 class AMActor;
+class AMCharacter;
 class AMMemoryator;
 
 /** Class for storing actors within one block of the frid */
