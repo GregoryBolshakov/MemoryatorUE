@@ -107,6 +107,16 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 		return;
 	}
 
+	// We cannot remove TMap elements during the iteration,
+	// so that we remember all the transitions in the temporary array
+	struct FTransition
+	{
+		FActorWorldMetadata& Metadata;
+		FBlockOfActors& OldBlock;
+		FBlockOfActors& NewBlock;
+	};
+	TMap<FName, FTransition> TransitionList;
+
 	for (const auto [Index, Bool] : ActiveBlocksMap)
 	{
 		if (!Bool)
@@ -114,13 +124,8 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 			check(false)
 			continue;
 		}
-
 		if (const auto Block = GridOfActors.Find(Index); Block && !Block->DynamicActors.IsEmpty())
 		{
-			// We cannot remove TMap elements during the iteration,
-			// so that we remember all the transitions in the temporary array
-			TMap<FName, TPair<FActorWorldMetadata, FBlockOfActors>> TransitionList;
-
 			for (const auto& [Name, Data] : Block->DynamicActors)
 			{
 				if (const auto ActorMetadata = ActorsMetadata.Find(Name))
@@ -128,29 +133,31 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 					if (const auto ActualBlockIndex = GetGroundBlockIndex(Data->GetTransform().GetLocation());
 						ActorMetadata->GroundBlockIndex != ActualBlockIndex)
 					{
-						TransitionList.Add(Name, {*ActorMetadata, *Block});
-						ActorMetadata->GroundBlockIndex = ActualBlockIndex;
+						if (const auto NewBlock = GridOfActors.Find(ActualBlockIndex))
+						{
+							const FTransition NewTransition{*ActorMetadata, *Block, *NewBlock};
+							TransitionList.Add(Name, NewTransition);
+							ActorMetadata->GroundBlockIndex = ActualBlockIndex;
+						}
 					}
 				}
 			}
-
-			// Do all the remembered transitions
-			for (const auto& [Name, Transition] : TransitionList)
-			{
-				Block->DynamicActors.Remove(Name);
-			}
-			for (auto& [Name, Transition] : TransitionList)
-			{
-				auto& Metadata = Transition.Key;
-				auto& TransitionBlock = Transition.Value;
-				TransitionBlock.DynamicActors.Add(Name, Metadata.Actor);
-
-				// Even though the dynamic object is still enabled, it might have moved to the disabled block,
-				// where all surrounding static objects are disabled.
-				// Check the environment for validity if you bind to the delegate!
-				Metadata.OnBlockChangedDelegate.Broadcast();
-			}
 		}
+	}
+
+	// Do all the remembered transitions
+	for (const auto& [Name, Transition] : TransitionList)
+	{
+		Transition.OldBlock.DynamicActors.Remove(Name);
+	}
+	for (auto& [Name, Transition] : TransitionList)
+	{
+		Transition.NewBlock.DynamicActors.Add(Name, Transition.Metadata.Actor);
+
+		// Even though the dynamic object is still enabled, it might have moved to the disabled block,
+		// where all surrounding static objects are disabled.
+		// Check the environment for validity if you bind to the delegate!
+		Transition.Metadata.OnBlockChangedDelegate.Broadcast();
 	}
 }
 
