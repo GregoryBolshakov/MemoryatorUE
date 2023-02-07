@@ -18,13 +18,3 @@ void AMMob::HandleAnimationStates()
 		return;
 	}
 }
-
-void AMMob::OnFightingAnimationFinished()
-{
-	Super::OnFightingAnimationFinished();
-
-	if (const auto MobController = Cast<AMMobController>(GetController()))
-	{
-		MobController->OnFightEnd();
-	}
-}

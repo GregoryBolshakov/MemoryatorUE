@@ -81,7 +81,7 @@ void UMRotatableFlipbookComponent::TickComponent(float DeltaTime, ELevelTick Tic
 	
 	if (CachedFrameIndex != LastCachedFrame)
 	{
-		//fire on frame changed event
+		OnSpriteChangeDelegate.Broadcast();
 	}
 
 #if WITH_EDITOR

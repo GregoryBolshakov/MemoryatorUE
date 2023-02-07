@@ -20,7 +20,9 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer) :
 	 Super(ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0")))
  	,SightRange(2000.f)
 	,FightRange(50.f)
+	,Strength(10.f)
 	,RetreatRange(200.f)
+	,bCanRetreat(true)
 {
 	const auto CollisionPrimitive = Cast<UPrimitiveComponent>(RootComponent);
 	check(CollisionPrimitive);
@@ -72,8 +74,8 @@ void AMCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	//TODO: there is usually IsActiveCheckerComponent->Disable();
 	IsActiveCheckerComponent->SetUpCollisionPrimitive();
+	IsActiveCheckerComponent->Disable();
 }
 
 void AMCharacter::HandleAnimationStates()

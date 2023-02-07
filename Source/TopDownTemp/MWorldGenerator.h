@@ -6,9 +6,14 @@
 #include "GameFramework/Actor.h"
 #include "MWorldGenerator.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBlockChanged);
+
 class AMGroundBlock;
 class AMTree;
+class AMActor;
+class AMMemoryator;
 
+/** Class for storing actors within one block of the frid */
 USTRUCT()
 struct FBlockOfActors
 {
@@ -21,6 +26,7 @@ public:
 	TMap<FName, AActor*> DynamicActors;
 };
 
+/** Utility class for storing actor's metadata in the grid */
 USTRUCT()
 struct FActorWorldMetadata
 {
@@ -30,6 +36,8 @@ public:
 	AActor* Actor;
 
 	FIntPoint GroundBlockIndex;
+
+	FOnBlockChanged OnBlockChangedDelegate;
 };
 
 /**
@@ -42,10 +50,6 @@ class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 public:
 
 	void GenerateWorld();
-
-	virtual void BeginPlay() override;
-
-	virtual void Tick(float DeltaSeconds) override;
 
 	AActor* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters());
 
@@ -60,27 +64,40 @@ public:
 
 	TMap<FName, FActorWorldMetadata> GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic);
 
-	template<typename T>
-	static FString GetStringByClass();
+	UPROPERTY(EditAnywhere, Category = SubclassessToSpawn)
+	TSubclassOf<AMGroundBlock> ToSpawnGroundBlock;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AMGroundBlock> ToSpawnGroundBlock;
+	UPROPERTY(EditAnywhere, Category = SubclassessToSpawn)
+	TSubclassOf<AMActor> ToSpawnTree;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AMActor> ToSpawnTree;
+	UPROPERTY(EditAnywhere, Category = SubclassessToSpawn)
+	TSubclassOf<AMCharacter> ToSpawnNightmare;
 	
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AMCharacter> ToSpawnNightmare;
-	
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AMCharacter> ToSpawnNightmareMedium;
+	UPROPERTY(EditAnywhere, Category = SubclassessToSpawn)
+	TSubclassOf<AMCharacter> ToSpawnNightmareMedium;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AMMemoryator> ToSpawnMemoryator;
+	UPROPERTY(EditAnywhere, Category = SubclassessToSpawn)
+	TSubclassOf<AMMemoryator> ToSpawnMemoryator;
 
 private:
 
+	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	virtual void Tick(float DeltaSeconds) override;
+
+	/** Matches all enabled dynamic actors with the blocks they are on*/
+	void CheckDynamicActorsBlocks();
+
+	/** Turns on all static and dynamic actors in the active zone, turn off all others*/
 	void UpdateActiveZone();
+
+	/** Moves the navigation mesh to the player's position */
+	void UpdateNavigationMesh();
+
+	UFUNCTION()
+	void OnPlayerChangedBlock();
 
 	FIntPoint GetGroundBlockIndex(FVector Position) const;
 
@@ -98,12 +115,7 @@ private:
 	TMap<FName, FActorWorldMetadata> ActorsMetadata;
 
 	TMap<FIntPoint, bool> ActiveBlocksMap;
-};
 
-template <typename T>
-FString AMWorldGenerator::GetStringByClass()
-{
-	if (TIsSame<T, AMGroundBlock>::Value)
-		return "GroundBlock";
-	return "unknown";
-}
+	float DynamicActorsCheckInterval;
+	float DynamicActorsCheckTimer;
+};

@@ -30,7 +30,11 @@ class TOPDOWNTEMP_API AMMobController : public AAIController
 public:
 	virtual void Tick(float DeltaSeconds) override;
 
-	void OnFightEnd();
+	UFUNCTION(BlueprintCallable)
+	virtual void OnFightEnd();
+
+	UFUNCTION(BlueprintCallable)
+	virtual void OnHit();
 
 private:
 

@@ -18,7 +18,5 @@ public:
 private:
 
 	virtual void HandleAnimationStates() override;
-
-	virtual void OnFightingAnimationFinished() override;
 };
 

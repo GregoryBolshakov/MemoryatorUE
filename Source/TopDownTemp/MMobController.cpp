@@ -10,9 +10,9 @@
 AMMobController::AMMobController(const FObjectInitializer& ObjectInitializer) :
 	  Super(ObjectInitializer)
 	, CurrentBehavior()
-	, Victim(nullptr)
 	, DefaultTimeBetweenDecisions(0.5f)
 	, CurrentTimeBetweenDecisions(0.f)
+	, Victim(nullptr)
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
@@ -114,7 +114,6 @@ void AMMobController::DoChaseBehavior(const UWorld& World, AMCharacter& MyCharac
 	if (DistanceToVictim > MyCharacter.GetSightRange() * 1.5f) //TODO: come up with "1.5f" parameter name
 	{
 		SetIdleBehavior(World, MyCharacter);
-		Victim = nullptr;
 		return;
 	}
 
@@ -164,6 +163,7 @@ void AMMobController::SetIdleBehavior(const UWorld& World, AMCharacter& MyCharac
 	StopMovement();
 
 	CurrentBehavior = EMobBehaviors::Idle;
+	Victim = nullptr;
 
 	OnBehaviorChanged(MyCharacter);
 }
@@ -260,12 +260,45 @@ void AMMobController::OnFightEnd()
 		return;
 	}
 
-	SetRetreatBehavior(*GetWorld(), *MyCharacter);
+	if (MyCharacter->GetCanRetreat())
+	{
+		SetRetreatBehavior(*GetWorld(), *MyCharacter);
+	}
+	else
+	{
+		SetIdleBehavior(*GetWorld(), *MyCharacter);
+	}
+}
+
+void AMMobController::OnHit()
+{
+	const auto pWorld = GetWorld();
+	if (!pWorld)
+	{
+		check(false);
+		return;
+	}
+	
+	const auto MyCharacter = Cast<AMCharacter>(GetPawn());
+	if (!MyCharacter)
+	{
+		check(false);
+		return;
+	}
+
+	if (!Victim)
+	{
+		SetIdleBehavior(*pWorld, *MyCharacter);
+		return;
+	}
+
+	//FPointDamageEvent DamageEvent(DamageAmount, Hit, -ActorForward, UDamageType::StaticClass());
+	//Victim->TakeDamage(DamageAmount, DamageEvent, MyPC, MyPC->GetPawn());
 }
 
 void AMMobController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
 {
-	Super::OnMoveCompleted(RequestID, Result);
+	AAIController::OnMoveCompleted(RequestID, Result);
 
 	if (!Result.IsSuccess())
 	{

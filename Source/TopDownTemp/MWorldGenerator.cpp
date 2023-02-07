@@ -10,10 +10,15 @@
 #include "MAICrowdManager.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MWorldManager.h"
+#include "NavigationSystem.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "NavMesh/NavMeshBoundsVolume.h"
 
-AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+	, DynamicActorsCheckInterval(0.5f)
+	, DynamicActorsCheckTimer(0.f)
 {
 	PlayerActiveZone = CreateDefaultSubobject<UBoxComponent>(TEXT("Player Active Zone"));
 	PlayerActiveZone->SetBoxExtent(FVector(500.0f, 500.0f, 500.0f));
@@ -70,6 +75,83 @@ void AMWorldGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 	UpdateActiveZone();
+
+	if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
+	{
+		if (const auto PlayerMetadata = ActorsMetadata.Find(FName(pPlayer->GetName())))
+		{
+			PlayerMetadata->OnBlockChangedDelegate.AddDynamic(this, &AMWorldGenerator::OnPlayerChangedBlock);
+		}
+	}
+}
+
+void AMWorldGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
+	{
+		if (const auto PlayerMetadata = ActorsMetadata.Find(FName(pPlayer->GetName())))
+		{
+			PlayerMetadata->OnBlockChangedDelegate.RemoveDynamic(this, &AMWorldGenerator::OnPlayerChangedBlock);
+		}
+	}
+}
+
+void AMWorldGenerator::CheckDynamicActorsBlocks()
+{
+	//TODO: TEST FOR EXCEPTIONS!
+	if (ActiveBlocksMap.IsEmpty())
+	{
+		check(false);
+		return;
+	}
+
+	for (const auto [Index, Bool] : ActiveBlocksMap)
+	{
+		if (!Bool)
+		{
+			check(false)
+			continue;
+		}
+
+		if (const auto Block = GridOfActors.Find(Index); Block && !Block->DynamicActors.IsEmpty())
+		{
+			// We cannot remove TMap elements during the iteration,
+			// so that we remember all the transitions in the temporary array
+			TMap<FName, TPair<FActorWorldMetadata, FBlockOfActors>> TransitionList;
+
+			for (const auto& [Name, Data] : Block->DynamicActors)
+			{
+				if (const auto ActorMetadata = ActorsMetadata.Find(Name))
+				{
+					if (const auto ActualBlockIndex = GetGroundBlockIndex(Data->GetTransform().GetLocation());
+						ActorMetadata->GroundBlockIndex != ActualBlockIndex)
+					{
+						TransitionList.Add(Name, {*ActorMetadata, *Block});
+						ActorMetadata->GroundBlockIndex = ActualBlockIndex;
+					}
+				}
+			}
+
+			// Do all the remembered transitions
+			for (const auto& [Name, Transition] : TransitionList)
+			{
+				Block->DynamicActors.Remove(Name);
+			}
+			for (auto& [Name, Transition] : TransitionList)
+			{
+				auto& Metadata = Transition.Key;
+				auto& TransitionBlock = Transition.Value;
+				TransitionBlock.DynamicActors.Add(Name, Metadata.Actor);
+
+				// Even though the dynamic object is still enabled, it might have moved to the disabled block,
+				// where all surrounding static objects are disabled.
+				// Check the environment for validity if you bind to the delegate!
+				Metadata.OnBlockChangedDelegate.Broadcast();
+			}
+		}
+	}
 }
 
 void AMWorldGenerator::UpdateActiveZone()
@@ -79,14 +161,10 @@ void AMWorldGenerator::UpdateActiveZone()
 	PlayerActiveZone->SetWorldLocation(PlayerLocation);
 
 	const FTransform BoxTransform = PlayerActiveZone->GetComponentToWorld();
-	const FVector BoxExtent = PlayerActiveZone->GetUnscaledBoxExtent();
+	const FVector BoxExtent = PlayerActiveZone->GetScaledBoxExtent();
 
 	const auto StartBlock = GetGroundBlockIndex(BoxTransform.GetLocation() - BoxExtent);
 	const auto FinishBlock = GetGroundBlockIndex(BoxTransform.GetLocation() + BoxExtent);
-
-	//TODO: For now we don't process DynamicActors. It is not clear how they will be spawned.
-	//TODO: They also might require bigger Active Zone that just visible square
-	//TODO: Dynamic Actors will need to update their metadata (GroundBlockIndex is changing while moving, etc.) 
 
 	// Enable all the objects within PlayerActiveZone. ActiveBlocksMap is considered as from the previous check.
 	TMap<FIntPoint, bool> ActiveBlocksMap_New;
@@ -96,9 +174,19 @@ void AMWorldGenerator::UpdateActiveZone()
 		{
 			ActiveBlocksMap_New.Add(FIntPoint(X, Y), true);
 			ActiveBlocksMap.Remove(FIntPoint(X, Y));
-			if (const auto Block = GridOfActors.Find(FIntPoint(X, Y)); !Block->StaticActors.IsEmpty())
+			if (const auto Block = GridOfActors.Find(FIntPoint(X, Y));
+				Block && !Block->StaticActors.IsEmpty())
 			{
+				// Enable all the static Actors in the block
 				for (const auto& [Index, Data] : Block->StaticActors)
+				{
+					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+					{
+						IsActiveCheckerComponent->Enable();
+					}
+				}
+				// Enable all dynamic Actors in the block
+				for (const auto& [Index, Data] : Block->DynamicActors)
 				{
 					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 					{
@@ -121,11 +209,49 @@ void AMWorldGenerator::UpdateActiveZone()
 					IsActiveCheckerComponent->Disable();
 				}
 			}
+			for (const auto& [Index, Data] : Block->DynamicActors)
+			{
+				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+				{
+					IsActiveCheckerComponent->Disable();
+				}
+			}
 		}
 	}
 
 	// All and only ActiveBlocksMap_New forms the new ActiveBlocksMap collection.
 	ActiveBlocksMap = ActiveBlocksMap_New;
+}
+
+void AMWorldGenerator::UpdateNavigationMesh()
+{
+	const auto pWorld = GetWorld();
+	if (!pWorld)
+	{
+		check(false);
+		return;
+	}
+
+	const auto PlayerLocation = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetTransform().GetLocation();
+	if (const auto NavMeshVolume = Cast<ANavMeshBoundsVolume>(UGameplayStatics::GetActorOfClass(pWorld, ANavMeshBoundsVolume::StaticClass())))
+	{
+		NavMeshVolume->SetActorLocation(PlayerLocation);
+
+		if (const auto NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+		{
+			NavSystem->OnNavigationBoundsUpdated(NavMeshVolume);
+		}
+		else
+		{
+			check(false);
+		}
+	}
+}
+
+void AMWorldGenerator::OnPlayerChangedBlock()
+{
+	UpdateActiveZone();
+	UpdateNavigationMesh();
 }
 
 FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position) const
@@ -138,29 +264,16 @@ void AMWorldGenerator::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	if (!pPlayer)
+	DynamicActorsCheckTimer += DeltaSeconds;
+	if (DynamicActorsCheckTimer >= DynamicActorsCheckInterval)
 	{
-		check(false);
-		return;
-	}
-
-	const auto PlayerMetadata = ActorsMetadata.Find(FName(pPlayer->GetName()));
-	if (!PlayerMetadata)
-	{
-		check(false);
-		return;
-	}
-
-	if (PlayerMetadata->GroundBlockIndex != GetGroundBlockIndex(pPlayer->GetTransform().GetLocation()))
-	{
-		UpdateActiveZone();
-		PlayerMetadata->GroundBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
+		DynamicActorsCheckTimer = 0.f;
+		CheckDynamicActorsBlocks();
 	}
 }
 
 AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation,
-	const FActorSpawnParameters& SpawnParameters)
+                                     const FActorSpawnParameters& SpawnParameters)
 {
 	const auto pWorld = GetWorld();
 	if (!pWorld || SpawnParameters.Name == "" || !Class)
@@ -179,7 +292,7 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRo
 	}
 
 	// Determine whether the object is static or movable
-	bool bDynamic = Class->GetSuperClass()->IsChildOf<APawn>();
+	bool bDynamic = Class->IsChildOf<APawn>();
 	auto& ListToAdd = bDynamic ? BlockOfActors->DynamicActors : BlockOfActors->StaticActors;
 
 	//TODO: If this check is of no use, should be removed
@@ -194,16 +307,18 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRo
 	// Spawn an AI controller for a spawned creature
 	if (bDynamic)
 	{
-		if (const auto pCrowdManager = pWorld->GetSubsystem<UMWorldManager>()->GetCrowdManager())
+		if (const auto Character = Cast<AMCharacter>(Actor))
 		{
-			if (const auto Controller = pCrowdManager->SpawnAIController(SpawnParameters.Name, *Class, Location, Rotation)) //TODO: Add valid spawn parameters
+			if (const auto pCrowdManager = pWorld->GetSubsystem<UMWorldManager>()->GetCrowdManager())
 			{
-				Controller->Possess(Cast<APawn>(Actor));
-				//TODO: there should be other options besides MMobController
-			}
-			else
-			{
-				check(false);
+				if (const auto Controller = pCrowdManager->SpawnAIController(SpawnParameters.Name, Character->GetControllerClass(), Location, Rotation)) //TODO: Add valid spawn parameters
+				{
+					Controller->Possess(Character);
+				}
+				else
+				{
+					check(false);
+				}
 			}
 		}
 	}

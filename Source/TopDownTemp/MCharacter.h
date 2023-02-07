@@ -20,6 +20,10 @@ public:
 	float GetFightRange() const { return FightRange; }
 
 	float GetRetreatRange() const { return RetreatRange; }
+	
+	bool GetCanRetreat() const { return bCanRetreat; }
+
+	TSubclassOf<class AAIController> GetControllerClass() const { return ControllerClass; }
 
 	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; }
 
@@ -38,9 +42,6 @@ protected:
 
 	void UpdateLastNonZeroDirection();
 
-	UFUNCTION(BlueprintCallable, Category="Animation", meta = (AllowPrivateAccess = "true"))
-	virtual void OnFightingAnimationFinished() { /*TODO: if there is still no logic, make pure virtual*/ };
-
 	/** Representation (collection of sprites) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Representation, meta = (AllowPrivateAccess = "true"))
 	class UM2DRepresentationComponent* RepresentationComponent;
@@ -50,6 +51,9 @@ protected:
 
 	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);
 	FVector ForcedGazeVector;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Controller, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AAIController> ControllerClass;
 
 	//TODO: It's hard to say if these booleans should be here or in Controller
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
@@ -64,10 +68,17 @@ protected:
 	bool IsPicking;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float Health;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float SightRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float FightRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float Strength;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float RetreatRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	bool bCanRetreat;
+	//TODO: Create variables for original values e.g. MaxHealth, DefaultSightRange, etc.
 };
 

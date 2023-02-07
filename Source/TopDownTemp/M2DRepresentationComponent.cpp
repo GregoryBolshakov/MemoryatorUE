@@ -53,7 +53,7 @@ void UM2DRepresentationComponent::SetMeshByRotation(float Angle, const FName& Ta
 	for (const auto RenderComponent : RenderComponentArray)
 	{
 		if (const auto RotatableFlipbook = Cast<UMRotatableFlipbookComponent>(RenderComponent);
-			Tag == "" || RotatableFlipbook->ComponentTags.Contains(FName(Tag)))
+			RotatableFlipbook && (Tag == "" || RotatableFlipbook->ComponentTags.Contains(FName(Tag))))
 		{
 			RotatableFlipbook->SetFlipbookByRotation(Angle);
 		}

@@ -7,6 +7,8 @@
 
 class UPaperFlipbook;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSpriteChange);
+
 /** Structure that provides array placement of UPaperFlipbook ptrs to containers.
  *  Also represents the array in the editor. */
 USTRUCT()
@@ -46,6 +48,9 @@ public:
 	 * @param ViewingAngle is angle between Camera->Actor and ActorsGaze vectors. 0 if actor's gaze matches the camera's
 	 */
 	void SetFlipbookByRotation(float ViewingAngle);
+
+	UPROPERTY(EditAnywhere, BlueprintAssignable)
+	FOnSpriteChange OnSpriteChangeDelegate;
 
 private:
 

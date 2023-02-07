@@ -20,17 +20,14 @@ AMAICrowdManager::AMAICrowdManager(const FObjectInitializer& ObjectInitializer) 
 }
 
 
-AAIController* AMAICrowdManager::SpawnAIController(const FName& Name, const UClass& Class, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters)
+AAIController* AMAICrowdManager::SpawnAIController(const FName& Name, const TSubclassOf<AAIController> ControllerClass, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters)
 {
-	if (Class.IsChildOf(AMCharacter::StaticClass()))
+	if (const auto Controller = GetWorld()->SpawnActor<AAIController>(ControllerClass, Location, Rotation, SpawnParameters))
 	{
-		if (const auto Controller = GetWorld()->SpawnActor<AAIController>(AMMobController::StaticClass(), Location, Rotation, SpawnParameters))
-		{
-			ControllersMap.Add(Name, Controller);
-			return Controller;
-		}
-		check(false);
+		ControllersMap.Add(Name, Controller);
+		return Controller;
 	}
+	check(false);
 	return nullptr;
 }
 

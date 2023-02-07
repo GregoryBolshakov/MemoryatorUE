@@ -16,12 +16,12 @@ public:
 
 	/** Spawn the pawn controller
 	* @param	Name			Name of possessed APawn
-	* @param	Class			Class of possessed APawn
+	* @param	ControllerClass	Class of the controller to spawn
 	* @param	Location		Location of possessed APawn
 	* @param	Rotation		Rotation of possessed APawn
 	* @param	SpawnParameters	SpawnParameters of possessed APawn
 	*/
-	AAIController* SpawnAIController(const FName& Name, const UClass& Class, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters());
+	AAIController* SpawnAIController(const FName& Name, const TSubclassOf<AAIController> ControllerClass, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters());
 
 private:
 
