@@ -47,6 +47,7 @@ void UMIsActiveCheckerComponent::Disable()
 	}
 
 	bIsActive = false;
+	//TODO: Disable actor's controller if present
 }
 
 void UMIsActiveCheckerComponent::Enable()
@@ -85,6 +86,7 @@ void UMIsActiveCheckerComponent::Enable()
 	DisabledComponentsData.Empty();
 
 	bIsActive = true;
+	//TODO: Enable actor's controller if present
 }
 
 void UMIsActiveCheckerComponent::SetUpCollisionPrimitive()

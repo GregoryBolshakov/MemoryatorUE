@@ -6,6 +6,7 @@
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "MMemoryator.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "MConsoleCommandsManager.h"
 
 AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer),
@@ -21,6 +22,8 @@ AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializ
 		PathFollowingComponent = CreateDefaultSubobject<UPathFollowingComponent>(TEXT("PathFollowingComponent"));
 		PathFollowingComponent->Initialize();
 	}
+
+	ConsoleCommandsManager = CreateDefaultSubobject<UMConsoleCommandsManager>(TEXT("ConsoleCommandsManager"));
 }
 
 bool AMPlayerController::IsMovingByAI() const
@@ -197,4 +200,16 @@ void AMPlayerController::OnToggleTurnAroundPressed()
 void AMPlayerController::OnToggleTurnAroundReleased()
 {
 	bIsTurningAround = false;
+}
+
+bool AMPlayerController::ProcessConsoleExec(const TCHAR* Cmd, FOutputDevice& Ar, UObject* Executor)
+{
+	bool bHandled = Super::ProcessConsoleExec(Cmd, Ar, Executor);
+
+	if (!bHandled && ConsoleCommandsManager != nullptr)
+	{
+		bHandled |= ConsoleCommandsManager->ProcessConsoleExec(Cmd, Ar, Executor);
+	}
+
+	return bHandled;
 }

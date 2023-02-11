@@ -52,33 +52,23 @@ public:
 
 	void GenerateWorld();
 
-	AActor* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters());
+	/** Turns on all actors in the active zone, turn off all others*/
+	void UpdateActiveZone();
+
+	AActor* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters);
 
 	//TODO: Add another templated SpawnActor with SpawnParameters argument
 	template< class T >
-	T* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, FName const& Name)
+	T* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, FName const& Name = "")
 	{
 		FActorSpawnParameters SpawnParameters;
-		SpawnParameters.Name = Name;
+		SpawnParameters.Name = Name != "" ? Name : FName(FString::FromInt(++UniqueNameSuffix));
 		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters),ECastCheckedType::NullAllowed);
 	}
 
+	TSubclassOf<AActor> GetClassToSpawn(FName Name); 
+
 	TMap<FName, FActorWorldMetadata> GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic);
-
-	UPROPERTY(EditAnywhere, Category = SubclassessToSpawn)
-	TSubclassOf<AMGroundBlock> ToSpawnGroundBlock;
-
-	UPROPERTY(EditAnywhere, Category = SubclassessToSpawn)
-	TSubclassOf<AMActor> ToSpawnTree;
-
-	UPROPERTY(EditAnywhere, Category = SubclassessToSpawn)
-	TSubclassOf<AMCharacter> ToSpawnNightmare;
-	
-	UPROPERTY(EditAnywhere, Category = SubclassessToSpawn)
-	TSubclassOf<AMCharacter> ToSpawnNightmareMedium;
-
-	UPROPERTY(EditAnywhere, Category = SubclassessToSpawn)
-	TSubclassOf<AMMemoryator> ToSpawnMemoryator;
 
 private:
 
@@ -91,9 +81,6 @@ private:
 	/** Matches all enabled dynamic actors with the blocks they are on*/
 	void CheckDynamicActorsBlocks();
 
-	/** Turns on all static and dynamic actors in the active zone, turn off all others*/
-	void UpdateActiveZone();
-
 	/** Moves the navigation mesh to the player's position */
 	void UpdateNavigationMesh();
 
@@ -105,6 +92,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	FVector2D WorldSize{10000, 10000};
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SubclassessToSpawn, meta = (DisplayThumbnail, AllowPrivateAccess = true))
+	TMap<FName, TSubclassOf<AActor>> ToSpawnActorMap;
+
 	/** The box indicating the bounds of the interaction area of the world. I.e. rendering and ticking. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Trigger Box", meta = (AllowPrivateAccess = "true"))
 	class UBoxComponent* PlayerActiveZone;
@@ -119,4 +109,6 @@ private:
 
 	float DynamicActorsCheckInterval;
 	float DynamicActorsCheckTimer;
+
+	int UniqueNameSuffix;
 };

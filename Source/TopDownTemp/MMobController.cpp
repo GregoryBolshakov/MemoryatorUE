@@ -87,7 +87,7 @@ void AMMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharact
 		for (const auto& [Name, Metadata] : DynamicActorsInSight)
 		{
 			//TODO: add a list of enemy/neutral/friends. possibly a map with tags o class names
-			if (Metadata.Actor != this && Metadata.Actor->GetClass()->GetSuperClass()->IsChildOf(AMMemoryator::StaticClass()))
+			if (Metadata.Actor && Metadata.Actor != this && Metadata.Actor->GetClass()->GetSuperClass()->IsChildOf(AMMemoryator::StaticClass()))
 			{
 				const auto DistanceToActor = FVector::Distance(Metadata.Actor->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
 				if (DistanceToActor <= MyCharacter.GetSightRange())

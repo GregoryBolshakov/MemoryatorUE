@@ -19,6 +19,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, DynamicActorsCheckInterval(0.5f)
 	, DynamicActorsCheckTimer(0.f)
+	, UniqueNameSuffix(0)
 {
 	PlayerActiveZone = CreateDefaultSubobject<UBoxComponent>(TEXT("Player Active Zone"));
 	PlayerActiveZone->SetBoxExtent(FVector(500.0f, 500.0f, 500.0f));
@@ -46,29 +47,27 @@ void AMWorldGenerator::GenerateWorld()
 		return;
 	}
 
-	const auto GroundBlockSize = ToSpawnGroundBlock.GetDefaultObject()->GetSize();
+	auto ToSpawnGroundBlock = ToSpawnActorMap.Find(FName("GroundBlock"));
+	const auto GroundBlockSize = Cast<AMGroundBlock>(ToSpawnGroundBlock->GetDefaultObject())->GetSize();
 
 	for (int x = -WorldSize.X / 2; x < WorldSize.X / 2; x += GroundBlockSize.X)
 	{
 		for (int y = -WorldSize.Y / 2; y < WorldSize.Y / 2; y += GroundBlockSize.Y)
 		{
 			FVector Location(x, y, 0);
-			FRotator Rotation;
 
-			auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock, Location, Rotation, FName(FString::FromInt(x) + FString::FromInt(y)));
+			auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, {}, FName(FString::FromInt(x) + FString::FromInt(y)));
 
 			int TreeSpawnRate = FMath::RandRange(1, 5);
 			//if (TreeSpawnRate == 1)
 			{
-				const auto TreeDefault = GetDefault<AMActor>(ToSpawnTree);
+				const auto TreeDefault = GetDefault<AMActor>(*ToSpawnActorMap.Find(FName("Tree")));
 				FVector TreeLocation(x, y, 0);
 
-				auto* Tree = SpawnActor<AMActor>(ToSpawnTree, TreeLocation, Rotation, FName("Tree_" + FString::FromInt(x) + FString::FromInt(y)));
+				auto* Tree = SpawnActor<AMActor>(*ToSpawnActorMap.Find(FName("Tree")), TreeLocation, {}, FName("Tree_" + FString::FromInt(x) + FString::FromInt(y)));
 			}
 		}
 	}
-
-	SpawnActor<AActor>(ToSpawnNightmareMedium, {380.f, 380.f, 100.f}, {}, FName("Nightmare"));
 }
 
 void AMWorldGenerator::BeginPlay()
@@ -113,7 +112,7 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 	{
 		FActorWorldMetadata& Metadata;
 		FBlockOfActors& OldBlock;
-		FBlockOfActors& NewBlock;
+		FBlockOfActors* NewBlock;
 	};
 	TMap<FName, FTransition> TransitionList;
 
@@ -130,14 +129,23 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 			{
 				if (const auto ActorMetadata = ActorsMetadata.Find(Name))
 				{
-					if (const auto ActualBlockIndex = GetGroundBlockIndex(Data->GetTransform().GetLocation());
-						ActorMetadata->GroundBlockIndex != ActualBlockIndex)
+					if (!ActorMetadata->Actor) //TODO: Remove this temporary solution
 					{
-						if (const auto NewBlock = GridOfActors.Find(ActualBlockIndex))
+						// If the metadata has invalid Actor pointer, just delete this record
+						const FTransition NewTransition{*ActorMetadata, *Block, nullptr};
+						TransitionList.Add(Name, NewTransition);
+					}
+					else
+					{
+						if (const auto ActualBlockIndex = GetGroundBlockIndex(Data->GetTransform().GetLocation());
+							ActorMetadata->GroundBlockIndex != ActualBlockIndex)
 						{
-							const FTransition NewTransition{*ActorMetadata, *Block, *NewBlock};
-							TransitionList.Add(Name, NewTransition);
-							ActorMetadata->GroundBlockIndex = ActualBlockIndex;
+							if (const auto NewBlock = GridOfActors.Find(ActualBlockIndex))
+							{
+								const FTransition NewTransition{*ActorMetadata, *Block, NewBlock};
+								TransitionList.Add(Name, NewTransition);
+								ActorMetadata->GroundBlockIndex = ActualBlockIndex;
+							}
 						}
 					}
 				}
@@ -152,12 +160,15 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 	}
 	for (auto& [Name, Transition] : TransitionList)
 	{
-		Transition.NewBlock.DynamicActors.Add(Name, Transition.Metadata.Actor);
+		if (Transition.NewBlock)
+		{
+			Transition.NewBlock->DynamicActors.Add(Name, Transition.Metadata.Actor);
 
-		// Even though the dynamic object is still enabled, it might have moved to the disabled block,
-		// where all surrounding static objects are disabled.
-		// Check the environment for validity if you bind to the delegate!
-		Transition.Metadata.OnBlockChangedDelegate.Broadcast();
+			// Even though the dynamic object is still enabled, it might have moved to the disabled block,
+			// where all surrounding static objects are disabled.
+			// Check the environment for validity if you bind to the delegate!
+			Transition.Metadata.OnBlockChangedDelegate.Broadcast();
+		}
 	}
 }
 
@@ -187,17 +198,24 @@ void AMWorldGenerator::UpdateActiveZone()
 				// Enable all the static Actors in the block
 				for (const auto& [Index, Data] : Block->StaticActors)
 				{
-					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+					//TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
+					if (Data) // temporary
 					{
-						IsActiveCheckerComponent->Enable();
+						if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+						{
+							IsActiveCheckerComponent->Enable();
+						}
 					}
 				}
 				// Enable all dynamic Actors in the block
 				for (const auto& [Index, Data] : Block->DynamicActors)
 				{
-					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+					if (Data) // temporary
 					{
-						IsActiveCheckerComponent->Enable();
+						if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+						{
+							IsActiveCheckerComponent->Enable();
+						}
 					}
 				}
 			}
@@ -211,16 +229,22 @@ void AMWorldGenerator::UpdateActiveZone()
 		{
 			for (const auto& [Index, Data] : Block->StaticActors)
 			{
-				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+				if (Data) // temporary
 				{
-					IsActiveCheckerComponent->Disable();
+					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+					{
+						IsActiveCheckerComponent->Disable();
+					}
 				}
 			}
 			for (const auto& [Index, Data] : Block->DynamicActors)
 			{
-				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+				if (Data) // temporary
 				{
-					IsActiveCheckerComponent->Disable();
+					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+					{
+						IsActiveCheckerComponent->Disable();
+					}
 				}
 			}
 		}
@@ -263,8 +287,16 @@ void AMWorldGenerator::OnPlayerChangedBlock()
 
 FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position) const
 {
-	const auto GroundBlockSize = ToSpawnGroundBlock.GetDefaultObject()->GetSize();
-	return FIntPoint(UE4::SSE::FloorToInt32(Position.X/GroundBlockSize.X), UE4::SSE::FloorToInt32(Position.Y/GroundBlockSize.Y));
+	if (const auto ToSpawnGroundBlock = ToSpawnActorMap.Find(FName("GroundBlock")))
+	{
+		if (const auto GroundBlock = Cast<AMGroundBlock>(ToSpawnGroundBlock->GetDefaultObject()))
+		{
+			const auto GroundBlockSize = GroundBlock->GetSize();
+			return FIntPoint(UE4::SSE::FloorToInt32(Position.X/GroundBlockSize.X), UE4::SSE::FloorToInt32(Position.Y/GroundBlockSize.Y));
+		}
+	}
+
+	return {0, 0};
 }
 
 void AMWorldGenerator::Tick(float DeltaSeconds)
@@ -283,7 +315,7 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRo
                                      const FActorSpawnParameters& SpawnParameters)
 {
 	const auto pWorld = GetWorld();
-	if (!pWorld || SpawnParameters.Name == "" || !Class)
+	if (!pWorld || !Class)
 	{
 		check(false);
 		return nullptr;
@@ -311,11 +343,11 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRo
 
 	const auto Actor = pWorld->SpawnActor(Class, &Location, &Rotation, SpawnParameters);
 
-	// Spawn an AI controller for a spawned creature
 	if (bDynamic)
 	{
 		if (const auto Character = Cast<AMCharacter>(Actor))
 		{
+			// Spawn an AI controller for a spawned creature
 			if (const auto pCrowdManager = pWorld->GetSubsystem<UMWorldManager>()->GetCrowdManager())
 			{
 				if (const auto Controller = pCrowdManager->SpawnAIController(SpawnParameters.Name, Character->GetControllerClass(), Location, Rotation)) //TODO: Add valid spawn parameters
@@ -335,6 +367,15 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRo
 	ActorsMetadata.Add(SpawnParameters.Name, Metadata);
 
 	return Metadata.Actor;
+}
+
+TSubclassOf<AActor> AMWorldGenerator::GetClassToSpawn(FName Name)
+{
+	if (const auto Class = ToSpawnActorMap.Find(Name))
+	{
+		return *Class;
+	}
+	return nullptr;
 }
 
 TMap<FName, FActorWorldMetadata> AMWorldGenerator::GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic)

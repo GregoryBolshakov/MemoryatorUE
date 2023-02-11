@@ -25,6 +25,9 @@ private:
 	UPROPERTY()
 	class UPathFollowingComponent* PathFollowingComponent;
 
+	UPROPERTY(EditDefaultsOnly)
+	class UMConsoleCommandsManager* ConsoleCommandsManager;
+
 	// Begin PlayerController interface
 	virtual void PlayerTick(float DeltaTime) override;
 	virtual void SetupInputComponent() override;
@@ -50,6 +53,8 @@ private:
 	
 	void OnToggleTurnAroundPressed();
 	void OnToggleTurnAroundReleased();
+
+	virtual bool ProcessConsoleExec(const TCHAR* Cmd, FOutputDevice& Ar, UObject* Executor) override;
 };
 
 

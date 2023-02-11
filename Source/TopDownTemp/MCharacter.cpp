@@ -24,15 +24,6 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer) :
 	,RetreatRange(200.f)
 	,bCanRetreat(true)
 {
-	const auto CollisionPrimitive = Cast<UPrimitiveComponent>(RootComponent);
-	check(CollisionPrimitive);
-	CollisionPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	CollisionPrimitive->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	CollisionPrimitive->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
-	CollisionPrimitive->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
-	CollisionPrimitive->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Block);
-	CollisionPrimitive->SetGenerateOverlapEvents(false);
-
 	// Collection of sprites or flipbooks representing the character. It's not the Root Component!
 	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("2DRepresentation"));
 	RepresentationComponent->SetupAttachment(RootComponent);

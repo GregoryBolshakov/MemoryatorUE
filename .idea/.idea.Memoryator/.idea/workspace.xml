@@ -67,121 +67,32 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_GameMode.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_PlayerController.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Sprites/ground_material.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommands.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommands.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsManager.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsManager.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsWorld.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsWorld.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/Nightmare/hit_down.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/Nightmare/hit_left.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/Nightmare/hit_up.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/Nightmare/idle_down.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/Nightmare/idle_left.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/Nightmare/idle_up.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/Nightmare/move_down.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/Nightmare/move_left.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Animations/Nightmare/move_up.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Character.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Character.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_GroundBlock.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_GroundBlock.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Nightmare.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_NightmareMedium.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_NightmareMedium.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Nightmare_Small.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Nightmare_Small.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_10_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_11_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_12_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_13_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_1_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_1_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_1_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_2_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_2_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_2_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_3_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_3_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_3_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_4_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_4_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_4_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_5_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_5_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_5_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_6_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_6_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_6_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_7_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_7_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_7_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_8_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_8_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_8_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_9_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/down_9_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_10_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_11_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_12_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_13_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_1_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_1_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_1_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_2_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_2_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_2_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_3_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_3_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_3_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_4_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_4_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_4_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_5_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_5_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_5_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_6_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_6_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_6_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_7_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_7_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_7_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_8_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_8_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_8_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_9_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/left_9_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_10_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_11_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_12_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_13_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_1_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_1_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_1_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_2_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_2_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_2_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_3_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_3_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_3_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_4_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_4_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_4_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_5_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_5_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_5_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_6_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_6_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_6_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_7_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_7_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_7_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_8_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_8_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_8_png2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_9_png.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Frames/up_9_png1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Textures/nightmare_small_hit.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Textures/nightmare_small_idle.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/Textures/nightmare_small_move.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/nightmare_small_hit.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/nightmare_small_idle.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Nightmare/nightmare_small_move.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Memoryator.sln" beforeDir="false" afterPath="$PROJECT_DIR$/Memoryator.sln" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MAICrowdManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MAICrowdManager.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMob.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMob.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMob.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMob.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" afterDir="false" />
     </list>
@@ -193,6 +104,7 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/2D/Paper2D/Source/Paper2D/Classes/PaperSpriteActor.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/2D/Paper2D/Source/Paper2D/Private/PaperSpriteActor.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Developer/GraphColor/Private/graph.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Programs/Enterprise/Datasmith/DatasmithSolidworksExporter/Private/DatasmithExporter.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Classes/Engine/EngineBaseTypes.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp" root0="SKIP_HIGHLIGHTING" />
@@ -203,20 +115,8 @@
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/ThirdParty/NVIDIA/nvapi/nvapi_lite_d3dext.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/ThirdParty/mimalloc/src/alloc.c" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Nakama/Source/NakamaUnreal/Public/NakamaClient.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MActor.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -230,23 +130,23 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "SolutionBuilderPresentationOptionsPageId",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.sourceCode.C++&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "rider.external.source.directories": [
-      "C:\\Users\\GregoryBolshakov\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\DecompilerCache",
-      "C:\\Users\\GregoryBolshakov\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\SourcesCache",
-      "C:\\Users\\GregoryBolshakov\\AppData\\Local\\Symbols\\src"
+  &quot;keyToStringList&quot;: {
+    &quot;rider.external.source.directories&quot;: [
+      &quot;C:\\Users\\GregoryBolshakov\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\DecompilerCache&quot;,
+      &quot;C:\\Users\\GregoryBolshakov\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\SourcesCache&quot;,
+      &quot;C:\\Users\\GregoryBolshakov\\AppData\\Local\\Symbols\\src&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="C++ Project.Memoryator">
     <configuration name="BaseTextureBuildWorker" type="CppProject" factoryName="C++ Project" folderName="Programs">
       <configuration_1>
@@ -23126,6 +23026,18 @@
       <workItem from="1675448880492" duration="376000" />
       <workItem from="1675449338324" duration="1591000" />
       <workItem from="1675458341566" duration="4187000" />
+      <workItem from="1675503376475" duration="24038000" />
+      <workItem from="1675597748127" duration="5514000" />
+      <workItem from="1675620472199" duration="10791000" />
+      <workItem from="1675702861909" duration="5740000" />
+      <workItem from="1675716994843" duration="4700000" />
+      <workItem from="1675786778016" duration="2115000" />
+      <workItem from="1675792292952" duration="2482000" />
+      <workItem from="1675887888166" duration="4271000" />
+      <workItem from="1675960014884" duration="7971000" />
+      <workItem from="1676028522811" duration="7925000" />
+      <workItem from="1676037916044" duration="4589000" />
+      <workItem from="1676046821600" duration="15481000" />
     </task>
     <servers />
   </component>
@@ -23177,17 +23089,36 @@
           <option name="timeStamp" value="68" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.cpp</url>
-          <line>39</line>
-          <option name="timeStamp" value="85" />
+          <url>file://$PROJECT_DIR$/Source/TopDownTemp/MMobController.cpp</url>
+          <line>107</line>
+          <option name="timeStamp" value="91" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/TopDownTemp/MMobController.cpp</url>
+          <line>130</line>
+          <option name="timeStamp" value="92" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/CheatManager.cpp</url>
+          <line>202</line>
+          <option name="timeStamp" value="99" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp</url>
+          <line>302</line>
+          <option name="timeStamp" value="129" />
         </line-breakpoint>
       </breakpoints>
+      <default-breakpoints>
+        <breakpoint suspend="NONE" type="DotNet Exception Breakpoints" />
+        <breakpoint suspend="NONE" type="CidrExceptionBreakpoint">
+          <properties>
+            <option name="whenThrown" />
+          </properties>
+        </breakpoint>
+        <breakpoint suspend="NONE" type="javascript-exception" />
+      </default-breakpoints>
     </breakpoint-manager>
-    <watches-manager>
-      <configuration name="CppProject">
-        <watch expression="@ ALREADY PREPROCESSED @test" />
-      </configuration>
-    </watches-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
