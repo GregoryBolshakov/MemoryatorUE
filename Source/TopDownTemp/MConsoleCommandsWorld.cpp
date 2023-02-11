@@ -23,7 +23,7 @@ UMConsoleCommandsWorld::UMConsoleCommandsWorld()
 {
 }
 
-void UMConsoleCommandsWorld::SpawnMob(const FString& MobClassString)
+void UMConsoleCommandsWorld::SpawnMob(const FString& MobClassString, int Quantity)
 {
 	if (const auto pWorld = GetWorld())
 	{
@@ -33,21 +33,42 @@ void UMConsoleCommandsWorld::SpawnMob(const FString& MobClassString)
 			{
 				if (const auto Class = pWorldGenerator->GetClassToSpawn(FName(MobClassString)))
 				{
-					const auto ToSpawnRadius = 150.f;
-					const auto Angle = FMath::FRandRange(0.f, 360.f);;
-					const auto ToSpawnHeight = 150.f;
+					const auto ToSpawnRadius = 150.f; // TODO: make editable or configurable
 
-					const FVector SpawnPositionOffset (
-							ToSpawnRadius * FMath::Cos(FMath::DegreesToRadians(Angle)),
-							ToSpawnRadius * FMath::Sin(FMath::DegreesToRadians(Angle)),
-							ToSpawnHeight
-						);
-
-					if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
+					const int TriesNumber = 10; // TODO: make editable or configurable
+					TArray<float> AnglesToTry;
+					const auto Angle = FMath::FRandRange(0.f, 360.f);
+					for (float increment = 0.f; increment < 360.f; increment += 360.f / TriesNumber)
 					{
-						const FVector SpawnPosition = pPlayer->GetTransform().GetLocation() + SpawnPositionOffset;
-						pWorldGenerator->SpawnActor<AActor>(Class.Get(), SpawnPosition, {}, "");
-						pWorldGenerator->UpdateActiveZone();
+						AnglesToTry.Add(Angle + increment);
+					}
+
+					for (int i = 0; i < Quantity; ++i)
+					{
+						const AActor* Actor = nullptr;
+						for (const auto& AngleToTry : AnglesToTry)
+						{
+							const auto ToSpawnHeight = 150.f;
+
+							const FVector SpawnPositionOffset (
+									ToSpawnRadius * FMath::Cos(FMath::DegreesToRadians(AngleToTry)),
+									ToSpawnRadius * FMath::Sin(FMath::DegreesToRadians(AngleToTry)),
+									ToSpawnHeight
+								);
+
+							if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
+							{
+								const FVector SpawnPosition = pPlayer->GetTransform().GetLocation() + SpawnPositionOffset;
+								Actor = pWorldGenerator->SpawnActor<AActor>(Class.Get(), SpawnPosition, {}, "");
+								if (Actor)
+								{
+									pWorldGenerator->UpdateActiveZone();
+									break;
+								}
+							}
+						}
+						// If check is failed, consider incrementing ToSpawnRadius
+						check(Actor != nullptr);
 					}
 				}
 			}

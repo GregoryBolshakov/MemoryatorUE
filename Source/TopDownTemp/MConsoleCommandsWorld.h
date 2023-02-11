@@ -16,6 +16,6 @@ public:
 	UMConsoleCommandsWorld();
 
 	UFUNCTION(Exec)
-	void SpawnMob(const FString& MobClassString);
+	void SpawnMob(const FString& MobClassString, int Quantity = 1);
 };
 
