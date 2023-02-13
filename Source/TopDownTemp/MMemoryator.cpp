@@ -67,6 +67,8 @@ void AMMemoryator::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	HandleAnimationStates();
+
 	HandleCursor();
 }
 
@@ -100,9 +102,20 @@ void AMMemoryator::HandleCursor() const
 	}
 }
 
-void AMMemoryator::HandleAnimationStates() 
-{
-	Super::HandleAnimationStates();
 
-	//TODO: Add personal logic
+void AMMemoryator::HandleAnimationStates()
+{
+	// TODO: Send this logic to custom Movement Component
+	const auto Velocity = GetVelocity();
+
+	if (IsMoving && Velocity == FVector::ZeroVector)
+	{
+		IsMoving = false;
+		UpdateAnimation();
+	}
+	if (!IsMoving && Velocity != FVector::ZeroVector)
+	{
+		IsMoving = true;
+		UpdateAnimation();
+	}
 }

@@ -12,6 +12,7 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	SetRootComponent(RepresentationComponent);
 
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
+	auto testComp = CreateDefaultSubobject<UActorComponent>(TEXT("TesComp"));
 }
 
 void AMActor::PostInitializeComponents()

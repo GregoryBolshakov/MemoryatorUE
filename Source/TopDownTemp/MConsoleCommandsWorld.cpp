@@ -6,15 +6,22 @@
 #include "Kismet/GameplayStatics.h"
 
 static TAutoConsoleVariable<FString> CVarToSpawnNightmare(
-		TEXT("r.Nightmare"), 
+		TEXT("r.Nightmare"),
 		FString("Nightmare"),
 		TEXT("Defines the TSubclassOf of the mob with given name"),
 		ECVF_ReadOnly
 	);
 
 static TAutoConsoleVariable<FString> CVarToSpawnNightmareMedium(
-		TEXT("r.NightmareMedium"), 
+		TEXT("r.NightmareMedium"),
 		FString("NightmareMedium"),
+		TEXT("Defines the TSubclassOf of the mob with given name"),
+		ECVF_ReadOnly
+	);
+
+static TAutoConsoleVariable<FString> CVarToSpawnNightmareLarge(
+		TEXT("r.NightmareLarge"),
+		FString("NightmareLarge"),
 		TEXT("Defines the TSubclassOf of the mob with given name"),
 		ECVF_ReadOnly
 	);
@@ -48,7 +55,7 @@ void UMConsoleCommandsWorld::SpawnMob(const FString& MobClassString, int Quantit
 						const AActor* Actor = nullptr;
 						for (const auto& AngleToTry : AnglesToTry)
 						{
-							const auto ToSpawnHeight = 150.f;
+							const auto ToSpawnHeight = 150.f; // TODO: make editable or configurable
 
 							const FVector SpawnPositionOffset (
 									ToSpawnRadius * FMath::Cos(FMath::DegreesToRadians(AngleToTry)),

@@ -26,7 +26,7 @@ private:
 
 	void HandleCursor() const;
 
-	virtual void HandleAnimationStates() override;
+	void HandleAnimationStates();
 
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))

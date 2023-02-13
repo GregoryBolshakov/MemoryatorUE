@@ -25,6 +25,8 @@ public:
 
 	TSubclassOf<class AAIController> GetControllerClass() const { return ControllerClass; }
 
+	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; }
+
 	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; }
 
 	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
@@ -38,7 +40,6 @@ public:
 	virtual void PostInitializeComponents() override;
 
 protected:
-	virtual void HandleAnimationStates();
 
 	void UpdateLastNonZeroDirection();
 

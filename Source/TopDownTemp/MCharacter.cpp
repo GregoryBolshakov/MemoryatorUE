@@ -16,13 +16,14 @@
 #include "Materials/Material.h"
 #include "Engine/World.h"
 
-AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer) :
-	 Super(ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0")))
- 	,SightRange(2000.f)
-	,FightRange(50.f)
-	,Strength(10.f)
-	,RetreatRange(200.f)
-	,bCanRetreat(true)
+AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0")))
+	, Health(100.f)
+ 	, SightRange(2000.f)
+	, FightRange(50.f)
+	, Strength(10.f)
+	, RetreatRange(200.f)
+	, bCanRetreat(true)
 {
 	// Collection of sprites or flipbooks representing the character. It's not the Root Component!
 	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("2DRepresentation"));
@@ -52,8 +53,6 @@ void AMCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	HandleAnimationStates();
-
 	UpdateLastNonZeroDirection();
 
 	const auto GazeDirection = ForcedGazeVector.IsZero() ? LastNonZeroVelocity : ForcedGazeVector;
@@ -67,23 +66,6 @@ void AMCharacter::PostInitializeComponents()
 
 	IsActiveCheckerComponent->SetUpCollisionPrimitive();
 	IsActiveCheckerComponent->Disable();
-}
-
-void AMCharacter::HandleAnimationStates()
-{
-	// TODO: Send this logic to custom Movement Component
-	const auto Velocity = GetVelocity();
-
-	if (IsMoving && Velocity == FVector::ZeroVector)
-	{
-		IsMoving = false;
-		UpdateAnimation();
-	}
-	if (!IsMoving && Velocity != FVector::ZeroVector)
-	{
-		IsMoving = true;
-		UpdateAnimation();
-	}
 }
 
 void AMCharacter::UpdateLastNonZeroDirection()

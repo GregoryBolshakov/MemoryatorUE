@@ -52,6 +52,7 @@ void UMRotatableFlipbookComponent::SetFlipbookByRotation(float ViewingAngle)
 			SetPlayRate(FlipbookArray->PlayRate);
 			SetLooping(FlipbookArray->bLooping);
 			bReversePlayback = FlipbookArray->bReversePlayback;
+			Play();
 		}
 
 		// Mirror the flipbook if needed

@@ -13,5 +13,11 @@
 				"Paper2D"
 			]
 		}
+	],
+	"Plugins": [
+		{
+			"Name": "FieldSystemPlugin",
+			"Enabled": true
+		}
 	]
 }

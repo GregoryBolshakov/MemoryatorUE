@@ -49,4 +49,7 @@ private:
 	//* Determines the bounds of the object. If it doesnt overlap the World active zone, the object is disabled */
 	UPROPERTY(meta = (AllowPrivateAccess = "true"))
 	class UPrimitiveComponent* CollisionPrimitive;
+
+	UPROPERTY(Category=Testing, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	bool bAlwaysEnabled;
 };

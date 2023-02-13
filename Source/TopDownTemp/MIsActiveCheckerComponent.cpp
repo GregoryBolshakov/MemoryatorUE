@@ -2,15 +2,21 @@
 
 #include "Components/PrimitiveComponent.h"
 
-UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer& ObjectInitializer) :
-	Super(ObjectInitializer),
-	bIsActive(false),
-	CollisionPrimitive(nullptr)
+UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+	, bIsActive(false)
+	, CollisionPrimitive(nullptr)
+	, bAlwaysEnabled(false)
 {
 }
 
 void UMIsActiveCheckerComponent::Disable()
 {
+	if (bAlwaysEnabled)
+	{
+		return;
+	}
+
 	const auto pOwner = GetOwner();
 	if (!pOwner)
 	{

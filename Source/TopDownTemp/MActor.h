@@ -18,6 +18,6 @@ protected:
 	UPROPERTY(Category=Representation, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) 
 	class UM2DRepresentationComponent* RepresentationComponent;
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category=ActiveCheck, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;
 };

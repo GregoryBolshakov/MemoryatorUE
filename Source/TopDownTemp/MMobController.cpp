@@ -10,24 +10,16 @@
 AMMobController::AMMobController(const FObjectInitializer& ObjectInitializer) :
 	  Super(ObjectInitializer)
 	, CurrentBehavior()
-	, DefaultTimeBetweenDecisions(0.5f)
-	, CurrentTimeBetweenDecisions(0.f)
 	, Victim(nullptr)
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.TickInterval = 0.5f;
 }
 
 void AMMobController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-	// For better performance the behavior decisions are made once in a while
-	CurrentTimeBetweenDecisions -= DeltaSeconds;
-	if (CurrentTimeBetweenDecisions > 0.f)
-	{
-		return;
-	}
 
 	const auto pWorld = GetWorld();
 	if (!pWorld)
@@ -35,7 +27,7 @@ void AMMobController::Tick(float DeltaSeconds)
 		check(false);
 		return;
 	}
-	
+
 	const auto MyCharacter = Cast<AMCharacter>(GetPawn());
 	if (!MyCharacter)
 	{
@@ -159,6 +151,7 @@ void AMMobController::DoRetreatBehavior(const UWorld& World, AMCharacter& MyChar
 void AMMobController::SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	MyCharacter.SetIsFighting(false);
+	MyCharacter.SetIsMoving(false);
 
 	StopMovement();
 
@@ -171,6 +164,7 @@ void AMMobController::SetIdleBehavior(const UWorld& World, AMCharacter& MyCharac
 void AMMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	MyCharacter.SetIsFighting(false);
+	MyCharacter.SetIsMoving(true);
 
 	CurrentBehavior = EMobBehaviors::Chase;
 
@@ -196,6 +190,7 @@ void AMMobController::SetFightBehavior(const UWorld& World, AMCharacter& MyChara
 	}
 
 	MyCharacter.SetIsFighting(true);
+	MyCharacter.SetIsMoving(false);
 
 	CurrentBehavior = EMobBehaviors::Fight;
 
@@ -209,6 +204,7 @@ void AMMobController::SetFightBehavior(const UWorld& World, AMCharacter& MyChara
 void AMMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	MyCharacter.SetIsFighting(false);
+	MyCharacter.SetIsMoving(true);
 
 	CurrentBehavior = EMobBehaviors::Retreat;
 
@@ -244,8 +240,6 @@ void AMMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCha
 
 void AMMobController::OnBehaviorChanged(AMCharacter& MyCharacter)
 {
-	CurrentTimeBetweenDecisions = DefaultTimeBetweenDecisions;
-	
 	MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
 
 	MyCharacter.UpdateAnimation();

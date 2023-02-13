@@ -61,13 +61,6 @@ private:
 	UPROPERTY()
 	EMobBehaviors CurrentBehavior;
 
-	/** Default time between behavior decision in seconds */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Behavior, meta = (AllowPrivateAccess = "true"))
-	float DefaultTimeBetweenDecisions;
-
-	/** Time left before a new behavioral decision is made */
-	float CurrentTimeBetweenDecisions;
-
 	UPROPERTY()
 	APawn* Victim;
 };
