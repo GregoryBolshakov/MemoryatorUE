@@ -68,46 +68,19 @@
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Character.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Character.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_GroundBlock.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_GroundBlock.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Nightmare_Small.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Nightmare_Small.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_House_Big.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_House_Big.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_House_Intermediate.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_House_Intermediate.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_House_Medium.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_House_Medium.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_House_Small.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_House_Small.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_House_Tiny.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_House_Tiny.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Sprites/DirectionCircle_Sprite.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Sprites/M_MaskedLitSpriteMaterial.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Sprites/My_MaskedUnlitSpriteMaterial.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Sprites/bush5_Sprite.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Sprites/ground_Sprite.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Sprites/ground_material.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Sprites/tree5_Sprite.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Sprites/tree_2_Sprite.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Bushes/bush1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Bushes/bush2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Bushes/bush3.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Bushes/bush4.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Bushes/bush5.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Bushes/bush6.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Bushes/bush7.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Bushes/bush8.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Trees/tree1.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Trees/tree2.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Trees/tree3.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Trees/tree4.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Trees/tree5.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Trees/tree_2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/Untitled.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/Untitled.umap" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Memoryator.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/Memoryator.uproject" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsWorld.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsWorld.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -149,7 +122,7 @@
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.sourceCode.C++&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
   &quot;keyToStringList&quot;: {
@@ -18928,6 +18901,16 @@
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="0" />
       </configuration_10>
+      <configuration_11>
+        <option name="CONFIGURATION" value="Debug Editor" />
+        <option name="PLATFORM" value="Win64" />
+        <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/UE4.vcxproj" />
+        <option name="EXE_PATH" value="$(TargetPath)" />
+        <option name="PROGRAM_PARAMETERS" value="" />
+        <option name="WORKING_DIRECTORY" value="$(ProjectDir)" />
+        <option name="PASS_PARENT_ENVS" value="1" />
+        <option name="USE_EXTERNAL_CONSOLE" value="0" />
+      </configuration_11>
       <option name="DEFAULT_PROJECT_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/UE4.vcxproj" />
       <method v="2">
         <option name="Build" />
@@ -23050,7 +23033,18 @@
       <workItem from="1675960014884" duration="7971000" />
       <workItem from="1676028522811" duration="7925000" />
       <workItem from="1676037916044" duration="4589000" />
-      <workItem from="1676046821600" duration="35653000" />
+      <workItem from="1676046821600" duration="46095000" />
+      <workItem from="1676490675294" duration="7012000" />
+      <workItem from="1676546260903" duration="8773000" />
+      <workItem from="1676637766300" duration="27365000" />
+      <workItem from="1676751642959" duration="651000" />
+      <workItem from="1676752892897" duration="208000" />
+      <workItem from="1676753138522" duration="758000" />
+      <workItem from="1676754198018" duration="668000" />
+      <workItem from="1676754952050" duration="947000" />
+      <workItem from="1676758515968" duration="1830000" />
+      <workItem from="1676765011866" duration="382000" />
+      <workItem from="1676765472917" duration="9186000" />
     </task>
     <servers />
   </component>
@@ -23077,39 +23071,19 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/KismetSystemLibrary.cpp</url>
-          <line>1438</line>
-          <option name="timeStamp" value="26" />
+          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/Developer/TraceSourceFiltering/Source/SourceFilteringTrace/Private/SourceFilterManager.cpp</url>
+          <line>54</line>
+          <option name="timeStamp" value="158" />
         </line-breakpoint>
         <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/TickTaskManager.cpp</url>
-          <line>1902</line>
-          <option name="timeStamp" value="57" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/2D/Paper2D/Source/Paper2DEditor/Private/FlipbookEditor/STimelineTrack.cpp</url>
-          <line>422</line>
-          <option name="timeStamp" value="63" />
+          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/LevelActor.cpp</url>
+          <line>634</line>
+          <option name="timeStamp" value="164" />
         </line-breakpoint>
         <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/GameModeBase.cpp</url>
-          <line>713</line>
-          <option name="timeStamp" value="65" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/2D/Paper2D/Source/Paper2D/Private/PaperFlipbookComponent.cpp</url>
-          <line>335</line>
-          <option name="timeStamp" value="68" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/CheatManager.cpp</url>
-          <line>202</line>
-          <option name="timeStamp" value="99" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp</url>
-          <line>298</line>
-          <option name="timeStamp" value="129" />
+          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/Actor.cpp</url>
+          <line>3636</line>
+          <option name="timeStamp" value="174" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -23122,6 +23096,11 @@
         <breakpoint suspend="NONE" type="javascript-exception" />
       </default-breakpoints>
     </breakpoint-manager>
+    <watches-manager>
+      <configuration name="CppProject">
+        <watch expression="@ ALREADY PREPROCESSED @Actor" />
+      </configuration>
+    </watches-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

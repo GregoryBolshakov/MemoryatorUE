@@ -58,6 +58,11 @@ void UMIsActiveCheckerComponent::Disable()
 
 void UMIsActiveCheckerComponent::Enable()
 {
+	if (bAlwaysEnabled)
+	{
+		return;
+	}
+
 	const auto pOwner = GetOwner();
 	if (!pOwner)
 	{
@@ -118,8 +123,11 @@ void UMIsActiveCheckerComponent::SetUpCollisionPrimitive()
 		return;
 	}
 
+	// For now it's useless
 	CollisionPrimitive->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	CollisionPrimitive->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	CollisionPrimitive->SetCollisionObjectType(ECollisionChannel::ECC_WorldStatic);
+	//CollisionPrimitive->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+	//CollisionPrimitive->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	CollisionPrimitive->SetGenerateOverlapEvents(false);
 }

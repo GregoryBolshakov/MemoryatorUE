@@ -57,7 +57,6 @@ public:
 
 	AActor* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters);
 
-	//TODO: Add another templated SpawnActor with SpawnParameters argument
 	template< class T >
 	T* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, FName const& Name = "")
 	{
@@ -66,9 +65,17 @@ public:
 		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters),ECastCheckedType::NullAllowed);
 	}
 
+	template< class T >
+	T* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters)
+	{
+		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters),ECastCheckedType::NullAllowed);
+	}
+
 	TSubclassOf<AActor> GetClassToSpawn(FName Name); 
 
 	TMap<FName, FActorWorldMetadata> GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic);
+
+	void CleanArea(const FVector& Location, float Radius);
 
 private:
 
@@ -93,7 +100,10 @@ private:
 	FVector2D WorldSize{10000, 10000};
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SubclassessToSpawn, meta = (DisplayThumbnail, AllowPrivateAccess = true))
-	TMap<FName, TSubclassOf<AActor>> ToSpawnActorMap;
+	TMap<FName, TSubclassOf<AActor>> ToSpawnActorClasses;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SubclassessToSpawn, meta = (AllowPrivateAccess = "true"))
+	TMap<FName, TSubclassOf<UObject>> ToSpawnComplexStructureClasses;
 
 	/** The box indicating the bounds of the interaction area of the world. I.e. rendering and ticking. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Trigger Box", meta = (AllowPrivateAccess = "true"))

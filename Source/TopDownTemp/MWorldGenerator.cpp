@@ -9,6 +9,7 @@
 #include "MMemoryator.h"
 #include "MAICrowdManager.h"
 #include "MIsActiveCheckerComponent.h"
+#include "MVillageGenerator.h"
 #include "MWorldManager.h"
 #include "NavigationSystem.h"
 #include "Components/BoxComponent.h"
@@ -47,7 +48,7 @@ void AMWorldGenerator::GenerateWorld()
 		return;
 	}
 
-	auto ToSpawnGroundBlock = ToSpawnActorMap.Find(FName("GroundBlock"));
+	auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock"));
 	const auto GroundBlockSize = Cast<AMGroundBlock>(ToSpawnGroundBlock->GetDefaultObject())->GetSize();
 
 	for (int x = -WorldSize.X / 2; x < WorldSize.X / 2; x += GroundBlockSize.X)
@@ -61,13 +62,19 @@ void AMWorldGenerator::GenerateWorld()
 			int TreeSpawnRate = FMath::RandRange(1, 5);
 			//if (TreeSpawnRate == 1)
 			{
-				const auto TreeDefault = GetDefault<AMActor>(*ToSpawnActorMap.Find(FName("Tree")));
+				const auto TreeDefault = GetDefault<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")));
 				FVector TreeLocation(x, y, 0);
 
-				auto* Tree = SpawnActor<AMActor>(*ToSpawnActorMap.Find(FName("Tree")), TreeLocation, {}, FName("Tree_" + FString::FromInt(x) + FString::FromInt(y)));
+				auto* Tree = SpawnActor<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")), TreeLocation, {}, FName("Tree_" + FString::FromInt(x) + FString::FromInt(y)));
 			}
 		}
 	}
+
+	FActorSpawnParameters SpawnParameters;
+	SpawnParameters.Name = "VillageGenerator_1";
+	const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
+	const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), {}, SpawnParameters);
+	VillageGenerator->Generate();
 }
 
 void AMWorldGenerator::BeginPlay()
@@ -287,7 +294,7 @@ void AMWorldGenerator::OnPlayerChangedBlock()
 
 FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position) const
 {
-	if (const auto ToSpawnGroundBlock = ToSpawnActorMap.Find(FName("GroundBlock")))
+	if (const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock")))
 	{
 		if (const auto GroundBlock = Cast<AMGroundBlock>(ToSpawnGroundBlock->GetDefaultObject()))
 		{
@@ -371,7 +378,7 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRo
 
 TSubclassOf<AActor> AMWorldGenerator::GetClassToSpawn(FName Name)
 {
-	if (const auto Class = ToSpawnActorMap.Find(Name))
+	if (const auto Class = ToSpawnActorClasses.Find(Name))
 	{
 		return *Class;
 	}
@@ -405,4 +412,28 @@ TMap<FName, FActorWorldMetadata> AMWorldGenerator::GetActorsInRect(FVector Upper
 	}
 
 	return Result;
+}
+
+void AMWorldGenerator::CleanArea(const FVector& Location, float Radius)
+{
+	const auto StartBlock = GetGroundBlockIndex(Location - FVector(Radius, Radius, 0.f));
+	const auto FinishBlock = GetGroundBlockIndex(Location + FVector(Radius, Radius, 0.f));
+	for (auto X = StartBlock.X; X <= FinishBlock.X; ++X)
+	{
+		for (auto Y = StartBlock.Y; Y <= FinishBlock.Y; ++Y)
+		{
+			if (const auto Block = GridOfActors.Find({X, Y}))
+			{
+				//TEMP SOLUTION
+				for (auto It = Block->StaticActors.CreateIterator(); It; ++It)
+				{
+					if (Cast<AMGroundBlock>(It.Value()))
+					{
+						continue;
+					}
+					It.RemoveCurrent();
+				}
+			}
+		}
+	}
 }
