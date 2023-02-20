@@ -20,7 +20,7 @@ FBoxSphereBounds GetDefaultBounds(const TSubclassOf<AActor> InActorClass)
 	{
 		return Result;
 	}
-	
+
 	UClass* ActorClass = InActorClass;
 
 	// Go down the inheritance tree to find nodes that were added to parent blueprints of our blueprint graph.
@@ -52,7 +52,7 @@ FBoxSphereBounds GetDefaultBounds(const TSubclassOf<AActor> InActorClass)
 
 AMVillageGenerator::AMVillageGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, Radius(0)
+	, TownSquareRadius(0)
 {
 }
 
@@ -78,10 +78,12 @@ void AMVillageGenerator::Generate()
 	}
 
 	const FVector CenterPosition = GetTransform().GetLocation();
-	const FVector TopPoint = GetPointOnCircle(CenterPosition, Radius, 0.f);
+	const FVector TopPoint = GetPointOnCircle(CenterPosition, TownSquareRadius, 0.f);
 
 	// Here we should clean all the blocks we are about to cover
-	pWorldGenerator->CleanArea(CenterPosition, Radius);
+	pWorldGenerator->CleanArea(CenterPosition, TownSquareRadius); //TODO: Increase the area somehow! for now I don't know how to calculate it
+
+	float Radius = TownSquareRadius;
 
 	// The Village has a circle shape with a hollow at the bottom.
 	// The Main Building is at the top point.
@@ -121,12 +123,12 @@ void AMVillageGenerator::Generate()
 
 		ShiftBuildingRandomly(BuildingActor);
 
-		if (const auto Location = FindLocationForBuilding(BuildingActor, BuildingIndex); Location.IsSet())
+		if (const auto Location = FindLocationForBuilding(BuildingActor, BuildingIndex, Radius); Location.IsSet())
 		{
 			BuildingActor->SetActorLocation(Location.GetValue());
 			BuildingMap.Add(*BuildingActor->GetName(), BuildingActor);
 			++BuildingIndex;
-			if (auto NumberOfInstances = RequiredNumberOfInstances.Find(BuildingClass))
+			if (const auto NumberOfInstances = RequiredNumberOfInstances.Find(BuildingClass))
 			{
 				*NumberOfInstances -= 1;
 				if (*NumberOfInstances == 0)
@@ -138,63 +140,70 @@ void AMVillageGenerator::Generate()
 		else
 		{
 			BuildingActor->Destroy();
+			//One of possible solutions to develop generation. It hasn't been proved yet and the binary search isn't suitable for it. 
+			/*if (const auto GapMetadata = ToSpawnBuildingsMetadata.Find("Gap"))
+			{
+				const auto BoxExtent = GetDefaultBounds(GapMetadata->ToSpawnClass).BoxExtent;
+				Radius += FMath::Max3(BoxExtent.X, BoxExtent.Y, BoxExtent.Z) / 2.f;
+				continue;
+			}*/
+			check(false);
 			break;
 		}
 	}
 
-	//TODO: Remove all the Gap actors
+	// Remove all spawned Gap actors
+	if (const auto GapMetadata = ToSpawnBuildingsMetadata.Find("Gap"))
+	{
+		for (auto It = BuildingMap.CreateIterator(); It; ++It)
+		{
+			if (It.Value()->GetClass() == GapMetadata->ToSpawnClass.Get())
+			{
+				It.Value()->Destroy();
+				It.RemoveCurrent();
+			}
+		}
+	}
 }
 
 void AMVillageGenerator::DetermineAllBuildingsNumberOfInstances()
 {
 	for (auto& [Name, Metadata] : ToSpawnBuildingsMetadata)
 	{
-		RequiredNumberOfInstances.Add(Metadata.ToSpawnClass, FMath::RandRange(Metadata.MinNumberOfInstances, Metadata.MaxNumberOfInstances));
+		if (const auto NumberOfInstances = FMath::RandRange(Metadata.MinNumberOfInstances, Metadata.MaxNumberOfInstances); NumberOfInstances > 0)
+		{
+			RequiredNumberOfInstances.Add(Metadata.ToSpawnClass, NumberOfInstances);
+		}
 	}
 }
 
 void AMVillageGenerator::ShiftBuildingRandomly(const AActor* Building) const
 {
-	const auto BuildingMeshComponents = Building->GetComponentsByTag(UStaticMeshComponent::StaticClass(), "BuildingMesh");
-	const auto ScopeForRandomOffsetComponents = Building->GetComponentsByTag(UBoxComponent::StaticClass(), "ScopeForRandomOffset");
-
-	if (!BuildingMeshComponents.IsEmpty() && !ScopeForRandomOffsetComponents.IsEmpty())
+	if (const auto BuildingMeshComponents = Building->GetComponentsByTag(UStaticMeshComponent::StaticClass(), "BuildingMesh"); !BuildingMeshComponents.IsEmpty())
 	{
 		const auto BuildingMeshComponent = Cast<UStaticMeshComponent>(BuildingMeshComponents[0]);
-		const auto ScopeForRandomOffset = Cast<UBoxComponent>(ScopeForRandomOffsetComponents[0]);
+		const auto RandomRotation = FRotator(0.f, FMath::RandRange(0.f, 360.f), 0.f);
+		BuildingMeshComponent->SetRelativeRotation(RandomRotation);
 
-		constexpr int RotationTries = 4;
-		for (int RotationTryIndex = 1; RotationTryIndex <= RotationTries; ++RotationTryIndex)
-		{
-			const auto RandomRotation = FRotator(0.f, FMath::RandRange(0.f, 360.f), 0.f);
-			BuildingMeshComponent->SetRelativeRotation(RandomRotation);
+		const auto BuildingBounds = BuildingMeshComponent->Bounds;
+		FBoxSphereBounds RandomOffsetBounds;
+		Building->GetActorBounds(true, RandomOffsetBounds.Origin, RandomOffsetBounds.BoxExtent, true);
 
-			const auto BuildingBounds = BuildingMeshComponent->Bounds;
-			const auto RandomOffsetBounds = ScopeForRandomOffset->Bounds;
+		const auto BuildingLowerBound = BuildingBounds.Origin - BuildingBounds.BoxExtent;
+		const auto BuildingUpperBound = BuildingBounds.Origin + BuildingBounds.BoxExtent;
 
-			const auto BuildingLowerBound = BuildingBounds.Origin - BuildingBounds.BoxExtent;
-			const auto BuildingUpperBound = BuildingBounds.Origin + BuildingBounds.BoxExtent;
+		const auto RandomOffsetLowerBound = RandomOffsetBounds.Origin - RandomOffsetBounds.BoxExtent;
+		const auto RandomOffsetUpperBound = RandomOffsetBounds.Origin + RandomOffsetBounds.BoxExtent;
 
-			const auto RandomOffsetLowerBound = RandomOffsetBounds.Origin - RandomOffsetBounds.BoxExtent;
-			const auto RandomOffsetUpperBound = RandomOffsetBounds.Origin + RandomOffsetBounds.BoxExtent;
-
-			if (RandomOffsetLowerBound.X <= BuildingLowerBound.X &&
-				RandomOffsetLowerBound.Y <= BuildingLowerBound.Y &&
-				RandomOffsetUpperBound.X >= BuildingUpperBound.X &&
-				RandomOffsetUpperBound.Y >= BuildingUpperBound.Y)
-			{
-				const FVector RandomOffset = FVector(
-					FMath::RandRange(RandomOffsetLowerBound.X - BuildingLowerBound.X, RandomOffsetUpperBound.X - BuildingUpperBound.X),
-					FMath::RandRange(RandomOffsetLowerBound.Y - BuildingLowerBound.Y, RandomOffsetUpperBound.Y - BuildingUpperBound.Y),
-					0.f);
-				BuildingMeshComponent->SetRelativeLocation(BuildingMeshComponent->GetRelativeLocation() + RandomOffset);
-				break;
-			}
-		}
+		const FVector RandomOffset = FVector(
+			FMath::RandRange(RandomOffsetLowerBound.X - BuildingLowerBound.X, RandomOffsetUpperBound.X - BuildingUpperBound.X),
+			FMath::RandRange(RandomOffsetLowerBound.Y - BuildingLowerBound.Y, RandomOffsetUpperBound.Y - BuildingUpperBound.Y),
+			0.f);
+		BuildingMeshComponent->SetRelativeLocation(BuildingMeshComponent->GetRelativeLocation() + RandomOffset);
 	}
 }
 
-TOptional<FVector> AMVillageGenerator::FindLocationForBuilding(const AActor* Building, int BuildingIndex) const
+TOptional<FVector> AMVillageGenerator::FindLocationForBuilding(const AActor* Building, int BuildingIndex, float Radius) const
 {
 	constexpr int PrecisionStepsNumber = 7; // It's impossible to know when exactly to stop
 	TOptional<FVector> LastValidPosition;
@@ -228,7 +237,7 @@ TOptional<FVector> AMVillageGenerator::FindLocationForBuilding(const AActor* Bui
 				{
 					break;
 				}
-				check(false);
+				//check(false);
 				break;
 			}
 		}

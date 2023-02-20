@@ -38,10 +38,10 @@ protected:
 
 	void ShiftBuildingRandomly(const AActor* Building) const;
 
-	TOptional<FVector> FindLocationForBuilding(const AActor* Building, int BuildingIndex) const;
+	TOptional<FVector> FindLocationForBuilding(const AActor* Building, int BuildingIndex, float Radius) const;
 
 	UPROPERTY(Category=VillageSettings, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) 
-	float Radius;
+	float TownSquareRadius;
 
 	UPROPERTY(Category=VillageCettings, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", DisplayThumbnail))
 	TMap<FName, FToSpawnBuildingMetadata> ToSpawnBuildingsMetadata;
