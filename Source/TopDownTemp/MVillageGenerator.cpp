@@ -7,10 +7,51 @@
 #include "Components/BoxComponent.h"
 #include "Components/ShapeComponent.h"
 #include "Math/UnrealMathUtility.h"
+#include "Engine/SCS_Node.h"
+
+FBoxSphereBounds GetDefaultBounds(const TSubclassOf<AActor> InActorClass)
+{
+	FBoxSphereBounds Result;
+	Result.Origin = FVector::ZeroVector;
+	Result.BoxExtent = FVector::ZeroVector;
+	Result.SphereRadius = 0.f;
+
+	if (!IsValid(InActorClass))
+	{
+		return Result;
+	}
+	
+	UClass* ActorClass = InActorClass;
+
+	// Go down the inheritance tree to find nodes that were added to parent blueprints of our blueprint graph.
+	do
+	{
+		if (const auto ActorBlueprintGeneratedClass = Cast<UBlueprintGeneratedClass>(ActorClass))
+		{
+			const TArray<USCS_Node*>& ActorBlueprintNodes =
+				ActorBlueprintGeneratedClass->SimpleConstructionScript->GetAllNodes();
+
+			for (const USCS_Node* Node : ActorBlueprintNodes)
+			{
+				if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Node->ComponentTemplate))
+				{
+					const auto ComponentBounds = PrimitiveComponent->CalcBounds(PrimitiveComponent->GetComponentTransform());
+					Result.BoxExtent.X = FMath::Max(Result.BoxExtent.X, ComponentBounds.BoxExtent.X);
+					Result.BoxExtent.Y = FMath::Max(Result.BoxExtent.Y, ComponentBounds.BoxExtent.Y);
+					Result.BoxExtent.Z = FMath::Max(Result.BoxExtent.Z, ComponentBounds.BoxExtent.Z);
+				}
+			}
+		}
+
+		ActorClass = Cast<UClass>(ActorClass->GetSuperStruct());
+
+	} while (ActorClass != AActor::StaticClass());
+
+	return Result;
+}
 
 AMVillageGenerator::AMVillageGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, NumberOfBuildings(0)
 	, Radius(0)
 {
 }
@@ -30,20 +71,17 @@ void AMVillageGenerator::Generate()
 			pWorldGenerator = pWorldManager->GetWorldGenerator();
 		}
 	}
-	if (!pWorldGenerator || ToSpawnClasses.IsEmpty() || !ToSpawnClasses.Find("MainBuilding"))
+	if (!pWorldGenerator || ToSpawnBuildingsMetadata.IsEmpty() || !ToSpawnBuildingsMetadata.Find("MainBuilding"))
 	{
 		check(false);
 		return;
 	}
 
 	const FVector CenterPosition = GetTransform().GetLocation();
+	const FVector TopPoint = GetPointOnCircle(CenterPosition, Radius, 0.f);
 
 	// Here we should clean all the blocks we are about to cover
 	pWorldGenerator->CleanArea(CenterPosition, Radius);
-
-	const FVector TopPoint = GetPointOnCircle(CenterPosition, Radius, 0.f);
-	BuildingMap.Add("MainBuilding", pWorldGenerator->SpawnActor<AActor>(ToSpawnClasses.CreateIterator()->Value.Get(), TopPoint, FRotator::ZeroRotator, ""));
-
 
 	// The Village has a circle shape with a hollow at the bottom.
 	// The Main Building is at the top point.
@@ -59,38 +97,59 @@ void AMVillageGenerator::Generate()
 	//  In order to find the closest eligible position where the building does not intersect with already placed we
 	//  perform a binary search. The start (left) position is the bottom point of the circle or the position corresponding to the angle PI
 
-	TArray<FName> KeysArray;
-	ToSpawnClasses.GetKeys(KeysArray);
-
 	// Generate buildings in the given amount
-	for (int BuildingIndex = 1; BuildingIndex < NumberOfBuildings; ++BuildingIndex)
+	int BuildingIndex = 0;
+	DetermineAllBuildingsNumberOfInstances();
+	while(!RequiredNumberOfInstances.IsEmpty())
 	{
 		FActorSpawnParameters SpawnParameters{};
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		SpawnParameters.Name = FName("Building_" + FString::FromInt(BuildingIndex));
 
 		// The class of the new building is random
-		const int32 RandomIndex = FMath::RandRange(1, KeysArray.Num() - 1); // Don't use the 0th index, it's the Main Building
-		const FName RandomKey = KeysArray[RandomIndex];
+		TArray<TSubclassOf<AActor>> KeysArray;
+		RequiredNumberOfInstances.GetKeys(KeysArray);
+		const int32 RandomIndex = FMath::RandRange(0, KeysArray.Num() - 1);
+		const auto BuildingClass = KeysArray[RandomIndex];
 
-		const auto Building = pWorldGenerator->SpawnActor<AActor>(ToSpawnClasses.Find(RandomKey)->Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
-		if (!Building)
+		const auto BuildingActor = pWorldGenerator->SpawnActor<AActor>(BuildingClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
+		if (!BuildingActor)
 		{
 			check(false);
 			return;
 		}
 
-		ShiftBuildingRandomly(Building);
+		ShiftBuildingRandomly(BuildingActor);
 
-		if (const auto Location = FindLocationForBuilding(Building, BuildingIndex); Location.IsSet())
+		if (const auto Location = FindLocationForBuilding(BuildingActor, BuildingIndex); Location.IsSet())
 		{
-			Building->SetActorLocation(Location.GetValue());
-			BuildingMap.Add(*Building->GetName(), Building);
+			BuildingActor->SetActorLocation(Location.GetValue());
+			BuildingMap.Add(*BuildingActor->GetName(), BuildingActor);
+			++BuildingIndex;
+			if (auto NumberOfInstances = RequiredNumberOfInstances.Find(BuildingClass))
+			{
+				*NumberOfInstances -= 1;
+				if (*NumberOfInstances == 0)
+				{
+					RequiredNumberOfInstances.Remove(BuildingClass);
+				}
+			}
 		}
 		else
 		{
-			Building->Destroy();
+			BuildingActor->Destroy();
+			break;
 		}
+	}
+
+	//TODO: Remove all the Gap actors
+}
+
+void AMVillageGenerator::DetermineAllBuildingsNumberOfInstances()
+{
+	for (auto& [Name, Metadata] : ToSpawnBuildingsMetadata)
+	{
+		RequiredNumberOfInstances.Add(Metadata.ToSpawnClass, FMath::RandRange(Metadata.MinNumberOfInstances, Metadata.MaxNumberOfInstances));
 	}
 }
 
@@ -177,4 +236,3 @@ TOptional<FVector> AMVillageGenerator::FindLocationForBuilding(const AActor* Bui
 
 	return LastValidPosition;
 }
-
