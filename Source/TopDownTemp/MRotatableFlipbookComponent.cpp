@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "MRotatableFlipbookComponent.h"
+
+#include "PaperFlipbook.h"
 #include "PaperFlipbookComponent.h"
 
 UMRotatableFlipbookComponent::UMRotatableFlipbookComponent(const FObjectInitializer& ObjectInitializer)
@@ -16,6 +18,7 @@ void UMRotatableFlipbookComponent::SetFlipbookByRotation(float ViewingAngle)
 		if (FlipbooksCount == 0)
 		{
 			SetFlipbook(nullptr);
+			OnFlipbookChangedDelegate.Broadcast(nullptr, 0.f, 0.f, false, false, {});
 			return;
 		}
 
@@ -40,20 +43,11 @@ void UMRotatableFlipbookComponent::SetFlipbookByRotation(float ViewingAngle)
 		if (FlipbookIndex >= FlipbooksCount)
 		{
 			SetFlipbook(nullptr);
+			OnFlipbookChangedDelegate.Broadcast(nullptr, 0.f, 0.f, false, false, {});
 			return;
 		}
 
-		if (SourceFlipbook != FlipbookArray->Flipbooks[FlipbookIndex])
-		{
-			const auto PlaybackPosition = GetPlaybackPosition();
-			SetFlipbook(FlipbookArray->Flipbooks[FlipbookIndex]);
-			SetPlaybackPosition(PlaybackPosition, false);
-
-			SetPlayRate(FlipbookArray->PlayRate);
-			SetLooping(FlipbookArray->bLooping);
-			bReversePlayback = FlipbookArray->bReversePlayback;
-			Play();
-		}
+		bool bForceUpdate = false;
 
 		// Mirror the flipbook if needed
 		FVector Scale = GetRelativeScale3D();
@@ -65,11 +59,33 @@ void UMRotatableFlipbookComponent::SetFlipbookByRotation(float ViewingAngle)
 		{
 			Scale.X = -abs(Scale.X);
 		}
+		if (Scale != GetRelativeScale3D())
+		{
+			bForceUpdate = true;
+		}
 		SetRelativeScale3D(Scale);
+
+		if (SourceFlipbook != FlipbookArray->Flipbooks[FlipbookIndex] ||
+			PlayRate != FlipbookArray->PlayRate ||
+			bLooping != FlipbookArray->bLooping ||
+			bReversePlayback != FlipbookArray->bReversePlayback ||
+			bForceUpdate)
+		{
+			const auto PlaybackPosition = GetPlaybackPosition();
+			SetFlipbook(FlipbookArray->Flipbooks[FlipbookIndex]);
+			SetPlaybackPosition(PlaybackPosition, false);
+			SetPlayRate(FlipbookArray->PlayRate);
+			SetLooping(FlipbookArray->bLooping);
+			bReversePlayback = FlipbookArray->bReversePlayback;
+			Play();
+
+			OnFlipbookChangedDelegate.Broadcast(GetFlipbook(), PlaybackPosition, PlayRate, bLooping, bReversePlayback, Scale);
+		}
 	}
 	else
 	{
 		SetFlipbook(nullptr);
+		OnFlipbookChangedDelegate.Broadcast(nullptr, 0.f, 0.f, false, false, {});
 	}
 }
 

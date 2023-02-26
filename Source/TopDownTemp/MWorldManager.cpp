@@ -20,10 +20,10 @@ void UMWorldManager::Initialize(FSubsystemCollectionBase& Collection)
 void UMWorldManager::OnWorldBeginPlay(UWorld& InWorld)
 {
 	Super::OnWorldBeginPlay(InWorld);
-	
+
 	WorldGenerator = Cast<AMWorldGenerator>(UGameplayStatics::GetActorOfClass(Cast<UObject>(&InWorld), AMWorldGenerator::StaticClass()));
 	check(WorldGenerator);
-	
+
 	CrowdManager = Cast<AMAICrowdManager>(UGameplayStatics::GetActorOfClass(Cast<UObject>(&InWorld), AMAICrowdManager::StaticClass()));
 	check(CrowdManager);
 

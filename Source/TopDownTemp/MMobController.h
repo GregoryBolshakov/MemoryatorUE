@@ -1,65 +1,48 @@
 #pragma once
 
 #include "AIController.h"
+#include "MInterfaceMobController.h"
 #include "MMobController.generated.h"
 
 class AMCharacter;
-
-UENUM()
-enum class EMobBehaviors
-{
-	Idle = 0,
-	Chase,
-	Fight,
-	Follow,
-	Speak,
-	Guard,
-	Retreat,
-	Hide,
-};
 
 //~=============================================================================
 /**
  * Manages an NPC's behavior in the game. 
  */
 UCLASS(Blueprintable)
-class TOPDOWNTEMP_API AMMobController : public AAIController
+class TOPDOWNTEMP_API AMMobController : public AAIController, public IMInterfaceMobController
 {
 	GENERATED_UCLASS_BODY()
 
 public:
 	virtual void Tick(float DeltaSeconds) override;
 
-	UFUNCTION(BlueprintCallable)
-	virtual void OnFightEnd();
+	virtual void OnFightEnd() override;
 
-	UFUNCTION(BlueprintCallable)
-	virtual void OnHit();
+	virtual void OnHit() override;
 
 private:
 
-	void DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter);
+	virtual void DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
-	void DoChaseBehavior(const UWorld& World, AMCharacter& MyCharacter);
+	virtual void DoChaseBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
-	void DoFightBehavior(const UWorld& World, AMCharacter& MyCharacter);
+	virtual void DoFightBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
-	void DoRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter);
+	virtual void DoRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
-	void SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter);
+	virtual void SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
-	void SetChaseBehavior(const UWorld& World, AMCharacter& MyCharacter);
+	virtual void SetChaseBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
-	void SetFightBehavior(const UWorld& World, AMCharacter& MyCharacter);
+	virtual void SetFightBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
-	void SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter);
+	virtual void SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
-	void OnBehaviorChanged(AMCharacter& MyCharacter);
+	virtual void OnBehaviorChanged(AMCharacter& MyCharacter) override;
 
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
-
-	UPROPERTY()
-	EMobBehaviors CurrentBehavior;
 
 	UPROPERTY()
 	APawn* Victim;

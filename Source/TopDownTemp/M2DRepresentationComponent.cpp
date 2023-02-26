@@ -1,4 +1,6 @@
 #include "M2DRepresentationComponent.h"
+
+#include "M2DShadowControllerComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
 #include "Camera/CameraComponent.h"
@@ -13,11 +15,18 @@ UM2DRepresentationComponent::UM2DRepresentationComponent(const FObjectInitialize
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 }
 
+void UM2DRepresentationComponent::PostInitChildren()
+{
+	SetUpSprites();
+	if (bFaceToCamera)
+	{
+		CreateShadowTwins();
+	}
+}
+
 void UM2DRepresentationComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	SetUpSprites();
 
 	CameraManager = GetWorld()->GetFirstPlayerController()->PlayerCameraManager;
 }
@@ -40,8 +49,60 @@ void UM2DRepresentationComponent::SetUpSprites()
 	}
 }
 
-void UM2DRepresentationComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
+void UM2DRepresentationComponent::CreateShadowTwins()
+{
+	const auto pOwner = GetOwner();
+	if (!pOwner)
+	{
+		return;
+	}
+
+	for (const auto& RenderComponent : RenderComponentArray)
+	{
+		UMeshComponent* ShadowComponent = nullptr;
+
+		if (const auto PaperSpriteComponent = Cast<UPaperSpriteComponent>(RenderComponent))
+		{
+			//TODO: In the future actors will use only UMRotatableFlipbookComponent, this case is temporary
+			if (const auto TwinSpriteComponent = NewObject<UPaperSpriteComponent>(this, UPaperSpriteComponent::StaticClass(), *("ShadowTwin_" + RenderComponent->GetName()), RF_NoFlags, PaperSpriteComponent))
+			{
+				TwinSpriteComponent->SetSprite(PaperSpriteComponent->GetSprite());
+				ShadowComponent = TwinSpriteComponent;
+			}
+		}
+		else
+		if (const auto FlipbookComponent = Cast<UMRotatableFlipbookComponent>(RenderComponent))
+		{
+			if (const auto TwinFlipbookComponent = NewObject<UMRotatableFlipbookComponent>(this, UMRotatableFlipbookComponent::StaticClass(), FName("ShadowTwin_" + RenderComponent->GetName()), RF_NoFlags, FlipbookComponent))
+			{
+				TwinFlipbookComponent->SetFlipbook(FlipbookComponent->GetFlipbook());
+				ShadowComponent = TwinFlipbookComponent;
+			}
+		}
+
+		if (ShadowComponent != nullptr)
+		{
+			// Creating and setting up the controller for the shadow component
+			const auto ShadowControllerComponent = NewObject<UM2DShadowControllerComponent>(this, UM2DShadowControllerComponent::StaticClass(), FName(ShadowComponent->GetName() + "_Controller"));
+			ShadowControllerComponent->RegisterComponent();
+			ShadowControllerComponent->AttachToComponent(ShadowComponent, FAttachmentTransformRules::KeepRelativeTransform);
+			ShadowControllerComponent->CreationMethod = EComponentCreationMethod::Instance;
+			ShadowControllerComponent->Possess(ShadowComponent, RenderComponent);
+
+			// Common object creation pipeline during runtime
+			ShadowComponent->RegisterComponent();
+			ShadowComponent->AttachToComponent(pOwner->GetRootComponent(), FAttachmentTransformRules::KeepRelativeTransform);
+			ShadowComponent->CreationMethod = EComponentCreationMethod::Instance;
+
+			// Just copy the render component transform
+			ShadowComponent->SetWorldTransform(RenderComponent->GetComponentTransform());
+
+			ShadowTwinComponentArray.Add(ShadowComponent);
+		}
+	}
+}
+
+void UM2DRepresentationComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 

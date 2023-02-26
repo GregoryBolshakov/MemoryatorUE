@@ -18,8 +18,13 @@
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0")))
+	, IsDying(false)
+	, IsTakingDamage(false)
+	, IsFighting(false)
+	, IsMoving(false)
+	, IsPicking(false)
 	, Health(100.f)
- 	, SightRange(2000.f)
+	, SightRange(2000.f)
 	, FightRange(50.f)
 	, Strength(10.f)
 	, RetreatRange(200.f)
@@ -63,6 +68,8 @@ void AMCharacter::Tick(float DeltaSeconds)
 void AMCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
+
+	RepresentationComponent->PostInitChildren();
 
 	IsActiveCheckerComponent->SetUpCollisionPrimitive();
 	IsActiveCheckerComponent->Disable();

@@ -9,7 +9,6 @@
 
 AMMobController::AMMobController(const FObjectInitializer& ObjectInitializer) :
 	  Super(ObjectInitializer)
-	, CurrentBehavior()
 	, Victim(nullptr)
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;

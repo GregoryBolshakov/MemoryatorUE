@@ -12,6 +12,9 @@ class TOPDOWNTEMP_API UM2DRepresentationComponent : public USceneComponent
 
 public:
 
+	/** Should be called in owner's PostInitializeComponents */
+	void PostInitChildren();
+
 	virtual void BeginPlay() override;
 
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -29,11 +32,17 @@ private:
 
 	void SetUpSprites();
 
+	/** Adds invisible twin-components for casting non rotatable shadows */
+	void CreateShadowTwins();
+
 	UPROPERTY() 
 	TArray<class UCapsuleComponent*> CapsuleComponentArray;
 
 	UPROPERTY()
-	TArray<class UMeshComponent*> RenderComponentArray;
+	TArray<UMeshComponent*> RenderComponentArray;
+
+	UPROPERTY()
+	TArray<UMeshComponent*> ShadowTwinComponentArray;
 	
 	UPROPERTY()
 	APlayerCameraManager* CameraManager;

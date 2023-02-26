@@ -47,8 +47,12 @@ void UMIsActiveCheckerComponent::Disable()
 		{
 			ComponentData.CollisionType = PrimitiveComponent->GetCollisionEnabled();
 			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+			ComponentData.bCanCastShadows = PrimitiveComponent->CastShadow;
+			PrimitiveComponent->CastShadow = false;
 			//TODO: Maybe we need to SetGenerateOverlapEvents(false) too?
 		}
+
 		DisabledComponentsData.Add(ComponentData);
 	}
 
@@ -92,6 +96,8 @@ void UMIsActiveCheckerComponent::Enable()
 		if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Data.Component))
 		{
 			PrimitiveComponent->SetCollisionEnabled(Data.CollisionType.Get(ECollisionEnabled::NoCollision));
+
+			PrimitiveComponent->CastShadow = Data.bCanCastShadows;
 		}
 	}
 	DisabledComponentsData.Empty();

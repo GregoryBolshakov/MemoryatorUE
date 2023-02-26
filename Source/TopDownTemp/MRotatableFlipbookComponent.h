@@ -7,7 +7,15 @@
 
 class UPaperFlipbook;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSpriteChange);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FOnFlipbookChanged
+	, UPaperFlipbook*, Flipbook
+	, float, PlaybackPosition
+	, float, PlayRate
+	, bool, bLoopping
+	, bool, bReversePlayback
+	, FVector, Scale
+	);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSpriteChanged);
 
 /** Structure that provides array placement of UPaperFlipbook ptrs to containers.
  *  Also represents the array in the editor. */
@@ -50,7 +58,9 @@ public:
 	void SetFlipbookByRotation(float ViewingAngle);
 
 	UPROPERTY(EditAnywhere, BlueprintAssignable)
-	FOnSpriteChange OnSpriteChangeDelegate;
+	FOnSpriteChanged OnSpriteChangeDelegate;
+
+	FOnFlipbookChanged OnFlipbookChangedDelegate;
 
 private:
 
