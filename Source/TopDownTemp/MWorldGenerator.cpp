@@ -75,6 +75,7 @@ void AMWorldGenerator::GenerateWorld()
 	const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
 	const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), {}, SpawnParameters);
 	VillageGenerator->Generate();
+	UpdateNavigationMesh();
 }
 
 void AMWorldGenerator::BeginPlay()
@@ -210,7 +211,7 @@ void AMWorldGenerator::UpdateActiveZone()
 					{
 						if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 						{
-							IsActiveCheckerComponent->Enable();
+							IsActiveCheckerComponent->EnableOwner();
 						}
 					}
 				}
@@ -221,7 +222,7 @@ void AMWorldGenerator::UpdateActiveZone()
 					{
 						if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 						{
-							IsActiveCheckerComponent->Enable();
+							IsActiveCheckerComponent->EnableOwner();
 						}
 					}
 				}
@@ -240,7 +241,7 @@ void AMWorldGenerator::UpdateActiveZone()
 				{
 					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 					{
-						IsActiveCheckerComponent->Disable();
+						IsActiveCheckerComponent->DisableOwner();
 					}
 				}
 			}
@@ -250,7 +251,7 @@ void AMWorldGenerator::UpdateActiveZone()
 				{
 					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 					{
-						IsActiveCheckerComponent->Disable();
+						IsActiveCheckerComponent->DisableOwner();
 					}
 				}
 			}

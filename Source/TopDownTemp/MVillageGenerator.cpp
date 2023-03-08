@@ -9,6 +9,7 @@
 #include "Math/UnrealMathUtility.h"
 #include "Engine/SCS_Node.h"
 
+/** Finds the bounds of the default object for a blueprint */
 FBoxSphereBounds GetDefaultBounds(const TSubclassOf<AActor> InActorClass)
 {
 	FBoxSphereBounds Result;
@@ -71,7 +72,7 @@ void AMVillageGenerator::Generate()
 			pWorldGenerator = pWorldManager->GetWorldGenerator();
 		}
 	}
-	if (!pWorldGenerator || ToSpawnBuildingsMetadata.IsEmpty() || !ToSpawnBuildingsMetadata.Find("MainBuilding"))
+	if (!pWorldGenerator || ToSpawnBuildingMetadataMap.IsEmpty() || !ToSpawnBuildingMetadataMap.Find("MainBuilding"))
 	{
 		check(false);
 		return;
@@ -109,12 +110,18 @@ void AMVillageGenerator::Generate()
 		SpawnParameters.Name = FName("Building_" + FString::FromInt(BuildingIndex));
 
 		// The class of the new building is random
-		TArray<TSubclassOf<AActor>> KeysArray;
+		TArray<FName> KeysArray;
 		RequiredNumberOfInstances.GetKeys(KeysArray);
 		const int32 RandomIndex = FMath::RandRange(0, KeysArray.Num() - 1);
-		const auto BuildingClass = KeysArray[RandomIndex];
+		const auto BuildingClassName = KeysArray[RandomIndex];
 
-		const auto BuildingActor = pWorldGenerator->SpawnActor<AActor>(BuildingClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
+		const auto BuildingMetadata = ToSpawnBuildingMetadataMap.Find(BuildingClassName);
+		if (!BuildingMetadata)
+		{
+			return;
+		}
+
+		const auto BuildingActor = pWorldGenerator->SpawnActor<AActor>(BuildingMetadata->ToSpawnClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
 		if (!BuildingActor)
 		{
 			check(false);
@@ -123,37 +130,15 @@ void AMVillageGenerator::Generate()
 
 		ShiftBuildingRandomly(BuildingActor);
 
-		if (const auto Location = FindLocationForBuilding(BuildingActor, BuildingIndex, Radius); Location.IsSet())
+		// We try to find a location to fit the building, and if there is no such, then we stop and don't build the rest.
+		if (!TryToPlaceBuilding(*BuildingActor, BuildingIndex, Radius, BuildingClassName, *BuildingMetadata))
 		{
-			BuildingActor->SetActorLocation(Location.GetValue());
-			BuildingMap.Add(*BuildingActor->GetName(), BuildingActor);
-			++BuildingIndex;
-			if (const auto NumberOfInstances = RequiredNumberOfInstances.Find(BuildingClass))
-			{
-				*NumberOfInstances -= 1;
-				if (*NumberOfInstances == 0)
-				{
-					RequiredNumberOfInstances.Remove(BuildingClass);
-				}
-			}
-		}
-		else
-		{
-			BuildingActor->Destroy();
-			//One of possible solutions to develop generation. It hasn't been proved yet and the binary search isn't suitable for it. 
-			/*if (const auto GapMetadata = ToSpawnBuildingsMetadata.Find("Gap"))
-			{
-				const auto BoxExtent = GetDefaultBounds(GapMetadata->ToSpawnClass).BoxExtent;
-				Radius += FMath::Max3(BoxExtent.X, BoxExtent.Y, BoxExtent.Z) / 2.f;
-				continue;
-			}*/
-			check(false);
 			break;
 		}
 	}
 
 	// Remove all spawned Gap actors
-	if (const auto GapMetadata = ToSpawnBuildingsMetadata.Find("Gap"))
+	if (const auto GapMetadata = ToSpawnBuildingMetadataMap.Find("Gap"))
 	{
 		for (auto It = BuildingMap.CreateIterator(); It; ++It)
 		{
@@ -166,13 +151,77 @@ void AMVillageGenerator::Generate()
 	}
 }
 
+bool AMVillageGenerator::TryToPlaceBuilding(AActor& BuildingActor, int& BuildingIndex, float DistanceFromCenter, FName BuildingClassName, const FToSpawnBuildingMetadata& BuildingMetadata)
+{
+	if (const auto Location = FindLocationForBuilding(BuildingActor, BuildingIndex, DistanceFromCenter); Location.IsSet())
+	{
+		BuildingActor.SetActorLocation(Location.GetValue());
+		BuildingMap.Add(*BuildingActor.GetName(), &BuildingActor);
+		++BuildingIndex;
+		if (const auto NumberOfInstances = RequiredNumberOfInstances.Find(BuildingClassName))
+		{
+			*NumberOfInstances -= 1;
+			if (*NumberOfInstances == 0)
+			{
+				RequiredNumberOfInstances.Remove(BuildingClassName);
+			}
+		}
+
+		OnBuildingPlaced(BuildingActor, BuildingMetadata);
+		return true;
+	}
+
+	BuildingActor.Destroy();
+	//One of possible solutions to develop generation. It hasn't been proved yet and the binary search isn't suitable for it. 
+	/*if (const auto GapMetadata = ToSpawnBuildingsMetadata.Find("Gap"))
+	{
+		const auto BoxExtent = GetDefaultBounds(GapMetadata->ToSpawnClass).BoxExtent;
+		Radius += FMath::Max3(BoxExtent.X, BoxExtent.Y, BoxExtent.Z) / 2.f;
+		continue;
+	}*/
+	check(false);
+	return false;
+}
+
+void AMVillageGenerator::OnBuildingPlaced(AActor& BuildingActor, const FToSpawnBuildingMetadata& BuildingMetadata)
+{
+	AMWorldGenerator* pWorldGenerator = nullptr;
+	if (const auto pWorld = GetWorld())
+	{
+		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
+		{
+			if (pWorldGenerator = pWorldManager->GetWorldGenerator(); !pWorldGenerator)
+			{
+				return;
+			}
+		}
+	}
+
+	if (const auto EntryPointComponent = Cast<USceneComponent>(BuildingActor.GetDefaultSubobjectByName(TEXT("EntryPoint"))))
+	{
+		const auto EntryPoint = EntryPointComponent->GetComponentTransform().GetLocation();
+
+		for (const auto& [VillagerClass, ToSpawnVillagerMetadata] : BuildingMetadata.ToSpawnVillagerMetadataMap)
+		{
+			const int RequiredVillagersNumber = FMath::RandRange(ToSpawnVillagerMetadata.MinNumberOfInstances, ToSpawnVillagerMetadata.MaxNumberOfInstances);
+			for (int i = 0; i < RequiredVillagersNumber; ++i)
+			{
+				FActorSpawnParameters SpawnParameters;
+				SpawnParameters.Name = MakeUniqueObjectName(this, VillagerClass);
+				SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+				check(pWorldGenerator->SpawnActor(VillagerClass, EntryPoint, FRotator::ZeroRotator, SpawnParameters));
+			}
+		}
+	}
+}
+
 void AMVillageGenerator::DetermineAllBuildingsNumberOfInstances()
 {
-	for (auto& [Name, Metadata] : ToSpawnBuildingsMetadata)
+	for (auto& [Name, Metadata] : ToSpawnBuildingMetadataMap)
 	{
 		if (const auto NumberOfInstances = FMath::RandRange(Metadata.MinNumberOfInstances, Metadata.MaxNumberOfInstances); NumberOfInstances > 0)
 		{
-			RequiredNumberOfInstances.Add(Metadata.ToSpawnClass, NumberOfInstances);
+			RequiredNumberOfInstances.Add(Name, NumberOfInstances);
 		}
 	}
 }
@@ -203,7 +252,7 @@ void AMVillageGenerator::ShiftBuildingRandomly(const AActor* Building) const
 	}
 }
 
-TOptional<FVector> AMVillageGenerator::FindLocationForBuilding(const AActor* Building, int BuildingIndex, float Radius) const
+TOptional<FVector> AMVillageGenerator::FindLocationForBuilding(const AActor& BuildingActor, int BuildingIndex, float DistanceFromCenter) const
 {
 	constexpr int PrecisionStepsNumber = 7; // It's impossible to know when exactly to stop
 	TOptional<FVector> LastValidPosition;
@@ -217,8 +266,8 @@ TOptional<FVector> AMVillageGenerator::FindLocationForBuilding(const AActor* Bui
 	{
 		const auto Mid = (BottomPointAngle + TopPointAngle) / 2.f;
 
-		const auto Location = GetPointOnCircle(CenterPosition, Radius, Mid);
-		const bool bIsEncroaching = GetWorld()->EncroachingBlockingGeometry(Building, Location, {});
+		const auto Location = GetPointOnCircle(CenterPosition, DistanceFromCenter, Mid);
+		const bool bIsEncroaching = GetWorld()->EncroachingBlockingGeometry(&BuildingActor, Location, {});
 		if (!bIsEncroaching)
 		{
 			BottomPointAngle = Mid;

@@ -26,6 +26,13 @@ static TAutoConsoleVariable<FString> CVarToSpawnNightmareLarge(
 		ECVF_ReadOnly
 	);
 
+static TAutoConsoleVariable<FString> CVarToSpawnVillager(
+		TEXT("r.Villager"),
+		FString("Villager"),
+		TEXT("Defines the TSubclassOf of the mob with given name"),
+		ECVF_ReadOnly
+	);
+
 UMConsoleCommandsWorld::UMConsoleCommandsWorld()
 {
 }

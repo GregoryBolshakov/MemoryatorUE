@@ -21,7 +21,7 @@ void AMActor::PostInitializeComponents()
 
 	RepresentationComponent->PostInitChildren();
 
-	IsActiveCheckerComponent->Disable();
-	IsActiveCheckerComponent->SetUpCollisionPrimitive();
+	IsActiveCheckerComponent->DisableOwner();
+	//IsActiveCheckerComponent->SetUpCollisionPrimitive();
 }
 
