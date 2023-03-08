@@ -71,8 +71,8 @@ void AMCharacter::PostInitializeComponents()
 
 	RepresentationComponent->PostInitChildren();
 
-	IsActiveCheckerComponent->SetUpCollisionPrimitive();
-	IsActiveCheckerComponent->Disable();
+	IsActiveCheckerComponent->DisableOwner();
+	//IsActiveCheckerComponent->SetUpCollisionPrimitive();
 }
 
 void AMCharacter::UpdateLastNonZeroDirection()

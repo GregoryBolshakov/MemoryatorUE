@@ -26,6 +26,13 @@ static TAutoConsoleVariable<FString> CVarToSpawnNightmareLarge(
 		ECVF_ReadOnly
 	);
 
+static TAutoConsoleVariable<FString> CVarToSpawnVillager(
+		TEXT("r.Villager"),
+		FString("Villager"),
+		TEXT("Defines the TSubclassOf of the mob with given name"),
+		ECVF_ReadOnly
+	);
+
 UMConsoleCommandsWorld::UMConsoleCommandsWorld()
 {
 }
@@ -66,7 +73,8 @@ void UMConsoleCommandsWorld::SpawnMob(const FString& MobClassString, int Quantit
 							if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 							{
 								const FVector SpawnPosition = pPlayer->GetTransform().GetLocation() + SpawnPositionOffset;
-								Actor = pWorldGenerator->SpawnActor<AActor>(Class.Get(), SpawnPosition, {}, "");
+								FActorSpawnParameters EmptySpawnParameters{};
+								Actor = pWorldGenerator->SpawnActor<AActor>(Class.Get(), SpawnPosition, {}, EmptySpawnParameters);
 								if (Actor)
 								{
 									pWorldGenerator->UpdateActiveZone();

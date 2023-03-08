@@ -10,7 +10,7 @@ UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer&
 {
 }
 
-void UMIsActiveCheckerComponent::Disable()
+void UMIsActiveCheckerComponent::DisableOwner()
 {
 	if (bAlwaysEnabled)
 	{
@@ -60,7 +60,7 @@ void UMIsActiveCheckerComponent::Disable()
 	//TODO: Disable actor's controller if present
 }
 
-void UMIsActiveCheckerComponent::Enable()
+void UMIsActiveCheckerComponent::EnableOwner()
 {
 	if (bAlwaysEnabled)
 	{

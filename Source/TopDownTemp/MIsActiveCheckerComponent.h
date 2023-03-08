@@ -31,11 +31,11 @@ public:
 
 	UPrimitiveComponent* GetPrimitive() const { return CollisionPrimitive; }
 	
-	void Disable();
+	void DisableOwner();
 
-	void Enable();
+	void EnableOwner();
 
-	//** It will find a UPrimitiveComponent tagged with IsActiveChecker and set it up. Should be called in owner's PostInitializeComponents */
+	//** Likely to be removed as it is not needed. It finds a UPrimitiveComponent tagged with IsActiveChecker and set it up. Should be called in owner's PostInitializeComponents */
 	virtual void SetUpCollisionPrimitive();
 
 private:

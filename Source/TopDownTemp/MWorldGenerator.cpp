@@ -3,9 +3,9 @@
 #include "MWorldGenerator.h"
 
 #include "Math/UnrealMathUtility.h"
-#include "MGroundBlock.h"
 #include "MActor.h" 
 #include "MCharacter.h"
+#include "MGroundBlock.h"
 #include "MMemoryator.h"
 #include "MAICrowdManager.h"
 #include "MIsActiveCheckerComponent.h"
@@ -15,6 +15,7 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
+#include "Engine/SCS_Node.h"
 
 AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -48,24 +49,30 @@ void AMWorldGenerator::GenerateWorld()
 		return;
 	}
 
-	auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock"));
-	const auto GroundBlockSize = Cast<AMGroundBlock>(ToSpawnGroundBlock->GetDefaultObject())->GetSize();
+	const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock"));
+	if (!ToSpawnGroundBlock)
+	{
+		check(false);
+		return;
+	}
+	const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get());
+	const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
 
 	for (int x = -WorldSize.X / 2; x < WorldSize.X / 2; x += GroundBlockSize.X)
 	{
 		for (int y = -WorldSize.Y / 2; y < WorldSize.Y / 2; y += GroundBlockSize.Y)
 		{
 			FVector Location(x, y, 0);
-
-			auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, {}, FName(FString::FromInt(x) + FString::FromInt(y)));
+			FActorSpawnParameters EmptySpawnParameters{};
+			auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, {}, EmptySpawnParameters);
 
 			int TreeSpawnRate = FMath::RandRange(1, 5);
 			//if (TreeSpawnRate == 1)
 			{
 				const auto TreeDefault = GetDefault<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")));
 				FVector TreeLocation(x, y, 0);
-
-				auto* Tree = SpawnActor<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")), TreeLocation, {}, FName("Tree_" + FString::FromInt(x) + FString::FromInt(y)));
+				EmptySpawnParameters = {};
+				auto* Tree = SpawnActor<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")), TreeLocation, {}, EmptySpawnParameters);
 			}
 		}
 	}
@@ -75,6 +82,7 @@ void AMWorldGenerator::GenerateWorld()
 	const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
 	const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), {}, SpawnParameters);
 	VillageGenerator->Generate();
+	UpdateNavigationMesh();
 }
 
 void AMWorldGenerator::BeginPlay()
@@ -210,7 +218,7 @@ void AMWorldGenerator::UpdateActiveZone()
 					{
 						if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 						{
-							IsActiveCheckerComponent->Enable();
+							IsActiveCheckerComponent->EnableOwner();
 						}
 					}
 				}
@@ -221,7 +229,7 @@ void AMWorldGenerator::UpdateActiveZone()
 					{
 						if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 						{
-							IsActiveCheckerComponent->Enable();
+							IsActiveCheckerComponent->EnableOwner();
 						}
 					}
 				}
@@ -240,7 +248,7 @@ void AMWorldGenerator::UpdateActiveZone()
 				{
 					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 					{
-						IsActiveCheckerComponent->Disable();
+						IsActiveCheckerComponent->DisableOwner();
 					}
 				}
 			}
@@ -250,7 +258,7 @@ void AMWorldGenerator::UpdateActiveZone()
 				{
 					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 					{
-						IsActiveCheckerComponent->Disable();
+						IsActiveCheckerComponent->DisableOwner();
 					}
 				}
 			}
@@ -296,11 +304,9 @@ FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position) const
 {
 	if (const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock")))
 	{
-		if (const auto GroundBlock = Cast<AMGroundBlock>(ToSpawnGroundBlock->GetDefaultObject()))
-		{
-			const auto GroundBlockSize = GroundBlock->GetSize();
-			return FIntPoint(UE4::SSE::FloorToInt32(Position.X/GroundBlockSize.X), UE4::SSE::FloorToInt32(Position.Y/GroundBlockSize.Y));
-		}
+		const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get());
+		const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
+		return FIntPoint(UE4::SSE::FloorToInt32(Position.X/GroundBlockSize.X), UE4::SSE::FloorToInt32(Position.Y/GroundBlockSize.Y));
 	}
 
 	return {0, 0};
@@ -318,8 +324,8 @@ void AMWorldGenerator::Tick(float DeltaSeconds)
 	}
 }
 
-AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation,
-                                     const FActorSpawnParameters& SpawnParameters)
+AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation,
+                                     const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround)
 {
 	const auto pWorld = GetWorld();
 	if (!pWorld || !Class)
@@ -348,7 +354,24 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, FVector const& Location, FRo
 		return *ExistingActor;
 	}
 
-	const auto Actor = pWorld->SpawnActor(Class, &Location, &Rotation, SpawnParameters);
+	AActor* Actor;
+
+	if (bForceAboveGround)
+	{
+		// Raise the actor until the bottom point is above the ground
+		auto ActorBounds = GetDefaultBounds(Class);
+		ActorBounds.Origin += Location;
+		auto LocationAboveGround = Location;
+		if (ActorBounds.Origin.Z - ActorBounds.BoxExtent.Z < 0.f)
+		{
+			LocationAboveGround.Z -= ActorBounds.Origin.Z - ActorBounds.BoxExtent.Z;
+		}
+		Actor = pWorld->SpawnActor(Class, &LocationAboveGround, &Rotation, SpawnParameters);
+	}
+	else
+	{
+		Actor = pWorld->SpawnActor(Class, &Location, &Rotation, SpawnParameters);
+	}
 
 	if (bDynamic)
 	{
@@ -436,4 +459,56 @@ void AMWorldGenerator::CleanArea(const FVector& Location, float Radius)
 			}
 		}
 	}
+}
+
+/** Finds the bounds of the default object for a blueprint */
+FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* InActorClass)
+{
+	FBoxSphereBounds Result(ForceInitToZero);
+
+	if (!IsValid(InActorClass))
+		return Result;
+
+	FBox Box(ForceInitToZero);
+
+	auto ActorClass = InActorClass;
+	do
+	{
+		if (const auto ActorBlueprintGeneratedClass = Cast<UBlueprintGeneratedClass>(ActorClass))
+		{
+			auto ActorBlueprintNodes = ActorBlueprintGeneratedClass->SimpleConstructionScript->GetAllNodes();
+
+			for (const USCS_Node* Node : ActorBlueprintNodes)
+			{
+				if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Node->ComponentTemplate))
+				{
+					auto ComponentTransform = PrimitiveComponent->GetComponentTransform();
+					// The SCS component's transform is zero. We have to set it's values manually.
+					ComponentTransform.SetLocation(PrimitiveComponent->GetRelativeLocation());
+					ComponentTransform.SetRotation(PrimitiveComponent->GetRelativeRotation().Quaternion());
+					ComponentTransform.SetScale3D(PrimitiveComponent->GetRelativeScale3D());
+					auto ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);
+
+					// Increase the box from the protruding sides
+					Box += ComponentBounds.GetBox();
+				}
+			}
+		}
+
+		ActorClass = Cast<UClass>(ActorClass->GetSuperStruct());
+
+	} while (ActorClass != AActor::StaticClass());
+
+	// SCS nodes list doesn't contain the root component, but it exists in the CDO
+	if (const auto Actor = Cast<AActor>(InActorClass->GetDefaultObject()))
+	{
+		if (const auto ActorRootComponent = Actor->GetRootComponent())
+		{
+			const auto RootComponentBounds = ActorRootComponent->CalcBounds(ActorRootComponent->GetComponentTransform());
+			Box += RootComponentBounds.GetBox();
+		}
+	}
+
+	Box.GetCenterAndExtents(Result.Origin, Result.BoxExtent);
+	return Result;
 }

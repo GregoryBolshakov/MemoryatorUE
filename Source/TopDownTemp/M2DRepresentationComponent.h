@@ -32,7 +32,7 @@ private:
 
 	void SetUpSprites();
 
-	/** Adds invisible twin-components for casting non rotatable shadows */
+	/** Creates invisible twin-components for casting non rotatable shadows */
 	void CreateShadowTwins();
 
 	UPROPERTY() 

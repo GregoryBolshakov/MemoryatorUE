@@ -44,6 +44,8 @@ protected:
 
 	virtual void DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
+	virtual void DoWalkBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
+
 	virtual void DoChaseBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
 	virtual void DoFightBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
@@ -51,6 +53,8 @@ protected:
 	virtual void DoRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
 	virtual void SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
+
+	virtual void SetWalkBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
 	virtual void SetChaseBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 

@@ -67,32 +67,20 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Temp/MaskedLitSpriteMaterial.uasset" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/M2DShadowControllerComponent.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/M2DShadowControllerComponent.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Character.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Character.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_GroundBlock.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_GroundBlock.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Tiny.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Tiny.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap_BuiltData.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap_BuiltData.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/Untitled.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/Untitled.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Temp/M_MaskedLitSpriteMaterial.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Temp/bush5_Sprite.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Temp/bush5_Sprite.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Temp/tree5_Sprite.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Temp/tree5_Sprite.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Temp/tree_2_Sprite.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Temp/tree_2_Sprite.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Temp/ground_material.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsWorld.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsWorld.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23061,7 +23049,13 @@
       <workItem from="1677088830166" duration="12012000" />
       <workItem from="1677170105897" duration="16080000" />
       <workItem from="1677324859689" duration="5460000" />
-      <workItem from="1677407317709" duration="20494000" />
+      <workItem from="1677407317709" duration="24595000" />
+      <workItem from="1678009077540" duration="12443000" />
+      <workItem from="1678217194130" duration="4052000" />
+      <workItem from="1678293070560" duration="23000" />
+      <workItem from="1678293312878" duration="1280000" />
+      <workItem from="1678477688297" duration="5851000" />
+      <workItem from="1678525038458" duration="25508000" />
     </task>
     <servers />
   </component>
@@ -23122,10 +23116,10 @@
           <line>45</line>
           <option name="timeStamp" value="187" />
         </line-breakpoint>
-        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.cpp</url>
-          <line>61</line>
-          <option name="timeStamp" value="196" />
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp</url>
+          <line>359</line>
+          <option name="timeStamp" value="228" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -23138,11 +23132,6 @@
         <breakpoint suspend="NONE" type="javascript-exception" />
       </default-breakpoints>
     </breakpoint-manager>
-    <watches-manager>
-      <configuration name="CppProject">
-        <watch expression="@ ALREADY PREPROCESSED @TwinComponent" />
-      </configuration>
-    </watches-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

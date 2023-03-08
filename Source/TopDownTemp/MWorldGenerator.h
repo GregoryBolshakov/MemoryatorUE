@@ -55,20 +55,14 @@ public:
 	/** Turns on all actors in the active zone, turn off all others*/
 	void UpdateActiveZone();
 
-	AActor* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters);
-
 	template< class T >
-	T* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, FName const& Name = "")
+	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, FActorSpawnParameters& SpawnParameters, bool bForceAboveGround = false)
 	{
-		FActorSpawnParameters SpawnParameters;
-		SpawnParameters.Name = Name != "" ? Name : FName(FString::FromInt(++UniqueNameSuffix));
-		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters),ECastCheckedType::NullAllowed);
-	}
-
-	template< class T >
-	T* SpawnActor(UClass* Class, FVector const& Location, FRotator const& Rotation, const FActorSpawnParameters& SpawnParameters)
-	{
-		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters),ECastCheckedType::NullAllowed);
+		if (SpawnParameters.Name.IsNone())
+		{
+			SpawnParameters.Name = MakeUniqueObjectName(this, Class);
+		}
+		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters, bForceAboveGround),ECastCheckedType::NullAllowed);
 	}
 
 	TSubclassOf<AActor> GetClassToSpawn(FName Name); 
@@ -77,7 +71,11 @@ public:
 
 	void CleanArea(const FVector& Location, float Radius);
 
+	static FBoxSphereBounds GetDefaultBounds(UClass* InActorClass);
+
 private:
+
+	AActor* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround);
 
 	virtual void BeginPlay() override;
 
