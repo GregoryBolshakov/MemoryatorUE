@@ -31,9 +31,9 @@ public:
 
 	UPrimitiveComponent* GetPrimitive() const { return CollisionPrimitive; }
 	
-	void DisableOwner();
+	void DisableOwner(bool bForce = false);
 
-	void EnableOwner();
+	void EnableOwner(bool bForce = false);
 
 	//** Likely to be removed as it is not needed. It finds a UPrimitiveComponent tagged with IsActiveChecker and set it up. Should be called in owner's PostInitializeComponents */
 	virtual void SetUpCollisionPrimitive();
@@ -41,9 +41,11 @@ public:
 private:
 	bool bIsActive;
 
-	bool bActorWasHiddenInGame = true;
+	bool bIsDisabledByForce;
 
-	bool bActorHadTickEnabled = false;
+	bool bActorWasHiddenInGame;
+
+	bool bActorHadTickEnabled;
 
 	UPROPERTY()
 	TArray<FDisabledComponentInfo> DisabledComponentsData;
@@ -52,6 +54,6 @@ private:
 	UPROPERTY(meta = (AllowPrivateAccess = "true"))
 	class UPrimitiveComponent* CollisionPrimitive;
 
-	UPROPERTY(Category=Testing, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Category=Testing, EditDefaultsOnly, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	bool bAlwaysEnabled;
 };

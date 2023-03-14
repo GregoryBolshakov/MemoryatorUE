@@ -67,7 +67,7 @@ public:
 
 	TSubclassOf<AActor> GetClassToSpawn(FName Name); 
 
-	TMap<FName, FActorWorldMetadata> GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic);
+	TMap<FName, AActor*> GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic);
 
 	void CleanArea(const FVector& Location, float Radius);
 

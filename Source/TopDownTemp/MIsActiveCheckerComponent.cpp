@@ -5,17 +5,22 @@
 UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, bIsActive(false)
+	, bIsDisabledByForce(false)
+	, bActorWasHiddenInGame(true)
+	, bActorHadTickEnabled(false)
 	, CollisionPrimitive(nullptr)
 	, bAlwaysEnabled(false)
 {
 }
 
-void UMIsActiveCheckerComponent::DisableOwner()
+void UMIsActiveCheckerComponent::DisableOwner(bool bForce)
 {
 	if (bAlwaysEnabled)
 	{
 		return;
 	}
+
+	bIsDisabledByForce = bForce;
 
 	const auto pOwner = GetOwner();
 	if (!pOwner)
@@ -60,9 +65,11 @@ void UMIsActiveCheckerComponent::DisableOwner()
 	//TODO: Disable actor's controller if present
 }
 
-void UMIsActiveCheckerComponent::EnableOwner()
+void UMIsActiveCheckerComponent::EnableOwner(bool bForce)
 {
-	if (bAlwaysEnabled)
+	// No need to enable if bAlwaysEnabled is true, because it has never been disabled.
+	// If was disabled by force, then can be enabled only by force
+	if (bAlwaysEnabled || (bIsDisabledByForce && !bForce))
 	{
 		return;
 	}
@@ -80,6 +87,11 @@ void UMIsActiveCheckerComponent::EnableOwner()
 	// Set the components state using saved data
 	for (auto& Data : DisabledComponentsData)
 	{
+		if (!Data.Component)
+		{
+			check(false);
+			continue;
+		}
 		if (Data.bCanEverTick)
 		{
 			Data.Component->PrimaryComponentTick.bCanEverTick = true;

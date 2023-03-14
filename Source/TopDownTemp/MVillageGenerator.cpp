@@ -2,6 +2,7 @@
 
 #include "MVillageGenerator.h"
 
+#include "MVillagerMobController.h"
 #include "MWorldGenerator.h"
 #include "MWorldManager.h"
 #include "Components/BoxComponent.h"
@@ -154,6 +155,7 @@ void AMVillageGenerator::OnBuildingPlaced(AActor& BuildingActor, const FToSpawnB
 		}
 	}
 
+	// Calculate the amount of villagers to be spawned and spawn them at the entry point of the building.
 	if (const auto EntryPointComponent = Cast<USceneComponent>(BuildingActor.GetDefaultSubobjectByName(TEXT("EntryPoint"))))
 	{
 		const auto EntryPoint = EntryPointComponent->GetComponentTransform().GetLocation();
@@ -165,7 +167,17 @@ void AMVillageGenerator::OnBuildingPlaced(AActor& BuildingActor, const FToSpawnB
 			{
 				FActorSpawnParameters SpawnParameters;
 				SpawnParameters.Name = MakeUniqueObjectName(this, VillagerClass);
-				check(pWorldGenerator->SpawnActor<AActor>(VillagerClass.Get(), EntryPoint, FRotator::ZeroRotator, SpawnParameters, true));
+				const auto VillagerPawn = pWorldGenerator->SpawnActor<APawn>(VillagerClass.Get(), EntryPoint, FRotator::ZeroRotator, SpawnParameters, true);
+				if (!VillagerPawn)
+				{
+					check(false);
+					continue;
+				}
+
+				if (const auto VillagerController = Cast<AMVillagerMobController>(VillagerPawn->Controller))
+				{
+					VillagerController->Initialize(BuildingActor, GetActorLocation(), TownSquareRadius);
+				}
 			}
 		}
 	}

@@ -11,52 +11,6 @@ AMMobController::AMMobController(const FObjectInitializer& ObjectInitializer) :
 	  Super(ObjectInitializer)
 	, Victim(nullptr)
 {
-	PrimaryActorTick.bStartWithTickEnabled = true;
-	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickInterval = 0.5f;
-}
-
-void AMMobController::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-
-	const auto pWorld = GetWorld();
-	if (!pWorld)
-	{
-		check(false);
-		return;
-	}
-
-	const auto MyCharacter = Cast<AMCharacter>(GetPawn());
-	if (!MyCharacter)
-	{
-		check(false);
-		return;
-	}
-
-	// Reset ForcedGazeVector, it might be set in one of behavior functions 
-	MyCharacter->SetForcedGazeVector(FVector::ZeroVector);
-
-	if (CurrentBehavior == EMobBehaviors::Idle)
-	{
-		// Try to find a victim in sight distance. If there is one, start chasing it
-		DoIdleBehavior(*pWorld, *MyCharacter);
-	}
-	if (CurrentBehavior == EMobBehaviors::Chase)
-	{
-		// Chase the victim until get within strike distance. Then try to strike
-		DoChaseBehavior(*pWorld, *MyCharacter);
-	}
-	if (CurrentBehavior == EMobBehaviors::Fight)
-	{
-		// Fight the victim and return to the Idle behavior
-		DoFightBehavior(*pWorld, *MyCharacter);
-	}
-	if (CurrentBehavior == EMobBehaviors::Retreat)
-	{
-		// Run away from the victim until move away by a set range
-		DoRetreatBehavior(*pWorld, *MyCharacter);
-	}
 }
 
 void AMMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
@@ -75,15 +29,15 @@ void AMMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharact
 
 	if (!DynamicActorsInSight.IsEmpty())
 	{
-		for (const auto& [Name, Metadata] : DynamicActorsInSight)
+		for (const auto& [Name, DynamicActor] : DynamicActorsInSight)
 		{
 			//TODO: add a list of enemy/neutral/friends. possibly a map with tags o class names
-			if (Metadata.Actor && Metadata.Actor != this && Metadata.Actor->GetClass()->GetSuperClass()->IsChildOf(AMMemoryator::StaticClass()))
+			if (DynamicActor && DynamicActor != this && DynamicActor->GetClass()->GetSuperClass()->IsChildOf(AMMemoryator::StaticClass()))
 			{
-				const auto DistanceToActor = FVector::Distance(Metadata.Actor->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
+				const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
 				if (DistanceToActor <= MyCharacter.GetSightRange())
 				{
-					Victim = Cast<APawn>(Metadata.Actor);
+					Victim = Cast<APawn>(DynamicActor);
 					SetChaseBehavior(World, MyCharacter);
 					break;
 				}
@@ -102,7 +56,7 @@ void AMMobController::DoChaseBehavior(const UWorld& World, AMCharacter& MyCharac
 	}
 
 	const auto DistanceToVictim = FVector::Distance(Victim->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
-	if (DistanceToVictim > MyCharacter.GetSightRange() * 1.5f) //TODO: come up with "1.5f" parameter name
+	if (DistanceToVictim > MyCharacter.GetForgetEnemyRange())
 	{
 		SetIdleBehavior(World, MyCharacter);
 		return;
@@ -174,6 +128,11 @@ void AMMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyChara
 		return;
 	}
 
+	OnMoveCompletedDelegate.Unbind();
+	OnMoveCompletedDelegate.BindLambda([this, &World, &MyCharacter]
+	{
+		SetFightBehavior(World, MyCharacter);
+	});
 	MoveToActor(Victim, MyCharacter.GetFightRange());
 
 	OnBehaviorChanged(MyCharacter);
@@ -226,6 +185,11 @@ void AMMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCha
 	FVector NavigatedRetreatLocation;
 	if (UNavigationSystemV1::K2_ProjectPointToNavigation(const_cast<UWorld*>(&World), RetreatLocation, NavigatedRetreatLocation, nullptr, nullptr))
 	{
+		OnMoveCompletedDelegate.Unbind();
+		OnMoveCompletedDelegate.BindLambda([this, &World, &MyCharacter]
+		{
+			SetChaseBehavior(World, MyCharacter);
+		});
 		MoveToLocation(NavigatedRetreatLocation);
 	}
 	else
@@ -244,7 +208,7 @@ void AMMobController::OnBehaviorChanged(AMCharacter& MyCharacter)
 	MyCharacter.UpdateAnimation();
 }
 
-void AMMobController::OnFightEnd()
+void AMMobController::OnFightAnimationEnd()
 {
 	const auto MyCharacter = Cast<AMCharacter>(GetPawn());
 	if (!MyCharacter)
@@ -287,43 +251,5 @@ void AMMobController::OnHit()
 
 	//FPointDamageEvent DamageEvent(DamageAmount, Hit, -ActorForward, UDamageType::StaticClass());
 	//Victim->TakeDamage(DamageAmount, DamageEvent, MyPC, MyPC->GetPawn());
-}
-
-void AMMobController::OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result)
-{
-	AAIController::OnMoveCompleted(RequestID, Result);
-
-	if (!Result.IsSuccess())
-	{
-		return;
-	}
-
-	const auto pWold = GetWorld();
-	if (!pWold)
-	{
-		check(false);
-		return;
-	}
-
-	const auto MyCharacter = Cast<AMCharacter>(GetPawn());
-	if (!MyCharacter)
-	{
-		check(false);
-		return;
-	}
-
-	switch (CurrentBehavior)
-	{
-	case EMobBehaviors::Chase:
-	default:
-		SetFightBehavior(*pWold, *MyCharacter);
-		return;
-	case EMobBehaviors::Retreat:
-		SetChaseBehavior(*pWold, *MyCharacter);
-		return;
-	case EMobBehaviors::Follow:
-		SetIdleBehavior(*pWold, *MyCharacter);
-		return;
-	}
 }
 

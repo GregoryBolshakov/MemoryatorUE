@@ -1,7 +1,6 @@
 #pragma once
 
-#include "AIController.h"
-#include "MInterfaceMobController.h"
+#include "MMobControllerBase.h"
 #include "MMobController.generated.h"
 
 class AMCharacter;
@@ -11,14 +10,13 @@ class AMCharacter;
  * Manages an NPC's behavior in the game. 
  */
 UCLASS(Blueprintable)
-class TOPDOWNTEMP_API AMMobController : public AAIController, public IMInterfaceMobController
+class TOPDOWNTEMP_API AMMobController : public AMMobControllerBase
 {
 	GENERATED_UCLASS_BODY()
 
 public:
-	virtual void Tick(float DeltaSeconds) override;
 
-	virtual void OnFightEnd() override;
+	virtual void OnFightAnimationEnd() override;
 
 	virtual void OnHit() override;
 
@@ -41,8 +39,6 @@ private:
 	virtual void SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
 	virtual void OnBehaviorChanged(AMCharacter& MyCharacter) override;
-
-	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 
 	UPROPERTY()
 	APawn* Victim;

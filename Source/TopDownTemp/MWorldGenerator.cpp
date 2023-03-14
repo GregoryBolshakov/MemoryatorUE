@@ -64,7 +64,7 @@ void AMWorldGenerator::GenerateWorld()
 		{
 			FVector Location(x, y, 0);
 			FActorSpawnParameters EmptySpawnParameters{};
-			auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, {}, EmptySpawnParameters);
+			auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, FRotator::ZeroRotator, EmptySpawnParameters);
 
 			int TreeSpawnRate = FMath::RandRange(1, 5);
 			//if (TreeSpawnRate == 1)
@@ -72,7 +72,7 @@ void AMWorldGenerator::GenerateWorld()
 				const auto TreeDefault = GetDefault<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")));
 				FVector TreeLocation(x, y, 0);
 				EmptySpawnParameters = {};
-				auto* Tree = SpawnActor<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")), TreeLocation, {}, EmptySpawnParameters);
+				auto* Tree = SpawnActor<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")), TreeLocation, FRotator::ZeroRotator, EmptySpawnParameters);
 			}
 		}
 	}
@@ -80,7 +80,7 @@ void AMWorldGenerator::GenerateWorld()
 	FActorSpawnParameters SpawnParameters;
 	SpawnParameters.Name = "VillageGenerator_1";
 	const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
-	const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), {}, SpawnParameters);
+	const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator, SpawnParameters);
 	VillageGenerator->Generate();
 	UpdateNavigationMesh();
 }
@@ -408,12 +408,12 @@ TSubclassOf<AActor> AMWorldGenerator::GetClassToSpawn(FName Name)
 	return nullptr;
 }
 
-TMap<FName, FActorWorldMetadata> AMWorldGenerator::GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic)
+TMap<FName, AActor*> AMWorldGenerator::GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic)
 {
 	const auto StartBlock = GetGroundBlockIndex(UpperLeft);
 	const auto FinishBlock = GetGroundBlockIndex(BottomRight);
 
-	TMap<FName, FActorWorldMetadata> Result;
+	TMap<FName, AActor*> Result;
 
 	for (auto X = StartBlock.X; X <= FinishBlock.X; ++X)
 	{
@@ -426,8 +426,10 @@ TMap<FName, FActorWorldMetadata> AMWorldGenerator::GetActorsInRect(FVector Upper
 				{
 					for (const auto& [Name, Actor] : Actors)
 					{
-						if (const auto Metadata = ActorsMetadata.Find(Name))
-							Result.Add(Name, *Metadata);
+						if (const auto Metadata = ActorsMetadata.Find(Name); Actor)
+						{
+							Result.Add(Name, Metadata->Actor);
+						}
 					}
 				}
 			}
@@ -510,5 +512,8 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* InActorClass)
 	}
 
 	Box.GetCenterAndExtents(Result.Origin, Result.BoxExtent);
+
+	// We ignore Z value on purpose
+	Result.SphereRadius = Result.BoxExtent.Size2D();
 	return Result;
 }

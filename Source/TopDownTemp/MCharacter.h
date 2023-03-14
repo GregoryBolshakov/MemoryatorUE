@@ -19,11 +19,19 @@ public:
 
 	float GetFightRange() const { return FightRange; }
 
+	float GetForgetEnemyRange() const { return ForgetEnemyRange; }
+
 	float GetRetreatRange() const { return RetreatRange; }
+
+	float GetWalkSpeed() const { return WalkSpeed; }
+
+	float GetRunSpeed() const { return RunSpeed; }
 	
 	bool GetCanRetreat() const { return bCanRetreat; }
 
 	TSubclassOf<class AAIController> GetControllerClass() const { return ControllerClass; }
+
+	class UMIsActiveCheckerComponent* GetIsActiveCheckerComponent() const { return IsActiveCheckerComponent; }
 
 	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; }
 
@@ -48,7 +56,7 @@ protected:
 	class UM2DRepresentationComponent* RepresentationComponent;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;
+	UMIsActiveCheckerComponent* IsActiveCheckerComponent;
 
 	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);
 	FVector ForcedGazeVector;
@@ -75,9 +83,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float FightRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float ForgetEnemyRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float Strength;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float RetreatRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float WalkSpeed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float RunSpeed;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	bool bCanRetreat;
 	//TODO: Create variables for original values e.g. MaxHealth, DefaultSightRange, etc.

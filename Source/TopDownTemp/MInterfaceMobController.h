@@ -8,6 +8,7 @@ UENUM()
 enum class EMobBehaviors
 {
 	Idle = 0,
+	Walk,
 	Chase,
 	Fight,
 	Follow,
@@ -15,6 +16,14 @@ enum class EMobBehaviors
 	Guard,
 	Retreat,
 	Hide,
+};
+
+UENUM()
+enum class ERelationType
+{
+	Neutral = 0,
+	Enemy = 1,
+	Friend = 2
 };
 
 // Class needed to support InterfaceCast<class IInterfaceDriver>(Object)
@@ -35,8 +44,9 @@ class TOPDOWNTEMP_API IMInterfaceMobController
 public:
 
 	UFUNCTION(BlueprintCallable)
-	virtual void OnFightEnd() {}
+	virtual void OnFightAnimationEnd() {}
 
+	/** The possessed mob hit somebody */
 	UFUNCTION(BlueprintCallable)
 	virtual void OnHit() {}
 
@@ -52,9 +62,11 @@ protected:
 
 	virtual void DoRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
+	virtual void DoHideBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
+
 	virtual void SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
-	virtual void SetWalkBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
+	virtual void SetWalkBehavior(const UWorld& World, AMCharacter& MyCharacter, const FVector& DestinationPoint) {}
 
 	virtual void SetChaseBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
@@ -62,7 +74,8 @@ protected:
 
 	virtual void SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
-	virtual void OnBehaviorChanged(AMCharacter& MyCharacter) {}
+	virtual void SetHideBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
-	EMobBehaviors CurrentBehavior = EMobBehaviors::Idle;
+	/** Logic to do in transition between behaviors */
+	virtual void OnBehaviorChanged(AMCharacter& MyCharacter) {}
 };
