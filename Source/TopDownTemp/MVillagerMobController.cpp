@@ -74,24 +74,31 @@ void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& M
 	{
 		TimerManager.SetTimer(RestTimerHandle, [this, &World, &MyCharacter]
 		{
-			// Calculate a random point within the village to go
-			const float RandomAngle = FMath::RandRange(0.f, 1.f) * 2.0f * PI;
-			const float RandomRadius = FMath::RandRange(0.f, 1.f) * VillageRadius;
-			const FVector RandomPoint{
-				VillageCenter.X + RandomRadius * cos(RandomAngle),
-				VillageCenter.Y + RandomRadius * sin(RandomAngle),
-				0.f
-				};
+			constexpr int TriesToFindLocation = 3;
+			bool bSuccess = false;
+			for (int i = 0; i < TriesToFindLocation; ++i)
+			{
+				// Calculate a random point within the village to go
+				const float RandomAngle = FMath::RandRange(0.f, 1.f) * 2.0f * PI;
+				const float RandomRadius = FMath::RandRange(0.f, 1.f) * VillageRadius;
+				const FVector RandomPoint{
+					VillageCenter.X + RandomRadius * cos(RandomAngle),
+					VillageCenter.Y + RandomRadius * sin(RandomAngle),
+					0.f
+					};
 
-			// Project the destination point to navigation mesh to find the closest reachable node
-			FVector NavigatedLocation;
-			if (UNavigationSystemV1::K2_ProjectPointToNavigation(const_cast<UWorld*>(&World), RandomPoint, NavigatedLocation, nullptr, nullptr))
-			{
-				SetWalkBehavior(World, MyCharacter, NavigatedLocation);
+				// Project the destination point to navigation mesh to find the closest reachable node
+				FVector NavigatedLocation;
+				if (UNavigationSystemV1::K2_ProjectPointToNavigation(const_cast<UWorld*>(&World), RandomPoint, NavigatedLocation, nullptr, nullptr))
+				{
+					SetWalkBehavior(World, MyCharacter, NavigatedLocation);
+					bSuccess = true;
+					break;
+				}
 			}
-			else
+			if (!bSuccess)
 			{
-				// If the point was obstructed, it's okay, villager will wait for the timer again and then try  
+				// If all the points were obstructed, it's okay, villager will wait for the timer again and then try
 				SetIdleBehavior(World, MyCharacter);
 			}
 		}, FMath::RandRange(MinRestDuration, MaxRestDuration), false);

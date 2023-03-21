@@ -1,9 +1,9 @@
 #include "M2DRepresentationComponent.h"
 
+#include "M2DRepresentationBlueprintLibrary.h"
 #include "M2DShadowControllerComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
-#include "Camera/CameraComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "MRotatableFlipbookComponent.h"
 
@@ -33,6 +33,8 @@ void UM2DRepresentationComponent::BeginPlay()
 
 void UM2DRepresentationComponent::SetUpSprites()
 {
+	CapsuleComponentArray.Empty();
+	RenderComponentArray.Empty();
 	TArray<USceneComponent*> ChildComponents;
 	GetChildrenComponents(true, ChildComponents);
 
@@ -56,6 +58,10 @@ void UM2DRepresentationComponent::CreateShadowTwins()
 	{
 		return;
 	}
+
+	//TODO: Don't create another twins and controllers. We should search if there are already created in case of PostEditChangeProperty invalidation
+	ShadowTwinComponentArray.Empty();
+	ShadowTwinControllerArray.Empty();
 
 	for (const auto& RenderComponent : RenderComponentArray)
 	{
@@ -98,6 +104,7 @@ void UM2DRepresentationComponent::CreateShadowTwins()
 			ShadowComponent->SetWorldTransform(RenderComponent->GetComponentTransform());
 
 			ShadowTwinComponentArray.Add(ShadowComponent);
+			ShadowTwinControllerArray.Add(ShadowControllerComponent);
 		}
 	}
 }
@@ -109,8 +116,20 @@ void UM2DRepresentationComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	FaceToCamera();
 }
 
-void UM2DRepresentationComponent::SetMeshByRotation(float Angle, const FName& Tag)
+void UM2DRepresentationComponent::SetMeshByGazeAndVelocity(const FVector& IN_Gaze, const FVector& IN_Velocity,
+	const FName& Tag)
 {
+	if (abs(UM2DRepresentationBlueprintLibrary::GetDeflectionAngle(IN_Gaze, IN_Velocity)) > 90.f)
+	{
+		OnReverseMovementStartedDelegate.Broadcast();
+	}
+	else
+	{
+		OnReverseMovementStoppedDelegate.Broadcast();
+	}
+
+	const auto Angle = UM2DRepresentationBlueprintLibrary::GetCameraDeflectionAngle(this, IN_Gaze);
+
 	for (const auto RenderComponent : RenderComponentArray)
 	{
 		if (const auto RotatableFlipbook = Cast<UMRotatableFlipbookComponent>(RenderComponent);
@@ -119,28 +138,22 @@ void UM2DRepresentationComponent::SetMeshByRotation(float Angle, const FName& Ta
 			RotatableFlipbook->SetFlipbookByRotation(Angle);
 		}
 	}
+
+	LastValidGaze = IN_Gaze;
 }
 
-float UM2DRepresentationComponent::GetCameraDeflectionAngle(const UObject* WorldContextObject, FVector GazeDirection)
+void UM2DRepresentationComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	const UWorld* pWorld = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull);
-	if (!pWorld)
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+#if WITH_EDITOR
+	if (GIsPlayInEditorWorld)
 	{
-		return 0.f;
+		// It is still poorly understood, but for some reason some of the stored pointers to components are invalidated
+		// after changing parameters at runtime. Therefore, we point them again.
+		PostInitChildren();
 	}
-
-	auto CameraVector = pWorld->GetFirstPlayerController()->PlayerCameraManager->GetActorForwardVector();
-	CameraVector.Z = 0;
-
-	GazeDirection.Z = 0;
-
-	const FVector CrossProduct = FVector::CrossProduct(CameraVector, GazeDirection);
-	float Angle = FMath::RadiansToDegrees(FMath::Atan2(CrossProduct.Size(), FVector::DotProduct(CameraVector, GazeDirection)));
-	const FVector UpVector(0.f, 0.f, 1.f);
-	float Sign = FVector::DotProduct(UpVector, CrossProduct) < 0.f ? -1.f : 1.f;
-	Angle *= Sign;
-
-	return Angle;
+#endif
 }
 
 void UM2DRepresentationComponent::FaceToCamera()
@@ -158,32 +171,36 @@ void UM2DRepresentationComponent::FaceToCamera()
 	//TODO: Not to get Pawn reference every tick; Remember this field and update by event (CPU)
 	const auto PlayerLocation = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetTransform().GetLocation();
 	auto FarCameraLocation = CameraLocation + (CameraLocation - PlayerLocation);
-	FarCameraLocation.Z /= 2; //TODO: bring the option out to the editor 
+	FarCameraLocation.Z /= 2; //TODO: bring the option out to the editor
 
 	for (const auto& RenderComponent : RenderComponentArray)
 	{
 		if (!IsValid(RenderComponent))
 			continue;
-		
+
 		TArray<USceneComponent*> RenderComponentChildren;
 		RenderComponent->GetChildrenComponents(false, RenderComponentChildren);
-		
+
+		// Try to find the first child with USceneComponent class. It will be the pivot point for the face-to-camera rotation
+		const USceneComponent* OriginPoint = RenderComponent;
 		for (const auto& Child : RenderComponentChildren)
 		{
-			if (Child->GetClass() == USceneComponent::StaticClass()) // The Child is the OriginPoint component
+			if (Child->GetClass() == USceneComponent::StaticClass())
 			{
-				auto ChildLocation = Child->GetComponentTransform().GetLocation();
-				const auto DirectionVector = ChildLocation - FarCameraLocation;
-				
-				const FRotator Rotation = FRotationMatrix::MakeFromX(DirectionVector).Rotator();
-				RenderComponent->SetWorldRotation(Rotation);
-				RenderComponent->AddLocalRotation(FRotator(0.f, 90.f, 0.f));
-
-				// Move sprite so that its origin point matches its starting position.
-				// (the point moved after sprite rotation, because it is attached to it) 
-				RenderComponent->MoveComponent(ChildLocation - Child->GetComponentTransform().GetLocation(), RenderComponent->GetComponentQuat(), false);
+				OriginPoint = Child;
 				break;
 			}
 		}
+		const auto OriginPointLocation = OriginPoint->GetComponentLocation();
+		const auto DirectionVector = OriginPointLocation - FarCameraLocation;
+
+		const FRotator Rotation = FRotationMatrix::MakeFromX(DirectionVector).Rotator();
+		RenderComponent->SetWorldRotation(Rotation);
+		RenderComponent->AddLocalRotation(FRotator(0.f, 90.f, 0.f));
+		RenderComponent->AddLocalRotation(RotationWhileFacingCamera);
+
+		// Move sprite so that its origin point matches its starting position.
+		// (the point might have moved after sprite rotation, because it is attached to it) 
+		RenderComponent->MoveComponent(OriginPointLocation - OriginPoint->GetComponentLocation(), RenderComponent->GetComponentQuat(), false);
 	}
 }

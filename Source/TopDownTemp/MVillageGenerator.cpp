@@ -137,7 +137,7 @@ bool AMVillageGenerator::TryToPlaceBuilding(AActor& BuildingActor, int& Building
 		Radius += FMath::Max3(BoxExtent.X, BoxExtent.Y, BoxExtent.Z) / 2.f;
 		continue;
 	}*/
-	check(false);
+	//check(false);
 	return false;
 }
 

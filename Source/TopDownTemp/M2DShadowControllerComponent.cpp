@@ -1,11 +1,11 @@
 #include "M2DShadowControllerComponent.h"
 
 #include "ComponentUtils.h"
-#include "M2DRepresentationComponent.h"
 #include "PaperFlipbookComponent.h"
 #include "Engine/DirectionalLight.h"
 #include "Kismet/GameplayStatics.h"
 #include "MRotatableFlipbookComponent.h"
+#include "M2DRepresentationBlueprintLibrary.h"
 
 UM2DShadowControllerComponent::UM2DShadowControllerComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -94,7 +94,7 @@ void UM2DShadowControllerComponent::OnPossessedMeshUpdated(
 		}
 
 		// If the camera observes the mesh from the opposite side, it should be mirrored
-		const auto angle = UM2DRepresentationComponent::GetCameraDeflectionAngle(this, pDirectionalLight->GetActorForwardVector());
+		const auto angle = UM2DRepresentationBlueprintLibrary::GetCameraDeflectionAngle(this, pDirectionalLight->GetActorForwardVector());
 		if (abs(angle) > 90.f)
 		{
 			Scale.X *= -1;

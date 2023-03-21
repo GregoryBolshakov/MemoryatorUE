@@ -10,6 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "M2DRepresentationComponent.h"
+#include "M2DRepresentationBlueprintLibrary.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MPlayerController.h"
 #include "PaperSpriteComponent.h"
@@ -64,8 +65,8 @@ void AMCharacter::Tick(float DeltaSeconds)
 	UpdateLastNonZeroDirection();
 
 	const auto GazeDirection = ForcedGazeVector.IsZero() ? LastNonZeroVelocity : ForcedGazeVector;
-	const auto Angle = UM2DRepresentationComponent::GetCameraDeflectionAngle(this, GazeDirection);
-	RepresentationComponent->SetMeshByRotation(Angle);
+
+	RepresentationComponent->SetMeshByGazeAndVelocity(GazeDirection, GetVelocity());
 }
 
 void AMCharacter::PostInitializeComponents()

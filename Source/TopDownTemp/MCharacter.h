@@ -29,13 +29,13 @@ public:
 	
 	bool GetCanRetreat() const { return bCanRetreat; }
 
-	TSubclassOf<class AAIController> GetControllerClass() const { return ControllerClass; }
+	FVector GetForcedGazeVector() const { return ForcedGazeVector; }
 
 	class UMIsActiveCheckerComponent* GetIsActiveCheckerComponent() const { return IsActiveCheckerComponent; }
 
-	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; }
+	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; UpdateAnimation(); }
 
-	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; }
+	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; UpdateAnimation(); }
 
 	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
 
@@ -58,11 +58,11 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UMIsActiveCheckerComponent* IsActiveCheckerComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);
-	FVector ForcedGazeVector;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=Controller, meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<AAIController> ControllerClass;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FVector ForcedGazeVector;
 
 	//TODO: It's hard to say if these booleans should be here or in Controller
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))

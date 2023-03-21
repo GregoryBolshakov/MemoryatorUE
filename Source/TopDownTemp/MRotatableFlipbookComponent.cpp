@@ -7,6 +7,11 @@
 
 UMRotatableFlipbookComponent::UMRotatableFlipbookComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, LastValidViewingAngle(0.f)
+	, LastValidFlipbook(nullptr)
+	, LastValidPlayRate(0)
+	, LastValidbLoopping(false)
+	, LastValidbReversePlayback(false)
 {
 }
 
@@ -25,19 +30,19 @@ void UMRotatableFlipbookComponent::SetFlipbookByRotation(float ViewingAngle)
 		const auto sign = ViewingAngle >= 0.f ? 1.f : -1.f;
 		// The angle of object's gaze. 0 means match with camera vector,
 		// 90 = watches to the right, 180 or -180 = face the camera, -90 = watches to the left
-		ViewingAngle = abs(ViewingAngle);
+		const auto AbsViewingAngle = abs(ViewingAngle);
 
 		// Determine to which sector of the coordinate circle ViewingAngle belongs
 		int FlipbookIndex;
 		if (FlipbooksCount <= 2)
 		{
 			const int AngleSegmentValue = 180.f / FlipbooksCount;
-			FlipbookIndex = StaticCast<int>(ViewingAngle / AngleSegmentValue);
+			FlipbookIndex = StaticCast<int>(AbsViewingAngle / AngleSegmentValue);
 		}
 		else
 		{
 			const int AngleSegmentValue = 180.f / (FlipbooksCount - 1);
-			FlipbookIndex = StaticCast<int>((ViewingAngle + AngleSegmentValue / 2) / AngleSegmentValue);
+			FlipbookIndex = StaticCast<int>((AbsViewingAngle + AngleSegmentValue / 2) / AngleSegmentValue);
 		}
 
 		if (FlipbookIndex >= FlipbooksCount)
@@ -46,8 +51,6 @@ void UMRotatableFlipbookComponent::SetFlipbookByRotation(float ViewingAngle)
 			OnFlipbookChangedDelegate.Broadcast(nullptr, 0.f, 0.f, false, false, {});
 			return;
 		}
-
-		bool bForceUpdate = false;
 
 		// Mirror the flipbook if needed
 		FVector Scale = GetRelativeScale3D();
@@ -59,25 +62,30 @@ void UMRotatableFlipbookComponent::SetFlipbookByRotation(float ViewingAngle)
 		{
 			Scale.X = -abs(Scale.X);
 		}
-		if (Scale != GetRelativeScale3D())
-		{
-			bForceUpdate = true;
-		}
-		SetRelativeScale3D(Scale);
 
-		if (SourceFlipbook != FlipbookArray->Flipbooks[FlipbookIndex] ||
-			PlayRate != FlipbookArray->PlayRate ||
-			bLooping != FlipbookArray->bLooping ||
-			bReversePlayback != FlipbookArray->bReversePlayback ||
-			bForceUpdate)
+		if (FlipbookArray->Flipbooks[FlipbookIndex] != LastValidFlipbook ||
+			PlayRate != LastValidPlayRate ||
+			bLooping != LastValidbLoopping ||
+			//bReversePlayback != LastValidbReversePlayback ||
+			Scale != GetRelativeScale3D() ||
+			!SourceFlipbook
+			)
 		{
 			const auto PlaybackPosition = GetPlaybackPosition();
 			SetFlipbook(FlipbookArray->Flipbooks[FlipbookIndex]);
 			SetPlaybackPosition(PlaybackPosition, false);
 			SetPlayRate(FlipbookArray->PlayRate);
 			SetLooping(FlipbookArray->bLooping);
-			bReversePlayback = FlipbookArray->bReversePlayback;
+			SetRelativeScale3D(Scale);
 			Play();
+
+			LastValidFlipbook = FlipbookArray->Flipbooks[FlipbookIndex];
+			LastValidPlayRate = GetPlayRate();
+			LastValidbLoopping = bLooping;
+			LastValidbReversePlayback = bReversePlayback;
+			LastValidScale = Scale;
+
+			LastValidViewingAngle = ViewingAngle;
 
 			OnFlipbookChangedDelegate.Broadcast(GetFlipbook(), PlaybackPosition, PlayRate, bLooping, bReversePlayback, Scale);
 		}
@@ -113,7 +121,6 @@ void UMRotatableFlipbookComponent::TickComponent(float DeltaTime, ELevelTick Tic
 				SetFlipbook(FirstValidAction.Flipbooks[0]);
 				SetPlayRate(FirstValidAction.PlayRate);
 				SetLooping(FirstValidAction.bLooping);
-				bReversePlayback = FirstValidAction.bReversePlayback;
 			}
 		}
 	}

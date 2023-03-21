@@ -34,10 +34,6 @@ public:
 	/** Whether the flipbook should loop when it reaches the end, or stop */
 	UPROPERTY(Category=Flipbooks, EditAnywhere)
 	uint32 bLooping:1;
-
-	/** If playback should move the current position backwards instead of forwards */
-	UPROPERTY(Category=Flipbooks, EditAnywhere)
-	uint32 bReversePlayback:1;
 };
 
 //TODO: Add a minimum playing time for every flipbook to avoid flickering due to frequent animation changes
@@ -48,7 +44,7 @@ class TOPDOWNTEMP_API UMRotatableFlipbookComponent : public UPaperFlipbookCompon
 
 public:
 
-	UFUNCTION(BlueprintCallable, Category = "Rendering")
+	UFUNCTION(BlueprintCallable, Category = "MRotatableFlipbookComponent")
 	void SetAction(const FName& _Action) { Action = _Action; }
 
 	/** 
@@ -57,7 +53,7 @@ public:
 	 */
 	void SetFlipbookByRotation(float ViewingAngle);
 
-	UPROPERTY(EditAnywhere, BlueprintAssignable)
+	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent")
 	FOnSpriteChanged OnSpriteChangeDelegate;
 
 	FOnFlipbookChanged OnFlipbookChangedDelegate;
@@ -71,4 +67,12 @@ private:
 
 	UPROPERTY(Category=Flipbooks, EditAnywhere, meta=(DisplayThumbnail = "true"))
 	TMap<FName, FFlipbooksArray> FlipbookByAction;
+
+	UPROPERTY()
+	UPaperFlipbook* LastValidFlipbook;
+	float LastValidPlayRate;
+	bool LastValidbLoopping;
+	bool LastValidbReversePlayback;
+	FVector LastValidScale;
+	float LastValidViewingAngle;
 };

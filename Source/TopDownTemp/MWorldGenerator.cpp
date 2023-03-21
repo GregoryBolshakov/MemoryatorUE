@@ -373,25 +373,6 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 		Actor = pWorld->SpawnActor(Class, &Location, &Rotation, SpawnParameters);
 	}
 
-	if (bDynamic)
-	{
-		if (const auto Character = Cast<AMCharacter>(Actor))
-		{
-			// Spawn an AI controller for a spawned creature
-			if (const auto pCrowdManager = pWorld->GetSubsystem<UMWorldManager>()->GetCrowdManager())
-			{
-				if (const auto Controller = pCrowdManager->SpawnAIController(SpawnParameters.Name, Character->GetControllerClass(), Location, Rotation)) //TODO: Add valid spawn parameters
-				{
-					Controller->Possess(Character);
-				}
-				else
-				{
-					check(false);
-				}
-			}
-		}
-	}
-
 	// We also store the mapping between the Name and metadata (actor's GroundBlock index, etc.)
 	const FActorWorldMetadata Metadata{ListToAdd.Add(SpawnParameters.Name, Actor), GroundBlockIndex};
 	ActorsMetadata.Add(SpawnParameters.Name, Metadata);

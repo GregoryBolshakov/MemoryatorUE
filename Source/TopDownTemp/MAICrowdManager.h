@@ -8,7 +8,7 @@
  * Manages all NPCs in the game. Can turn them on/off, change the difficulty, etc.
  */
 UCLASS(Blueprintable)
-class TOPDOWNTEMP_API AMAICrowdManager : public AActor //TODO: Rename this class. Name is already taken by Navigation system
+class TOPDOWNTEMP_API AMAICrowdManager : public AActor //TODO: Maybe remove this, now is useless
 {
 	GENERATED_UCLASS_BODY()
 

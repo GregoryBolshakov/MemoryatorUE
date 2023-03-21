@@ -7,6 +7,9 @@
 #include "MMemoryator.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "MConsoleCommandsManager.h"
+#include "MInterfaceMobController.h"
+#include "MWorldManager.h"
+#include "MWorldGenerator.h"
 
 AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer),
@@ -46,7 +49,33 @@ void AMPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
-	// keep updating the destination every tick while desired
+	const auto pWorld = GetWorld();
+	if (!pWorld)
+	{
+		check(false);
+		return;
+	}
+
+	const auto pMyCharacter = Cast<AMCharacter>(GetPawn());
+	if (!pMyCharacter)
+	{
+		check(false);
+		return;
+	}
+
+	// Get actors nearby every N seconds. We don't need to do this every frame
+	if (auto& TimerManager = GetWorld()->GetTimerManager();
+		!TimerManager.IsTimerActive(ActorsNearbyUpdateTimerHandle))
+	{
+		TimerManager.SetTimer(ActorsNearbyUpdateTimerHandle, [this, pWorld, pMyCharacter]
+		{
+			SetDynamicActorsNearby(*pWorld, *pMyCharacter);
+		}, 1.f, false);
+	}
+
+	FixGazeOnClosestEnemy(*pMyCharacter);
+
+	// Keep updating the destination every tick while desired
 	if (bMoveToMouseCursor)
 	{
 		MoveToMouseCursor();
@@ -64,6 +93,9 @@ void AMPlayerController::SetupInputComponent()
 	InputComponent->BindAction("ToggleIsTurningAround", IE_Pressed, this, &AMPlayerController::OnToggleTurnAroundPressed);
 	InputComponent->BindAction("ToggleIsTurningAround", IE_Released, this, &AMPlayerController::OnToggleTurnAroundReleased);
 
+	InputComponent->BindAction("ToggleIsFighting", IE_Pressed, this, &AMPlayerController::OnToggleFightPressed);
+	InputComponent->BindAction("ToggleIsFighting", IE_Released, this, &AMPlayerController::OnToggleFightReleased);
+
 	// support touch devices 
 	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AMPlayerController::MoveToTouchLocation);
 	InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &AMPlayerController::MoveToTouchLocation);
@@ -72,6 +104,55 @@ void AMPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("MoveRight", this, &AMPlayerController::MoveRight);
 
 	InputComponent->BindAxis("TurnAround", this, &AMPlayerController::TurnAround);
+}
+
+void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter& MyCharacter)
+{
+	if (const auto pWorldGenerator = World.GetSubsystem<UMWorldManager>()->GetWorldGenerator())
+	{
+		const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
+		const auto ForgetEnemyRange = MyCharacter.GetForgetEnemyRange();
+		const auto DynamicActorsNearby = pWorldGenerator->GetActorsInRect(CharacterLocation - FVector(ForgetEnemyRange,ForgetEnemyRange, 0.f), CharacterLocation + FVector(ForgetEnemyRange,ForgetEnemyRange, 0.f), true);
+		EnemiesNearby.Empty();
+
+		if (!DynamicActorsNearby.IsEmpty())
+		{
+			for (const auto& [Name, DynamicActor] : DynamicActorsNearby)
+			{
+				// The actors are taken in a square area, in the corners the distance is greater than the radius
+				const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
+				if (DistanceToActor <= MyCharacter.GetForgetEnemyRange())
+				{
+					// Split dynamic actors by role
+
+					// Check if the actor is an enemy
+					if (const auto Relationship = RelationshipMap.Find(DynamicActor->GetClass());
+						Relationship && *Relationship == ERelationType::Enemy)
+					{
+						EnemiesNearby.Add(Name, DynamicActor);
+					}
+					
+					//TODO: Check if the actor is a friend
+				}
+			}
+		}
+	}
+}
+
+void AMPlayerController::FixGazeOnClosestEnemy(AMCharacter& MyCharacter)
+{
+	MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
+	for (const auto& [Name, EnemyActor] : EnemiesNearby)
+	{
+		const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
+		const auto EnemyLocation = EnemyActor->GetTransform().GetLocation();
+		const auto DistanceToActor = FVector::Distance(CharacterLocation, EnemyLocation);
+		// Fix our character's gaze on the enemy if it is the closest one and is within sight range
+		if (DistanceToActor <= MyCharacter.GetFightRange() * 3.f && (DistanceToActor <= MyCharacter.GetForcedGazeVector().Size() || MyCharacter.GetForcedGazeVector().IsZero())) //TODO: put " * 1.5f" to the properties 
+		{
+			MyCharacter.SetForcedGazeVector(EnemyLocation - CharacterLocation);
+		}
+	}
 }
 
 void AMPlayerController::MoveRight(float Value)
@@ -200,6 +281,22 @@ void AMPlayerController::OnToggleTurnAroundPressed()
 void AMPlayerController::OnToggleTurnAroundReleased()
 {
 	bIsTurningAround = false;
+}
+
+void AMPlayerController::OnToggleFightPressed()
+{
+	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()))
+	{
+		MyCharacter->SetIsFighting(true);
+	}
+}
+
+void AMPlayerController::OnToggleFightReleased()
+{
+	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()))
+	{
+		MyCharacter->SetIsFighting(false);
+	}
 }
 
 bool AMPlayerController::ProcessConsoleExec(const TCHAR* Cmd, FOutputDevice& Ar, UObject* Executor)
