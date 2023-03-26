@@ -10,6 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "M2DRepresentationComponent.h"
+#include "MInventoryComponent.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MPlayerController.h"
 #include "PaperSpriteComponent.h"
@@ -118,4 +119,11 @@ void AMMemoryator::HandleAnimationStates()
 		IsMoving = true;
 		UpdateAnimation();
 	}
+}
+
+void AMMemoryator::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
+	InventoryComponent->Initialize(40, {{0, 10}, {1, 11}, {2, 12}, {3, 13}});
 }

@@ -33,6 +33,8 @@ public:
 
 	class UMIsActiveCheckerComponent* GetIsActiveCheckerComponent() const { return IsActiveCheckerComponent; }
 
+	class UMInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
 	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; UpdateAnimation(); }
 
 	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; UpdateAnimation(); }
@@ -52,8 +54,11 @@ protected:
 	void UpdateLastNonZeroDirection();
 
 	/** Representation (collection of sprites) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Representation, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
 	class UM2DRepresentationComponent* RepresentationComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
+	UMInventoryComponent* InventoryComponent;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UMIsActiveCheckerComponent* IsActiveCheckerComponent;

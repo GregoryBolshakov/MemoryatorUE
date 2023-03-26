@@ -1,21 +1,11 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "MCharacter.h"
-#include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
-#include "Components/DecalComponent.h"
-#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/PlayerController.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
 #include "M2DRepresentationComponent.h"
-#include "M2DRepresentationBlueprintLibrary.h"
 #include "MIsActiveCheckerComponent.h"
-#include "MPlayerController.h"
-#include "PaperSpriteComponent.h"
-#include "Materials/Material.h"
-#include "Engine/World.h"
+#include "MInventoryComponent.h"
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0")))
@@ -37,6 +27,8 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	// Collection of sprites or flipbooks representing the character. It's not the Root Component!
 	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("2DRepresentation"));
 	RepresentationComponent->SetupAttachment(RootComponent);
+
+	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("InventoryrComponent"));
 
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
 

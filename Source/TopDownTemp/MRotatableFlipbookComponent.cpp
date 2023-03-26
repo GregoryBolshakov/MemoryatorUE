@@ -7,11 +7,11 @@
 
 UMRotatableFlipbookComponent::UMRotatableFlipbookComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, LastValidViewingAngle(0.f)
 	, LastValidFlipbook(nullptr)
 	, LastValidPlayRate(0)
 	, LastValidbLoopping(false)
 	, LastValidbReversePlayback(false)
+	, LastValidViewingAngle(0.f)
 {
 }
 

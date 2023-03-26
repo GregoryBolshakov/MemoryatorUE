@@ -67,10 +67,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MGameInstance.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MGameInstance.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Memoryator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Memoryator.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Temp/1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Temp/1_Sprite.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_Inventory.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_Inventory.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_InventorySlot.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_InventorySlot.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/TopDownTemp.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/TopDownTemp.Build.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -81,6 +93,7 @@
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/2D/Paper2D/Source/Paper2D/Classes/PaperSpriteActor.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/2D/Paper2D/Source/Paper2D/Private/PaperSpriteActor.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Developer/GraphColor/Private/graph.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Developer/GraphColor/Private/graphColorVertices.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Programs/Enterprise/Datasmith/DatasmithSolidworksExporter/Private/DatasmithExporter.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Programs/UnrealBuildTool/Configuration/TargetRules.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Classes/Engine/EngineBaseTypes.h" root0="FORCE_HIGHLIGHTING" />
@@ -91,9 +104,9 @@
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/ThirdParty/NVIDIA/nvapi/nvapi_lite_common.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/ThirdParty/NVIDIA/nvapi/nvapi_lite_d3dext.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/ThirdParty/mimalloc/src/alloc.c" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Nakama/Source/NakamaUnreal/Public/NakamaClient.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MActor.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.cpp" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -23062,7 +23075,11 @@
       <workItem from="1679327556262" duration="7822000" />
       <workItem from="1679415416679" duration="7153000" />
       <workItem from="1679502885940" duration="3210000" />
-      <workItem from="1679596945889" duration="2476000" />
+      <workItem from="1679596945889" duration="4309000" />
+      <workItem from="1679676918794" duration="6049000" />
+      <workItem from="1679738334938" duration="10683000" />
+      <workItem from="1679759870090" duration="9633000" />
+      <workItem from="1679819899908" duration="2395000" />
     </task>
     <servers />
   </component>
