@@ -13,6 +13,8 @@ class TOPDOWNTEMP_API UMInventoryWidget : public UUserWidget
 
 public:
 
+	virtual void NativeDestruct() override;
+
 	UFUNCTION(BlueprintCallable)
 	void CreateSlots();
 

@@ -2,9 +2,26 @@
 #include "MCharacter.h"
 #include "MGameInstance.h"
 #include "MInventoryComponent.h"
+#include "MInventorySlotWidget.h"
 #include "Components/Image.h"
-#include "Components/TextBlock.h"
+#include "Components/RichTextBlock.h"
 #include "Components/WrapBox.h"
+
+void UMInventoryWidget::NativeDestruct()
+{
+	Super::NativeDestruct();
+
+	if (const auto pPlayerCharacter = Cast<AMCharacter>(GetOwningPlayerPawn()))
+	{
+		if (const auto InventoryComponent = pPlayerCharacter->GetInventoryComponent())
+		{
+			for (auto& [Item, OnChangedDelegate] : InventoryComponent->GetSlots())
+			{
+				OnChangedDelegate.Unbind();
+			}
+		}
+	}
+}
 
 void UMInventoryWidget::CreateSlots()
 {
@@ -25,12 +42,18 @@ void UMInventoryWidget::CreateSlots()
 	const auto ItemsData = pGameInstance->ItemsDataAsset->ItemsData;
 
 	// Create widgets for player's inventory slots
-	for (const auto& Item : InventoryComponent->GetSlots())
+	for (auto& [Item, OnChangedDelegate] : InventoryComponent->GetSlots())
 	{
-		const auto SlotWidget = CreateWidget(this, ItemSlotWidgetBPClass);
+		const auto SlotWidget = CreateWidget<UMInventorySlotWidget>(this, ItemSlotWidgetBPClass);
+		if (!SlotWidget)
+			continue;
+
+		SlotWidget->SetNumberInArray(Item.ID);
+		SlotWidget->SetOwnerInventory(InventoryComponent);
+		OnChangedDelegate.BindDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
 
 		const auto IconWidget = Cast<UImage>(SlotWidget->GetWidgetFromName(TEXT("ItemIcon")));
-		const auto QuantityTextWidget = Cast<UTextBlock>(SlotWidget->GetWidgetFromName(TEXT("QuantityTextBlock")));
+		const auto QuantityTextWidget = Cast<URichTextBlock>(SlotWidget->GetWidgetFromName(TEXT("QuantityTextBlock")));
 		if (IconWidget && QuantityTextWidget) // Icon and QuantityText widgets exist
 		{
 			if (Item.Quantity > 0 && Item.ID < ItemsData.Num())

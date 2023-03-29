@@ -19,27 +19,27 @@ void UMInventoryComponent::Initialize(int IN_SlotsNumber, const TArray<FItem>& S
 
 void UMInventoryComponent::SortItems(const TArray<FItemData>& ItemsData)
 {
-	Slots.Sort([&ItemsData](const FItem& A, const FItem& B)
+	Slots.Sort([&ItemsData](const FSlot& A, const FSlot& B)
 	{
-		if (ItemsData.Num() <= A.ID || ItemsData.Num() <= B.ID)
+		if (ItemsData.Num() <= A.Item.ID || ItemsData.Num() <= B.Item.ID)
 		{
 			check(false);
 			return true;
 		}
-		if (A.ID == B.ID)
+		if (A.Item.ID == B.Item.ID)
 		{
-			if (A.Quantity == B.Quantity)
+			if (A.Item.Quantity == B.Item.Quantity)
 			{
-				return ItemsData[A.ID].MaxStack > ItemsData[B.ID].MaxStack;
+				return ItemsData[A.Item.ID].MaxStack > ItemsData[B.Item.ID].MaxStack;
 			}
 			else
 			{
-				return A.Quantity > B.Quantity;
+				return A.Item.Quantity > B.Item.Quantity;
 			}
 		}
 		else
 		{
-			return A.ID < B.ID;
+			return A.Item.ID < B.Item.ID;
 		}
 	});
 }
@@ -61,18 +61,18 @@ FItem UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 
 	// We consider any slot as empty if its Quantity is 0, no matter what ID it has
 
-	for (auto& Item : Slots)
+	for (auto& Slot : Slots)
 	{
-		if (Item.ID >= ItemsData.Num())
+		if (Slot.Item.ID >= ItemsData.Num())
 		{
 			check(false);
 			continue;
 		}
 		// Search for not empty and not full slots with same ID to stack
-		if (Item.ID == ItemToStore.ID && Item.Quantity < ItemsData[ItemToStore.ID].MaxStack && Item.Quantity != 0)
+		if (Slot.Item.ID == ItemToStore.ID && Slot.Item.Quantity < ItemsData[ItemToStore.ID].MaxStack && Slot.Item.Quantity != 0)
 		{
-			const int QuantityToAdd = FMath::Min(ItemLeft.Quantity, ItemsData[ItemToStore.ID].MaxStack - Item.Quantity);
-			Item.Quantity += QuantityToAdd;
+			const int QuantityToAdd = FMath::Min(ItemLeft.Quantity, ItemsData[ItemToStore.ID].MaxStack - Slot.Item.Quantity);
+			Slot.Item.Quantity += QuantityToAdd;
 			ItemLeft.Quantity -= QuantityToAdd;
 		}
 
@@ -84,14 +84,14 @@ FItem UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 
 	if (ItemLeft.Quantity > 0)
 	{
-		for (FItem& Item : Slots)
+		for (auto& Slot : Slots)
 		{
 			// Search for empty slots
-			if (Item.Quantity == 0)
+			if (Slot.Item.Quantity == 0)
 			{
 				const int QuantityToAdd = FMath::Min(ItemLeft.Quantity, ItemsData[ItemToStore.ID].MaxStack);
-				Item.ID = ItemToStore.ID;
-				Item.Quantity += QuantityToAdd;
+				Slot.Item.ID = ItemToStore.ID;
+				Slot.Item.Quantity += QuantityToAdd;
 				ItemLeft.Quantity -= QuantityToAdd;
 			}
 
@@ -103,4 +103,20 @@ FItem UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 	}
 
 	return ItemLeft;
+}
+
+FItem UMInventoryComponent::TakeItem(int SlotNumberInArray, int Quantity)
+{
+	//TODO: Should be replicated and do validation
+
+	if (Slots.Num() <= SlotNumberInArray)
+		return {};
+
+	const int QuantityToTake = FMath::Min(Quantity, Slots[SlotNumberInArray].Item.Quantity);
+
+	Slots[SlotNumberInArray].Item.Quantity -= QuantityToTake;
+
+	Slots[SlotNumberInArray].OnSlotChangedDelegate.ExecuteIfBound(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
+
+	return {Slots[SlotNumberInArray].Item.ID, QuantityToTake};
 }
