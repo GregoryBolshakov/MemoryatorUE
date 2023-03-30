@@ -74,6 +74,8 @@ FItem UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 			const int QuantityToAdd = FMath::Min(ItemLeft.Quantity, ItemsData[ItemToStore.ID].MaxStack - Slot.Item.Quantity);
 			Slot.Item.Quantity += QuantityToAdd;
 			ItemLeft.Quantity -= QuantityToAdd;
+
+			Slot.OnSlotChangedDelegate.ExecuteIfBound(Slot.Item.ID, Slot.Item.Quantity);
 		}
 
 		if (ItemLeft.Quantity == 0)
@@ -93,6 +95,8 @@ FItem UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 				Slot.Item.ID = ItemToStore.ID;
 				Slot.Item.Quantity += QuantityToAdd;
 				ItemLeft.Quantity -= QuantityToAdd;
+
+				Slot.OnSlotChangedDelegate.ExecuteIfBound(Slot.Item.ID, Slot.Item.Quantity);
 			}
 
 			if (ItemLeft.Quantity == 0)
@@ -105,7 +109,43 @@ FItem UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 	return ItemLeft;
 }
 
-FItem UMInventoryComponent::TakeItem(int SlotNumberInArray, int Quantity)
+FItem UMInventoryComponent::StoreItemToSpecificSlot(int SlotNumberInArray, const FItem& ItemToStore)
+{
+	if (Slots.Num() <= SlotNumberInArray)
+		return ItemToStore;
+
+	if (Slots[SlotNumberInArray].Item.Quantity > 0 && Slots[SlotNumberInArray].Item.ID != ItemToStore.ID)
+		return ItemToStore;
+
+	const auto pMGameInstance = GetWorld()->GetGameInstance<UMGameInstance>();
+    if (!IsValid(pMGameInstance) || !pMGameInstance->ItemsDataAsset)
+    	return ItemToStore;
+    
+    const auto ItemsData = pMGameInstance->ItemsDataAsset->ItemsData;
+    if (ItemToStore.ID >= ItemsData.Num())
+    {
+    	check(false);
+    	return ItemToStore;
+    }
+
+	const auto MaxStack = ItemsData[Slots[SlotNumberInArray].Item.ID].MaxStack;
+	const auto QuantityToStore = FMath::Min(ItemToStore.Quantity, MaxStack - Slots[SlotNumberInArray].Item.Quantity);
+	check(QuantityToStore >= 0);
+
+	if (QuantityToStore == 0)
+		return ItemToStore;
+
+	Slots[SlotNumberInArray].Item.ID = ItemToStore.ID;
+	Slots[SlotNumberInArray].Item.Quantity += QuantityToStore;
+	Slots[SlotNumberInArray].OnSlotChangedDelegate.Execute(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
+
+	auto ItemToReturn = ItemToStore;
+	ItemToReturn.Quantity -= QuantityToStore;
+
+	return ItemToReturn;
+}
+
+FItem UMInventoryComponent::TakeItemFromSpecificSlot(int SlotNumberInArray, int Quantity)
 {
 	//TODO: Should be replicated and do validation
 

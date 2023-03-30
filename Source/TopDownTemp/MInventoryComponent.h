@@ -9,7 +9,11 @@ USTRUCT(BlueprintType)
 struct FItem
 {
 	GENERATED_BODY()
+
+	UPROPERTY(Category=FItem, EditAnywhere, BlueprintReadOnly)
 	int ID = 0;
+
+	UPROPERTY(Category=FItem, EditAnywhere, BlueprintReadOnly)
 	int Quantity = 0;
 };
 
@@ -33,10 +37,14 @@ public:
 
 	void SortItems(const TArray<struct FItemData>& ItemsData);
 
+	UFUNCTION(BlueprintCallable)
 	FItem StoreItem(const FItem& ItemToStore);
 
 	UFUNCTION(BlueprintCallable)
-	FItem TakeItem(int SlotNumberInArray, int Quantity);
+	FItem StoreItemToSpecificSlot(int SlotNumberInArray, const FItem& ItemToStore);
+
+	UFUNCTION(BlueprintCallable)
+	FItem TakeItemFromSpecificSlot(int SlotNumberInArray, int Quantity);
 
 protected:
 

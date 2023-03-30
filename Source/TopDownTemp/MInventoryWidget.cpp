@@ -41,6 +41,7 @@ void UMInventoryWidget::CreateSlots()
 		return;
 	const auto ItemsData = pGameInstance->ItemsDataAsset->ItemsData;
 
+	int Index = 0;
 	// Create widgets for player's inventory slots
 	for (auto& [Item, OnChangedDelegate] : InventoryComponent->GetSlots())
 	{
@@ -48,7 +49,7 @@ void UMInventoryWidget::CreateSlots()
 		if (!SlotWidget)
 			continue;
 
-		SlotWidget->SetNumberInArray(Item.ID);
+		SlotWidget->SetNumberInArray(Index++);
 		SlotWidget->SetOwnerInventory(InventoryComponent);
 		OnChangedDelegate.BindDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
 
@@ -67,14 +68,11 @@ void UMInventoryWidget::CreateSlots()
 					QuantityTextWidget->SetText(FText::FromString(FString::FromInt(Item.Quantity)));
 					QuantityTextWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 				}
-
-				SlotWidget->SetIsEnabled(true);
 			}
 			else // Slot is empty
 			{
 				IconWidget->SetVisibility(ESlateVisibility::Hidden);
 				QuantityTextWidget->SetVisibility(ESlateVisibility::Hidden);
-				SlotWidget->SetIsEnabled(false);
 			}
 		}
 		if (pItemSlotsWrapBox)

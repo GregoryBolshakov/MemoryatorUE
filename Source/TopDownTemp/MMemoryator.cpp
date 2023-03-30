@@ -125,5 +125,5 @@ void AMMemoryator::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	InventoryComponent->Initialize(40, {{0, 10}, {1, 11}, {2, 12}, {3, 13}});
+	InventoryComponent->Initialize(40, {{0, 8}, {0, 8}, {1, 8}, {1, 8}, {2, 8}, {2, 8}, {3, 8}, {3, 8}});
 }
