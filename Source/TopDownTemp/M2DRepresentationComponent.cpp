@@ -119,15 +119,6 @@ void UM2DRepresentationComponent::TickComponent(float DeltaTime, ELevelTick Tick
 void UM2DRepresentationComponent::SetMeshByGazeAndVelocity(const FVector& IN_Gaze, const FVector& IN_Velocity,
 	const FName& Tag)
 {
-	if (abs(UM2DRepresentationBlueprintLibrary::GetDeflectionAngle(IN_Gaze, IN_Velocity)) > 90.f)
-	{
-		OnReverseMovementStartedDelegate.Broadcast();
-	}
-	else
-	{
-		OnReverseMovementStoppedDelegate.Broadcast();
-	}
-
 	const auto Angle = UM2DRepresentationBlueprintLibrary::GetCameraDeflectionAngle(this, IN_Gaze);
 
 	for (const auto RenderComponent : RenderComponentArray)

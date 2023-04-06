@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "MCharacter.h"
+
+#include "M2DRepresentationBlueprintLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "M2DRepresentationComponent.h"
@@ -57,6 +59,15 @@ void AMCharacter::Tick(float DeltaSeconds)
 	UpdateLastNonZeroDirection();
 
 	const auto GazeDirection = ForcedGazeVector.IsZero() ? LastNonZeroVelocity : ForcedGazeVector;
+
+	if (abs(UM2DRepresentationBlueprintLibrary::GetDeflectionAngle(GazeDirection, GetVelocity())) > 90.f)
+	{
+		OnReverseMovementStartedDelegate.Broadcast();
+	}
+	else
+	{
+		OnReverseMovementStoppedDelegate.Broadcast();
+	}
 
 	RepresentationComponent->SetMeshByGazeAndVelocity(GazeDirection, GetVelocity());
 }

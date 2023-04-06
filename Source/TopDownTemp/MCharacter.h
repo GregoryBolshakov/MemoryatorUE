@@ -6,6 +6,9 @@
 #include "GameFramework/Character.h"
 #include "MCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStarted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStopped);
+
 UCLASS(Blueprintable)
 class AMCharacter : public ACharacter
 {
@@ -68,6 +71,11 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector ForcedGazeVector;
+
+	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent", meta=(AllowPrivateAccess=true))
+	FOnReverseMovementStarted OnReverseMovementStartedDelegate;
+	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent", meta=(AllowPrivateAccess=true))
+	FOnReverseMovementStopped OnReverseMovementStoppedDelegate;
 
 	//TODO: It's hard to say if these booleans should be here or in Controller
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))

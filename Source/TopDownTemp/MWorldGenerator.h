@@ -73,9 +73,17 @@ public:
 
 	static FBoxSphereBounds GetDefaultBounds(UClass* InActorClass);
 
+	template< class T >
+	T* SpawnActorInRadius(TSubclassOf<AActor> Class, float ToSpawnRadius = 150.f, float ToSpawnHeight = 0.f)
+	{
+		return CastChecked<T>(SpawnActorInRadius(Class, ToSpawnRadius, ToSpawnHeight),ECastCheckedType::NullAllowed);
+	}
+
 private:
 
 	AActor* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround);
+
+	AActor* SpawnActorInRadius(UClass* Class, float ToSpawnRadius, const float ToSpawnHeight);
 
 	virtual void BeginPlay() override;
 

@@ -160,3 +160,13 @@ FItem UMInventoryComponent::TakeItemFromSpecificSlot(int SlotNumberInArray, int 
 
 	return {Slots[SlotNumberInArray].Item.ID, QuantityToTake};
 }
+
+void UMInventoryComponent::SwapItems(FItem& A, int SlotNumberInArray)
+{
+	if (SlotNumberInArray >= Slots.Num())
+		return;
+
+	Swap(A, Slots[SlotNumberInArray].Item);
+
+	Slots[SlotNumberInArray].OnSlotChangedDelegate.ExecuteIfBound(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
+}

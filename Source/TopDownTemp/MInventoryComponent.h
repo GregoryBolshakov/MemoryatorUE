@@ -46,6 +46,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FItem TakeItemFromSpecificSlot(int SlotNumberInArray, int Quantity);
 
+	UFUNCTION(BlueprintCallable)
+	void SwapItems(UPARAM(ref)FItem& A, int SlotNumberInArray);
+
 protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=InventorySettings, meta=(AllowPrivateAccess=true))

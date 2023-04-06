@@ -306,7 +306,7 @@ FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position) const
 	{
 		const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get());
 		const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
-		return FIntPoint(UE4::SSE::FloorToInt32(Position.X/GroundBlockSize.X), UE4::SSE::FloorToInt32(Position.Y/GroundBlockSize.Y));
+		return FIntPoint(FMath::FloorToInt(Position.X/GroundBlockSize.X), FMath::FloorToInt(Position.Y/GroundBlockSize.Y));
 	}
 
 	return {0, 0};
@@ -497,4 +497,53 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* InActorClass)
 	// We ignore Z value on purpose
 	Result.SphereRadius = Result.BoxExtent.Size2D();
 	return Result;
+}
+
+AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const float ToSpawnRadius, const float ToSpawnHeight)
+{
+	const auto DefaultBounds = GetDefaultBounds(Class);
+	const auto BoundsRadius = FMath::Max(DefaultBounds.BoxExtent.X, DefaultBounds.BoxExtent.Y);
+	const int TriesNumber = 2 * PI * ToSpawnRadius / BoundsRadius;
+	TArray<float> AnglesToTry;
+	const auto Angle = FMath::FRandRange(0.f, 360.f);
+	for (float increment = 0.f; increment < 360.f; increment += 360.f / TriesNumber)
+	{
+		AnglesToTry.Add(Angle + increment);
+	}
+
+	const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (!pPlayer)
+		return nullptr;
+
+	AActor* Actor = nullptr;
+	for (const auto& AngleToTry : AnglesToTry)
+	{
+		const FVector SpawnPositionOffset (
+				ToSpawnRadius * FMath::Cos(FMath::DegreesToRadians(AngleToTry)),
+				ToSpawnRadius * FMath::Sin(FMath::DegreesToRadians(AngleToTry)),
+				0.f
+			);
+
+		FVector SpawnPosition = pPlayer->GetTransform().GetLocation() + SpawnPositionOffset;
+		SpawnPosition.Z = ToSpawnHeight;
+
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.Name = MakeUniqueObjectName(this, Class);
+		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
+		Actor = SpawnActor<AActor>(Class, SpawnPosition, {}, SpawnParameters, true);
+		if (Actor)
+		{
+			UpdateActiveZone();
+			return Actor;
+		}
+	}
+
+	if (ToSpawnRadius >= 1000.f) // dummy check
+	{
+		check(false);
+		return nullptr;
+	}
+
+	// If check is failed, consider incrementing ToSpawnRadius
+	return SpawnActorInRadius(Class, ToSpawnRadius + BoundsRadius * 2.f, ToSpawnHeight);
 }

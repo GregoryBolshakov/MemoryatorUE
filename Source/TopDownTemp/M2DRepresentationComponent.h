@@ -3,8 +3,7 @@
 #include "CoreMinimal.h"
 #include "M2DRepresentationComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStarted);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStopped);
+#define EEC_Pickable ECollisionChannel::ECC_GameTraceChannel2
 
 class UCapsuleComponent;
 class UM2DShadowControllerComponent;
@@ -24,6 +23,8 @@ class TOPDOWNTEMP_API UM2DRepresentationComponent : public USceneComponent
 
 public:
 
+	const TArray<UCapsuleComponent*>& GetCapsuleComponentArray() { return CapsuleComponentArray; }
+
 	/** Should be called in owner's PostInitializeComponents */
 	void PostInitChildren();
 
@@ -40,11 +41,6 @@ public:
 	 * This is the reason of heaving imaginary rotation of the object after it was rotated toward the camera. */
 	UPROPERTY(Category=Rendering, EditAnywhere, BlueprintReadWrite)
 	FRotator RotationWhileFacingCamera;
-
-	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent")
-	FOnReverseMovementStarted OnReverseMovementStartedDelegate;
-	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent")
-	FOnReverseMovementStopped OnReverseMovementStoppedDelegate;
 
 	UPROPERTY(BlueprintReadOnly, Category="MRotatableFlipbookComponent")
 	FVector LastValidGaze;
