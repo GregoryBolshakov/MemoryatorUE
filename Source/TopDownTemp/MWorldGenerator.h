@@ -58,9 +58,9 @@ public:
 	template< class T >
 	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, FActorSpawnParameters& SpawnParameters, bool bForceAboveGround = false)
 	{
-		if (SpawnParameters.Name.IsNone())
+		if (SpawnParameters.Name.IsNone() && GetWorld())
 		{
-			SpawnParameters.Name = MakeUniqueObjectName(this, Class);
+			SpawnParameters.Name = MakeUniqueObjectName(GetWorld(), Class);
 		}
 		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters, bForceAboveGround),ECastCheckedType::NullAllowed);
 	}
@@ -71,7 +71,7 @@ public:
 
 	void CleanArea(const FVector& Location, float Radius);
 
-	static FBoxSphereBounds GetDefaultBounds(UClass* InActorClass);
+	static FBoxSphereBounds GetDefaultBounds(UClass* IN_ActorClass, UObject* WorldContextObject);
 
 	template< class T >
 	T* SpawnActorInRadius(TSubclassOf<AActor> Class, float ToSpawnRadius = 150.f, float ToSpawnHeight = 0.f)
@@ -100,7 +100,7 @@ private:
 	UFUNCTION()
 	void OnPlayerChangedBlock();
 
-	FIntPoint GetGroundBlockIndex(FVector Position) const;
+	FIntPoint GetGroundBlockIndex(FVector Position);
 
 	UPROPERTY(EditAnywhere)
 	FVector2D WorldSize{10000, 10000};
@@ -126,5 +126,5 @@ private:
 	float DynamicActorsCheckInterval;
 	float DynamicActorsCheckTimer;
 
-	int UniqueNameSuffix;
+	static TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;
 };

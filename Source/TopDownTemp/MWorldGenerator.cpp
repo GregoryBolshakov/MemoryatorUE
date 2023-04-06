@@ -21,7 +21,6 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, DynamicActorsCheckInterval(0.5f)
 	, DynamicActorsCheckTimer(0.f)
-	, UniqueNameSuffix(0)
 {
 	PlayerActiveZone = CreateDefaultSubobject<UBoxComponent>(TEXT("Player Active Zone"));
 	PlayerActiveZone->SetBoxExtent(FVector(500.0f, 500.0f, 500.0f));
@@ -55,7 +54,9 @@ void AMWorldGenerator::GenerateWorld()
 		check(false);
 		return;
 	}
-	const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get());
+	const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), pWorld);
+	if (GroundBlockBounds.BoxExtent == FVector::ZeroVector)
+		return;
 	const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
 
 	for (int x = -WorldSize.X / 2; x < WorldSize.X / 2; x += GroundBlockSize.X)
@@ -300,11 +301,11 @@ void AMWorldGenerator::OnPlayerChangedBlock()
 	UpdateNavigationMesh();
 }
 
-FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position) const
+FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position)
 {
-	if (const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock")))
+	if (const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock")); GetWorld())
 	{
-		const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get());
+		const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), GetWorld());
 		const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
 		return FIntPoint(FMath::FloorToInt(Position.X/GroundBlockSize.X), FMath::FloorToInt(Position.Y/GroundBlockSize.Y));
 	}
@@ -359,7 +360,7 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 	if (bForceAboveGround)
 	{
 		// Raise the actor until the bottom point is above the ground
-		auto ActorBounds = GetDefaultBounds(Class);
+		auto ActorBounds = GetDefaultBounds(Class, pWorld);
 		ActorBounds.Origin += Location;
 		auto LocationAboveGround = Location;
 		if (ActorBounds.Origin.Z - ActorBounds.BoxExtent.Z < 0.f)
@@ -443,65 +444,59 @@ void AMWorldGenerator::CleanArea(const FVector& Location, float Radius)
 		}
 	}
 }
-
+TMap<UClass*, FBoxSphereBounds> AMWorldGenerator::DefaultBoundsMap;
 /** Finds the bounds of the default object for a blueprint */
-FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* InActorClass)
+FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObject* WorldContextObject)
 {
-	FBoxSphereBounds Result(ForceInitToZero);
-
-	if (!IsValid(InActorClass))
-		return Result;
-
-	FBox Box(ForceInitToZero);
-
-	auto ActorClass = InActorClass;
-	do
+	if (const auto FoundBounds = DefaultBoundsMap.Find(IN_ActorClass))
 	{
-		if (const auto ActorBlueprintGeneratedClass = Cast<UBlueprintGeneratedClass>(ActorClass))
+		return *FoundBounds;
+	}
+
+	FBoxSphereBounds ActorBounds(ForceInitToZero);
+
+	if (const auto pWorld = WorldContextObject->GetWorld())
+	{
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.Name = MakeUniqueObjectName(WorldContextObject, IN_ActorClass);
+		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		if (const auto Actor = pWorld->SpawnActor(IN_ActorClass, {}, {}, SpawnParameters))
 		{
-			auto ActorBlueprintNodes = ActorBlueprintGeneratedClass->SimpleConstructionScript->GetAllNodes();
+			FVector Origin, BoxExtent;
+			Actor->InitializeComponents();
+			Actor->PostInitializeComponents();
 
-			for (const USCS_Node* Node : ActorBlueprintNodes)
+			// Calculate the Actor bounds by accumulating the bounds of its components
+			FBox ActorBox(EForceInit::ForceInitToZero);
+			for (UActorComponent* Component : Actor->GetComponents())
 			{
-				if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Node->ComponentTemplate))
+				if (USceneComponent* SceneComponent = Cast<USceneComponent>(Component))
 				{
-					auto ComponentTransform = PrimitiveComponent->GetComponentTransform();
-					// The SCS component's transform is zero. We have to set it's values manually.
-					ComponentTransform.SetLocation(PrimitiveComponent->GetRelativeLocation());
-					ComponentTransform.SetRotation(PrimitiveComponent->GetRelativeRotation().Quaternion());
-					ComponentTransform.SetScale3D(PrimitiveComponent->GetRelativeScale3D());
-					auto ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);
-
-					// Increase the box from the protruding sides
-					Box += ComponentBounds.GetBox();
+					FTransform ComponentTransform = SceneComponent->GetComponentTransform();
+					FBoxSphereBounds ComponentBounds = SceneComponent->CalcBounds(ComponentTransform);
+					ActorBox += ComponentBounds.GetBox();
 				}
 			}
-		}
 
-		ActorClass = Cast<UClass>(ActorClass->GetSuperStruct());
+			ActorBounds.Origin = ActorBox.GetCenter();
+			ActorBounds.BoxExtent = ActorBox.GetExtent();
+			ActorBounds.SphereRadius = ActorBox.GetExtent().Size2D();
+			DefaultBoundsMap.Add(IN_ActorClass, ActorBounds);
 
-	} while (ActorClass != AActor::StaticClass());
-
-	// SCS nodes list doesn't contain the root component, but it exists in the CDO
-	if (const auto Actor = Cast<AActor>(InActorClass->GetDefaultObject()))
-	{
-		if (const auto ActorRootComponent = Actor->GetRootComponent())
-		{
-			const auto RootComponentBounds = ActorRootComponent->CalcBounds(ActorRootComponent->GetComponentTransform());
-			Box += RootComponentBounds.GetBox();
+			Actor->Destroy();
 		}
 	}
 
-	Box.GetCenterAndExtents(Result.Origin, Result.BoxExtent);
-
-	// We ignore Z value on purpose
-	Result.SphereRadius = Result.BoxExtent.Size2D();
-	return Result;
+	return ActorBounds;
 }
 
 AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const float ToSpawnRadius, const float ToSpawnHeight)
 {
-	const auto DefaultBounds = GetDefaultBounds(Class);
+	const auto pWorld = GetWorld();
+	if (!pWorld)
+		return nullptr;
+
+	const auto DefaultBounds = GetDefaultBounds(Class, pWorld);
 	const auto BoundsRadius = FMath::Max(DefaultBounds.BoxExtent.X, DefaultBounds.BoxExtent.Y);
 	const int TriesNumber = 2 * PI * ToSpawnRadius / BoundsRadius;
 	TArray<float> AnglesToTry;
@@ -528,7 +523,7 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const float ToSpawnR
 		SpawnPosition.Z = ToSpawnHeight;
 
 		FActorSpawnParameters SpawnParameters;
-		SpawnParameters.Name = MakeUniqueObjectName(this, Class);
+		SpawnParameters.Name = MakeUniqueObjectName(GetWorld(), Class);
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
 		Actor = SpawnActor<AActor>(Class, SpawnPosition, {}, SpawnParameters, true);
 		if (Actor)

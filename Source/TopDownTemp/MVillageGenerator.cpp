@@ -133,7 +133,7 @@ bool AMVillageGenerator::TryToPlaceBuilding(AActor& BuildingActor, int& Building
 	//One of possible solutions to develop generation. It hasn't been proved yet and the binary search isn't suitable for it. 
 	/*if (const auto GapMetadata = ToSpawnBuildingsMetadata.Find("Gap"))
 	{
-		const auto BoxExtent = GetDefaultBounds(GapMetadata->ToSpawnClass).BoxExtent;
+		const auto BoxExtent = GetDefaultBounds(GapMetadata->ToSpawnClass, this).BoxExtent;
 		Radius += FMath::Max3(BoxExtent.X, BoxExtent.Y, BoxExtent.Z) / 2.f;
 		continue;
 	}*/
@@ -166,7 +166,7 @@ void AMVillageGenerator::OnBuildingPlaced(AActor& BuildingActor, const FToSpawnB
 			for (int i = 0; i < RequiredVillagersNumber; ++i)
 			{
 				FActorSpawnParameters SpawnParameters;
-				SpawnParameters.Name = MakeUniqueObjectName(this, VillagerClass);
+				SpawnParameters.Name = MakeUniqueObjectName(GetWorld(), VillagerClass);
 				const auto VillagerPawn = pWorldGenerator->SpawnActor<APawn>(VillagerClass.Get(), EntryPoint, FRotator::ZeroRotator, SpawnParameters, true);
 				if (!VillagerPawn)
 				{
