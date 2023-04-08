@@ -103,7 +103,7 @@ private:
 	FIntPoint GetGroundBlockIndex(FVector Position);
 
 	UPROPERTY(EditAnywhere)
-	FVector2D WorldSize{10000, 10000};
+	FIntPoint WorldSize{10000, 10000};
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SubclassessToSpawn, meta = (DisplayThumbnail, AllowPrivateAccess = true))
 	TMap<FName, TSubclassOf<AActor>> ToSpawnActorClasses;

@@ -59,6 +59,12 @@ void AMWorldGenerator::GenerateWorld()
 		return;
 	const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
 
+	// Adjust the world size so that it is divisible by two block sizes
+	WorldSize.X /= 2 * GroundBlockSize.X;
+	WorldSize.X *= 2 * GroundBlockSize.X;
+	WorldSize.Y /= 2 * GroundBlockSize.Y;
+	WorldSize.Y *= 2 * GroundBlockSize.Y;
+
 	for (int x = -WorldSize.X / 2; x < WorldSize.X / 2; x += GroundBlockSize.X)
 	{
 		for (int y = -WorldSize.Y / 2; y < WorldSize.Y / 2; y += GroundBlockSize.Y)
