@@ -67,7 +67,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Memoryator.sln" beforeDir="false" afterPath="$PROJECT_DIR$/Memoryator.sln" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_VillageGenerator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_VillageGenerator.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillagerMobController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MVillagerMobController.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

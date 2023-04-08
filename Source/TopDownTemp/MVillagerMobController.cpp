@@ -74,6 +74,9 @@ void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& M
 	{
 		TimerManager.SetTimer(RestTimerHandle, [this, &World, &MyCharacter]
 		{
+			if (CurrentBehavior != EMobBehaviors::Idle) // If were interrupted by something more important (like retreat from enemy..)
+				return;
+
 			constexpr int TriesToFindLocation = 3;
 			bool bSuccess = false;
 			for (int i = 0; i < TriesToFindLocation; ++i)
@@ -146,6 +149,14 @@ void AMVillagerMobController::SetWalkBehavior(const UWorld& World, AMCharacter& 
 
 	MyCharacter.GetCharacterMovement()->MaxWalkSpeed = MyCharacter.GetWalkSpeed();
 
+	OnMoveCompletedDelegate.Unbind();
+	OnMoveCompletedDelegate.BindLambda([this, &World, &MyCharacter]
+	{
+		if (CurrentBehavior != EMobBehaviors::Walk) // If were interrupted by something more important (like retreat from enemy..)
+			return;
+
+		SetIdleBehavior(World, MyCharacter);
+	});
 	MoveToLocation(DestinationPoint);
 
 	OnBehaviorChanged(MyCharacter);
@@ -164,8 +175,13 @@ void AMVillagerMobController::SetRetreatBehavior(const UWorld& World, AMCharacte
 	{
 		OnMoveCompletedDelegate.Unbind();
 		StopMovement();
+		MyCharacter.GetMovementComponent()->StopMovementImmediately(); // In case of slip or other velocity modificators 
+
 		OnMoveCompletedDelegate.BindLambda([this, &World, &MyCharacter]
 		{
+			if (CurrentBehavior != EMobBehaviors::Retreat) // If the movement was started not to retreat
+				return;
+
 			if (HomeBuilding)
 			{
 				SetHideBehavior(World, MyCharacter);
