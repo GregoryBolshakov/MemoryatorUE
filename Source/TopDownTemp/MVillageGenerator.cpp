@@ -166,7 +166,7 @@ void AMVillageGenerator::OnBuildingPlaced(AActor& BuildingActor, const FToSpawnB
 			for (int i = 0; i < RequiredVillagersNumber; ++i)
 			{
 				FActorSpawnParameters SpawnParameters;
-				SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+				SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 				SpawnParameters.Name = MakeUniqueObjectName(GetWorld(), VillagerClass);
 				const auto VillagerPawn = pWorldGenerator->SpawnActor<APawn>(VillagerClass.Get(), EntryPoint, FRotator::ZeroRotator, SpawnParameters, true);
 				if (!VillagerPawn)

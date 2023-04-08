@@ -79,6 +79,12 @@ public:
 		return CastChecked<T>(SpawnActorInRadius(Class, ToSpawnRadius, ToSpawnHeight),ECastCheckedType::NullAllowed);
 	}
 
+protected:
+
+#if WITH_EDITOR
+	virtual ~AMWorldGenerator() override { DefaultBoundsMap.Empty(); };
+#endif
+
 private:
 
 	AActor* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround);

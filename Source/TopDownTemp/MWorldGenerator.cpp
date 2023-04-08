@@ -476,10 +476,11 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 			FBox ActorBox(EForceInit::ForceInitToZero);
 			for (UActorComponent* Component : Actor->GetComponents())
 			{
-				if (USceneComponent* SceneComponent = Cast<USceneComponent>(Component))
+				if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component); PrimitiveComponent &&
+					PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds")) //TODO: Come up with getting collision enabled state of not fully initialized component
 				{
-					FTransform ComponentTransform = SceneComponent->GetComponentTransform();
-					FBoxSphereBounds ComponentBounds = SceneComponent->CalcBounds(ComponentTransform);
+					FTransform ComponentTransform = PrimitiveComponent->GetComponentTransform();
+					FBoxSphereBounds ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);
 					ActorBox += ComponentBounds.GetBox();
 				}
 			}
