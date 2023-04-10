@@ -67,6 +67,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_DropManager.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/UI/inventory/PickUpBarBackground.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_PickUpBar.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MDropManager.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MDropManager.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
@@ -90,6 +95,8 @@
       <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MaterialLayers/T_ML_Aluminum01_N.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MaterialLayers/T_ML_Rubber_Blue_01_D.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MaterialLayers/T_ML_Rubber_Blue_01_N.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Mesh/SK_Mannequin.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Mesh/SK_Mannequin_Female.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Mesh/SK_Mannequin_Female_PhysicsAsset.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Mesh/SK_Mannequin_PhysicsAsset.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Mesh/UE4_Mannequin_Skeleton.uasset" beforeDir="false" />
@@ -23131,7 +23138,7 @@
       <workItem from="1680719969696" duration="6539000" />
       <workItem from="1680783718863" duration="15333000" />
       <workItem from="1681027249844" duration="18537000" />
-      <workItem from="1681116584425" duration="11017000" />
+      <workItem from="1681116584425" duration="18348000" />
     </task>
     <servers />
   </component>
