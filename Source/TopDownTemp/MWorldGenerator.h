@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "MWorldGenerator.generated.h"
 
+class UMDropManager;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBlockChanged);
 
 class AMGroundBlock;
@@ -48,6 +49,7 @@ UCLASS(Blueprintable)
 class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 {
 	GENERATED_UCLASS_BODY()
+
 public:
 
 	void GenerateWorld();
@@ -79,11 +81,16 @@ public:
 		return CastChecked<T>(SpawnActorInRadius(Class, ToSpawnRadius, ToSpawnHeight),ECastCheckedType::NullAllowed);
 	}
 
+	UMDropManager* GetDropManager() const { return DropManager; }
+
 protected:
 
 #if WITH_EDITOR
 	virtual ~AMWorldGenerator() override { DefaultBoundsMap.Empty(); };
 #endif
+
+	UPROPERTY(EditDefaultsOnly, Category=AMWorldGenerator, meta=(AllowPrivateAccess=true))
+	TSubclassOf<UMDropManager> DropManagerBPClass;
 
 private:
 
@@ -133,4 +140,7 @@ private:
 	float DynamicActorsCheckTimer;
 
 	static TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;
+
+	UPROPERTY()
+	UMDropManager* DropManager;
 };

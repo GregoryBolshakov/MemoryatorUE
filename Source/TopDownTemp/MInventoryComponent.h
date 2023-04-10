@@ -51,8 +51,5 @@ public:
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=InventorySettings, meta=(AllowPrivateAccess=true))
-	int SlotsNumber;
-
 	TArray<FSlot> Slots;
 };

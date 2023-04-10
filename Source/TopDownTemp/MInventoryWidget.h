@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "MInventoryComponent.h"
 #include "MInventoryWidget.generated.h"
 
 class AMPickableItem;
@@ -22,9 +21,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CreateSlots();
 
-	UFUNCTION(BlueprintCallable)
-	bool OnDraggedItemDropped(const FItem& Item);
-
 protected:
 
 	UPROPERTY(EditDefaultsOnly, Category=MInventoryWidgetSettings)
@@ -35,7 +31,4 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, Category=MInventoryWidgetSettings)
 	bool IsDraggedItemOutside;
-
-	UPROPERTY(EditDefaultsOnly, Category=MInventoryWidgetSettings)
-	TSubclassOf<AMPickableItem> AMPickableItemToSpawnClass;
 };

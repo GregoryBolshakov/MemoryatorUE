@@ -5,6 +5,7 @@
 #include "MInventoryComponent.h"
 #include "MPickableItem.generated.h"
 
+class UMDropManager;
 //~=============================================================================
 /**
  * Item that can be picked up
@@ -16,15 +17,24 @@ class AMPickableItem : public AMActor //For now is useless
 
 public:
 
-	virtual void PostInitializeComponents() override;
+	void Initialise(const FItem& IN_Item);
 
-	void SetItem(const FItem& IN_Item);
+	UFUNCTION()
+	void OnItemChanged(int NewItemID, int NewQuantity);
 
 protected:
 
+	virtual void PostInitializeComponents() override;
+
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=AMPickableItem, meta=(AllowPrivateAccess=true))
-	FItem Item;
+	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AMPickableItem, meta = (AllowPrivateAccess = "true"))
+	UMInventoryComponent* InventoryComponent;
+
+	/** A pointer for easier access of World Generator's Drop Manager */
+	UPROPERTY()
+	UMDropManager* pDropManager;
 };
 

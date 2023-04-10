@@ -8,6 +8,7 @@
 #include "MGroundBlock.h"
 #include "MMemoryator.h"
 #include "MAICrowdManager.h"
+#include "MDropManager.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MVillageGenerator.h"
 #include "MWorldManager.h"
@@ -97,6 +98,7 @@ void AMWorldGenerator::BeginPlay()
 	Super::BeginPlay();
 	UpdateActiveZone();
 
+	// Bind to the player-moves-to-another-block event 
 	if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 	{
 		if (const auto PlayerMetadata = ActorsMetadata.Find(FName(pPlayer->GetName())))
@@ -104,6 +106,10 @@ void AMWorldGenerator::BeginPlay()
 			PlayerMetadata->OnBlockChangedDelegate.AddDynamic(this, &AMWorldGenerator::OnPlayerChangedBlock);
 		}
 	}
+
+	// Create the Drop Manager
+	DropManager = DropManagerBPClass ? NewObject<UMDropManager>(this, DropManagerBPClass, TEXT("DropManager")) : nullptr;
+	check(DropManager);
 }
 
 void AMWorldGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -451,7 +457,7 @@ void AMWorldGenerator::CleanArea(const FVector& Location, float Radius)
 	}
 }
 TMap<UClass*, FBoxSphereBounds> AMWorldGenerator::DefaultBoundsMap;
-/** Finds the bounds of the default object for a blueprint */
+/** Finds the bounds of the default object for a blueprint. You have to mark components with AffectsDefaultBounds tag in order to affect bounds! */
 FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObject* WorldContextObject)
 {
 	if (const auto FoundBounds = DefaultBoundsMap.Find(IN_ActorClass))
@@ -503,23 +509,23 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const float ToSpawnR
 	if (!pWorld)
 		return nullptr;
 
-	const auto DefaultBounds = GetDefaultBounds(Class, pWorld);
-	const auto BoundsRadius = FMath::Max(DefaultBounds.BoxExtent.X, DefaultBounds.BoxExtent.Y);
-	const int TriesNumber = 2 * PI * ToSpawnRadius / BoundsRadius;
-	TArray<float> AnglesToTry;
-	const auto Angle = FMath::FRandRange(0.f, 360.f);
-	for (float increment = 0.f; increment < 360.f; increment += 360.f / TriesNumber)
-	{
-		AnglesToTry.Add(Angle + increment);
-	}
-
 	const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
 	if (!pPlayer)
 		return nullptr;
 
-	AActor* Actor = nullptr;
-	for (const auto& AngleToTry : AnglesToTry)
+	const auto DefaultBounds = GetDefaultBounds(Class, pWorld);
+	const auto BoundsRadius = FMath::Max(DefaultBounds.BoxExtent.X, DefaultBounds.BoxExtent.Y);
+
+	if (FMath::IsNearlyZero(BoundsRadius))
+		return nullptr;
+
+	const int TriesNumber = 2 * PI * ToSpawnRadius / BoundsRadius;
+	TArray<float> AnglesToTry;
+	const auto StartAngle = FMath::FRandRange(0.f, 360.f);
+
+	for (int AngleIndex = 0; AngleIndex < TriesNumber; ++AngleIndex)
 	{
+		const float AngleToTry = StartAngle + 360.f * AngleIndex / TriesNumber;
 		const FVector SpawnPositionOffset (
 				ToSpawnRadius * FMath::Cos(FMath::DegreesToRadians(AngleToTry)),
 				ToSpawnRadius * FMath::Sin(FMath::DegreesToRadians(AngleToTry)),
@@ -532,7 +538,7 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const float ToSpawnR
 		FActorSpawnParameters SpawnParameters;
 		SpawnParameters.Name = MakeUniqueObjectName(GetWorld(), Class);
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
-		Actor = SpawnActor<AActor>(Class, SpawnPosition, {}, SpawnParameters, true);
+		auto Actor = SpawnActor<AActor>(Class, SpawnPosition, {}, SpawnParameters, true);
 		if (Actor)
 		{
 			UpdateActiveZone();

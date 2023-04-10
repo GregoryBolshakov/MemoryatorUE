@@ -2,12 +2,10 @@
 #include "MCharacter.h"
 #include "MGameInstance.h"
 #include "MInventorySlotWidget.h"
-#include "MWorldManager.h"
 #include "Components/Image.h"
 #include "Components/RichTextBlock.h"
 #include "Components/WrapBox.h"
-#include "MPickableItem.h"
-#include "MWorldGenerator.h"
+#include "MInventoryComponent.h"
 
 void UMInventoryWidget::NativeDestruct()
 {
@@ -54,6 +52,7 @@ void UMInventoryWidget::CreateSlots()
 		SlotWidget->SetNumberInArray(Index++);
 		SlotWidget->SetOwnerInventory(InventoryComponent);
 		SlotWidget->SetOwnerInventoryWidget(this);
+		SlotWidget->SetStoredItem(Item);
 		OnChangedDelegate.BindDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
 
 		const auto IconWidget = Cast<UImage>(SlotWidget->GetWidgetFromName(TEXT("ItemIcon")));
@@ -83,24 +82,4 @@ void UMInventoryWidget::CreateSlots()
 			pItemSlotsWrapBox->AddChild(SlotWidget);
 		}
 	}
-
-}
-
-bool UMInventoryWidget::OnDraggedItemDropped(const FItem& Item)
-{
-	if (const auto pWorld = GetWorld())
-	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
-			{
-				if (const auto PickableItem = pWorldGenerator->SpawnActorInRadius<AMPickableItem>(AMPickableItemToSpawnClass, 50.f, 0.f))
-				{
-					PickableItem->SetItem(Item);
-					return true;
-				}
-			}
-		}
-	}
-	return false;
 }

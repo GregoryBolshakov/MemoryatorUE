@@ -2,10 +2,12 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "MInventoryComponent.h"
 #include "MInventorySlotWidget.generated.h"
 
 class UMInventoryWidget;
 class UMInventoryComponent;
+class UMDropManager;
 
 UCLASS(Blueprintable, BlueprintType)
 class TOPDOWNTEMP_API UMInventorySlotWidget : public UUserWidget
@@ -14,17 +16,22 @@ class TOPDOWNTEMP_API UMInventorySlotWidget : public UUserWidget
 
 public:
 
+	virtual void NativeConstruct() override;
+
 	void SetNumberInArray(int IN_NumberInArray) { NumberInArray = IN_NumberInArray; }
 
 	void SetOwnerInventory(UMInventoryComponent* IN_OwnerInventory) { OwnerInventory = IN_OwnerInventory; }
 
 	void SetOwnerInventoryWidget(UMInventoryWidget* IN_OwnerInventoryWidget) { OwnerInventoryWidget = IN_OwnerInventoryWidget; }
 
+	void SetStoredItem(const FItem& IN_Item) { StoredItem = IN_Item; }
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnChangedData(int NewItemID, int NewQuantity);
 
 protected:
 
+	/** Number of the slot (container) in the wrap box, it doesn't change even if we swap items! */
 	UPROPERTY(BlueprintReadOnly, Category=UMInventorySlotWidget, meta=(AllowPrivateAccess=true))
 	int NumberInArray;
 
@@ -33,5 +40,13 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category=UMInventorySlotWidget, meta=(AllowPrivateAccess=true))
 	UMInventoryWidget* OwnerInventoryWidget;
+
+	/** The copy of the item. Is needed when we stack or swap with dragged item */
+	UPROPERTY(BlueprintReadWrite)
+	FItem StoredItem;
+
+	/** A pointer for easier access of World Generator's Drop Manager */
+	UPROPERTY(BlueprintReadOnly)
+	UMDropManager* pDropManager;
 };
 

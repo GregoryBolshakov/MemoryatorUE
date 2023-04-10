@@ -8,9 +8,10 @@
 UCLASS()
 class TOPDOWNTEMP_API UMGameInstance : public UGameInstance
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
 public:
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MyDataAsset")
 	UMItemsDataAsset* ItemsDataAsset;
 };

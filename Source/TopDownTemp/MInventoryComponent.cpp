@@ -4,13 +4,12 @@
 
 UMInventoryComponent::UMInventoryComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, SlotsNumber(40)
 {
 }
 
 void UMInventoryComponent::Initialize(int IN_SlotsNumber, const TArray<FItem>& StartingItems)
 {
-	Slots.SetNum(SlotsNumber);
+	Slots.SetNum(IN_SlotsNumber);
 	for (const auto& Item : StartingItems)
 	{
 		StoreItem(Item);
@@ -137,7 +136,7 @@ FItem UMInventoryComponent::StoreItemToSpecificSlot(int SlotNumberInArray, const
 
 	Slots[SlotNumberInArray].Item.ID = ItemToStore.ID;
 	Slots[SlotNumberInArray].Item.Quantity += QuantityToStore;
-	Slots[SlotNumberInArray].OnSlotChangedDelegate.Execute(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
+	Slots[SlotNumberInArray].OnSlotChangedDelegate.ExecuteIfBound(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
 
 	auto ItemToReturn = ItemToStore;
 	ItemToReturn.Quantity -= QuantityToStore;
@@ -150,7 +149,10 @@ FItem UMInventoryComponent::TakeItemFromSpecificSlot(int SlotNumberInArray, int 
 	//TODO: Should be replicated and do validation
 
 	if (Slots.Num() <= SlotNumberInArray)
+	{
+		check(false);
 		return {};
+	}
 
 	const int QuantityToTake = FMath::Min(Quantity, Slots[SlotNumberInArray].Item.Quantity);
 
@@ -158,6 +160,7 @@ FItem UMInventoryComponent::TakeItemFromSpecificSlot(int SlotNumberInArray, int 
 
 	Slots[SlotNumberInArray].OnSlotChangedDelegate.ExecuteIfBound(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
 
+	check(QuantityToTake != 0);
 	return {Slots[SlotNumberInArray].Item.ID, QuantityToTake};
 }
 
