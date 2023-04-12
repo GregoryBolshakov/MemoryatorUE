@@ -16,10 +16,13 @@ class UMDropManager : public UObject
 
 public:
 
+	/** Is called by pickable items to add their inventories to the MPickUpBarWidget */
 	void AddInventory(UMInventoryComponent* Inventory);
 
+	/** Is called by pickable items to remove their inventories to the MPickUpBarWidget */
 	void RemoveInventory(UMInventoryComponent* Inventory);
 
+	/** Updates the list of the listed inventories in the MPickUpBarWidget */
 	void Update();
 
 	UFUNCTION(BlueprintCallable)
