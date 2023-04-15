@@ -7,7 +7,7 @@
 #include "MWorldGenerator.generated.h"
 
 class UMDropManager;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBlockChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBlockChanged, const FIntPoint&, NewBlock);
 
 class AMGroundBlock;
 class AMTree;
@@ -111,9 +111,12 @@ private:
 	void UpdateNavigationMesh();
 
 	UFUNCTION()
-	void OnPlayerChangedBlock();
+	void OnPlayerChangedBlock(const FIntPoint& NewBlock);
 
 	FIntPoint GetGroundBlockIndex(FVector Position);
+
+	/** Lists all the blocks lying on the perimeter of the circle with the given coordinates and radius. Time Complexity: O(PositionX – PositionY) */
+	TSet<FIntPoint> GetBlocksAround(int PositionX, int PositionY, int Radius);
 
 	UPROPERTY(EditAnywhere)
 	FIntPoint WorldSize{10000, 10000};

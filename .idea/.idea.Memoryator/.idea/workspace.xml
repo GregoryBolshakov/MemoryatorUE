@@ -67,63 +67,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_DropManager.uasset" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/UI/inventory/PickUpBarBackground.uasset" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_PickUpBar.uasset" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MDropManager.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MDropManager.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Animations/ThirdPersonIdle.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Animations/ThirdPersonJump_End.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Animations/ThirdPersonJump_Loop.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Animations/ThirdPersonJump_Start.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Animations/ThirdPersonRun.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Animations/ThirdPersonWalk.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Animations/ThirdPerson_AnimBP.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Animations/ThirdPerson_IdleRun_2D.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Animations/ThirdPerson_Jump.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MI_Female_Body.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/M_Male_Body.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/M_UE4Man_ChestLogo.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MaterialLayers/ML_GlossyBlack_Latex_UE4.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MaterialLayers/ML_Plastic_Shiny_Beige.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MaterialLayers/ML_Plastic_Shiny_Beige_LOGO.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MaterialLayers/ML_SoftMetal_UE4.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MaterialLayers/T_ML_Aluminum01.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MaterialLayers/T_ML_Aluminum01_N.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MaterialLayers/T_ML_Rubber_Blue_01_D.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Materials/MaterialLayers/T_ML_Rubber_Blue_01_N.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Mesh/SK_Mannequin.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Mesh/SK_Mannequin_Female.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Mesh/SK_Mannequin_Female_PhysicsAsset.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Mesh/SK_Mannequin_PhysicsAsset.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Mesh/UE4_Mannequin_Skeleton.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Textures/T_Female_Mask.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Textures/T_Female_N.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Textures/T_Male_Mask.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Textures/T_Male_N.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Textures/T_UE4Logo_Mask.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Mannequin/Character/Textures/T_UE4Logo_N.uasset" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_MGameInstance.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_MGameInstance.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_PickableItem.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_PickableItem.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_Inventory.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_Inventory.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_InventorySlot.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_InventorySlot.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGameInstance.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MGameInstance.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGameInstance.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MGameInstance.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPickableItem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MPickableItem.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPickableItem.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MPickableItem.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_ToggleInventoryButton.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_ToggleInventoryButton.uasset" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23139,6 +23084,7 @@
       <workItem from="1680783718863" duration="15333000" />
       <workItem from="1681027249844" duration="18537000" />
       <workItem from="1681116584425" duration="18348000" />
+      <workItem from="1681506080955" duration="615000" />
     </task>
     <servers />
   </component>

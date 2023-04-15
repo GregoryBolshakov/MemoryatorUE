@@ -195,7 +195,7 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 			// Even though the dynamic object is still enabled, it might have moved to the disabled block,
 			// where all surrounding static objects are disabled.
 			// Check the environment for validity if you bind to the delegate!
-			Transition.Metadata.OnBlockChangedDelegate.Broadcast();
+			Transition.Metadata.OnBlockChangedDelegate.Broadcast(Transition.Metadata.GroundBlockIndex);
 		}
 	}
 }
@@ -307,7 +307,7 @@ void AMWorldGenerator::UpdateNavigationMesh()
 	}
 }
 
-void AMWorldGenerator::OnPlayerChangedBlock()
+void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& NewBlock)
 {
 	UpdateActiveZone();
 	UpdateNavigationMesh();
@@ -323,6 +323,44 @@ FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position)
 	}
 
 	return {0, 0};
+}
+
+TSet<FIntPoint> AMWorldGenerator::GetBlocksAround(int PositionX, int PositionY, int Radius)
+{
+	TSet<FIntPoint> PerimeterCells;
+
+	// Bresenham's Circle Algorithm
+	int x = 0;
+	int y = Radius;
+	int d = 3 - 2 * Radius;
+
+	auto AddSymmetricPoints = [&PerimeterCells, PositionX, PositionY](int X, int Y) {
+		PerimeterCells.Add({PositionX + X, PositionY + Y});
+		PerimeterCells.Add({PositionX - X, PositionY + Y});
+		PerimeterCells.Add({PositionX + X, PositionY - Y});
+		PerimeterCells.Add({PositionX - X, PositionY - Y});
+		PerimeterCells.Add({PositionX + Y, PositionY + X});
+		PerimeterCells.Add({PositionX - Y, PositionY + X});
+		PerimeterCells.Add({PositionX + Y, PositionY - X});
+		PerimeterCells.Add({PositionX - Y, PositionY - X});
+	};
+
+	AddSymmetricPoints(x, y);
+
+	while (x < y) {
+		x++;
+
+		if (d > 0) {
+			y--;
+			d = d + 4 * (x - y) + 10;
+		} else {
+			d = d + 4 * x + 6;
+		}
+
+		AddSymmetricPoints(x, y);
+	}
+
+	return PerimeterCells;
 }
 
 void AMWorldGenerator::Tick(float DeltaSeconds)
