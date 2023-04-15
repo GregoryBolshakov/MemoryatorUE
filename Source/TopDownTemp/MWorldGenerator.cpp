@@ -6,83 +6,47 @@
 #include "MActor.h" 
 #include "MCharacter.h"
 #include "MGroundBlock.h"
-#include "MMemoryator.h"
 #include "MAICrowdManager.h"
 #include "MDropManager.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MVillageGenerator.h"
 #include "MWorldManager.h"
 #include "NavigationSystem.h"
-#include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
-#include "Engine/SCS_Node.h"
 
 AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, ActiveZoneRadius(0)
 	, DynamicActorsCheckInterval(0.5f)
 	, DynamicActorsCheckTimer(0.f)
+	, DropManager(nullptr)
 {
-	PlayerActiveZone = CreateDefaultSubobject<UBoxComponent>(TEXT("Player Active Zone"));
-	PlayerActiveZone->SetBoxExtent(FVector(500.0f, 500.0f, 500.0f));
-	PlayerActiveZone->SetGenerateOverlapEvents(false);
-	PlayerActiveZone->PrimaryComponentTick.bStartWithTickEnabled = false;
-	PlayerActiveZone->PrimaryComponentTick.bCanEverTick = false;
-	SetRootComponent(PlayerActiveZone);
-
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void AMWorldGenerator::GenerateWorld()
+void AMWorldGenerator::GenerateActiveZone()
 {
-	//TODO: Remove it from here
-	auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	const auto Block = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
-	GridOfActors.Add(Block, {}).DynamicActors.Emplace(pPlayer->GetName(), pPlayer);
-	ActorsMetadata.Add(FName(pPlayer->GetName()), {pPlayer, Block});
-
 	auto* pWorld = GetWorld();
 	if (!pWorld)
-	{
-		check(false);
 		return;
-	}
+
+	//TODO: Remove it from here
+	auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	const auto PlayerBlock = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
+	GridOfActors.Add(PlayerBlock, {}).DynamicActors.Emplace(pPlayer->GetName(), pPlayer);
+	ActorsMetadata.Add(FName(pPlayer->GetName()), {pPlayer, PlayerBlock});
 
 	const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock"));
-	if (!ToSpawnGroundBlock)
-	{
-		check(false);
-		return;
-	}
 	const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), pWorld);
 	if (GroundBlockBounds.BoxExtent == FVector::ZeroVector)
 		return;
-	const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
 
-	// Adjust the world size so that it is divisible by two block sizes
-	WorldSize.X /= 2 * GroundBlockSize.X;
-	WorldSize.X *= 2 * GroundBlockSize.X;
-	WorldSize.Y /= 2 * GroundBlockSize.Y;
-	WorldSize.Y *= 2 * GroundBlockSize.Y;
-
-	for (int x = -WorldSize.X / 2; x < WorldSize.X / 2; x += GroundBlockSize.X)
+	// We add 1 to the radius on purpose. Generated area always has to be further then visible
+	for (const auto BlockInRadius : GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius + 1))
 	{
-		for (int y = -WorldSize.Y / 2; y < WorldSize.Y / 2; y += GroundBlockSize.Y)
-		{
-			FVector Location(x, y, 0);
-			FActorSpawnParameters EmptySpawnParameters{};
-			auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, FRotator::ZeroRotator, EmptySpawnParameters);
-
-			int TreeSpawnRate = FMath::RandRange(1, 5);
-			//if (TreeSpawnRate == 1)
-			{
-				const auto TreeDefault = GetDefault<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")));
-				FVector TreeLocation(x, y, 0);
-				EmptySpawnParameters = {};
-				auto* Tree = SpawnActor<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")), TreeLocation, FRotator::ZeroRotator, EmptySpawnParameters);
-			}
-		}
+		GenerateBlock(BlockInRadius);
 	}
 
 	FActorSpawnParameters SpawnParameters;
@@ -91,6 +55,40 @@ void AMWorldGenerator::GenerateWorld()
 	const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator, SpawnParameters);
 	VillageGenerator->Generate();
 	UpdateNavigationMesh();
+}
+
+void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDynamicObjects)
+{
+	if (!GetWorld())
+		return;
+
+	// Get the ground block size
+	const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock"));
+	if (!ToSpawnGroundBlock)
+		return;
+
+	const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), GetWorld());
+	if (GroundBlockBounds.BoxExtent == FVector::ZeroVector)
+		return;
+	const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
+
+	// Empty the block if already spawned
+	if (const auto BlockOfActors = GridOfActors.Find(BlockIndex))
+	{
+		BlockOfActors->StaticActors.Empty();
+		if (EraseDynamicObjects)
+		{
+			BlockOfActors->DynamicActors.Empty();
+		}
+	}
+
+	const FVector Location(GroundBlockSize.X * BlockIndex.X, GroundBlockSize.Y * BlockIndex.Y, 0);
+
+	FActorSpawnParameters EmptySpawnParameters{};
+	auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, FRotator::ZeroRotator, EmptySpawnParameters);
+
+	EmptySpawnParameters = {};
+	auto* Tree = SpawnActor<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")), Location, FRotator::ZeroRotator, EmptySpawnParameters);
 }
 
 void AMWorldGenerator::BeginPlay()
@@ -203,47 +201,37 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 void AMWorldGenerator::UpdateActiveZone()
 {
 	const auto PlayerLocation = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetTransform().GetLocation();
-	//TODO: Think how to fit the Active zone to the screen size
-	PlayerActiveZone->SetWorldLocation(PlayerLocation);
-
-	const FTransform BoxTransform = PlayerActiveZone->GetComponentToWorld();
-	const FVector BoxExtent = PlayerActiveZone->GetScaledBoxExtent();
-
-	const auto StartBlock = GetGroundBlockIndex(BoxTransform.GetLocation() - BoxExtent);
-	const auto FinishBlock = GetGroundBlockIndex(BoxTransform.GetLocation() + BoxExtent);
+	const auto PlayerBlock = GetGroundBlockIndex(PlayerLocation);
 
 	// Enable all the objects within PlayerActiveZone. ActiveBlocksMap is considered as from the previous check.
 	TMap<FIntPoint, bool> ActiveBlocksMap_New;
-	for (auto X = StartBlock.X; X <= FinishBlock.X; ++X)
+	for (const auto Block : GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius))
 	{
-		for (auto Y = StartBlock.Y; Y <= FinishBlock.Y; ++Y)
+		ActiveBlocksMap_New.Add(Block, true);
+		ActiveBlocksMap.Remove(Block);
+		if (const auto GridBlock = GridOfActors.Find(Block);
+			GridBlock && !GridBlock->StaticActors.IsEmpty())
 		{
-			ActiveBlocksMap_New.Add(FIntPoint(X, Y), true);
-			ActiveBlocksMap.Remove(FIntPoint(X, Y));
-			if (const auto Block = GridOfActors.Find(FIntPoint(X, Y));
-				Block && !Block->StaticActors.IsEmpty())
+			// Enable all the static Actors in the block
+			for (const auto& [Index, Data] : GridBlock->StaticActors)
 			{
-				// Enable all the static Actors in the block
-				for (const auto& [Index, Data] : Block->StaticActors)
+				//TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
+				if (Data) // temporary
 				{
-					//TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
-					if (Data) // temporary
+					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 					{
-						if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-						{
-							IsActiveCheckerComponent->EnableOwner();
-						}
+						IsActiveCheckerComponent->EnableOwner();
 					}
 				}
-				// Enable all dynamic Actors in the block
-				for (const auto& [Index, Data] : Block->DynamicActors)
+			}
+			// Enable all dynamic Actors in the block
+			for (const auto& [Index, Data] : GridBlock->DynamicActors)
+			{
+				if (Data) // temporary
 				{
-					if (Data) // temporary
+					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 					{
-						if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-						{
-							IsActiveCheckerComponent->EnableOwner();
-						}
+						IsActiveCheckerComponent->EnableOwner();
 					}
 				}
 			}
@@ -253,9 +241,9 @@ void AMWorldGenerator::UpdateActiveZone()
 	// Disable all the rest of objects that were in PlayerActiveZone in the previous check but no longer there.
 	for (const auto& [BlockIndex, IsActive] : ActiveBlocksMap)
 	{
-		if (const auto Block = GridOfActors.Find(BlockIndex))
+		if (const auto GridBlock = GridOfActors.Find(BlockIndex))
 		{
-			for (const auto& [Index, Data] : Block->StaticActors)
+			for (const auto& [Index, Data] : GridBlock->StaticActors)
 			{
 				if (Data) // temporary
 				{
@@ -265,7 +253,7 @@ void AMWorldGenerator::UpdateActiveZone()
 					}
 				}
 			}
-			for (const auto& [Index, Data] : Block->DynamicActors)
+			for (const auto& [Index, Data] : GridBlock->DynamicActors)
 			{
 				if (Data) // temporary
 				{
@@ -311,6 +299,11 @@ void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& NewBlock)
 {
 	UpdateActiveZone();
 	UpdateNavigationMesh();
+
+	for (const auto Block : GetBlocksOnPerimeter(NewBlock.X, NewBlock.Y, ActiveZoneRadius + 1))
+	{
+		GenerateBlock(Block);
+	}
 }
 
 FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position)
@@ -325,42 +318,40 @@ FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position)
 	return {0, 0};
 }
 
-TSet<FIntPoint> AMWorldGenerator::GetBlocksAround(int PositionX, int PositionY, int Radius)
+TSet<FIntPoint> AMWorldGenerator::GetBlocksOnPerimeter(int BlockX, int BlockY, int RadiusInBlocks)
 {
-	TSet<FIntPoint> PerimeterCells;
+	TSet<FIntPoint> Blocks;
 
-	// Bresenham's Circle Algorithm
-	int x = 0;
-	int y = Radius;
-	int d = 3 - 2 * Radius;
-
-	auto AddSymmetricPoints = [&PerimeterCells, PositionX, PositionY](int X, int Y) {
-		PerimeterCells.Add({PositionX + X, PositionY + Y});
-		PerimeterCells.Add({PositionX - X, PositionY + Y});
-		PerimeterCells.Add({PositionX + X, PositionY - Y});
-		PerimeterCells.Add({PositionX - X, PositionY - Y});
-		PerimeterCells.Add({PositionX + Y, PositionY + X});
-		PerimeterCells.Add({PositionX - Y, PositionY + X});
-		PerimeterCells.Add({PositionX + Y, PositionY - X});
-		PerimeterCells.Add({PositionX - Y, PositionY - X});
-	};
-
-	AddSymmetricPoints(x, y);
-
-	while (x < y) {
-		x++;
-
-		if (d > 0) {
-			y--;
-			d = d + 4 * (x - y) + 10;
-		} else {
-			d = d + 4 * x + 6;
+	for (float X = BlockX - RadiusInBlocks; X <= BlockX + RadiusInBlocks; ++X)
+	{
+		for (float Y = BlockY - RadiusInBlocks; Y <= BlockY + RadiusInBlocks; ++Y)
+		{
+			const auto Distance = sqrt(pow(X - BlockX, 2) + pow(Y - BlockY, 2));
+			if (Distance <= static_cast<float>(RadiusInBlocks) && Distance > static_cast<float>(RadiusInBlocks - 1)) {
+				Blocks.Add({ static_cast<int>(X), static_cast<int>(Y) });
+			}
 		}
-
-		AddSymmetricPoints(x, y);
 	}
 
-	return PerimeterCells;
+	return Blocks;
+}
+
+TSet<FIntPoint> AMWorldGenerator::GetBlocksInRadius(int BlockX, int BlockY, int RadiusInBlocks) const
+{
+	TSet<FIntPoint> Blocks;
+
+	for (float X = BlockX - RadiusInBlocks; X <= BlockX + RadiusInBlocks; ++X)
+	{
+		for (float Y = BlockY - RadiusInBlocks; Y <= BlockY + RadiusInBlocks; ++Y)
+		{
+			
+			if (sqrt(pow(X - BlockX, 2) + pow(Y - BlockY, 2)) <= static_cast<float>(RadiusInBlocks)) {
+				Blocks.Add({ static_cast<int>(X), static_cast<int>(Y) });
+			}
+		}
+	}
+
+	return Blocks;
 }
 
 void AMWorldGenerator::Tick(float DeltaSeconds)
@@ -504,6 +495,9 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 	}
 
 	FBoxSphereBounds ActorBounds(ForceInitToZero);
+
+	if (!IN_ActorClass)
+		return ActorBounds;
 
 	if (const auto pWorld = WorldContextObject->GetWorld())
 	{

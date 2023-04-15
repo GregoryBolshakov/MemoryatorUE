@@ -52,7 +52,9 @@ class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 
 public:
 
-	void GenerateWorld();
+	void GenerateActiveZone();
+
+	void GenerateBlock(const FIntPoint& BlockIndex, bool EraseDynamicObjects = false);
 
 	/** Turns on all actors in the active zone, turn off all others*/
 	void UpdateActiveZone();
@@ -115,21 +117,21 @@ private:
 
 	FIntPoint GetGroundBlockIndex(FVector Position);
 
-	/** Lists all the blocks lying on the perimeter of the circle with the given coordinates and radius. Time Complexity: O(PositionX – PositionY) */
-	TSet<FIntPoint> GetBlocksAround(int PositionX, int PositionY, int Radius);
+	/** Lists all the blocks lying on the perimeter of the circle with the given coordinates and radius */ //TODO: Use Bresenham's Circle Algorithm for better performance
+	static TSet<FIntPoint> GetBlocksOnPerimeter(int BlockX, int BlockY, int RadiusInBlocks);
 
-	UPROPERTY(EditAnywhere)
-	FIntPoint WorldSize{10000, 10000};
-	
+	/** Lists all the blocks lying within the circle with the given coordinates and radius */
+	TSet<FIntPoint> GetBlocksInRadius(int BlockX, int BlockY, int RadiusInBlocks) const;
+
+	/** The radius of the visible area (in blocks) */
+	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess=true))
+	int ActiveZoneRadius;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SubclassessToSpawn, meta = (DisplayThumbnail, AllowPrivateAccess = true))
 	TMap<FName, TSubclassOf<AActor>> ToSpawnActorClasses;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SubclassessToSpawn, meta = (AllowPrivateAccess = "true"))
 	TMap<FName, TSubclassOf<UObject>> ToSpawnComplexStructureClasses;
-
-	/** The box indicating the bounds of the interaction area of the world. I.e. rendering and ticking. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Trigger Box", meta = (AllowPrivateAccess = "true"))
-	class UBoxComponent* PlayerActiveZone;
 
 	UPROPERTY()
 	TMap<FIntPoint, FBlockOfActors> GridOfActors;

@@ -24,7 +24,7 @@ void UMWorldManager::OnWorldBeginPlay(UWorld& InWorld)
 	WorldGenerator = Cast<AMWorldGenerator>(UGameplayStatics::GetActorOfClass(Cast<UObject>(&InWorld), AMWorldGenerator::StaticClass()));
 	if (WorldGenerator)
 	{
-		WorldGenerator->GenerateWorld();
+		WorldGenerator->GenerateActiveZone();
 	}
 	else
 	{
