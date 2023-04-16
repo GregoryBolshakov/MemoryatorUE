@@ -10,6 +10,8 @@
 #include "MInterfaceMobController.h"
 #include "MWorldManager.h"
 #include "MWorldGenerator.h"
+#include "Components/TimelineComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer),
@@ -27,6 +29,47 @@ AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializ
 	}
 
 	ConsoleCommandsManager = CreateDefaultSubobject<UMConsoleCommandsManager>(TEXT("ConsoleCommandsManager"));
+}
+
+void AMPlayerController::TimelineProgress(float Value)
+{
+	if (auto MyCharacter = Cast<AMCharacter>(GetPawn()))
+	{
+		if (FMath::IsNearlyZero(Value, 0.000001))
+		{
+			// Not dashing
+			EnableInput(this);
+			MyCharacter->SetIsDashing(false);
+			MyCharacter->UpdateAnimation();
+			DashVelocityTimeline.Stop();
+		}
+		else
+		{
+			// Dashing
+			if (const auto CharacterPawn = GetPawn())
+			{
+				if (const auto MovementComponent = MyCharacter->GetMovementComponent())
+				{
+					MovementComponent->Velocity = MyCharacter->GetLastNonZeroVelocity().GetSafeNormal() *
+						MovementComponent->GetMaxSpeed() * 2.f * Value;
+				}
+			}
+			DisableInput(this);
+		}
+	}
+}
+
+void AMPlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (DashVelocityCurve)
+	{
+		FOnTimelineFloat TimelineProgress;
+		TimelineProgress.BindUFunction(this, FName("TimelineProgress"));
+		DashVelocityTimeline.AddInterpFloat(DashVelocityCurve, TimelineProgress);
+		DashVelocityTimeline.SetLooping(false);
+	}
 }
 
 bool AMPlayerController::IsMovingByAI() const
@@ -48,6 +91,8 @@ void AMPlayerController::StopAIMovement()
 void AMPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
+
+	DashVelocityTimeline.TickTimeline(DeltaTime);
 
 	const auto pWorld = GetWorld();
 	if (!pWorld)
@@ -90,11 +135,16 @@ void AMPlayerController::SetupInputComponent()
 	InputComponent->BindAction("SetDestination", IE_Pressed, this, &AMPlayerController::OnSetDestinationPressed);
 	InputComponent->BindAction("SetDestination", IE_Released, this, &AMPlayerController::OnSetDestinationReleased);
 
-	InputComponent->BindAction("ToggleIsTurningAround", IE_Pressed, this, &AMPlayerController::OnToggleTurnAroundPressed);
-	InputComponent->BindAction("ToggleIsTurningAround", IE_Released, this, &AMPlayerController::OnToggleTurnAroundReleased);
+	InputComponent->BindAction("ToggleIsTurningAround", IE_Pressed, this,
+	                           &AMPlayerController::OnToggleTurnAroundPressed);
+	InputComponent->BindAction("ToggleIsTurningAround", IE_Released, this,
+	                           &AMPlayerController::OnToggleTurnAroundReleased);
 
 	InputComponent->BindAction("ToggleIsFighting", IE_Pressed, this, &AMPlayerController::OnToggleFightPressed);
 	InputComponent->BindAction("ToggleIsFighting", IE_Released, this, &AMPlayerController::OnToggleFightReleased);
+
+	// we use only pressed, because player cannot stop performing the dash by himself
+	InputComponent->BindAction("Dash", IE_Pressed, this, &AMPlayerController::OnDashPressed);
 
 	// support touch devices 
 	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AMPlayerController::MoveToTouchLocation);
@@ -112,7 +162,9 @@ void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter
 	{
 		const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
 		const auto ForgetEnemyRange = MyCharacter.GetForgetEnemyRange();
-		const auto DynamicActorsNearby = pWorldGenerator->GetActorsInRect(CharacterLocation - FVector(ForgetEnemyRange,ForgetEnemyRange, 0.f), CharacterLocation + FVector(ForgetEnemyRange,ForgetEnemyRange, 0.f), true);
+		const auto DynamicActorsNearby = pWorldGenerator->GetActorsInRect(
+			CharacterLocation - FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f),
+			CharacterLocation + FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f), true);
 		EnemiesNearby.Empty();
 
 		if (!DynamicActorsNearby.IsEmpty())
@@ -120,7 +172,8 @@ void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter
 			for (const auto& [Name, DynamicActor] : DynamicActorsNearby)
 			{
 				// The actors are taken in a square area, in the corners the distance is greater than the radius
-				const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
+				const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(),
+				                                               MyCharacter.GetTransform().GetLocation());
 				if (DistanceToActor <= MyCharacter.GetForgetEnemyRange())
 				{
 					// Split dynamic actors by role
@@ -131,7 +184,7 @@ void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter
 					{
 						EnemiesNearby.Add(Name, DynamicActor);
 					}
-					
+
 					//TODO: Check if the actor is a friend
 				}
 			}
@@ -148,7 +201,9 @@ void AMPlayerController::FixGazeOnClosestEnemy(AMCharacter& MyCharacter)
 		const auto EnemyLocation = EnemyActor->GetTransform().GetLocation();
 		const auto DistanceToActor = FVector::Distance(CharacterLocation, EnemyLocation);
 		// Fix our character's gaze on the enemy if it is the closest one and is within sight range
-		if (DistanceToActor <= MyCharacter.GetFightRange() * 3.f && (DistanceToActor <= MyCharacter.GetForcedGazeVector().Size() || MyCharacter.GetForcedGazeVector().IsZero())) //TODO: put " * 1.5f" to the properties 
+		if (DistanceToActor <= MyCharacter.GetFightRange() * 3.f && (DistanceToActor <= MyCharacter.
+			GetForcedGazeVector().Size() || MyCharacter.GetForcedGazeVector().IsZero()))
+		//TODO: put " * 1.5f" to the properties 
 		{
 			MyCharacter.SetForcedGazeVector(EnemyLocation - CharacterLocation);
 		}
@@ -185,7 +240,7 @@ void AMPlayerController::TurnAround(float Value)
 		if (IsValid(MyPawn))
 		{
 			const FRotator Rotation(0.0f, Value, 0.0f);
-			
+
 			AddYawInput(Rotation.Yaw); // Rotate Controller, to change the direction of the Pawn movement
 			MyPawn->SetActorRotation(GetControlRotation()); // Pawn visual rotation only
 		}
@@ -207,7 +262,8 @@ void AMPlayerController::MoveToMouseCursor()
 		{
 			if (MyCharacter->GetCursorToWorld())
 			{
-				UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, MyCharacter->GetCursorToWorld()->GetComponentLocation());
+				UAIBlueprintHelperLibrary::SimpleMoveToLocation(
+					this, MyCharacter->GetCursorToWorld()->GetComponentLocation());
 			}
 		}
 	}
@@ -296,6 +352,21 @@ void AMPlayerController::OnToggleFightReleased()
 	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()))
 	{
 		MyCharacter->SetIsFighting(false);
+	}
+}
+
+void AMPlayerController::OnDashPressed()
+{
+	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && !MyCharacter->GetIsDashing())
+	{
+		MyCharacter->SetIsDashing(true);
+		MyCharacter->UpdateAnimation();
+		// Freeze Direction
+
+
+		// Dash by curve
+		DashVelocityTimeline.PlayFromStart();
+		UE_LOG(LogTemp, Warning, TEXT("Dashing!!!"));
 	}
 }
 
