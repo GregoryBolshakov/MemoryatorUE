@@ -32,12 +32,16 @@ void AMWorldGenerator::GenerateActiveZone()
 	if (!pWorld)
 		return;
 
-	//TODO: Remove it from here
+	// Fill ActiveBlocksMap with the active blocks
+	UpdateActiveZone();
+
+	// Add player to the Grid
 	auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	const auto PlayerBlock = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
 	GridOfActors.Add(PlayerBlock, {}).DynamicActors.Emplace(pPlayer->GetName(), pPlayer);
 	ActorsMetadata.Add(FName(pPlayer->GetName()), {pPlayer, PlayerBlock});
 
+	// Get ground block class and bounds
 	const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock"));
 	const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), pWorld);
 	if (GroundBlockBounds.BoxExtent == FVector::ZeroVector)
@@ -238,7 +242,7 @@ void AMWorldGenerator::UpdateActiveZone()
 		}
 	}
 
-	// Disable all the rest of objects that were in PlayerActiveZone in the previous check but no longer there.
+	// Disable/Remove all the rest of objects that were in PlayerActiveZone in the previous check but no longer there.
 	for (const auto& [BlockIndex, IsActive] : ActiveBlocksMap)
 	{
 		if (const auto GridBlock = GridOfActors.Find(BlockIndex))
@@ -264,6 +268,7 @@ void AMWorldGenerator::UpdateActiveZone()
 				}
 			}
 		}
+		//TODO: If the block isn't constant and the GridOfActors is almost full, delete the furthest block and destroy its actors
 	}
 
 	// All and only ActiveBlocksMap_New forms the new ActiveBlocksMap collection.
@@ -295,14 +300,31 @@ void AMWorldGenerator::UpdateNavigationMesh()
 	}
 }
 
+TArray<FTimerHandle> Timers;
 void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& NewBlock)
 {
 	UpdateActiveZone();
 	UpdateNavigationMesh();
 
-	for (const auto Block : GetBlocksOnPerimeter(NewBlock.X, NewBlock.Y, ActiveZoneRadius + 1))
+	// Generate the perimeter outside the active zone
+	const auto BlocksInRadius = GetBlocksOnPerimeter(NewBlock.X, NewBlock.Y, ActiveZoneRadius + 1);
+	OnTickGenerateBlocks(BlocksInRadius);
+}
+
+int BlocksPerFrame = 1;
+void AMWorldGenerator::OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate)
+{
+	int Index = 0;
+	for (auto It = BlocksToGenerate.CreateIterator(); It; ++It)
 	{
-		GenerateBlock(Block);
+		GenerateBlock(*It);
+		It.RemoveCurrent();
+
+		if (++Index >= BlocksPerFrame)
+		{
+			GetWorld()->GetTimerManager().SetTimerForNextTick([this, BlocksToGenerate]{ OnTickGenerateBlocks(BlocksToGenerate); });
+			break;
+		}
 	}
 }
 
@@ -376,26 +398,6 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 		return nullptr;
 	}
 
-	const auto GroundBlockIndex = GetGroundBlockIndex(Location);
-
-	// If there's an empty block, add it to the map
-	auto BlockOfActors = GridOfActors.Find(GroundBlockIndex);
-	if (!BlockOfActors)
-	{
-		BlockOfActors = &GridOfActors.Add(GroundBlockIndex, {});
-	}
-
-	// Determine whether the object is static or movable
-	bool bDynamic = Class->IsChildOf<APawn>();
-	auto& ListToAdd = bDynamic ? BlockOfActors->DynamicActors : BlockOfActors->StaticActors;
-
-	//TODO: If this check is of no use, should be removed
-	if (const auto ExistingActor = ListToAdd.Find(SpawnParameters.Name))
-	{
-		UE_LOG(LogWorldManager, Warning, TEXT("Trying to spawn already existing actor"));
-		return *ExistingActor;
-	}
-
 	AActor* Actor;
 
 	if (bForceAboveGround)
@@ -415,11 +417,56 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 		Actor = pWorld->SpawnActor(Class, &Location, &Rotation, SpawnParameters);
 	}
 
-	// We also store the mapping between the Name and metadata (actor's GroundBlock index, etc.)
-	const FActorWorldMetadata Metadata{ListToAdd.Add(SpawnParameters.Name, Actor), GroundBlockIndex};
-	ActorsMetadata.Add(SpawnParameters.Name, Metadata);
+	if (!Actor)
+		return nullptr;
 
-	return Metadata.Actor;
+	EnrollActorToGrid(Actor);
+
+	return Actor;
+}
+
+void AMWorldGenerator::EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant)
+{
+	if (!Actor)
+		return;
+
+	const auto GroundBlockIndex = GetGroundBlockIndex(Actor->GetActorLocation());
+
+	// If there's an empty block, add it to the map
+	auto BlockOfActors = GridOfActors.Find(GroundBlockIndex);
+	if (!BlockOfActors)
+	{
+		BlockOfActors = &GridOfActors.Add(GroundBlockIndex, {});
+	}
+
+	if (bMakeBlockConstant)
+	{
+		BlockOfActors->IsConstant = true;
+	}
+
+	// Determine whether the object is static or movable
+	bool bDynamic = Actor->GetClass()->IsChildOf<APawn>();
+	auto& ListToAdd = bDynamic ? BlockOfActors->DynamicActors : BlockOfActors->StaticActors;
+
+	// We also store the mapping between the Name and metadata (actor's GroundBlock index, etc.)
+	const FActorWorldMetadata Metadata{ListToAdd.Add(FName(Actor->GetName()), Actor), GroundBlockIndex};
+	ActorsMetadata.Add(FName(Actor->GetName()), Metadata);
+
+	// If was spawned on a disabled block, disable the actor
+	if (const auto IsActiveCheckerComponent = Cast<UMIsActiveCheckerComponent>(Actor->GetComponentByClass(UMIsActiveCheckerComponent::StaticClass())))
+	{
+		if (IsActiveCheckerComponent->GetAlwaysEnabled())
+		{
+			BlockOfActors->IsConstant = true;
+		}
+		else
+		{
+			if (!ActiveBlocksMap.Contains(GroundBlockIndex))
+			{
+				IsActiveCheckerComponent->DisableOwner();
+			}
+		}
+	}
 }
 
 TSubclassOf<AActor> AMWorldGenerator::GetClassToSpawn(FName Name)
@@ -479,6 +526,7 @@ void AMWorldGenerator::CleanArea(const FVector& Location, float Radius)
 					{
 						continue;
 					}
+					It->Value->Destroy();
 					It.RemoveCurrent();
 				}
 			}
@@ -573,7 +621,6 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const float ToSpawnR
 		auto Actor = SpawnActor<AActor>(Class, SpawnPosition, {}, SpawnParameters, true);
 		if (Actor)
 		{
-			UpdateActiveZone();
 			return Actor;
 		}
 	}

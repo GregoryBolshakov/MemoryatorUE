@@ -35,6 +35,8 @@ public:
 
 	void EnableOwner(bool bForce = false);
 
+	bool GetAlwaysEnabled() const { return bAlwaysEnabled; }
+
 	//** Likely to be removed as it is not needed. It finds a UPrimitiveComponent tagged with IsActiveChecker and set it up. Should be called in owner's PostInitializeComponents */
 	virtual void SetUpCollisionPrimitive();
 
@@ -43,9 +45,9 @@ private:
 
 	bool bIsDisabledByForce;
 
-	bool bActorWasHiddenInGame;
+	TOptional<bool> bActorWasHiddenInGame;
 
-	bool bActorHadTickEnabled;
+	TOptional<bool> bActorHadTickEnabled;
 
 	UPROPERTY()
 	TArray<FDisabledComponentInfo> DisabledComponentsData;

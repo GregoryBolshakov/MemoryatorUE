@@ -17,13 +17,14 @@ AMVillageGenerator::AMVillageGenerator(const FObjectInitializer& ObjectInitializ
 
 FVector GetPointOnCircle(const FVector& CircleCenter, float Radius, float Angle)
 {
-	return { CircleCenter.X + Radius * cos(Angle), CircleCenter.Y + Radius * sin(Angle), 0 };
+	return { CircleCenter.X + Radius * cos(Angle), CircleCenter.Y + Radius * sin(Angle), 0.f };
 }
 
 void AMVillageGenerator::Generate()
 {
+	UWorld* pWorld = GetWorld();
 	AMWorldGenerator* pWorldGenerator = nullptr;
-	if (const auto pWorld = GetWorld())
+	if (pWorld)
 	{
 		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
 		{
@@ -65,7 +66,6 @@ void AMVillageGenerator::Generate()
 	{
 		FActorSpawnParameters SpawnParameters{};
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnParameters.Name = FName("Building_" + FString::FromInt(BuildingIndex));
 
 		// The class of the new building is random
 		TArray<FName> KeysArray;
@@ -78,19 +78,27 @@ void AMVillageGenerator::Generate()
 		{
 			return;
 		}
+		SpawnParameters.Name = MakeUniqueObjectName(pWorld, BuildingMetadata->ToSpawnClass.Get());
 
-		const auto BuildingActor = pWorldGenerator->SpawnActor<AActor>(BuildingMetadata->ToSpawnClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
-		if (!BuildingActor)
+		// The temporary actor to find the position for the building
+		const auto TestingBuildingActor = pWorld->SpawnActor<AActor>(BuildingMetadata->ToSpawnClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
+
+		if (!TestingBuildingActor)
 		{
 			check(false);
 			return;
 		}
 
-		ShiftBuildingRandomly(BuildingActor);
+		ShiftBuildingRandomly(TestingBuildingActor);
 
-		// We try to find a location to fit the building, and if there is no such, then we stop and don't build the rest.
-		if (!TryToPlaceBuilding(*BuildingActor, BuildingIndex, Radius, BuildingClassName, *BuildingMetadata))
+		// We try to find a location to fit the building
+		if (TryToPlaceBuilding(*TestingBuildingActor, BuildingIndex, Radius, BuildingClassName, *BuildingMetadata))
 		{
+			pWorldGenerator->EnrollActorToGrid(TestingBuildingActor);
+		}
+		else
+		{
+			// If there is no such, then we stop and don't build the rest
 			break;
 		}
 	}

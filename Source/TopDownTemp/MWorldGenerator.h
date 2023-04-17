@@ -26,6 +26,8 @@ public:
 
 	UPROPERTY()
 	TMap<FName, AActor*> DynamicActors;
+
+	bool IsConstant = false;
 };
 
 /** Utility class for storing actor's metadata in the grid */
@@ -68,6 +70,8 @@ public:
 		}
 		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters, bForceAboveGround),ECastCheckedType::NullAllowed);
 	}
+
+	void EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant = false);
 
 	TSubclassOf<AActor> GetClassToSpawn(FName Name); 
 
@@ -114,6 +118,8 @@ private:
 
 	UFUNCTION()
 	void OnPlayerChangedBlock(const FIntPoint& NewBlock);
+
+	void OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate);
 
 	FIntPoint GetGroundBlockIndex(FVector Position);
 

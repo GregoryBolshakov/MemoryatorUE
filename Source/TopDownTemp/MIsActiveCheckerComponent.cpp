@@ -6,8 +6,6 @@ UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer&
 	: Super(ObjectInitializer)
 	, bIsActive(false)
 	, bIsDisabledByForce(false)
-	, bActorWasHiddenInGame(true)
-	, bActorHadTickEnabled(false)
 	, CollisionPrimitive(nullptr)
 	, bAlwaysEnabled(false)
 {
@@ -43,7 +41,7 @@ void UMIsActiveCheckerComponent::DisableOwner(bool bForce)
 		if (Component == this)
 			continue;
 
-		FDisabledComponentInfo ComponentData{ Component, Component->PrimaryComponentTick.bCanEverTick };
+		FDisabledComponentInfo ComponentData{ Component, static_cast<bool>(Component->PrimaryComponentTick.bCanEverTick) };
 		Component->PrimaryComponentTick.bCanEverTick = false;
 		Component->PrimaryComponentTick.UnRegisterTickFunction();
 
@@ -81,8 +79,14 @@ void UMIsActiveCheckerComponent::EnableOwner(bool bForce)
 		return;
 	}
 
-	pOwner->SetActorHiddenInGame(bActorWasHiddenInGame);
-	pOwner->SetActorTickEnabled(bActorHadTickEnabled);
+	if (bActorWasHiddenInGame.IsSet())
+	{
+		pOwner->SetActorHiddenInGame(bActorWasHiddenInGame.GetValue());
+	}
+	if (bActorHadTickEnabled.IsSet())
+	{
+		pOwner->SetActorTickEnabled(bActorHadTickEnabled.GetValue());
+	}
 
 	// Set the components state using saved data
 	for (auto& Data : DisabledComponentsData)
