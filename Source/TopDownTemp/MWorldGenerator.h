@@ -44,6 +44,12 @@ public:
 	FOnBlockChanged OnBlockChangedDelegate;
 };
 
+enum class EScreenPoint
+{
+	TopLeft = 0,
+	TopRight
+};
+
 /**
  * The class responsible for world generation. At the moment it must be placed in the world manually..
  */
@@ -119,9 +125,14 @@ private:
 	UFUNCTION()
 	void OnPlayerChangedBlock(const FIntPoint& NewBlock);
 
+	/** Function for spreading heavy GenerateBlock calls over multiple ticks */
 	void OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate);
 
 	FIntPoint GetGroundBlockIndex(FVector Position);
+
+	FVector GetGroundBlockLocation(FIntPoint BlockIndex);
+
+	static FVector RaycastScreenPoint(const UObject* pWorldContextObject, const EScreenPoint ScreenPoint);
 
 	/** Lists all the blocks lying on the perimeter of the circle with the given coordinates and radius */ //TODO: Use Bresenham's Circle Algorithm for better performance
 	static TSet<FIntPoint> GetBlocksOnPerimeter(int BlockX, int BlockY, int RadiusInBlocks);

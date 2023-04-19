@@ -68,18 +68,11 @@
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_VillageGenerator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_VillageGenerator.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Big.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Big.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Intermediate.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Intermediate.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Medium.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Medium.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Small.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Small.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Tiny.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Tiny.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_ToggleInventoryButton.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_ToggleInventoryButton.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v15/.suo" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Batch/Cleanup.bat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" afterDir="false" />
     </list>
@@ -23100,7 +23093,10 @@
       <workItem from="1681506080955" duration="615000" />
       <workItem from="1681554478447" duration="20866000" />
       <workItem from="1681632737176" duration="16194000" />
-      <workItem from="1681736083140" duration="6209000" />
+      <workItem from="1681736083140" duration="9596000" />
+      <workItem from="1681830923426" duration="1226000" />
+      <workItem from="1681896216144" duration="11906000" />
+      <workItem from="1681911815050" duration="8047000" />
     </task>
     <servers />
   </component>
@@ -23153,7 +23149,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp</url>
-          <line>446</line>
+          <line>525</line>
           <option name="timeStamp" value="225" />
         </line-breakpoint>
       </breakpoints>
@@ -23167,11 +23163,6 @@
         <breakpoint suspend="NONE" type="javascript-exception" />
       </default-breakpoints>
     </breakpoint-manager>
-    <watches-manager>
-      <configuration name="CppProject">
-        <watch expression="this-&gt;GridOfActors" />
-      </configuration>
-    </watches-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

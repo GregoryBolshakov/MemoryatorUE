@@ -4,7 +4,7 @@
 
 UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, bIsActive(false)
+	, bIsActive(true)
 	, bIsDisabledByForce(false)
 	, CollisionPrimitive(nullptr)
 	, bAlwaysEnabled(false)
@@ -13,7 +13,8 @@ UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer&
 
 void UMIsActiveCheckerComponent::DisableOwner(bool bForce)
 {
-	if (bAlwaysEnabled)
+	// No need to disable if either already disabled or configured to always be enabled
+	if (!bIsActive || bAlwaysEnabled)
 	{
 		return;
 	}
@@ -67,7 +68,7 @@ void UMIsActiveCheckerComponent::EnableOwner(bool bForce)
 {
 	// No need to enable if bAlwaysEnabled is true, because it has never been disabled.
 	// If was disabled by force, then can be enabled only by force
-	if (bAlwaysEnabled || (bIsDisabledByForce && !bForce))
+	if (bIsActive || bAlwaysEnabled || (bIsDisabledByForce && !bForce))
 	{
 		return;
 	}

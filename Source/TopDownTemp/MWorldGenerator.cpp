@@ -63,7 +63,8 @@ void AMWorldGenerator::GenerateActiveZone()
 
 void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDynamicObjects)
 {
-	if (!GetWorld())
+	const auto pWorld = GetWorld();
+	if (!pWorld)
 		return;
 
 	// Get the ground block size
@@ -71,7 +72,7 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 	if (!ToSpawnGroundBlock)
 		return;
 
-	const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), GetWorld());
+	const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), pWorld);
 	if (GroundBlockBounds.BoxExtent == FVector::ZeroVector)
 		return;
 	const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
@@ -79,19 +80,32 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 	// Empty the block if already spawned
 	if (const auto BlockOfActors = GridOfActors.Find(BlockIndex))
 	{
-		BlockOfActors->StaticActors.Empty();
+		for (auto It = BlockOfActors->StaticActors.CreateIterator(); It; ++It)
+		{
+			if (!IsValid(It->Value))
+				continue;
+			It->Value->Destroy();
+			It.RemoveCurrent();
+		}
 		if (EraseDynamicObjects)
 		{
-			BlockOfActors->DynamicActors.Empty();
+			for (auto It = BlockOfActors->DynamicActors.CreateIterator(); It; ++It)
+			{
+				if (!IsValid(It->Value))
+					continue;
+				It->Value->Destroy();
+				It.RemoveCurrent();
+			}
 		}
 	}
 
 	const FVector Location(GroundBlockSize.X * BlockIndex.X, GroundBlockSize.Y * BlockIndex.Y, 0);
 
-	FActorSpawnParameters EmptySpawnParameters{};
-	auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, FRotator::ZeroRotator, EmptySpawnParameters);
+	FActorSpawnParameters BlockSpawnParameters;
+	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, FRotator::ZeroRotator, BlockSpawnParameters);
 
-	EmptySpawnParameters = {};
+	FActorSpawnParameters EmptySpawnParameters;
 	auto* Tree = SpawnActor<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")), Location, FRotator::ZeroRotator, EmptySpawnParameters);
 }
 
@@ -209,6 +223,8 @@ void AMWorldGenerator::UpdateActiveZone()
 
 	// Enable all the objects within PlayerActiveZone. ActiveBlocksMap is considered as from the previous check.
 	TMap<FIntPoint, bool> ActiveBlocksMap_New;
+
+	//TODO: Consider spreading the block logic over multiple ticks as done in OnTickGenerateBlocks()
 	for (const auto Block : GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius))
 	{
 		ActiveBlocksMap_New.Add(Block, true);
@@ -300,15 +316,39 @@ void AMWorldGenerator::UpdateNavigationMesh()
 	}
 }
 
-TArray<FTimerHandle> Timers;
 void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& NewBlock)
 {
-	UpdateActiveZone();
-	UpdateNavigationMesh();
+	auto pWorld = GetWorld();
+	if (!pWorld)
+		return;
 
-	// Generate the perimeter outside the active zone
-	const auto BlocksInRadius = GetBlocksOnPerimeter(NewBlock.X, NewBlock.Y, ActiveZoneRadius + 1);
-	OnTickGenerateBlocks(BlocksInRadius);
+	UpdateActiveZone();
+	pWorld->GetTimerManager().SetTimerForNextTick([this, pWorld, NewBlock]
+	{
+		UpdateNavigationMesh();
+
+		pWorld->GetTimerManager().SetTimerForNextTick([this, pWorld, NewBlock]
+		{
+			// Generate the perimeter outside the active zone
+			auto BlocksInRadius = GetBlocksOnPerimeter(NewBlock.X, NewBlock.Y, ActiveZoneRadius + 1);
+			auto TopLeftScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopLeft);
+			auto TopRighScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopRight);
+			// Sort blocks so that the closest to the screen corners would be the first
+			BlocksInRadius.Sort([this, &TopLeftScreenPointInWorld, &TopRighScreenPointInWorld](const FIntPoint& BlockA, const FIntPoint& BlockB)
+			{
+				const auto LocationA = GetGroundBlockLocation(BlockA);
+				const auto LocationB = GetGroundBlockLocation(BlockB);
+
+				const auto MinDistanceToScreenEdgesA = FMath::Min(FVector::Distance(LocationA, TopLeftScreenPointInWorld), FVector::Distance(LocationA, TopRighScreenPointInWorld));
+				const auto MinDistanceToScreenEdgesB = FMath::Min(FVector::Distance(LocationB, TopLeftScreenPointInWorld), FVector::Distance(LocationB, TopRighScreenPointInWorld));
+
+				return MinDistanceToScreenEdgesA <= MinDistanceToScreenEdgesB;
+			});
+
+			// We spread heavy GenerateBlock calls over the next few ticks
+			OnTickGenerateBlocks(BlocksInRadius);
+		});
+	});
 }
 
 int BlocksPerFrame = 1;
@@ -336,8 +376,62 @@ FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position)
 		const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
 		return FIntPoint(FMath::FloorToInt(Position.X/GroundBlockSize.X), FMath::FloorToInt(Position.Y/GroundBlockSize.Y));
 	}
-
+	check(false);
 	return {0, 0};
+}
+
+FVector AMWorldGenerator::GetGroundBlockLocation(FIntPoint BlockIndex)
+{
+	if (const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock")); GetWorld())
+	{
+		const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), GetWorld());
+		const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
+		return { FVector(BlockIndex) * GroundBlockSize };
+	}
+	check(false);
+	return FVector::ZeroVector;
+}
+
+static bool RayPlaneIntersection(const FVector& RayOrigin, const FVector& RayDirection, float PlaneZ, FVector& IntersectionPoint)
+{
+	if (FMath::IsNearlyZero(RayDirection.Z))
+	{
+		// The ray is parallel to the plane
+		return false;
+	}
+
+	float t = (PlaneZ - RayOrigin.Z) / RayDirection.Z;
+	if (t < 0)
+	{
+		// Intersection point is behind the camera
+		return false;
+	}
+
+	IntersectionPoint = RayOrigin + RayDirection * t;
+	return true;
+}
+
+FVector AMWorldGenerator::RaycastScreenPoint(const UObject* pWorldContextObject, const EScreenPoint ScreenPoint)
+{
+	auto CameraManager = UGameplayStatics::GetPlayerCameraManager(pWorldContextObject, 0);
+
+	if (CameraManager)
+	{
+		FVector CameraLocation = CameraManager->GetCameraLocation();
+		FRotator CameraRotation = CameraManager->GetCameraRotation();
+
+		FVector2D ScreenSize;
+		GEngine->GameViewport->GetViewportSize(ScreenSize);
+
+		FVector WorldDirection;
+		FVector2D ScreenPosition = ScreenPoint == EScreenPoint::TopLeft ? FVector2D::ZeroVector : FVector2D(ScreenSize.X, 0);
+		UGameplayStatics::DeprojectScreenToWorld(UGameplayStatics::GetPlayerController(pWorldContextObject, 0), ScreenPosition, CameraLocation, WorldDirection);
+
+		FVector IntersectionPoint;
+		RayPlaneIntersection(CameraLocation, WorldDirection, 0, IntersectionPoint);
+		return IntersectionPoint;
+	}
+	return FVector::ZeroVector;
 }
 
 TSet<FIntPoint> AMWorldGenerator::GetBlocksOnPerimeter(int BlockX, int BlockY, int RadiusInBlocks)
@@ -452,7 +546,7 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant)
 	const FActorWorldMetadata Metadata{ListToAdd.Add(FName(Actor->GetName()), Actor), GroundBlockIndex};
 	ActorsMetadata.Add(FName(Actor->GetName()), Metadata);
 
-	// If was spawned on a disabled block, disable the actor
+	// If was spawned on a disabled block, disable the actor (unless the actor has to be always enabled)
 	if (const auto IsActiveCheckerComponent = Cast<UMIsActiveCheckerComponent>(Actor->GetComponentByClass(UMIsActiveCheckerComponent::StaticClass())))
 	{
 		if (IsActiveCheckerComponent->GetAlwaysEnabled())
