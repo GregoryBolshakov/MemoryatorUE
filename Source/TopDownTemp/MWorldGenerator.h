@@ -15,9 +15,16 @@ class AMActor;
 class AMCharacter;
 class AMMemoryator;
 
+UENUM()
+enum EBiome
+{
+	DarkWoods = 0,
+	BirchGroove,
+	Swamp
+};
 /** Class for storing actors within one block of the frid */
-USTRUCT()
-struct FBlockOfActors
+UCLASS()
+class UBlockOfActors : public UObject
 {
 	GENERATED_BODY()
 public:
@@ -28,6 +35,8 @@ public:
 	TMap<FName, AActor*> DynamicActors;
 
 	bool IsConstant = false;
+
+	EBiome Biome;
 };
 
 /** Utility class for storing actor's metadata in the grid */
@@ -125,6 +134,8 @@ private:
 	UFUNCTION()
 	void OnPlayerChangedBlock(const FIntPoint& NewBlock);
 
+	void SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIntPoint>& BlocksToGenerate);
+
 	/** Function for spreading heavy GenerateBlock calls over multiple ticks */
 	void OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate);
 
@@ -151,7 +162,7 @@ private:
 	TMap<FName, TSubclassOf<UObject>> ToSpawnComplexStructureClasses;
 
 	UPROPERTY()
-	TMap<FIntPoint, FBlockOfActors> GridOfActors;
+	TMap<FIntPoint, UBlockOfActors*> GridOfActors;
 
 	UPROPERTY()
 	TMap<FName, FActorWorldMetadata> ActorsMetadata;

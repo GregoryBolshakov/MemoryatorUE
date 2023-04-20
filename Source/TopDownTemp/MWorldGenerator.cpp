@@ -37,9 +37,9 @@ void AMWorldGenerator::GenerateActiveZone()
 
 	// Add player to the Grid
 	auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-	const auto PlayerBlock = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
-	GridOfActors.Add(PlayerBlock, {}).DynamicActors.Emplace(pPlayer->GetName(), pPlayer);
-	ActorsMetadata.Add(FName(pPlayer->GetName()), {pPlayer, PlayerBlock});
+	const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
+	GridOfActors.Add(PlayerBlockIndex, NewObject<UBlockOfActors>(this))->DynamicActors.Emplace(pPlayer->GetName(), pPlayer);
+	ActorsMetadata.Add(FName(pPlayer->GetName()), {pPlayer, PlayerBlockIndex});
 
 	// Get ground block class and bounds
 	const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock"));
@@ -48,7 +48,7 @@ void AMWorldGenerator::GenerateActiveZone()
 		return;
 
 	// We add 1 to the radius on purpose. Generated area always has to be further then visible
-	for (const auto BlockInRadius : GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius + 1))
+	for (const auto BlockInRadius : GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1))
 	{
 		GenerateBlock(BlockInRadius);
 	}
@@ -80,7 +80,7 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 	// Empty the block if already spawned
 	if (const auto BlockOfActors = GridOfActors.Find(BlockIndex))
 	{
-		for (auto It = BlockOfActors->StaticActors.CreateIterator(); It; ++It)
+		for (auto It = (*BlockOfActors)->StaticActors.CreateIterator(); It; ++It)
 		{
 			if (!IsValid(It->Value))
 				continue;
@@ -89,7 +89,7 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 		}
 		if (EraseDynamicObjects)
 		{
-			for (auto It = BlockOfActors->DynamicActors.CreateIterator(); It; ++It)
+			for (auto It = (*BlockOfActors)->DynamicActors.CreateIterator(); It; ++It)
 			{
 				if (!IsValid(It->Value))
 					continue;
@@ -152,11 +152,13 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 
 	// We cannot remove TMap elements during the iteration,
 	// so that we remember all the transitions in the temporary array
+	USTRUCT()
 	struct FTransition
 	{
 		FActorWorldMetadata& Metadata;
-		FBlockOfActors& OldBlock;
-		FBlockOfActors* NewBlock;
+		UBlockOfActors& OldBlock;
+		UPROPERTY()
+		UBlockOfActors* NewBlock;
 	};
 	TMap<FName, FTransition> TransitionList;
 
@@ -167,16 +169,16 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 			check(false)
 			continue;
 		}
-		if (const auto Block = GridOfActors.Find(Index); Block && !Block->DynamicActors.IsEmpty())
+		if (const auto Block = GridOfActors.Find(Index); Block && !(*Block)->DynamicActors.IsEmpty())
 		{
-			for (const auto& [Name, Data] : Block->DynamicActors)
+			for (const auto& [Name, Data] : (*Block)->DynamicActors)
 			{
 				if (const auto ActorMetadata = ActorsMetadata.Find(Name))
 				{
 					if (!ActorMetadata->Actor) //TODO: Remove this temporary solution
 					{
 						// If the metadata has invalid Actor pointer, just delete this record
-						const FTransition NewTransition{*ActorMetadata, *Block, nullptr};
+						const FTransition NewTransition{*ActorMetadata, **Block, nullptr};
 						TransitionList.Add(Name, NewTransition);
 					}
 					else
@@ -186,7 +188,7 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 						{
 							if (const auto NewBlock = GridOfActors.Find(ActualBlockIndex))
 							{
-								const FTransition NewTransition{*ActorMetadata, *Block, NewBlock};
+								const FTransition NewTransition{*ActorMetadata, **Block, *NewBlock};
 								TransitionList.Add(Name, NewTransition);
 								ActorMetadata->GroundBlockIndex = ActualBlockIndex;
 							}
@@ -230,10 +232,10 @@ void AMWorldGenerator::UpdateActiveZone()
 		ActiveBlocksMap_New.Add(Block, true);
 		ActiveBlocksMap.Remove(Block);
 		if (const auto GridBlock = GridOfActors.Find(Block);
-			GridBlock && !GridBlock->StaticActors.IsEmpty())
+			GridBlock && !(*GridBlock)->StaticActors.IsEmpty())
 		{
 			// Enable all the static Actors in the block
-			for (const auto& [Index, Data] : GridBlock->StaticActors)
+			for (const auto& [Index, Data] : (*GridBlock)->StaticActors)
 			{
 				//TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
 				if (Data) // temporary
@@ -245,7 +247,7 @@ void AMWorldGenerator::UpdateActiveZone()
 				}
 			}
 			// Enable all dynamic Actors in the block
-			for (const auto& [Index, Data] : GridBlock->DynamicActors)
+			for (const auto& [Index, Data] : (*GridBlock)->DynamicActors)
 			{
 				if (Data) // temporary
 				{
@@ -263,7 +265,7 @@ void AMWorldGenerator::UpdateActiveZone()
 	{
 		if (const auto GridBlock = GridOfActors.Find(BlockIndex))
 		{
-			for (const auto& [Index, Data] : GridBlock->StaticActors)
+			for (const auto& [Index, Data] : (*GridBlock)->StaticActors)
 			{
 				if (Data) // temporary
 				{
@@ -273,7 +275,7 @@ void AMWorldGenerator::UpdateActiveZone()
 					}
 				}
 			}
-			for (const auto& [Index, Data] : GridBlock->DynamicActors)
+			for (const auto& [Index, Data] : (*GridBlock)->DynamicActors)
 			{
 				if (Data) // temporary
 				{
@@ -316,26 +318,39 @@ void AMWorldGenerator::UpdateNavigationMesh()
 	}
 }
 
+//     x     
+//  xxx xxx  
+// xx     xx 
+// x       x 
+// x       x 
+//x    0    x
+// x       x 
+// x       x 
+// xx     xx 
+//  xxx xxx  
+//     x     
 void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& NewBlock)
 {
 	auto pWorld = GetWorld();
 	if (!pWorld)
 		return;
 
-	UpdateActiveZone();
+	UpdateActiveZone(); // heavy call, we put everything else to the next tick
+
 	pWorld->GetTimerManager().SetTimerForNextTick([this, pWorld, NewBlock]
 	{
-		UpdateNavigationMesh();
+		UpdateNavigationMesh(); // heavy call, we put everything else to the next tick
 
 		pWorld->GetTimerManager().SetTimerForNextTick([this, pWorld, NewBlock]
-		{
-			// Generate the perimeter outside the active zone
+		{ // Generate the perimeter outside the active zone
 			auto BlocksInRadius = GetBlocksOnPerimeter(NewBlock.X, NewBlock.Y, ActiveZoneRadius + 1);
+
+			SetBiomesForBlocks(NewBlock, BlocksInRadius);
+
 			auto TopLeftScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopLeft);
 			auto TopRighScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopRight);
-			// Sort blocks so that the closest to the screen corners would be the first
 			BlocksInRadius.Sort([this, &TopLeftScreenPointInWorld, &TopRighScreenPointInWorld](const FIntPoint& BlockA, const FIntPoint& BlockB)
-			{
+			{ // Sort blocks so that the closest to the screen corners would be the first
 				const auto LocationA = GetGroundBlockLocation(BlockA);
 				const auto LocationB = GetGroundBlockLocation(BlockB);
 
@@ -345,10 +360,30 @@ void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& NewBlock)
 				return MinDistanceToScreenEdgesA <= MinDistanceToScreenEdgesB;
 			});
 
-			// We spread heavy GenerateBlock calls over the next few ticks
+			// We'll spread heavy GenerateBlock calls over the next few ticks
 			OnTickGenerateBlocks(BlocksInRadius);
 		});
 	});
+}
+
+/** Function to calculate the angle between [0; 1] vector and the vector from O to P */
+float GetAngle(const FIntPoint& O, const FIntPoint& P)
+{
+	const FIntPoint OP = P - O;
+	const FVector2D OPFloat(OP.X, OP.Y);
+	const FVector2D ReferenceVector(0, 1);
+	const float Angle = FMath::RadiansToDegrees(FMath::Acos(FVector2D::DotProduct(OPFloat.GetSafeNormal(), ReferenceVector)));
+	return OP.X < 0 ? 360.0f - Angle : Angle;
+}
+
+void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIntPoint>& BlocksToGenerate)
+{
+	// Sort the blocks in ascending order of the polar angle
+	BlocksToGenerate.Sort([&CenterBlock](const FIntPoint& BlockA, const FIntPoint& BlockB) {
+		return GetAngle(CenterBlock, BlockA) < GetAngle(CenterBlock, BlockB);
+	});
+
+	
 }
 
 int BlocksPerFrame = 1;
@@ -527,10 +562,14 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant)
 	const auto GroundBlockIndex = GetGroundBlockIndex(Actor->GetActorLocation());
 
 	// If there's an empty block, add it to the map
-	auto BlockOfActors = GridOfActors.Find(GroundBlockIndex);
-	if (!BlockOfActors)
+	UBlockOfActors* BlockOfActors;
+	if (!GridOfActors.Contains(GroundBlockIndex))
 	{
-		BlockOfActors = &GridOfActors.Add(GroundBlockIndex, {});
+		BlockOfActors = GridOfActors.Add(GroundBlockIndex, NewObject<UBlockOfActors>(this));
+	}
+	else
+	{
+		BlockOfActors = *GridOfActors.Find(GroundBlockIndex);
 	}
 
 	if (bMakeBlockConstant)
@@ -585,7 +624,7 @@ TMap<FName, AActor*> AMWorldGenerator::GetActorsInRect(FVector UpperLeft, FVecto
 		{
 			if (const auto Block = GridOfActors.Find({X, Y}))
 			{
-				if (const auto& Actors = bDynamic ? Block->DynamicActors : Block->StaticActors;
+				if (const auto& Actors = bDynamic ? (*Block)->DynamicActors : (*Block)->StaticActors;
 					!Actors.IsEmpty())
 				{
 					for (const auto& [Name, Actor] : Actors)
@@ -614,7 +653,7 @@ void AMWorldGenerator::CleanArea(const FVector& Location, float Radius)
 			if (const auto Block = GridOfActors.Find({X, Y}))
 			{
 				//TEMP SOLUTION
-				for (auto It = Block->StaticActors.CreateIterator(); It; ++It)
+				for (auto It = (*Block)->StaticActors.CreateIterator(); It; ++It)
 				{
 					if (Cast<AMGroundBlock>(It.Value()))
 					{
