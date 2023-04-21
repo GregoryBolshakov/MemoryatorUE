@@ -77,25 +77,27 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 		return;
 	const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
 
+	// Get the block from grid or add if doesn't exist
+	auto* BlockOfActors = GridOfActors.Contains(BlockIndex) ?
+				*GridOfActors.Find(BlockIndex) :
+				GridOfActors.Add(BlockIndex, NewObject<UBlockOfActors>(this));
+
 	// Empty the block if already spawned
-	if (const auto BlockOfActors = GridOfActors.Find(BlockIndex))
+	for (auto It = BlockOfActors->StaticActors.CreateIterator(); It; ++It)
 	{
-		for (auto It = (*BlockOfActors)->StaticActors.CreateIterator(); It; ++It)
+		if (!IsValid(It->Value))
+			continue;
+		It->Value->Destroy();
+		It.RemoveCurrent();
+	}
+	if (EraseDynamicObjects)
+	{
+		for (auto It = BlockOfActors->DynamicActors.CreateIterator(); It; ++It)
 		{
 			if (!IsValid(It->Value))
 				continue;
 			It->Value->Destroy();
 			It.RemoveCurrent();
-		}
-		if (EraseDynamicObjects)
-		{
-			for (auto It = (*BlockOfActors)->DynamicActors.CreateIterator(); It; ++It)
-			{
-				if (!IsValid(It->Value))
-					continue;
-				It->Value->Destroy();
-				It.RemoveCurrent();
-			}
 		}
 	}
 
@@ -103,7 +105,10 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 
 	FActorSpawnParameters BlockSpawnParameters;
 	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, FRotator::ZeroRotator, BlockSpawnParameters);
+	if (auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, FRotator::ZeroRotator, BlockSpawnParameters))
+	{
+		GroundBlock->SetBiome(BlockOfActors->Biome);
+	}
 
 	FActorSpawnParameters EmptySpawnParameters;
 	auto* Tree = SpawnActor<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")), Location, FRotator::ZeroRotator, EmptySpawnParameters);
@@ -126,6 +131,9 @@ void AMWorldGenerator::BeginPlay()
 	// Create the Drop Manager
 	DropManager = DropManagerBPClass ? NewObject<UMDropManager>(this, DropManagerBPClass, TEXT("DropManager")) : nullptr;
 	check(DropManager);
+
+	// We want to set the biome coloring since the first block change
+	BlocksPassedSinceLastPerimeterColoring = BiomesPerimeterColoringRate;
 }
 
 void AMWorldGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -227,7 +235,7 @@ void AMWorldGenerator::UpdateActiveZone()
 	TMap<FIntPoint, bool> ActiveBlocksMap_New;
 
 	//TODO: Consider spreading the block logic over multiple ticks as done in OnTickGenerateBlocks()
-	for (const auto Block : GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius))
+	for (const auto Block : GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius)) // you can add +1 to the ActiveZoneRadius if you need to see how the perimeter is generated in PIE
 	{
 		ActiveBlocksMap_New.Add(Block, true);
 		ActiveBlocksMap.Remove(Block);
@@ -376,14 +384,81 @@ float GetAngle(const FIntPoint& O, const FIntPoint& P)
 	return OP.X < 0 ? 360.0f - Angle : Angle;
 }
 
+TArray<FBiomeDelimiter> Delimiters;
 void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIntPoint>& BlocksToGenerate)
 {
+	check(!BlocksToGenerate.IsEmpty())
+	++BlocksPassedSinceLastPerimeterColoring;
+
 	// Sort the blocks in ascending order of the polar angle
 	BlocksToGenerate.Sort([&CenterBlock](const FIntPoint& BlockA, const FIntPoint& BlockB) {
 		return GetAngle(CenterBlock, BlockA) < GetAngle(CenterBlock, BlockB);
 	});
 
-	
+	// Set biomes for the generation perimeter. They will remain same for specified number of blocks, providing us with variety of biomes forms 
+	if (BlocksPassedSinceLastPerimeterColoring >= BiomesPerimeterColoringRate)
+	{
+		BlocksPassedSinceLastPerimeterColoring = 0;
+
+		// Number of biome types on the generation perimeter for the current coloring
+		int BiomesNumberInCurrentColoring = StaticEnum<EBiome>()->NumEnums() - 1; // - 1 because of the implicit MAX value
+
+		// We split all the blocks into 'BiomesNumberInCurrentColoring' number of sub-arrays with random length.
+		// Delimiters denote the ending of the sub-arrays
+		Delimiters.Empty();
+
+		// Simple coloring. Split perimeter into 3 equal segments of random colors (may have duplicates)
+		int LastDelimiterBlock = BlocksToGenerate.Num() / BiomesNumberInCurrentColoring;
+		for (int i = 0; i < BiomesNumberInCurrentColoring - 1; ++i)
+		{
+			Delimiters.Add({LastDelimiterBlock, static_cast<EBiome>(FMath::RandRange(0, StaticEnum<EBiome>()->NumEnums() - 1))});
+			LastDelimiterBlock += BlocksToGenerate.Num() / BiomesNumberInCurrentColoring;
+		}
+		Delimiters.Add({BlocksToGenerate.Num() - 1, static_cast<EBiome>(BiomesNumberInCurrentColoring - 1)});
+
+		// Old implementation. Deprecated due to a lot of random. However is very customizable.
+		/*if (BiomesNumberInCurrentColoring == 1)
+		{
+			Delimiters = { { BlocksToGenerate.Num() - 1, static_cast<EBiome>(FMath::RandRange(0, StaticEnum<EBiome>()->NumEnums() - 1)) } };
+		}
+		else
+		{
+			for (int i = 0; i < BiomesNumberInCurrentColoring - 1; ++i)
+			{
+				const int PreviousPosition = i > 0 ? Delimiters[i-1].BlockPosition : 0;
+				Delimiters.Add({
+					FMath::RandRange(PreviousPosition + 1, BlocksToGenerate.Num() - (BiomesNumberInCurrentColoring - i)), // random block index (including space for the rest biomes)
+					static_cast<EBiome>(FMath::RandRange(0, StaticEnum<EBiome>()->NumEnums() - 1)) // random biome
+				});
+			}
+
+			Delimiters.Add({
+				BlocksToGenerate.Num() - 1, // the last sub-array ends on the last block
+				static_cast<EBiome>(FMath::RandRange(0, StaticEnum<EBiome>()->NumEnums() - 1)) // random biome
+			});
+		}*/
+	}
+
+	if (!Delimiters.IsEmpty())
+	{
+		int DelimiterIndex = 0;
+		int BlockIndex = 0;
+		// Set biomes for blocks
+		for (auto Block : BlocksToGenerate)
+		{
+			if (BlockIndex > Delimiters[DelimiterIndex].BlockPosition)
+			{
+				++DelimiterIndex;
+			}
+
+			auto* BlockOfActors = GridOfActors.Contains(Block) ?
+				*GridOfActors.Find(Block) :
+				GridOfActors.Add(Block, NewObject<UBlockOfActors>(this));
+
+			BlockOfActors->Biome = Delimiters[DelimiterIndex].Biome;
+			++BlockIndex;
+		}
+	}
 }
 
 int BlocksPerFrame = 1;

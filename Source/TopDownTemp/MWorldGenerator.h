@@ -4,60 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "MWorldGeneratorTypes.h"
 #include "MWorldGenerator.generated.h"
 
 class UMDropManager;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBlockChanged, const FIntPoint&, NewBlock);
-
 class AMGroundBlock;
 class AMTree;
 class AMActor;
 class AMCharacter;
 class AMMemoryator;
-
-UENUM()
-enum EBiome
-{
-	DarkWoods = 0,
-	BirchGroove,
-	Swamp
-};
-/** Class for storing actors within one block of the frid */
-UCLASS()
-class UBlockOfActors : public UObject
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY()
-	TMap<FName, AActor*> StaticActors;
-
-	UPROPERTY()
-	TMap<FName, AActor*> DynamicActors;
-
-	bool IsConstant = false;
-
-	EBiome Biome;
-};
-
-/** Utility class for storing actor's metadata in the grid */
-USTRUCT()
-struct FActorWorldMetadata
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY()
-	AActor* Actor;
-
-	FIntPoint GroundBlockIndex;
-
-	FOnBlockChanged OnBlockChangedDelegate;
-};
-
-enum class EScreenPoint
-{
-	TopLeft = 0,
-	TopRight
-};
 
 /**
  * The class responsible for world generation. At the moment it must be placed in the world manually..
@@ -161,6 +116,13 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SubclassessToSpawn, meta = (AllowPrivateAccess = "true"))
 	TMap<FName, TSubclassOf<UObject>> ToSpawnComplexStructureClasses;
 
+	/** The number of blocks to be changed before changing the perimeter coloring */
+	UPROPERTY(EditDefaultsOnly, Category = AMWorldGenerator, meta = (AllowPrivateAccess = "true"))
+	int BiomesPerimeterColoringRate = 10;
+
+	/** The number of blocks player passed since the last biomes perimeter coloring */
+	int BlocksPassedSinceLastPerimeterColoring;
+
 	UPROPERTY()
 	TMap<FIntPoint, UBlockOfActors*> GridOfActors;
 
@@ -169,6 +131,7 @@ private:
 
 	TMap<FIntPoint, bool> ActiveBlocksMap;
 
+	// TODO: Use FTimerHandle
 	float DynamicActorsCheckInterval;
 	float DynamicActorsCheckTimer;
 
