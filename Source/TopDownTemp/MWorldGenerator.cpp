@@ -48,7 +48,15 @@ void AMWorldGenerator::GenerateActiveZone()
 		return;
 
 	// We add 1 to the radius on purpose. Generated area always has to be further then visible
-	for (const auto BlockInRadius : GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1))
+	const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
+	for (const auto BlockInRadius : BlocksInRadius)
+	{ // Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
+		auto* BlockOfActors = GridOfActors.Contains(BlockInRadius) ?
+					*GridOfActors.Find(BlockInRadius) :
+					GridOfActors.Add(BlockInRadius, NewObject<UBlockOfActors>(this));
+		BlockOfActors->Biome = EBiome::DarkWoods;
+	}
+	for (const auto BlockInRadius : BlocksInRadius)
 	{
 		GenerateBlock(BlockInRadius);
 	}
@@ -107,7 +115,8 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	if (auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, FRotator::ZeroRotator, BlockSpawnParameters))
 	{
-		GroundBlock->SetBiome(BlockOfActors->Biome);
+		GroundBlock->UpdateBiome(BlockOfActors->Biome);
+		BlockOfActors->pGroundBlock = GroundBlock;
 	}
 
 	FActorSpawnParameters EmptySpawnParameters;

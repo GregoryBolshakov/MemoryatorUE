@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "MWorldGeneratorTypes.generated.h"
 
+class AMGroundBlock;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBlockChanged, const FIntPoint&, NewBlock);
 
 UENUM(BlueprintType)
@@ -37,6 +38,9 @@ public:
 	bool IsConstant = false;
 
 	EBiome Biome;
+
+	//TODO: Come up how not to store it here. Temp workaround for ground block transitions
+	AMGroundBlock* pGroundBlock = nullptr;
 };
 
 /** Utility class for storing actor's metadata in the grid */

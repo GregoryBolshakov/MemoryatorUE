@@ -24,6 +24,7 @@ class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 
 public:
 
+	/** One-time generation. Performed at the game start to create the surrounding area */
 	void GenerateActiveZone();
 
 	void GenerateBlock(const FIntPoint& BlockIndex, bool EraseDynamicObjects = false);
@@ -59,6 +60,12 @@ public:
 
 	UMDropManager* GetDropManager() const { return DropManager; }
 
+	const TMap<FIntPoint, UBlockOfActors*>& GetGridOfActors() { return GridOfActors; }
+
+	FIntPoint GetGroundBlockIndex(FVector Position);
+
+	FVector GetGroundBlockLocation(FIntPoint BlockIndex);
+
 protected:
 
 #if WITH_EDITOR
@@ -93,10 +100,6 @@ private:
 
 	/** Function for spreading heavy GenerateBlock calls over multiple ticks */
 	void OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate);
-
-	FIntPoint GetGroundBlockIndex(FVector Position);
-
-	FVector GetGroundBlockLocation(FIntPoint BlockIndex);
 
 	static FVector RaycastScreenPoint(const UObject* pWorldContextObject, const EScreenPoint ScreenPoint);
 
