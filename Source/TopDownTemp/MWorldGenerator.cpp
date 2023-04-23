@@ -757,14 +757,9 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 	if (const auto pWorld = WorldContextObject->GetWorld())
 	{
 		FActorSpawnParameters SpawnParameters;
-		SpawnParameters.Name = MakeUniqueObjectName(WorldContextObject, IN_ActorClass);
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		if (const auto Actor = pWorld->SpawnActor(IN_ActorClass, {}, {}, SpawnParameters))
 		{
-			FVector Origin, BoxExtent;
-			Actor->InitializeComponents();
-			Actor->PostInitializeComponents();
-
 			// Calculate the Actor bounds by accumulating the bounds of its components
 			FBox ActorBox(EForceInit::ForceInitToZero);
 			for (UActorComponent* Component : Actor->GetComponents())

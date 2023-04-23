@@ -54,7 +54,7 @@ struct FPreset
 UCLASS(Blueprintable, BlueprintType)
 class TOPDOWNTEMP_API UMBlockGenerator : public UObject
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
 
 public:
 
