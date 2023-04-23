@@ -7,6 +7,7 @@
 #include "MCharacter.h"
 #include "MGroundBlock.h"
 #include "MAICrowdManager.h"
+#include "MBlockGenerator.h"
 #include "MDropManager.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MVillageGenerator.h"
@@ -21,6 +22,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	, DynamicActorsCheckInterval(0.5f)
 	, DynamicActorsCheckTimer(0.f)
 	, DropManager(nullptr)
+	, BlockGenerator(nullptr)
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
@@ -36,16 +38,9 @@ void AMWorldGenerator::GenerateActiveZone()
 	UpdateActiveZone();
 
 	// Add player to the Grid
-	auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
 	const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
-	GridOfActors.Add(PlayerBlockIndex, NewObject<UBlockOfActors>(this))->DynamicActors.Emplace(pPlayer->GetName(), pPlayer);
-	ActorsMetadata.Add(FName(pPlayer->GetName()), {pPlayer, PlayerBlockIndex});
-
-	// Get ground block class and bounds
-	const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock"));
-	const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), pWorld);
-	if (GroundBlockBounds.BoxExtent == FVector::ZeroVector)
-		return;
+	EnrollActorToGrid(pPlayer);
 
 	// We add 1 to the radius on purpose. Generated area always has to be further then visible
 	const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
@@ -75,16 +70,6 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 	if (!pWorld)
 		return;
 
-	// Get the ground block size
-	const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock"));
-	if (!ToSpawnGroundBlock)
-		return;
-
-	const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), pWorld);
-	if (GroundBlockBounds.BoxExtent == FVector::ZeroVector)
-		return;
-	const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
-
 	// Get the block from grid or add if doesn't exist
 	auto* BlockOfActors = GridOfActors.Contains(BlockIndex) ?
 				*GridOfActors.Find(BlockIndex) :
@@ -109,24 +94,26 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 		}
 	}
 
-	const FVector Location(GroundBlockSize.X * BlockIndex.X, GroundBlockSize.Y * BlockIndex.Y, 0);
-
-	FActorSpawnParameters BlockSpawnParameters;
-	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	if (auto* GroundBlock = SpawnActor<AMGroundBlock>(ToSpawnGroundBlock->Get(), Location, FRotator::ZeroRotator, BlockSpawnParameters))
-	{
-		GroundBlock->UpdateBiome(BlockOfActors->Biome);
-		BlockOfActors->pGroundBlock = GroundBlock;
-	}
-
-	FActorSpawnParameters EmptySpawnParameters;
-	auto* Tree = SpawnActor<AMActor>(*ToSpawnActorClasses.Find(FName("Tree")), Location, FRotator::ZeroRotator, EmptySpawnParameters);
+	BlockGenerator->Generate(BlockIndex, this, BlockOfActors->Biome);
 }
 
 void AMWorldGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 	UpdateActiveZone();
+
+	// Create the Drop Manager
+	DropManager = DropManagerBPClass ? NewObject<UMDropManager>(this, DropManagerBPClass, TEXT("DropManager")) : nullptr;
+	check(DropManager);
+
+	// Create the Block Generator
+	BlockGenerator = BlockGeneratorBPClass ? NewObject<UMBlockGenerator>(this, BlockGeneratorBPClass, TEXT("BlockGenerator")) : nullptr;
+	check(BlockGenerator);
+
+	// We want to set the biome coloring since the first block change
+	BlocksPassedSinceLastPerimeterColoring = BiomesPerimeterColoringRate;
+
+	GenerateActiveZone();
 
 	// Bind to the player-moves-to-another-block event 
 	if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
@@ -136,13 +123,6 @@ void AMWorldGenerator::BeginPlay()
 			PlayerMetadata->OnBlockChangedDelegate.AddDynamic(this, &AMWorldGenerator::OnPlayerChangedBlock);
 		}
 	}
-
-	// Create the Drop Manager
-	DropManager = DropManagerBPClass ? NewObject<UMDropManager>(this, DropManagerBPClass, TEXT("DropManager")) : nullptr;
-	check(DropManager);
-
-	// We want to set the biome coloring since the first block change
-	BlocksPassedSinceLastPerimeterColoring = BiomesPerimeterColoringRate;
 }
 
 void AMWorldGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -420,7 +400,7 @@ void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIn
 		int LastDelimiterBlock = BlocksToGenerate.Num() / BiomesNumberInCurrentColoring;
 		for (int i = 0; i < BiomesNumberInCurrentColoring - 1; ++i)
 		{
-			Delimiters.Add({LastDelimiterBlock, static_cast<EBiome>(FMath::RandRange(0, StaticEnum<EBiome>()->NumEnums() - 1))});
+			Delimiters.Add({LastDelimiterBlock, static_cast<EBiome>(FMath::RandRange(0, BiomesNumberInCurrentColoring - 1))});
 			LastDelimiterBlock += BlocksToGenerate.Num() / BiomesNumberInCurrentColoring;
 		}
 		Delimiters.Add({BlocksToGenerate.Num() - 1, static_cast<EBiome>(BiomesNumberInCurrentColoring - 1)});
@@ -487,28 +467,32 @@ void AMWorldGenerator::OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate)
 	}
 }
 
-FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position)
+FVector AMWorldGenerator::GetGroundBlockSize()
 {
 	if (const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock")); GetWorld())
 	{
 		const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), GetWorld());
-		const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
-		return FIntPoint(FMath::FloorToInt(Position.X/GroundBlockSize.X), FMath::FloorToInt(Position.Y/GroundBlockSize.Y));
+		return GroundBlockBounds.BoxExtent * 2.f;
 	}
 	check(false);
-	return {0, 0};
+	return FVector::ZeroVector;
+}
+
+FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position)
+{
+	const auto GroundBlockSize = GetGroundBlockSize();
+	if (GroundBlockSize.IsZero())
+	{
+		check(false);
+		return FIntPoint::ZeroValue;
+	}
+	return FIntPoint(FMath::FloorToInt(Position.X/GroundBlockSize.X), FMath::FloorToInt(Position.Y/GroundBlockSize.Y));
 }
 
 FVector AMWorldGenerator::GetGroundBlockLocation(FIntPoint BlockIndex)
 {
-	if (const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock")); GetWorld())
-	{
-		const auto GroundBlockBounds = GetDefaultBounds(ToSpawnGroundBlock->Get(), GetWorld());
-		const auto GroundBlockSize = GroundBlockBounds.BoxExtent * 2.f;
-		return { FVector(BlockIndex) * GroundBlockSize };
-	}
-	check(false);
-	return FVector::ZeroVector;
+	const auto GroundBlockSize = GetGroundBlockSize();
+	return FVector(BlockIndex) * GroundBlockSize;
 }
 
 static bool RayPlaneIntersection(const FVector& RayOrigin, const FVector& RayDirection, float PlaneZ, FVector& IntersectionPoint)
@@ -602,7 +586,7 @@ void AMWorldGenerator::Tick(float DeltaSeconds)
 }
 
 AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation,
-                                     const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround)
+                                     const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround, const FOnSpawnActorStarted& OnSpawnActorStarted)
 {
 	const auto pWorld = GetWorld();
 	if (!pWorld || !Class)
@@ -611,7 +595,7 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 		return nullptr;
 	}
 
-	AActor* Actor;
+	FTransform ActorTransform;
 
 	if (bForceAboveGround)
 	{
@@ -623,12 +607,18 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 		{
 			LocationAboveGround.Z -= ActorBounds.Origin.Z - ActorBounds.BoxExtent.Z;
 		}
-		Actor = pWorld->SpawnActor(Class, &LocationAboveGround, &Rotation, SpawnParameters);
+		ActorTransform = FTransform(Rotation, LocationAboveGround);
 	}
 	else
 	{
-		Actor = pWorld->SpawnActor(Class, &Location, &Rotation, SpawnParameters);
+		ActorTransform = FTransform(Rotation, Location);
 	}
+
+	auto* Actor = pWorld->SpawnActorDeferred<AActor>(Class, ActorTransform, nullptr, nullptr, SpawnParameters.SpawnCollisionHandlingOverride);
+
+	OnSpawnActorStarted.Broadcast(Actor);
+
+	UGameplayStatics::FinishSpawningActor(Actor, ActorTransform);
 
 	if (!Actor)
 		return nullptr;
@@ -800,14 +790,10 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 	return ActorBounds;
 }
 
-AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const float ToSpawnRadius, const float ToSpawnHeight)
+AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, const float ToSpawnRadius, const float ToSpawnHeight, const FOnSpawnActorStarted& OnSpawnActorStarted)
 {
 	const auto pWorld = GetWorld();
 	if (!pWorld)
-		return nullptr;
-
-	const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (!pPlayer)
 		return nullptr;
 
 	const auto DefaultBounds = GetDefaultBounds(Class, pWorld);
@@ -829,14 +815,10 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const float ToSpawnR
 				0.f
 			);
 
-		FVector SpawnPosition = pPlayer->GetTransform().GetLocation() + SpawnPositionOffset;
+		FVector SpawnPosition = Location + SpawnPositionOffset;
 		SpawnPosition.Z = ToSpawnHeight;
 
-		FActorSpawnParameters SpawnParameters;
-		SpawnParameters.Name = MakeUniqueObjectName(GetWorld(), Class);
-		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
-		auto Actor = SpawnActor<AActor>(Class, SpawnPosition, {}, SpawnParameters, true);
-		if (Actor)
+		if (const auto Actor = SpawnActor<AActor>(Class, SpawnPosition, Rotation, SpawnParameters, true, OnSpawnActorStarted))
 		{
 			return Actor;
 		}
@@ -849,5 +831,5 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const float ToSpawnR
 	}
 
 	// If check is failed, consider incrementing ToSpawnRadius
-	return SpawnActorInRadius(Class, ToSpawnRadius + BoundsRadius * 2.f, ToSpawnHeight);
+	return SpawnActorInRadius(Class, Location, Rotation, SpawnParameters, ToSpawnRadius + BoundsRadius * 2.f, ToSpawnHeight, OnSpawnActorStarted);
 }

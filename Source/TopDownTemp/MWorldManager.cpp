@@ -22,15 +22,4 @@ void UMWorldManager::OnWorldBeginPlay(UWorld& InWorld)
 	Super::OnWorldBeginPlay(InWorld);
 
 	WorldGenerator = Cast<AMWorldGenerator>(UGameplayStatics::GetActorOfClass(Cast<UObject>(&InWorld), AMWorldGenerator::StaticClass()));
-	if (WorldGenerator)
-	{
-		WorldGenerator->GenerateActiveZone();
-	}
-	else
-	{
-		check(false);
-	}
-
-	CrowdManager = Cast<AMAICrowdManager>(UGameplayStatics::GetActorOfClass(Cast<UObject>(&InWorld), AMAICrowdManager::StaticClass()));
-	check(CrowdManager);
 }

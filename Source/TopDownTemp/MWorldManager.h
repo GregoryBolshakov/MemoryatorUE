@@ -21,7 +21,6 @@ public:
 
 	class AMWorldGenerator* GetWorldGenerator() const { return WorldGenerator; }
 
-	class AMAICrowdManager* GetCrowdManager() const { return CrowdManager; }
 private:
 
 	UMWorldManager();
@@ -32,10 +31,4 @@ private:
 
 	UPROPERTY()
 	AMWorldGenerator* WorldGenerator;
-
-	UPROPERTY()
-	AMAICrowdManager* CrowdManager;
-
-	UPROPERTY(Config)
-	FString SettingsDataAssetPath;
 };

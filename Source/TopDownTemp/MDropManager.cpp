@@ -6,6 +6,7 @@
 #include "MWorldManager.h"
 #include "MWorldGenerator.h"
 #include "MInventoryComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 void UMDropManager::AddInventory(UMInventoryComponent* Inventory)
 {
@@ -65,7 +66,12 @@ bool UMDropManager::OnDraggedItemDropped(const FItem& Item)
 		{
 			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
 			{
-				if (const auto PickableItem = pWorldGenerator->SpawnActorInRadius<AMPickableItem>(AMPickableItemBPClass, 25.f, 0.f))
+				const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
+				if (!pPlayer)
+					return false;
+
+				FActorSpawnParameters EmptySpawnParameters;
+				if (const auto PickableItem = pWorldGenerator->SpawnActorInRadius<AMPickableItem>(AMPickableItemBPClass, pPlayer->GetActorLocation(), FRotator::ZeroRotator, EmptySpawnParameters, 25.f, 0.f))
 				{
 					PickableItem->Initialise(Item);
 					return true;

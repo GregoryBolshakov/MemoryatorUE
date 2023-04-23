@@ -4,7 +4,7 @@
 
 #include "MVillageGenerator.generated.h"
 
-/** Describes all the data can be configure for one particular kind of villagers */
+/** Describes all the data can be configured for one particular kind of villagers */
 USTRUCT(BlueprintType)
 struct FToSpawnVillagerMetadata
 {
@@ -17,7 +17,7 @@ struct FToSpawnVillagerMetadata
 	int MaxNumberOfInstances;
 };
 
-/** Describes all the data can be configure for one particular kind of buildings */
+/** Describes all the data can be configured for one particular kind of buildings */
 USTRUCT(BlueprintType)
 struct FToSpawnBuildingMetadata
 {

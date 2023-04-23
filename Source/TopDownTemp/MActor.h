@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MWorldGeneratorTypes.h"
 #include "MActor.generated.h"
 
 UCLASS()
@@ -12,13 +13,21 @@ class TOPDOWNTEMP_API AMActor : public AActor
 
 public:
 
-	virtual void PostInitializeComponents() override;
+	void SetBiomeForRandomization(EBiome Biome) { BiomeForRandomization = Biome; }
 
 protected:
+
+	virtual void PostInitializeComponents() override;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void Randomize(EBiome Biome);
 
 	UPROPERTY(Category=Representation, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) 
 	class UM2DRepresentationComponent* RepresentationComponent;
 
 	UPROPERTY(Category=ActiveCheck, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;
+
+	/** Objects like trees/plants/mushrooms/stones/etc. may have different appearances. If true, the type will be picked randomly */
+	TOptional<EBiome> BiomeForRandomization;
 };

@@ -7,6 +7,9 @@
 #include "MWorldGeneratorTypes.h"
 #include "MWorldGenerator.generated.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*)
+
+class UMBlockGenerator;
 class UMDropManager;
 class AMGroundBlock;
 class AMTree;
@@ -33,13 +36,9 @@ public:
 	void UpdateActiveZone();
 
 	template< class T >
-	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, FActorSpawnParameters& SpawnParameters, bool bForceAboveGround = false)
+	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround = false, const FOnSpawnActorStarted& OnSpawnActorStarted = {})
 	{
-		if (SpawnParameters.Name.IsNone() && GetWorld())
-		{
-			SpawnParameters.Name = MakeUniqueObjectName(GetWorld(), Class);
-		}
-		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters, bForceAboveGround),ECastCheckedType::NullAllowed);
+		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters, bForceAboveGround, OnSpawnActorStarted),ECastCheckedType::NullAllowed);
 	}
 
 	void EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant = false);
@@ -53,14 +52,16 @@ public:
 	static FBoxSphereBounds GetDefaultBounds(UClass* IN_ActorClass, UObject* WorldContextObject);
 
 	template< class T >
-	T* SpawnActorInRadius(TSubclassOf<AActor> Class, float ToSpawnRadius = 150.f, float ToSpawnHeight = 0.f)
+	T* SpawnActorInRadius(TSubclassOf<AActor> Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, float ToSpawnRadius = 150.f, float ToSpawnHeight = 0.f, const FOnSpawnActorStarted& OnSpawnActorStarted = {})
 	{
-		return CastChecked<T>(SpawnActorInRadius(Class, ToSpawnRadius, ToSpawnHeight),ECastCheckedType::NullAllowed);
+		return CastChecked<T>(SpawnActorInRadius(Class, Location, Rotation, SpawnParameters, ToSpawnRadius, ToSpawnHeight, OnSpawnActorStarted),ECastCheckedType::NullAllowed);
 	}
 
 	UMDropManager* GetDropManager() const { return DropManager; }
 
 	const TMap<FIntPoint, UBlockOfActors*>& GetGridOfActors() { return GridOfActors; }
+
+	FVector GetGroundBlockSize();
 
 	FIntPoint GetGroundBlockIndex(FVector Position);
 
@@ -72,14 +73,17 @@ protected:
 	virtual ~AMWorldGenerator() override { DefaultBoundsMap.Empty(); };
 #endif
 
-	UPROPERTY(EditDefaultsOnly, Category=AMWorldGenerator, meta=(AllowPrivateAccess=true))
+	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UMDropManager> DropManagerBPClass;
+
+	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
+	TSubclassOf<UMBlockGenerator> BlockGeneratorBPClass;
 
 private:
 
-	AActor* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround);
+	AActor* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround, const FOnSpawnActorStarted& OnSpawnActorStarted);
 
-	AActor* SpawnActorInRadius(UClass* Class, float ToSpawnRadius, const float ToSpawnHeight);
+	AActor* SpawnActorInRadius(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, float ToSpawnRadius, const float ToSpawnHeight, const FOnSpawnActorStarted& OnSpawnActorStarted);
 
 	virtual void BeginPlay() override;
 
@@ -120,7 +124,7 @@ private:
 	TMap<FName, TSubclassOf<UObject>> ToSpawnComplexStructureClasses;
 
 	/** The number of blocks to be changed before changing the perimeter coloring */
-	UPROPERTY(EditDefaultsOnly, Category = AMWorldGenerator, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, Category = MWorldGenerator, meta = (AllowPrivateAccess = "true"))
 	int BiomesPerimeterColoringRate = 10;
 
 	/** The number of blocks player passed since the last biomes perimeter coloring */
@@ -142,4 +146,7 @@ private:
 
 	UPROPERTY()
 	UMDropManager* DropManager;
+
+	UPROPERTY()
+	UMBlockGenerator* BlockGenerator;
 };

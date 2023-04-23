@@ -71,13 +71,65 @@
       <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v15/.suo" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_GroundBlock.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_GroundBlock.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Tree.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_Totem.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_Totem.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_1_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_1_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_2_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_2_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_3_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_3_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_4_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_4_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_5_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_5_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_6_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_6_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_7_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/BirchGrove/Frames/tree_7_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Bushes/Frames/bush5_Sprite.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Bushes/bush1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Bushes/bush2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Bushes/bush3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Bushes/bush4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Bushes/bush5.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Bushes/bush6.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Bushes/bush7.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Bushes/bush8.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/DarkWoods/Frames/DarkWoods_tree_1_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/DarkWoods/Frames/DarkWoods_tree_1_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/DarkWoods/Frames/DarkWoods_tree_2_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/DarkWoods/Frames/DarkWoods_tree_2_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/DarkWoods/Frames/DarkWoods_tree_3_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/DarkWoods/Frames/DarkWoods_tree_3_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/DarkWoods/Frames/DarkWoods_tree_4_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/DarkWoods/Frames/DarkWoods_tree_4_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/DarkWoods/Frames/DarkWoods_tree_5_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/DarkWoods/Frames/DarkWoods_tree_5_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/Frames/roof_1_png.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/Frames/roof_2_png.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/Frames/roof_3_png.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/Frames/roof_4_png.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/Frames/totem_1_png.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/Frames/totem_2_png.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/Frames/totem_3_png.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/Frames/totem_4_png.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/Frames/totem_5_png.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/Frames/totem_6_png.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/Textures/pillars.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Pillars/pillars.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Swamp/Frames/SwampyTrees_tree_1_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Swamp/Frames/SwampyTrees_tree_1_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Swamp/Frames/SwampyTrees_tree_2_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Swamp/Frames/SwampyTrees_tree_2_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Swamp/Frames/SwampyTrees_tree_3_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Swamp/Frames/SwampyTrees_tree_3_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Swamp/Frames/SwampyTrees_tree_4_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Swamp/Frames/SwampyTrees_tree_4_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Swamp/Frames/SwampyTrees_tree_5_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Swamp/Frames/SwampyTrees_tree_5_png.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Trees/Frames/tree5_Sprite.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Trees/Frames/tree_2_Sprite.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Trees/tree1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Trees/tree2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Trees/tree3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Trees/tree4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Trees/tree5.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/World/Trees/tree_2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MActor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MActor.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsWorld.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsWorld.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MDropManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MDropManager.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGeneratorTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGeneratorTypes.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23104,7 +23156,7 @@
       <workItem from="1681999568475" duration="10510000" />
       <workItem from="1682021165960" duration="3711000" />
       <workItem from="1682089877525" duration="14537000" />
-      <workItem from="1682156524400" duration="1221000" />
+      <workItem from="1682156524400" duration="29458000" />
     </task>
     <servers />
   </component>
@@ -23154,11 +23206,6 @@
           <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Editor/UnrealEd/Private/StaticLightingSystem/StaticLightingSystem.cpp</url>
           <line>2194</line>
           <option name="timeStamp" value="178" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.cpp</url>
-          <line>52</line>
-          <option name="timeStamp" value="179" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
