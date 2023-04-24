@@ -8,11 +8,13 @@
 
 AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+	PointComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootPoint"));
+	SetRootComponent(PointComponent);
+
 	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("Representation"));
-	SetRootComponent(RepresentationComponent);
+	RepresentationComponent->SetupAttachment(RootComponent);
 
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
-	auto testComp = CreateDefaultSubobject<UActorComponent>(TEXT("TesComp"));
 }
 
 void AMActor::PostInitializeComponents()

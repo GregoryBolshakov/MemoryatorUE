@@ -546,7 +546,7 @@ TSet<FIntPoint> AMWorldGenerator::GetBlocksOnPerimeter(int BlockX, int BlockY, i
 		for (float Y = BlockY - RadiusInBlocks; Y <= BlockY + RadiusInBlocks; ++Y)
 		{
 			const auto Distance = sqrt(pow(X - BlockX, 2) + pow(Y - BlockY, 2));
-			if (Distance <= static_cast<float>(RadiusInBlocks) && Distance > static_cast<float>(RadiusInBlocks - 1)) {
+			if (Distance <= static_cast<float>(RadiusInBlocks) && Distance >= static_cast<float>(RadiusInBlocks - 1)) {
 				Blocks.Add({ static_cast<int>(X), static_cast<int>(Y) });
 			}
 		}
@@ -621,7 +621,10 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 	UGameplayStatics::FinishSpawningActor(Actor, ActorTransform);
 
 	if (!Actor)
+	{
+		check(false);
 		return nullptr;
+	}
 
 	EnrollActorToGrid(Actor);
 

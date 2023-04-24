@@ -26,26 +26,32 @@ void UMBlockGenerator::Generate(const FIntPoint BlockIndex, AMWorldGenerator* pW
 		BlockOfActors->pGroundBlock = GroundBlock; // temporary stuff, will be gone when get rid of UBlockOfActors::pGroundBlock
 	}
 
-	const auto TreesNumber = FMath::RandRange(Preset.TreesConfig.MinNumberOfInstances, Preset.TreesConfig.MaxNumberOfInstances);
-	for (int i = 0; i < TreesNumber; ++i)
+	FOnSpawnActorStarted OnSpawnActorStarted;
+	OnSpawnActorStarted.AddLambda([this, Biome](AActor* Actor)
 	{
-		if (!Preset.TreesConfig.ToSpawnClass)
+		if (const auto MActor = Cast<AMActor>(Actor))
 		{
-			check(false);
-			break;
+			MActor->SetBiomeForRandomization(Biome);
+			return;
 		}
+		check(false);
+	});
 
-		FOnSpawnActorStarted OnSpawnActorStarted;
-		OnSpawnActorStarted.AddLambda([this, Biome](AActor* Actor)
+	const auto TreesNumber = FMath::RandRange(Preset.TreesConfig.MinNumberOfInstances, Preset.TreesConfig.MaxNumberOfInstances);
+	if (Preset.TreesConfig.ToSpawnClass)
+	{
+		for (int i = 0; i < TreesNumber; ++i)
 		{
-			if (const auto MActor = Cast<AMActor>(Actor))
-			{
-				MActor->SetBiomeForRandomization(Biome);
-				return;
-			}
-			check(false);
-		});
-		const auto Tree = pWorldGenerator->SpawnActorInRadius<AMActor>(Preset.TreesConfig.ToSpawnClass, BlockCenter, FRotator::ZeroRotator, {}, FMath::RandRange(0.f, static_cast<float>(BlockSize.X / 2.f)), 0.f, OnSpawnActorStarted);
+			const auto Tree = pWorldGenerator->SpawnActorInRadius<AMActor>(Preset.TreesConfig.ToSpawnClass, BlockCenter, FRotator::ZeroRotator, {}, FMath::RandRange(0.f, static_cast<float>(BlockSize.X / 2.f)), 0.f, OnSpawnActorStarted);
+		}
+	}
+	const auto PlantsNumber = FMath::RandRange(Preset.PlantsConfig.MinNumberOfInstances, Preset.PlantsConfig.MaxNumberOfInstances);
+	if (Preset.PlantsConfig.ToSpawnClass)
+	{
+		for (int i = 0; i < PlantsNumber; ++i)
+		{
+			const auto Plant = pWorldGenerator->SpawnActorInRadius<AMActor>(Preset.PlantsConfig.ToSpawnClass, BlockCenter, FRotator::ZeroRotator, {}, FMath::RandRange(0.f, static_cast<float>(BlockSize.X / 2.f)), 0.f, OnSpawnActorStarted);
+		}
 	}
 }
 

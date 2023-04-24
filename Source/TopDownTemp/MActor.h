@@ -22,6 +22,9 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void Randomize(EBiome Biome);
 
+	UPROPERTY()
+	USceneComponent* PointComponent;
+
 	UPROPERTY(Category=Representation, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) 
 	class UM2DRepresentationComponent* RepresentationComponent;
 

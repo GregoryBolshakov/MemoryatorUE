@@ -54,7 +54,7 @@ void UM2DRepresentationComponent::SetUpSprites()
 void UM2DRepresentationComponent::CreateShadowTwins()
 {
 	const auto pOwner = GetOwner();
-	if (!pOwner)
+	if (!pOwner || !bCastShadow)
 	{
 		return;
 	}

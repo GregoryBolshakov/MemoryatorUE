@@ -37,6 +37,9 @@ public:
 	UPROPERTY(Category=Rendering, EditAnywhere, BlueprintReadWrite)
 	bool bFaceToCamera = true;
 
+	UPROPERTY(Category=Rendering, EditAnywhere, BlueprintReadWrite)
+	bool bCastShadow = true;
+
 	/** Representation component is 3D object and it would be ambiguous to tell where exactly this object is tilted.
 	 * This is the reason of heaving imaginary rotation of the object after it was rotated toward the camera. */
 	UPROPERTY(Category=Rendering, EditAnywhere, BlueprintReadWrite)
