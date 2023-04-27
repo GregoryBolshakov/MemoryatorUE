@@ -51,7 +51,6 @@ void UMInventoryWidget::CreateSlots()
 
 		SlotWidget->SetNumberInArray(Index++);
 		SlotWidget->SetOwnerInventory(InventoryComponent);
-		SlotWidget->SetOwnerInventoryWidget(this);
 		SlotWidget->SetStoredItem(Item);
 		OnChangedDelegate.BindDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
 
@@ -65,11 +64,8 @@ void UMInventoryWidget::CreateSlots()
 				IconWidget->SetBrushFromTexture(ItemsData[Item.ID].IconTexture);
 				IconWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
-				if (Item.Quantity > 1) // Draw quantity text
-				{
-					QuantityTextWidget->SetText(FText::FromString(FString::FromInt(Item.Quantity)));
-					QuantityTextWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
-				}
+				QuantityTextWidget->SetText(FText::FromString(FString::FromInt(Item.Quantity)));
+				QuantityTextWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 			}
 			else // Slot is empty
 			{

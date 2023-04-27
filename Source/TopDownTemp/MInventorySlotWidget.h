@@ -20,9 +20,8 @@ public:
 
 	void SetNumberInArray(int IN_NumberInArray) { NumberInArray = IN_NumberInArray; }
 
+	UFUNCTION(BlueprintCallable, Category=UMInventorySlotWidget)
 	void SetOwnerInventory(UMInventoryComponent* IN_OwnerInventory) { OwnerInventory = IN_OwnerInventory; }
-
-	void SetOwnerInventoryWidget(UMInventoryWidget* IN_OwnerInventoryWidget) { OwnerInventoryWidget = IN_OwnerInventoryWidget; }
 
 	void SetStoredItem(const FItem& IN_Item) { StoredItem = IN_Item; }
 
@@ -37,9 +36,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category=UMInventorySlotWidget, meta=(AllowPrivateAccess=true))
 	UMInventoryComponent* OwnerInventory;
-
-	UPROPERTY(BlueprintReadOnly, Category=UMInventorySlotWidget, meta=(AllowPrivateAccess=true))
-	UMInventoryWidget* OwnerInventoryWidget;
 
 	/** The copy of the item. Is needed when we stack or swap with dragged item */
 	UPROPERTY(BlueprintReadWrite)

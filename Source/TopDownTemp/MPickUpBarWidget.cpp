@@ -42,7 +42,6 @@ void UMPickUpBarWidget::CreateSlots(TSet<UMInventoryComponent*>& InventoriesToRe
 
 			SlotWidget->SetNumberInArray(Index++);
 			SlotWidget->SetOwnerInventory(InventoryComponent);
-			SlotWidget->SetOwnerInventoryWidget(nullptr);
 			SlotWidget->SetStoredItem(Item);
 			OnChangedDelegate.BindDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
 			if (const auto InventoryOwner = Cast<AMPickableItem>(InventoryComponent->GetOwner());

@@ -68,15 +68,14 @@
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Memoryator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Memoryator.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_PickableItem.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_PickableItem.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Environment/BP_GroundBlock.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Environment/BP_GroundBlock.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_DraggableItem.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_DraggableItem.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_Inventory.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_Inventory.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_InventorySlot.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_InventorySlot.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_PickUpBar.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_PickUpBar.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_ToggleInventoryButton.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_ToggleInventoryButton.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPickUpBarWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MPickUpBarWidget.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23107,6 +23106,7 @@
       <workItem from="1682362909932" duration="4954000" />
       <workItem from="1682436947614" duration="2873000" />
       <workItem from="1682520468837" duration="2994000" />
+      <workItem from="1682597794363" duration="5211000" />
     </task>
     <servers />
   </component>
@@ -23156,6 +23156,16 @@
           <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Editor/UnrealEd/Private/StaticLightingSystem/StaticLightingSystem.cpp</url>
           <line>2194</line>
           <option name="timeStamp" value="178" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.cpp</url>
+          <line>112</line>
+          <option name="timeStamp" value="180" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.cpp</url>
+          <line>47</line>
+          <option name="timeStamp" value="181" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
