@@ -108,12 +108,14 @@ void AMMemoryator::HandleAnimationStates()
 	// TODO: Send this logic to custom Movement Component
 	const auto Velocity = GetVelocity();
 
-	if (IsMoving && Velocity == FVector::ZeroVector)
+	if (IsDashing) return;
+	
+	if (IsMoving && Velocity.IsZero())
 	{
 		IsMoving = false;
 		UpdateAnimation();
 	}
-	if (!IsMoving && Velocity != FVector::ZeroVector)
+	if (!IsMoving && !Velocity.IsZero())
 	{
 		IsMoving = true;
 		UpdateAnimation();

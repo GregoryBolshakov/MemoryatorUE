@@ -38,10 +38,16 @@ public:
 
 	class UMInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
+	FVector GetLastNonZeroVelocity() const { return LastNonZeroVelocity; }
+
+	bool GetIsDashing() const { return IsDashing; }
+	
 	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; UpdateAnimation(); }
 
 	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; UpdateAnimation(); }
 
+	void SetIsDashing(bool bIsDashing) {IsDashing = bIsDashing; }
+	
 	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
 
 	// Called every frame.
@@ -88,7 +94,9 @@ protected:
 	bool IsMoving;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
 	bool IsPicking;
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
+	bool IsDashing;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float Health;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))

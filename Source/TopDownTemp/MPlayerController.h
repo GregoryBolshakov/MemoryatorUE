@@ -4,9 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
+#include "Components/TimelineComponent.h"
 #include "MPlayerController.generated.h"
 
 class AMCharacter;
+class UCurveFloat;
 enum class ERelationType;
 
 UCLASS()
@@ -15,10 +17,19 @@ class AMPlayerController : public APlayerController
 	GENERATED_UCLASS_BODY()
 
 public:
+	UFUNCTION()
+	void TimelineProgress(float Value);
 
 	bool IsMovingByAI() const;
 
 	void StopAIMovement();
+protected:
+	FTimeline DashVelocityTimeline;
+
+	UPROPERTY(EditAnywhere, Category = "Timeline")
+	UCurveFloat* DashVelocityCurve;
+
+	virtual void BeginPlay() override;
 
 private:
 	/** True if the controlled character should navigate to the mouse cursor. */
@@ -72,6 +83,8 @@ private:
 
 	void OnToggleFightPressed();
 	void OnToggleFightReleased();
+
+	void OnDashPressed();
 
 	virtual bool ProcessConsoleExec(const TCHAR* Cmd, FOutputDevice& Ar, UObject* Executor) override;
 };
