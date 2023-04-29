@@ -31,30 +31,29 @@ AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializ
 	ConsoleCommandsManager = CreateDefaultSubobject<UMConsoleCommandsManager>(TEXT("ConsoleCommandsManager"));
 }
 
+FTimerHandle tempTimer;
 void AMPlayerController::TimelineProgress(float Value)
 {
-	if (auto MyCharacter = Cast<AMCharacter>(GetPawn()))
+	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()))
 	{
-		if (FMath::IsNearlyZero(Value, 0.000001))
+		if (FMath::IsNearlyEqual(Value, 1.f, 0.0001f)) // Passed the timeline, stop dashing
 		{
-			// Not dashing
 			EnableInput(this);
 			MyCharacter->SetIsDashing(false);
 			MyCharacter->UpdateAnimation();
 			DashVelocityTimeline.Stop();
+			return;
 		}
-		else
+
+		if (const auto MovementComponent = Cast<UCharacterMovementComponent>(MyCharacter->GetMovementComponent()))
 		{
-			// Dashing
-			if (const auto CharacterPawn = GetPawn())
-			{
-				if (const auto MovementComponent = MyCharacter->GetMovementComponent())
-				{
-					MovementComponent->Velocity = MyCharacter->GetLastNonZeroVelocity().GetSafeNormal() *
-						MovementComponent->GetMaxSpeed() * 2.f * Value;
-				}
-			}
-			DisableInput(this);
+			// Set velocity to the distance we should have passed since the last frame and force movement component to consume the velocity
+			MovementComponent->UpdateComponentVelocity();
+			MovementComponent->MoveUpdatedComponent((Value - LastDashProgressValue) * DashLength * MyCharacter->GetLastNonZeroVelocity().GetSafeNormal(), MyCharacter->GetActorRotation(), true);
+
+			// Update last frame info
+			TimeSinceLastDashUpdate = FDateTime::UtcNow();
+			LastDashProgressValue = Value;
 		}
 	}
 }
@@ -66,10 +65,12 @@ void AMPlayerController::BeginPlay()
 	if (DashVelocityCurve)
 	{
 		FOnTimelineFloat TimelineProgress;
-		TimelineProgress.BindUFunction(this, FName("TimelineProgress"));
+		TimelineProgress.BindDynamic(this, &AMPlayerController::TimelineProgress);
 		DashVelocityTimeline.AddInterpFloat(DashVelocityCurve, TimelineProgress);
 		DashVelocityTimeline.SetLooping(false);
 	}
+
+	//ExchangeNetRoles(true); // temp
 }
 
 bool AMPlayerController::IsMovingByAI() const
@@ -341,7 +342,7 @@ void AMPlayerController::OnToggleTurnAroundReleased()
 
 void AMPlayerController::OnToggleFightPressed()
 {
-	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()))
+	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && !MyCharacter->GetIsFighting())
 	{
 		MyCharacter->SetIsFighting(true);
 	}
@@ -349,7 +350,7 @@ void AMPlayerController::OnToggleFightPressed()
 
 void AMPlayerController::OnToggleFightReleased()
 {
-	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()))
+	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && MyCharacter->GetIsFighting())
 	{
 		MyCharacter->SetIsFighting(false);
 	}
@@ -360,13 +361,15 @@ void AMPlayerController::OnDashPressed()
 	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && !MyCharacter->GetIsDashing())
 	{
 		MyCharacter->SetIsDashing(true);
+		MyCharacter->SetIsMoving(false);
+		MyCharacter->SetIsFighting(false);
 		MyCharacter->UpdateAnimation();
-		// Freeze Direction
+		DisableInput(this);
 
+		TimeSinceLastDashUpdate = FDateTime::UtcNow();
+		LastDashProgressValue = 0.f;
 
-		// Dash by curve
 		DashVelocityTimeline.PlayFromStart();
-		UE_LOG(LogTemp, Warning, TEXT("Dashing!!!"));
 	}
 }
 

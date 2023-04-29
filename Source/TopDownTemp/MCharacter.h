@@ -29,7 +29,7 @@ public:
 	float GetWalkSpeed() const { return WalkSpeed; }
 
 	float GetRunSpeed() const { return RunSpeed; }
-	
+
 	bool GetCanRetreat() const { return bCanRetreat; }
 
 	FVector GetForcedGazeVector() const { return ForcedGazeVector; }
@@ -41,13 +41,13 @@ public:
 	FVector GetLastNonZeroVelocity() const { return LastNonZeroVelocity; }
 
 	bool GetIsDashing() const { return IsDashing; }
-	
+
 	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; UpdateAnimation(); }
 
 	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; UpdateAnimation(); }
 
-	void SetIsDashing(bool bIsDashing) {IsDashing = bIsDashing; }
-	
+	void SetIsDashing(bool bIsDashing) { IsDashing = bIsDashing; }
+
 	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
 
 	// Called every frame.

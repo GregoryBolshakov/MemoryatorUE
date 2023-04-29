@@ -17,17 +17,31 @@ class AMPlayerController : public APlayerController
 	GENERATED_UCLASS_BODY()
 
 public:
-	UFUNCTION()
-	void TimelineProgress(float Value);
 
 	bool IsMovingByAI() const;
 
 	void StopAIMovement();
+
+//Dash
 protected:
+
+	UFUNCTION()
+	void TimelineProgress(float Value);
+
+	void OnDashPressed();
+
+	UPROPERTY(EditDefaultsOnly, Category="Dash")
+	float DashLength = 135.f;
+
 	FTimeline DashVelocityTimeline;
 
-	UPROPERTY(EditAnywhere, Category = "Timeline")
+	UPROPERTY(EditAnywhere, Category = "Dash")
 	UCurveFloat* DashVelocityCurve;
+
+	FDateTime TimeSinceLastDashUpdate;
+	float LastDashProgressValue;
+
+protected:
 
 	virtual void BeginPlay() override;
 
@@ -83,8 +97,6 @@ private:
 
 	void OnToggleFightPressed();
 	void OnToggleFightReleased();
-
-	void OnDashPressed();
 
 	virtual bool ProcessConsoleExec(const TCHAR* Cmd, FOutputDevice& Ar, UObject* Executor) override;
 };
