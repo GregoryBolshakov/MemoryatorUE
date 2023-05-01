@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "MCharacter.generated.h"
 
+class UMAttackPuddleComponent;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStarted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStopped);
 
@@ -44,6 +46,7 @@ public:
 
 	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; UpdateAnimation(); }
 
+	UFUNCTION(BlueprintCallable)
 	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; UpdateAnimation(); }
 
 	void SetIsDashing(bool bIsDashing) { IsDashing = bIsDashing; }
@@ -62,6 +65,8 @@ protected:
 
 	void UpdateLastNonZeroDirection();
 
+	virtual void BeginPlay() override;
+
 	/** Representation (collection of sprites) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
 	class UM2DRepresentationComponent* RepresentationComponent;
@@ -71,6 +76,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UMIsActiveCheckerComponent* IsActiveCheckerComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	UMAttackPuddleComponent* AttackPuddleComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);
@@ -115,6 +123,8 @@ protected:
 	float RunSpeed;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	bool bCanRetreat;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float MeleeSpread;
 	//TODO: Create variables for original values e.g. MaxHealth, DefaultSightRange, etc.
 };
 

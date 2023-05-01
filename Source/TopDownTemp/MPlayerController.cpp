@@ -119,7 +119,7 @@ void AMPlayerController::PlayerTick(float DeltaTime)
 		}, 1.f, false);
 	}
 
-	FixGazeOnClosestEnemy(*pMyCharacter);
+	UpdateClosestEnemy(*pMyCharacter);
 
 	// Keep updating the destination every tick while desired
 	if (bMoveToMouseCursor)
@@ -142,7 +142,6 @@ void AMPlayerController::SetupInputComponent()
 	                           &AMPlayerController::OnToggleTurnAroundReleased);
 
 	InputComponent->BindAction("ToggleIsFighting", IE_Pressed, this, &AMPlayerController::OnToggleFightPressed);
-	InputComponent->BindAction("ToggleIsFighting", IE_Released, this, &AMPlayerController::OnToggleFightReleased);
 
 	// we use only pressed, because player cannot stop performing the dash by himself
 	InputComponent->BindAction("Dash", IE_Pressed, this, &AMPlayerController::OnDashPressed);
@@ -193,20 +192,36 @@ void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter
 	}
 }
 
-void AMPlayerController::FixGazeOnClosestEnemy(AMCharacter& MyCharacter)
+void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 {
+	if (MyCharacter.GetIsDashing()) // check for any action that shouldn't rotate character towards enemy
+	{
+		return;
+	}
+
 	MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
+	const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
+	ClosestEnemy = nullptr;
+
 	for (const auto& [Name, EnemyActor] : EnemiesNearby)
 	{
-		const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
 		const auto EnemyLocation = EnemyActor->GetTransform().GetLocation();
 		const auto DistanceToActor = FVector::Distance(CharacterLocation, EnemyLocation);
-		// Fix our character's gaze on the enemy if it is the closest one and is within sight range
-		if (DistanceToActor <= MyCharacter.GetFightRange() * 3.f && (DistanceToActor <= MyCharacter.
-			GetForcedGazeVector().Size() || MyCharacter.GetForcedGazeVector().IsZero()))
-		//TODO: put " * 1.5f" to the properties 
+		// Fix our character's gaze on the enemy if it is the closest one and 
+		if (DistanceToActor <= MyCharacter.GetFightRange() * 2.f && // Actor is within sight range TODO: put the " * 2.f" to the properties
+			(!ClosestEnemy || DistanceToActor < FVector::Distance(CharacterLocation, ClosestEnemy->GetActorLocation()))) // It is either the only one in sight or the closest
 		{
-			MyCharacter.SetForcedGazeVector(EnemyLocation - CharacterLocation);
+			ClosestEnemy = EnemyActor;
+		}
+	}
+
+	if (ClosestEnemy)
+	{
+		const auto VectorToEnemy = ClosestEnemy->GetActorLocation() - CharacterLocation;
+		MyCharacter.SetForcedGazeVector(VectorToEnemy);
+		if (VectorToEnemy.Size2D() <= MyCharacter.GetFightRange() && !MyCharacter.GetIsFighting())
+		{
+			MyCharacter.SetIsFighting(true);
 		}
 	}
 }
@@ -348,18 +363,11 @@ void AMPlayerController::OnToggleFightPressed()
 	}
 }
 
-void AMPlayerController::OnToggleFightReleased()
-{
-	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && MyCharacter->GetIsFighting())
-	{
-		MyCharacter->SetIsFighting(false);
-	}
-}
-
 void AMPlayerController::OnDashPressed()
 {
 	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && !MyCharacter->GetIsDashing())
 	{
+		MyCharacter->SetForcedGazeVector(FVector::ZeroVector); // If character was facing enemy, stop
 		MyCharacter->SetIsDashing(true);
 		MyCharacter->SetIsMoving(false);
 		MyCharacter->SetIsFighting(false);

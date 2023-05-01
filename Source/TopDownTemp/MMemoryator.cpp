@@ -8,9 +8,8 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
-#include "M2DRepresentationComponent.h"
+#include "MAttackPuddleComponent.h"
 #include "MInventoryComponent.h"
-#include "MIsActiveCheckerComponent.h"
 #include "MPlayerController.h"
 #include "PaperSpriteComponent.h"
 #include "Materials/Material.h"
@@ -47,6 +46,8 @@ AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
 
 	DirectionMarkerComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("DirectionMarker"));
 	DirectionMarkerComponent->SetupAttachment(RootComponent);
+
+	AttackPuddleComponent->PrimaryComponentTick.bCanEverTick = true;
 }
 
 void AMMemoryator::AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce)

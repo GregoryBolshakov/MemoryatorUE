@@ -41,6 +41,25 @@ protected:
 	FDateTime TimeSinceLastDashUpdate;
 	float LastDashProgressValue;
 
+// Interaction with other mobs
+protected:
+
+	void SetDynamicActorsNearby(const UWorld& World, AMCharacter& MyCharacter);
+
+	void UpdateClosestEnemy(AMCharacter& MyCharacter);
+
+	/** Represents relationship with other pawns. Neutral if not listed */
+	UPROPERTY(EditAnywhere, Category = BehaviorParameters, meta=(AllowPrivateAccess = true))
+	TMap<TSubclassOf<APawn>, ERelationType> RelationshipMap;
+
+	UPROPERTY()
+	TMap<FName, AActor*> EnemiesNearby;
+
+	UPROPERTY()
+	AActor* ClosestEnemy;
+
+	FTimerHandle ActorsNearbyUpdateTimerHandle;
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -55,24 +74,11 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	class UMConsoleCommandsManager* ConsoleCommandsManager;
-	
-	/** Represents relationship with other pawns. Neutral if not listed */
-	UPROPERTY(EditAnywhere, Category = BehaviorParameters, meta=(AllowPrivateAccess = true))
-	TMap<TSubclassOf<APawn>, ERelationType> RelationshipMap;
-
-	UPROPERTY()
-	TMap<FName, AActor*> EnemiesNearby;
-
-	FTimerHandle ActorsNearbyUpdateTimerHandle;
 
 	// Begin PlayerController interface
 	virtual void PlayerTick(float DeltaTime) override;
 	virtual void SetupInputComponent() override;
 	// End PlayerController interface
-
-	void SetDynamicActorsNearby(const UWorld& World, AMCharacter& MyCharacter);
-
-	void FixGazeOnClosestEnemy(AMCharacter& MyCharacter);
 
 	void MoveRight(float Value);
 	void MoveForward(float Value);
@@ -96,7 +102,6 @@ private:
 	void OnToggleTurnAroundReleased();
 
 	void OnToggleFightPressed();
-	void OnToggleFightReleased();
 
 	virtual bool ProcessConsoleExec(const TCHAR* Cmd, FOutputDevice& Ar, UObject* Executor) override;
 };

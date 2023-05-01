@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "M2DRepresentationComponent.h"
+#include "MAttackPuddleComponent.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MInventoryComponent.h"
 
@@ -25,6 +26,7 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	, WalkSpeed(100.f)
 	, RunSpeed(140.f)
 	, bCanRetreat(true)
+	, MeleeSpread(40.f)
 {
 	// Collection of sprites or flipbooks representing the character. It's not the Root Component!
 	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("2DRepresentation"));
@@ -33,6 +35,10 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("InventoryrComponent"));
 
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
+
+	AttackPuddleComponent = CreateDefaultSubobject<UMAttackPuddleComponent>(TEXT("AttackPuddle"));
+	AttackPuddleComponent->SetupAttachment(RootComponent);
+	AttackPuddleComponent->SetHiddenInGame(true);
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
@@ -58,7 +64,8 @@ void AMCharacter::Tick(float DeltaSeconds)
 
 	UpdateLastNonZeroDirection();
 
-	const auto GazeDirection = ForcedGazeVector.IsZero() ? LastNonZeroVelocity : ForcedGazeVector;
+	auto GazeDirection = ForcedGazeVector.IsZero() ? LastNonZeroVelocity : ForcedGazeVector;
+	GazeDirection.Z = 0;
 
 	if (abs(UM2DRepresentationBlueprintLibrary::GetDeflectionAngle(GazeDirection, GetVelocity())) > 90.f)
 	{
@@ -86,4 +93,11 @@ void AMCharacter::UpdateLastNonZeroDirection()
 	{
 		LastNonZeroVelocity = GetVelocity();
 	}
+}
+
+void AMCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	AttackPuddleComponent->SetLength(FightRange);
 }

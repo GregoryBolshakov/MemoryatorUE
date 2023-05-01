@@ -28,9 +28,6 @@ void AMMobControllerBase::Tick(float DeltaSeconds)
 
 	PreTick(DeltaSeconds, *pWorld, *MyCharacter);
 
-	// Reset ForcedGazeVector, it might be set in one of behavior functions 
-	MyCharacter->SetForcedGazeVector(FVector::ZeroVector);
-
 	if (CurrentBehavior == EMobBehaviors::Idle)
 	{
 		// Wait some time, then find a random point within the village to go
@@ -50,6 +47,16 @@ void AMMobControllerBase::Tick(float DeltaSeconds)
 	{
 		// Run away from the victim until move away by a set range
 		DoHideBehavior(*pWorld, *MyCharacter);
+	}
+	if (CurrentBehavior == EMobBehaviors::Fight)
+	{
+		// Attack the victim
+		DoFightBehavior(*pWorld, *MyCharacter);
+	}
+	if (CurrentBehavior == EMobBehaviors::Chase)
+	{
+		// Chase the victim
+		DoChaseBehavior(*pWorld, *MyCharacter);
 	}
 }
 

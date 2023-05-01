@@ -1,5 +1,6 @@
 #include "MMobController.h"
 
+#include "M2DRepresentationComponent.h"
 #include "MMemoryator.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
@@ -128,6 +129,9 @@ void AMMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyChara
 		return;
 	}
 
+	// Reset forced gaze. Facing move direction (it is the default case)
+	MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
+
 	OnMoveCompletedDelegate.Unbind();
 	OnMoveCompletedDelegate.BindLambda([this, &World, &MyCharacter]
 	{
@@ -203,8 +207,6 @@ void AMMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCha
 
 void AMMobController::OnBehaviorChanged(AMCharacter& MyCharacter)
 {
-	MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
-
 	MyCharacter.UpdateAnimation();
 }
 

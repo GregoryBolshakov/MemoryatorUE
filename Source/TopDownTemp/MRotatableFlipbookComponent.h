@@ -45,7 +45,10 @@ class TOPDOWNTEMP_API UMRotatableFlipbookComponent : public UPaperFlipbookCompon
 public:
 
 	UFUNCTION(BlueprintCallable, Category = "MRotatableFlipbookComponent")
-	void SetAction(const FName& _Action) { Action = _Action; }
+	FName GetAction() const { return Action; }
+
+	UFUNCTION(BlueprintCallable, Category = "MRotatableFlipbookComponent")
+	void SetAction(const FName& _Action) { Action = _Action; SetFlipbookByRotation(LastValidViewingAngle); }
 
 	/** 
 	 * Called to set appropriate flipbook to represent the angular direction. 
