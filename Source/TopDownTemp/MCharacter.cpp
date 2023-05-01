@@ -39,6 +39,7 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	AttackPuddleComponent = CreateDefaultSubobject<UMAttackPuddleComponent>(TEXT("AttackPuddle"));
 	AttackPuddleComponent->SetupAttachment(RootComponent);
 	AttackPuddleComponent->SetHiddenInGame(true);
+	AttackPuddleComponent->SetCanEverAffectNavigation(false);
 
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;

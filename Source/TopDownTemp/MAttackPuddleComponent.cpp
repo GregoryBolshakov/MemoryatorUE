@@ -17,11 +17,17 @@ void UMAttackPuddleComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	DynamicMaterial = CreateDynamicMaterialInstance(0, DynamicMaterialInterface);
+	if (DynamicMaterialInterface)
+	{
+		DynamicMaterial = CreateDynamicMaterialInstance(0, DynamicMaterialInterface);
+	}
 }
 
 void UMAttackPuddleComponent::SetLength(float Length)
 {
+	if (!SourceSprite || !DynamicMaterialInterface)
+		return;
+
 	const auto PuddleBounds = CalcBounds(GetComponentTransform());
 	auto PuddleScale = GetComponentScale();
 	PuddleScale.X *= Length / PuddleBounds.BoxExtent.X;
