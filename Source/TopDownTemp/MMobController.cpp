@@ -52,14 +52,14 @@ void AMMobController::DoChaseBehavior(const UWorld& World, AMCharacter& MyCharac
 	if (!Victim)
 	{
 		check(false);
-		SetIdleBehavior(World, MyCharacter);
+		SetIdleBehavior(&World, &MyCharacter);
 		return;
 	}
 
 	const auto DistanceToVictim = FVector::Distance(Victim->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
 	if (DistanceToVictim > MyCharacter.GetForgetEnemyRange())
 	{
-		SetIdleBehavior(World, MyCharacter);
+		SetIdleBehavior(&World, &MyCharacter);
 		return;
 	}
 
@@ -74,7 +74,7 @@ void AMMobController::DoFightBehavior(const UWorld& World, AMCharacter& MyCharac
 	if (!Victim)
 	{
 		check(false);
-		SetIdleBehavior(World, MyCharacter);
+		SetIdleBehavior(&World, &MyCharacter);
 		return;
 	}
 
@@ -90,7 +90,7 @@ void AMMobController::DoRetreatBehavior(const UWorld& World, AMCharacter& MyChar
 	if (!Victim)
 	{
 		check(false);
-		SetIdleBehavior(World, MyCharacter);
+		SetIdleBehavior(&World, &MyCharacter);
 		return;
 	}
 
@@ -102,17 +102,17 @@ void AMMobController::DoRetreatBehavior(const UWorld& World, AMCharacter& MyChar
 	}
 }
 
-void AMMobController::SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
+void AMMobController::SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter)
 {
-	MyCharacter.SetIsFighting(false);
-	MyCharacter.SetIsMoving(false);
+	MyCharacter->SetIsFighting(false);
+	MyCharacter->SetIsMoving(false);
 
 	StopMovement();
 
 	CurrentBehavior = EMobBehaviors::Idle;
 	Victim = nullptr;
 
-	OnBehaviorChanged(MyCharacter);
+	OnBehaviorChanged(*MyCharacter);
 }
 
 void AMMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyCharacter)
@@ -125,7 +125,7 @@ void AMMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyChara
 	if (!Victim)
 	{
 		check(false);
-		SetIdleBehavior(World, MyCharacter);
+		SetIdleBehavior(&World, &MyCharacter);
 		return;
 	}
 
@@ -147,7 +147,7 @@ void AMMobController::SetFightBehavior(const UWorld& World, AMCharacter& MyChara
 	if (!Victim)
 	{
 		check(false);
-		SetIdleBehavior(World, MyCharacter);
+		SetIdleBehavior(&World, &MyCharacter);
 		return;
 	}
 
@@ -174,7 +174,7 @@ void AMMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCha
 	{
 		// We need to know who are we running from
 		check(false);
-		SetIdleBehavior(World, MyCharacter);
+		SetIdleBehavior(&World, &MyCharacter);
 		return;
 	}
 
@@ -198,7 +198,7 @@ void AMMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCha
 	}
 	else
 	{
-		SetIdleBehavior(World, MyCharacter);
+		SetIdleBehavior(&World, &MyCharacter);
 		return;
 	}
 
@@ -225,7 +225,7 @@ void AMMobController::OnFightAnimationEnd()
 	}
 	else
 	{
-		SetIdleBehavior(*GetWorld(), *MyCharacter);
+		SetIdleBehavior(GetWorld(), MyCharacter);
 	}
 }
 
@@ -247,7 +247,7 @@ void AMMobController::OnHit()
 
 	if (!Victim)
 	{
-		SetIdleBehavior(*pWorld, *MyCharacter);
+		SetIdleBehavior(pWorld, MyCharacter);
 		return;
 	}
 

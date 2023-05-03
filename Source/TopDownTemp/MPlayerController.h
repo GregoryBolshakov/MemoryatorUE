@@ -50,6 +50,9 @@ protected:
 
 	void UpdateClosestEnemy(AMCharacter& MyCharacter);
 
+	UFUNCTION(BlueprintCallable)
+	void OnHit();
+
 	/** Represents relationship with other pawns. Neutral if not listed */
 	UPROPERTY(EditAnywhere, Category = BehaviorParameters, meta=(AllowPrivateAccess = true))
 	TMap<TSubclassOf<APawn>, ERelationType> RelationshipMap;

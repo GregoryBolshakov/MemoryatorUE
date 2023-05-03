@@ -30,7 +30,7 @@ private:
 
 	virtual void DoRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
-	virtual void SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
+	virtual void SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter) override;
 
 	virtual void SetChaseBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 

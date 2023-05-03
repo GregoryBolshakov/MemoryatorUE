@@ -64,7 +64,8 @@ protected:
 
 	virtual void DoHideBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
-	virtual void SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
+	UFUNCTION(BlueprintCallable)
+	virtual void SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter) {}
 
 	virtual void SetWalkBehavior(const UWorld& World, AMCharacter& MyCharacter, const FVector& DestinationPoint) {}
 

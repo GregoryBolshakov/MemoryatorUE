@@ -17,7 +17,8 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	, IsFighting(false)
 	, IsMoving(false)
 	, IsPicking(false)
-	, Health(100.f)
+	, MaxHealth(100.f)
+	, Health(MaxHealth)
 	, SightRange(500.f)
 	, FightRange(50.f)
 	, ForgetEnemyRange(1000.f)
@@ -53,6 +54,18 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	// Configure collision
+	if (const auto PrimitiveRoot = Cast<UPrimitiveComponent>(RootComponent))
+	{
+		PrimitiveRoot->SetCollisionObjectType(ECC_Pawn);
+		PrimitiveRoot->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		PrimitiveRoot->SetCollisionResponseToAllChannels(ECR_Ignore);
+		PrimitiveRoot->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+		PrimitiveRoot->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+		PrimitiveRoot->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+		PrimitiveRoot->SetGenerateOverlapEvents(true);
+	}
 
 	//TODO: Make Z position constant. Now there is a performance loss due to floor collisions.
 }
@@ -103,4 +116,18 @@ void AMCharacter::BeginPlay()
 		AttackPuddleComponent->SetLength(FightRange);
 		AttackPuddleComponent->SetAngle(MeleeSpread);
 	}
+}
+
+float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator,
+	AActor* DamageCauser)
+{
+	if (Damage)
+	{
+		const auto LaunchVelocity = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal() * 140.f; // TODO: add a UPROPERTY for the length
+		LaunchCharacter(LaunchVelocity, false, false);
+
+		IsTakingDamage = true;
+		UpdateAnimation();
+	}
+	return Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 }

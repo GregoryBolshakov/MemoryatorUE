@@ -29,7 +29,7 @@ private:
 
 	virtual void DoHideBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
-	virtual void SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
+	virtual void SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter) override;
 
 	virtual void SetWalkBehavior(const UWorld& World, AMCharacter& MyCharacter, const FVector& DestinationPoint) override;
 

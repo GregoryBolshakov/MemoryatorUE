@@ -11,7 +11,7 @@ UMAttackPuddleComponent::UMAttackPuddleComponent()
 	, Length(0)
 {
 	// Collision setup
-	UPrimitiveComponent::SetCollisionObjectType(ECC_Pawn);
+	UPrimitiveComponent::SetCollisionObjectType(ECC_WorldDynamic);
 	UPrimitiveComponent::SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	UPrimitiveComponent::SetCollisionResponseToAllChannels(ECR_Ignore);
 	UPrimitiveComponent::SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);

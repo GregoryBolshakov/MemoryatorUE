@@ -30,6 +30,8 @@ public:
 
 	float GetRunSpeed() const { return RunSpeed; }
 
+	float GetStrength() const { return Strength; }
+
 	bool GetCanRetreat() const { return bCanRetreat; }
 
 	FVector GetForcedGazeVector() const { return ForcedGazeVector; }
@@ -56,7 +58,7 @@ public:
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "Animation")
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Animation")
 	void UpdateAnimation();
 
 	virtual void PostInitializeComponents() override;
@@ -66,6 +68,8 @@ protected:
 	void UpdateLastNonZeroDirection();
 
 	virtual void BeginPlay() override;
+
+	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 	/** Representation (collection of sprites) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
@@ -104,7 +108,9 @@ protected:
 	bool IsPicking;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
 	bool IsDashing;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float MaxHealth;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float Health;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))

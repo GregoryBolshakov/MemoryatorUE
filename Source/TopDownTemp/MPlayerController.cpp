@@ -13,6 +13,7 @@
 #include "MWorldGenerator.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer),
@@ -230,8 +231,26 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 	}
 	else
 	{
-		//MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
+		MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
 		//PuddleComponent->SetHiddenInGame(true);
+	}
+}
+
+void AMPlayerController::OnHit()
+{
+	const auto MyCharacter = Cast<AMCharacter>(GetCharacter());
+	if (!MyCharacter)
+		return;
+
+	if (const auto AttackPuddleComponent = MyCharacter->GetAttackPuddleComponent())
+	{
+		for (const auto [Name, Actor] : AttackPuddleComponent->ActorsWithin)
+		{
+			if (!Actor)
+				continue;
+
+			Actor->TakeDamage(MyCharacter->GetStrength(), {}, this, MyCharacter);
+		}
 	}
 }
 

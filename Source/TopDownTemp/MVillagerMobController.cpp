@@ -102,7 +102,7 @@ void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& M
 			if (!bSuccess)
 			{
 				// If all the points were obstructed, it's okay, villager will wait for the timer again and then try
-				SetIdleBehavior(World, MyCharacter);
+				SetIdleBehavior(&World, &MyCharacter);
 			}
 		}, FMath::RandRange(MinRestDuration, MaxRestDuration), false);
 	}
@@ -124,20 +124,20 @@ void AMVillagerMobController::DoHideBehavior(const UWorld& World, AMCharacter& M
 	if (EnemiesNearby.IsEmpty())
 	{
 		Disembark(MyCharacter);
-		SetIdleBehavior(World, MyCharacter);
+		SetIdleBehavior(&World, &MyCharacter);
 	}
 }
 
-void AMVillagerMobController::SetIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
+void AMVillagerMobController::SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter)
 {
-	MyCharacter.SetIsFighting(false);
-	MyCharacter.SetIsMoving(false);
+	MyCharacter->SetIsFighting(false);
+	MyCharacter->SetIsMoving(false);
 
 	StopMovement();
 
 	CurrentBehavior = EMobBehaviors::Idle;
 
-	OnBehaviorChanged(MyCharacter);
+	OnBehaviorChanged(*MyCharacter);
 }
 
 void AMVillagerMobController::SetWalkBehavior(const UWorld& World, AMCharacter& MyCharacter, const FVector& DestinationPoint)
@@ -155,7 +155,7 @@ void AMVillagerMobController::SetWalkBehavior(const UWorld& World, AMCharacter& 
 		if (CurrentBehavior != EMobBehaviors::Walk) // If were interrupted by something more important (like retreat from enemy..)
 			return;
 
-		SetIdleBehavior(World, MyCharacter);
+		SetIdleBehavior(&World, &MyCharacter);
 	});
 	MoveToLocation(DestinationPoint);
 
@@ -188,7 +188,7 @@ void AMVillagerMobController::SetRetreatBehavior(const UWorld& World, AMCharacte
 			}
 			else
 			{
-				SetIdleBehavior(World, MyCharacter);
+				SetIdleBehavior(&World, &MyCharacter);
 				//TODO: implement new home assignment
 			}
 		});
