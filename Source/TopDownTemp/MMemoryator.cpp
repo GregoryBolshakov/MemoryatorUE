@@ -9,6 +9,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "MAttackPuddleComponent.h"
+#include "MInterfaceMobController.h"
 #include "MInventoryComponent.h"
 #include "MPlayerController.h"
 #include "PaperSpriteComponent.h"
@@ -46,8 +47,6 @@ AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
 
 	DirectionMarkerComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("DirectionMarker"));
 	DirectionMarkerComponent->SetupAttachment(RootComponent);
-
-	AttackPuddleComponent->PrimaryComponentTick.bCanEverTick = true;
 }
 
 void AMMemoryator::AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce)
@@ -128,4 +127,24 @@ void AMMemoryator::PostInitializeComponents()
 	Super::PostInitializeComponents();
 
 	InventoryComponent->Initialize(40, {{0, 8}, {0, 8}, {1, 8}, {1, 8}, {2, 8}, {2, 8}, {3, 8}, {3, 8}});
+}
+
+void AMMemoryator::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorBeginOverlap(OtherActor);
+
+	if (const auto MPlayerController = Cast<AMPlayerController>(Controller))
+	{
+		if (const auto Relation = MPlayerController->GetRelationshipMap().Find(OtherActor->GetClass()); Relation && *Relation == ERelationType::Enemy)
+		{
+			AttackPuddleComponent->ActorsWithin.Add(*OtherActor->GetName(), OtherActor);
+		}
+	}
+}
+
+void AMMemoryator::NotifyActorEndOverlap(AActor* OtherActor)
+{
+	Super::NotifyActorEndOverlap(OtherActor);
+
+	AttackPuddleComponent->ActorsWithin.Remove(*OtherActor->GetName());
 }

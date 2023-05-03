@@ -30,6 +30,10 @@ private:
 
 	virtual void PostInitializeComponents() override;
 
+	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
+
+	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
+
 	/** Top down camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* TopDownCameraComponent;

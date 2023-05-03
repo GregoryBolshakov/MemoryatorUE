@@ -56,11 +56,11 @@ void AMWorldGenerator::GenerateActiveZone()
 		GenerateBlock(BlockInRadius);
 	}
 
-	FActorSpawnParameters SpawnParameters;
+	/*FActorSpawnParameters SpawnParameters;
 	SpawnParameters.Name = "VillageGenerator_1";
 	const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
 	const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator, SpawnParameters);
-	VillageGenerator->Generate();
+	VillageGenerator->Generate();*/
 	UpdateNavigationMesh();
 }
 

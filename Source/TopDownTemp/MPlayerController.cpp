@@ -4,6 +4,7 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Runtime/Engine/Classes/Components/DecalComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "MAttackPuddleComponent.h"
 #include "MMemoryator.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "MConsoleCommandsManager.h"
@@ -69,8 +70,6 @@ void AMPlayerController::BeginPlay()
 		DashVelocityTimeline.AddInterpFloat(DashVelocityCurve, TimelineProgress);
 		DashVelocityTimeline.SetLooping(false);
 	}
-
-	//ExchangeNetRoles(true); // temp
 }
 
 bool AMPlayerController::IsMovingByAI() const
@@ -194,12 +193,16 @@ void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter
 
 void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 {
+	const auto PuddleComponent = MyCharacter.GetAttackPuddleComponent();
+	if (!PuddleComponent)
+		return;
+
 	if (MyCharacter.GetIsDashing()) // check for any action that shouldn't rotate character towards enemy
 	{
+		PuddleComponent->SetHiddenInGame(true);
 		return;
 	}
 
-	MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
 	const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
 	ClosestEnemy = nullptr;
 
@@ -219,10 +222,16 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 	{
 		const auto VectorToEnemy = ClosestEnemy->GetActorLocation() - CharacterLocation;
 		MyCharacter.SetForcedGazeVector(VectorToEnemy);
+		PuddleComponent->SetHiddenInGame(false);
 		if (VectorToEnemy.Size2D() <= MyCharacter.GetFightRange() && !MyCharacter.GetIsFighting())
 		{
 			MyCharacter.SetIsFighting(true);
 		}
+	}
+	else
+	{
+		//MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
+		//PuddleComponent->SetHiddenInGame(true);
 	}
 }
 

@@ -22,6 +22,8 @@ public:
 
 	void StopAIMovement();
 
+	const TMap<TSubclassOf<APawn>, ERelationType>& GetRelationshipMap() const { return RelationshipMap; }
+
 //Dash
 protected:
 

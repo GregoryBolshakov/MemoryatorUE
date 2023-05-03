@@ -6,8 +6,6 @@
 #include "GameFramework/Character.h"
 #include "MCharacter.generated.h"
 
-class UMAttackPuddleComponent;
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStarted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStopped);
 
@@ -39,6 +37,8 @@ public:
 	class UMIsActiveCheckerComponent* GetIsActiveCheckerComponent() const { return IsActiveCheckerComponent; }
 
 	class UMInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
+	class UMAttackPuddleComponent* GetAttackPuddleComponent() const { return AttackPuddleComponent; }
 
 	FVector GetLastNonZeroVelocity() const { return LastNonZeroVelocity; }
 
@@ -74,7 +74,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
 	UMInventoryComponent* InventoryComponent;
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UMIsActiveCheckerComponent* IsActiveCheckerComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)

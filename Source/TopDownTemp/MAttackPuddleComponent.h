@@ -5,29 +5,38 @@
 #include "PaperSpriteComponent.h"
 #include "MAttackPuddleComponent.generated.h"
 
+//TODO: Hide the Sprite category, because there's no difference which to use.
 /** Component represents the zone of the attack */
 UCLASS(BlueprintType, Blueprintable, HideCategories=(Materials))
 class TOPDOWNTEMP_API UMAttackPuddleComponent : public UPaperSpriteComponent
 {
-	//TODO: Hide the Sprite category, because there's no difference which to use.
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
+	UMAttackPuddleComponent();
 
 	virtual void BeginPlay() override;
 
-	void SetLength(float Length);
+public:
 
-	bool IsPointWithin(FVector Point);
-
-protected:
+	void SetLength(float IN_Length);
 
 	/** Sets the progress between 0 and 360.f */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION()
 	void SetAngle(float Value);
+
+	bool IsCircleWithin(const FVector& Center, float Radius) const;
+
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	UPROPERTY()
+	TMap<FName, AActor*> ActorsWithin;
+
+protected:
 
 	UFUNCTION(BlueprintCallable)
 	float GetProgress() const { return Angle; }
 
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	/** Finds (up to two) intersection points of two circles */
+	void FindIntersectionPoints(FVector O1, float r1, FVector O2, float r2, FVector& point1, FVector& point2) const;
 
 	UPROPERTY(EditDefaultsOnly, Category=MAttackPuddleComponent)
 	UMaterialInterface* DynamicMaterialInterface;
@@ -36,5 +45,7 @@ protected:
 	UMaterialInstanceDynamic* DynamicMaterial;
 
 	float Angle;
+
+	float Length;
 
 };
