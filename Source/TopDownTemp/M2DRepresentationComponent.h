@@ -34,6 +34,9 @@ public:
 
 	void SetMeshByGazeAndVelocity(const FVector& IN_Gaze, const FVector& IN_Velocity, const FName& Tag = "");
 
+	UFUNCTION(BlueprintCallable)
+	void SetColor(const FLinearColor& Color);
+
 	UPROPERTY(Category=Rendering, EditAnywhere, BlueprintReadWrite)
 	bool bFaceToCamera = true;
 

@@ -1,12 +1,14 @@
 #include "MMobController.h"
 
 #include "M2DRepresentationComponent.h"
+#include "MAttackPuddleComponent.h"
 #include "MMemoryator.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "MWorldManager.h"
 #include "MWorldGenerator.h"
 #include "NavigationSystem.h"
+#include "Components/CapsuleComponent.h"
 
 AMMobController::AMMobController(const FObjectInitializer& ObjectInitializer) :
 	  Super(ObjectInitializer)
@@ -63,8 +65,13 @@ void AMMobController::DoChaseBehavior(const UWorld& World, AMCharacter& MyCharac
 		return;
 	}
 
+	float VictimRadius = 0.f;
+	if (const auto VictimCapsule = Cast<UCapsuleComponent>(Victim->GetRootComponent()))
+	{
+		VictimRadius = VictimCapsule->GetScaledCapsuleRadius();
+	}
 	// For reliability, update the move goal
-	MoveToActor(Victim, MyCharacter.GetFightRange());
+	MoveToLocation(Victim->GetActorLocation(), MyCharacter.GetFightRangePlusMyRadius() + VictimRadius, false);
 
 	//TODO: Add a logic to do during chase (shouts, effects, etc.)
 }
@@ -137,7 +144,13 @@ void AMMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyChara
 	{
 		SetFightBehavior(World, MyCharacter);
 	});
-	MoveToActor(Victim, MyCharacter.GetFightRange());
+
+	float VictimRadius = 0.f;
+	if (const auto VictimCapsule = Cast<UCapsuleComponent>(Victim->GetRootComponent()))
+	{
+		VictimRadius = VictimCapsule->GetScaledCapsuleRadius();
+	}
+	MoveToLocation(Victim->GetActorLocation(), MyCharacter.GetFightRangePlusMyRadius() + VictimRadius, false);
 
 	OnBehaviorChanged(MyCharacter);
 }
@@ -231,27 +244,27 @@ void AMMobController::OnFightAnimationEnd()
 
 void AMMobController::OnHit()
 {
-	const auto pWorld = GetWorld();
-	if (!pWorld)
-	{
-		check(false);
-		return;
-	}
-	
-	const auto MyCharacter = Cast<AMCharacter>(GetPawn());
+	const auto MyCharacter = Cast<AMCharacter>(GetCharacter());
 	if (!MyCharacter)
-	{
-		check(false);
 		return;
-	}
 
-	if (!Victim)
+	if (const auto AttackPuddleComponent = MyCharacter->GetAttackPuddleComponent())
 	{
-		SetIdleBehavior(pWorld, MyCharacter);
-		return;
-	}
+		TArray<AActor*> OutActors;
+		UKismetSystemLibrary::BoxOverlapActors(GetWorld(), AttackPuddleComponent->GetComponentLocation(), AttackPuddleComponent->Bounds.BoxExtent, {UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)}, AMCharacter::StaticClass(), {MyCharacter}, OutActors);
+		for (const auto Actor : OutActors)
+		{
+			if (!Actor)
+				continue;
 
-	//FPointDamageEvent DamageEvent(DamageAmount, Hit, -ActorForward, UDamageType::StaticClass());
-	//Victim->TakeDamage(DamageAmount, DamageEvent, MyPC, MyPC->GetPawn());
+			if (const auto CapsuleComponent = Cast<UCapsuleComponent>(Actor->GetRootComponent()))
+			{
+				if (AttackPuddleComponent->IsCircleWithin(Actor->GetActorLocation(), CapsuleComponent->GetScaledCapsuleRadius()))
+				{
+					Actor->TakeDamage(MyCharacter->GetStrength(), {}, this, MyCharacter);
+				}
+			}
+		}
+	}
 }
 

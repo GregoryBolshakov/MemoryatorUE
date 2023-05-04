@@ -4,6 +4,7 @@
 
 #include "M2DRepresentationBlueprintLibrary.h"
 #include "M2DRepresentationComponent.h"
+#include "Components/BoxComponent.h"
 
 UMAttackPuddleComponent::UMAttackPuddleComponent()
 	: DynamicMaterialInterface(nullptr), DynamicMaterial(nullptr)
@@ -53,35 +54,47 @@ void UMAttackPuddleComponent::SetLength(float IN_Length)
 	const auto PuddleBounds = CalcBounds(GetComponentTransform());
 	auto PuddleScale = GetComponentScale();
 	PuddleScale.X *= IN_Length / PuddleBounds.BoxExtent.X;
-	const auto MyRotation = GetComponentRotation();
 	PuddleScale.Z *= IN_Length / PuddleBounds.BoxExtent.Z;
 	SetWorldScale3D(PuddleScale);
+
+	auto test = CalcBounds(GetComponentTransform());
+	auto test1 = 1;
 }
 
 bool UMAttackPuddleComponent::IsCircleWithin(const FVector& Center, float Radius) const
 {
 	const auto MyBounds = CalcBounds(GetComponentTransform());
-	check(FMath::IsNearlyEqual(MyBounds.BoxExtent.X, MyBounds.BoxExtent.Y));
-	const auto MyRadius = MyBounds.BoxExtent.X;
-	if (FVector::Dist2D(GetComponentLocation(), Center) > MyRadius) // Check if inside the circle
-		return false;
+	check(FMath::IsNearlyEqual(MyBounds.BoxExtent.X, MyBounds.BoxExtent.Y, 0.001));
 
 	auto MyRotation = FRotationMatrix::MakeFromX(GetForwardVector()).Rotator().Yaw - 90.f; // we always add 90 for 2D objects because they are arranged along the x-axis, not across
-	MyRotation = MyRotation < 0.f ? MyRotation + 360.f : MyRotation; // Make sure angle is [0, 380]
 
 	FVector Point1, Point2; // The left and right-most intersection points of the circle O1, R1 = [O2-O1] and circle O2, R2 = object's radius 
 	const auto ToPointVector = Center - GetComponentLocation();
-	FindIntersectionPoints(GetComponentLocation(), ToPointVector.Size2D(), Center, 16.f, Point1, Point2);
+	FindIntersectionPoints(GetComponentLocation(), ToPointVector.Size2D(), Center, Radius, Point1, Point2);
 
-	auto RotationToLeftPoint = FRotationMatrix::MakeFromX(Point1 - GetComponentLocation()).Rotator().Yaw;
-	RotationToLeftPoint = RotationToLeftPoint < 0.f ? RotationToLeftPoint + 360.f : RotationToLeftPoint; // Make sure angle is [0, 380]
-	auto RotationToRightPoint = FRotationMatrix::MakeFromX(Point2 - GetComponentLocation()).Rotator().Yaw;
-	RotationToRightPoint = RotationToRightPoint < 0.f ? RotationToRightPoint + 360.f : RotationToRightPoint; // Make sure angle is [0, 380]
+	// Rotations to the left-most and right-most edges of checkable circle 
+	const auto LeftEdgeRotation = FRotationMatrix::MakeFromX(Point1 - GetComponentLocation()).Rotator().Yaw;
+	const auto RightEdgeRotation = FRotationMatrix::MakeFromX(Point2 - GetComponentLocation()).Rotator().Yaw;
 
-	// Either the left point or the right point falls into our angle range, or the entire angle is between them
-	return (MyRotation <= RotationToLeftPoint && MyRotation + Angle >= RotationToLeftPoint) ||
-		(MyRotation <= RotationToRightPoint && MyRotation + Angle >= RotationToRightPoint) ||
-		MyRotation >= RotationToLeftPoint && MyRotation + Angle <= RotationToRightPoint;
+	const auto ToPointRotation = FRotationMatrix::MakeFromX(ToPointVector).Rotator().Yaw;
+	const auto MinSufficientAngle = abs(FMath::FindDeltaAngleDegrees(LeftEdgeRotation, RightEdgeRotation) / 2.f);
+
+	// Angle between rotations we just found to the boundaries of the segment 
+	const auto LeftEdgeToBorderAngle = abs(FMath::FindDeltaAngleDegrees(MyRotation, ToPointRotation));
+	const auto RightEdgeToBorderAngle = abs(FMath::FindDeltaAngleDegrees(MyRotation + Angle, ToPointRotation));
+
+	if (Angle <= 180.f && (LeftEdgeToBorderAngle <= Angle + MinSufficientAngle && RightEdgeToBorderAngle <= Angle + MinSufficientAngle))
+	{
+		return true;
+	}
+
+	const float InvertedAngle = 360.f - Angle;
+	if (Angle > 180.f && (LeftEdgeToBorderAngle >= InvertedAngle - MinSufficientAngle || RightEdgeToBorderAngle >= InvertedAngle - MinSufficientAngle))
+	{
+		return true;
+	}
+
+	return false;
 }
 
 void UMAttackPuddleComponent::SetAngle(float Value)

@@ -9,6 +9,8 @@
 #include "MAttackPuddleComponent.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MInventoryComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0")))
@@ -70,6 +72,16 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	//TODO: Make Z position constant. Now there is a performance loss due to floor collisions.
 }
 
+float AMCharacter::GetFightRangePlusMyRadius() const
+{
+	if (const auto Capsule = GetCapsuleComponent())
+	{
+		return FightRange + Capsule->GetScaledCapsuleRadius();
+	}
+	check(false);
+	return 0.f;
+}
+
 void AMCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -113,7 +125,7 @@ void AMCharacter::BeginPlay()
 
 	if (AttackPuddleComponent)
 	{
-		AttackPuddleComponent->SetLength(FightRange);
+		AttackPuddleComponent->SetLength(GetFightRangePlusMyRadius());
 		AttackPuddleComponent->SetAngle(MeleeSpread);
 	}
 }
@@ -123,8 +135,10 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 {
 	if (Damage)
 	{
-		const auto LaunchVelocity = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal() * 140.f; // TODO: add a UPROPERTY for the length
+		const auto LaunchVelocity = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal() * 140.f; // TODO: add a UPROPERTY for the knock back length
 		LaunchCharacter(LaunchVelocity, false, false);
+
+		RepresentationComponent->SetColor(FLinearColor(1.f, 0.f, 0.f, 1.f));
 
 		IsTakingDamage = true;
 		UpdateAnimation();

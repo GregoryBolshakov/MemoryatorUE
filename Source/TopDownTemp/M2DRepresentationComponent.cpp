@@ -133,6 +133,21 @@ void UM2DRepresentationComponent::SetMeshByGazeAndVelocity(const FVector& IN_Gaz
 	LastValidGaze = IN_Gaze;
 }
 
+void UM2DRepresentationComponent::SetColor(const FLinearColor& Color)
+{
+	for (const auto RenderComponent : RenderComponentArray)
+	{
+		if (const auto Flipbook = Cast<UPaperFlipbookComponent>(RenderComponent))
+		{
+			Flipbook->SetSpriteColor(Color);
+		}
+		if (const auto Sprite = Cast<UPaperSpriteComponent>(RenderComponent))
+		{
+			Sprite->SetSpriteColor(Color);
+		}
+	}
+}
+
 void UM2DRepresentationComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);

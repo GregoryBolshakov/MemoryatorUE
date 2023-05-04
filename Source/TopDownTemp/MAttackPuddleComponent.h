@@ -5,6 +5,7 @@
 #include "PaperSpriteComponent.h"
 #include "MAttackPuddleComponent.generated.h"
 
+class UBoxComponent;
 //TODO: Hide the Sprite category, because there's no difference which to use.
 /** Component represents the zone of the attack */
 UCLASS(BlueprintType, Blueprintable, HideCategories=(Materials))

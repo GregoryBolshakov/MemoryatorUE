@@ -20,7 +20,7 @@ public:
 
 	float GetSightRange() const { return SightRange; }
 
-	float GetFightRange() const { return FightRange; }
+	float GetFightRangePlusMyRadius() const;
 
 	float GetForgetEnemyRange() const { return ForgetEnemyRange; }
 

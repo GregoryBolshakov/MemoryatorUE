@@ -11,6 +11,7 @@
 #include "MInterfaceMobController.h"
 #include "MWorldManager.h"
 #include "MWorldGenerator.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -207,15 +208,30 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 	const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
 	ClosestEnemy = nullptr;
 
-	for (const auto& [Name, EnemyActor] : EnemiesNearby)
+	float ClosestEnemyRadius = 0.f;
+	for (const auto [Name, EnemyActor] : EnemiesNearby)
 	{
+		if (!EnemyActor)
+		{
+			check(false);
+			continue;
+		}
+		const auto Capsule = EnemyActor->FindComponentByClass<UCapsuleComponent>();
+		if (!Capsule)
+		{
+			check(false);
+			continue;
+		}
+
+		const auto EnemyRadius = Capsule->GetScaledCapsuleRadius();
 		const auto EnemyLocation = EnemyActor->GetTransform().GetLocation();
 		const auto DistanceToActor = FVector::Distance(CharacterLocation, EnemyLocation);
 		// Fix our character's gaze on the enemy if it is the closest one and 
-		if (DistanceToActor <= MyCharacter.GetFightRange() * 2.f && // Actor is within sight range TODO: put the " * 2.f" to the properties
+		if (DistanceToActor + EnemyRadius <= MyCharacter.GetFightRangePlusMyRadius() * 2.5f && // Actor is within sight range TODO: put the " * 2.5f" to the properties
 			(!ClosestEnemy || DistanceToActor < FVector::Distance(CharacterLocation, ClosestEnemy->GetActorLocation()))) // It is either the only one in sight or the closest
 		{
 			ClosestEnemy = EnemyActor;
+			ClosestEnemyRadius = EnemyRadius;
 		}
 	}
 
@@ -224,7 +240,8 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 		const auto VectorToEnemy = ClosestEnemy->GetActorLocation() - CharacterLocation;
 		MyCharacter.SetForcedGazeVector(VectorToEnemy);
 		PuddleComponent->SetHiddenInGame(false);
-		if (VectorToEnemy.Size2D() <= MyCharacter.GetFightRange() && !MyCharacter.GetIsFighting())
+
+		if (VectorToEnemy.Size2D() <= MyCharacter.GetFightRangePlusMyRadius() + ClosestEnemyRadius && !MyCharacter.GetIsFighting())
 		{
 			MyCharacter.SetIsFighting(true);
 		}
@@ -232,7 +249,7 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 	else
 	{
 		MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
-		//PuddleComponent->SetHiddenInGame(true);
+		PuddleComponent->SetHiddenInGame(true);
 	}
 }
 
@@ -244,12 +261,20 @@ void AMPlayerController::OnHit()
 
 	if (const auto AttackPuddleComponent = MyCharacter->GetAttackPuddleComponent())
 	{
-		for (const auto [Name, Actor] : AttackPuddleComponent->ActorsWithin)
+		TArray<AActor*> OutActors;
+		UKismetSystemLibrary::BoxOverlapActors(GetWorld(), AttackPuddleComponent->GetComponentLocation(), AttackPuddleComponent->Bounds.BoxExtent, {UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)}, AMCharacter::StaticClass(), {MyCharacter}, OutActors);
+		for (const auto Actor : OutActors)
 		{
 			if (!Actor)
 				continue;
 
-			Actor->TakeDamage(MyCharacter->GetStrength(), {}, this, MyCharacter);
+			if (const auto CapsuleComponent = Cast<UCapsuleComponent>(Actor->GetRootComponent()))
+			{
+				if (AttackPuddleComponent->IsCircleWithin(Actor->GetActorLocation(), CapsuleComponent->GetScaledCapsuleRadius()))
+				{
+					Actor->TakeDamage(MyCharacter->GetStrength(), {}, this, MyCharacter);
+				}
+			}
 		}
 	}
 }
