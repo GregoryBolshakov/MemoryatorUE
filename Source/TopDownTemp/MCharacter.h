@@ -16,11 +16,13 @@ class AMCharacter : public ACharacter
 
 public:
 
+	float GetRadius() const;
+
 	bool GetIsFighting() const { return IsFighting; }
 
 	float GetSightRange() const { return SightRange; }
 
-	float GetFightRangePlusMyRadius() const;
+	float GetFightRangePlusMyRadius() const { return FightRange + GetRadius(); }
 
 	float GetForgetEnemyRange() const { return ForgetEnemyRange; }
 
@@ -81,8 +83,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UMIsActiveCheckerComponent* IsActiveCheckerComponent;
 
+	//TODO: Consider creating separate manager for all underfoot UI
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	UMAttackPuddleComponent* AttackPuddleComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+	class UPaperSpriteComponent* PerimeterOutlineComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);

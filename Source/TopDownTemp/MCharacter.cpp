@@ -11,6 +11,7 @@
 #include "MInventoryComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "PaperSpriteComponent.h"
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0")))
@@ -42,6 +43,13 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	AttackPuddleComponent = CreateDefaultSubobject<UMAttackPuddleComponent>(TEXT("AttackPuddle"));
 	AttackPuddleComponent->SetupAttachment(RootComponent);
 
+	PerimeterOutlineComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("PerimeterOutline"));
+	PerimeterOutlineComponent->SetupAttachment(AttackPuddleComponent);
+	AttackPuddleComponent->SetPerimeterOutline(PerimeterOutlineComponent);
+#ifdef WITH_EDITOR
+	PerimeterOutlineComponent->SetVisibleFlag(false);
+#endif
+
 	// Don't rotate character to camera direction
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -72,11 +80,11 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	//TODO: Make Z position constant. Now there is a performance loss due to floor collisions.
 }
 
-float AMCharacter::GetFightRangePlusMyRadius() const
+float AMCharacter::GetRadius() const
 {
 	if (const auto Capsule = GetCapsuleComponent())
 	{
-		return FightRange + Capsule->GetScaledCapsuleRadius();
+		return Capsule->GetScaledCapsuleRadius();
 	}
 	check(false);
 	return 0.f;
@@ -138,7 +146,7 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 		const auto LaunchVelocity = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal() * 140.f; // TODO: add a UPROPERTY for the knock back length
 		LaunchCharacter(LaunchVelocity, false, false);
 
-		RepresentationComponent->SetColor(FLinearColor(1.f, 0.f, 0.f, 1.f));
+		RepresentationComponent->SetColor(FLinearColor(1.f, 0.2f, 0.2f, 1.f));
 
 		IsTakingDamage = true;
 		UpdateAnimation();

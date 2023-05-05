@@ -20,6 +20,8 @@ public:
 
 	void SetLength(float IN_Length);
 
+	void SetPerimeterOutline(UPaperSpriteComponent* IN_PerimeterOutline) { pPerimeterOutline = IN_PerimeterOutline; }
+
 	/** Sets the progress between 0 and 360.f */
 	UFUNCTION()
 	void SetAngle(float Value);
@@ -41,6 +43,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category=MAttackPuddleComponent)
 	UMaterialInterface* DynamicMaterialInterface;
+
+	UPROPERTY()
+	UPaperSpriteComponent* pPerimeterOutline;
 
 	UPROPERTY()
 	UMaterialInstanceDynamic* DynamicMaterial;

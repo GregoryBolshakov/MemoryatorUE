@@ -227,7 +227,7 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 		const auto EnemyLocation = EnemyActor->GetTransform().GetLocation();
 		const auto DistanceToActor = FVector::Distance(CharacterLocation, EnemyLocation);
 		// Fix our character's gaze on the enemy if it is the closest one and 
-		if (DistanceToActor + EnemyRadius <= MyCharacter.GetFightRangePlusMyRadius() * 2.5f && // Actor is within sight range TODO: put the " * 2.5f" to the properties
+		if (DistanceToActor + EnemyRadius <= MyCharacter.GetFightRangePlusMyRadius() * 3.5f && // Actor is within sight range TODO: put the " * 2.5f" to the properties
 			(!ClosestEnemy || DistanceToActor < FVector::Distance(CharacterLocation, ClosestEnemy->GetActorLocation()))) // It is either the only one in sight or the closest
 		{
 			ClosestEnemy = EnemyActor;

@@ -4,6 +4,7 @@
 
 #include "M2DRepresentationBlueprintLibrary.h"
 #include "M2DRepresentationComponent.h"
+#include "MCharacter.h"
 #include "Components/BoxComponent.h"
 
 UMAttackPuddleComponent::UMAttackPuddleComponent()
@@ -41,6 +42,7 @@ void UMAttackPuddleComponent::BeginPlay()
 		{
 			SetVisibleFlag(true);
 		}
+		pPerimeterOutline->SetVisibleFlag(true);
 	}
 #endif
 }
@@ -57,8 +59,14 @@ void UMAttackPuddleComponent::SetLength(float IN_Length)
 	PuddleScale.Z *= IN_Length / PuddleBounds.BoxExtent.Z;
 	SetWorldScale3D(PuddleScale);
 
-	auto test = CalcBounds(GetComponentTransform());
-	auto test1 = 1;
+	// Configure perimeter outline size
+	if (const auto OwnerCharacter = Cast<AMCharacter>(GetOwner()))
+	{
+		auto PerimeterOutlineScale = pPerimeterOutline->GetComponentScale();
+		PerimeterOutlineScale.X *= OwnerCharacter->GetRadius() / pPerimeterOutline->Bounds.BoxExtent.X;
+		PerimeterOutlineScale.Z *= OwnerCharacter->GetRadius() / pPerimeterOutline->Bounds.BoxExtent.Z;
+		pPerimeterOutline->SetWorldScale3D(PerimeterOutlineScale);
+	}
 }
 
 bool UMAttackPuddleComponent::IsCircleWithin(const FVector& Center, float Radius) const
