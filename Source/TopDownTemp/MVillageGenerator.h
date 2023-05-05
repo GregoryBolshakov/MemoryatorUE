@@ -55,7 +55,7 @@ protected:
 
 	void ShiftBuildingRandomly(const AActor* Building) const;
 
-	bool TryToPlaceBuilding(AActor& BuildingActor, int& BuildingIndex, float DistanceFromCenter, FName BuildingClassName, const FToSpawnBuildingMetadata& BuildingMetadata);
+	bool TryToPlaceBuilding(AActor& BuildingActor, int& BuildingIndex, float& DistanceFromCenter, FName BuildingClassName, const FToSpawnBuildingMetadata& BuildingMetadata);
 
 	void OnBuildingPlaced(AActor& BuildingActor, const FToSpawnBuildingMetadata& BuildingMetadata);
 

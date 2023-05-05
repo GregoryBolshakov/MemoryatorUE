@@ -43,7 +43,7 @@ void AMVillageGenerator::Generate()
 	// Here we should clean all the blocks we are about to cover
 	pWorldGenerator->CleanArea(CenterPosition, TownSquareRadius); //TODO: Increase the area somehow! for now I don't know how to calculate it
 
-	float Radius = TownSquareRadius;
+	float DistanceFromCenter = TownSquareRadius;
 
 	// The Village has a circle shape with a hollow at the bottom.
 	// The Main Building is at the top point.
@@ -78,7 +78,6 @@ void AMVillageGenerator::Generate()
 		{
 			return;
 		}
-		SpawnParameters.Name = MakeUniqueObjectName(pWorld, BuildingMetadata->ToSpawnClass.Get());
 
 		// The temporary actor to find the position for the building
 		const auto TestingBuildingActor = pWorld->SpawnActor<AActor>(BuildingMetadata->ToSpawnClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
@@ -92,14 +91,16 @@ void AMVillageGenerator::Generate()
 		ShiftBuildingRandomly(TestingBuildingActor);
 
 		// We try to find a location to fit the building
-		if (TryToPlaceBuilding(*TestingBuildingActor, BuildingIndex, Radius, BuildingClassName, *BuildingMetadata))
+		if (TryToPlaceBuilding(*TestingBuildingActor, BuildingIndex, DistanceFromCenter, BuildingClassName, *BuildingMetadata))
 		{
 			pWorldGenerator->EnrollActorToGrid(TestingBuildingActor);
 		}
 		else
 		{
-			// If there is no such, then we stop and don't build the rest
-			break;
+			// Legacy implementation: If there is no such, then we stop and don't build the rest.
+			//break;
+
+			// TODO: Ensure this doesn't cause endless loop  
 		}
 	}
 
@@ -117,7 +118,7 @@ void AMVillageGenerator::Generate()
 	}
 }
 
-bool AMVillageGenerator::TryToPlaceBuilding(AActor& BuildingActor, int& BuildingIndex, float DistanceFromCenter, FName BuildingClassName, const FToSpawnBuildingMetadata& BuildingMetadata)
+bool AMVillageGenerator::TryToPlaceBuilding(AActor& BuildingActor, int& BuildingIndex, float& DistanceFromCenter, FName BuildingClassName, const FToSpawnBuildingMetadata& BuildingMetadata)
 {
 	if (const auto Location = FindLocationForBuilding(BuildingActor, BuildingIndex, DistanceFromCenter); Location.IsSet())
 	{
@@ -139,13 +140,15 @@ bool AMVillageGenerator::TryToPlaceBuilding(AActor& BuildingActor, int& Building
 
 	BuildingActor.Destroy();
 	//One of possible solutions to develop generation. It hasn't been proved yet and the binary search isn't suitable for it. 
-	/*if (const auto GapMetadata = ToSpawnBuildingsMetadata.Find("Gap"))
+	if (const auto GapMetadata = ToSpawnBuildingMetadataMap.Find("Gap"))
 	{
-		const auto BoxExtent = GetDefaultBounds(GapMetadata->ToSpawnClass, this).BoxExtent;
-		Radius += FMath::Max3(BoxExtent.X, BoxExtent.Y, BoxExtent.Z) / 2.f;
-		continue;
-	}*/
-	//check(false);
+		const auto BoxExtent = AMWorldGenerator::GetDefaultBounds(GapMetadata->ToSpawnClass, GetWorld()).BoxExtent;
+		DistanceFromCenter += FMath::Max3(BoxExtent.X, BoxExtent.Y, BoxExtent.Z) / 2.f;
+	}
+	else
+	{
+		check(false);
+	}
 	return false;
 }
 
