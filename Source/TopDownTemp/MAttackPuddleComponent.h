@@ -26,14 +26,16 @@ public:
 	UFUNCTION()
 	void SetAngle(float Value);
 
-	bool IsCircleWithin(const FVector& Center, float Radius) const;
+	void UpdateRotation();
 
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	bool IsCircleWithin(const FVector& Center, float Radius) const;
 
 	UPROPERTY()
 	TMap<FName, AActor*> ActorsWithin;
 
 protected:
+
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable)
 	float GetProgress() const { return Angle; }

@@ -7,9 +7,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "M2DRepresentationComponent.h"
 #include "MAttackPuddleComponent.h"
+#include "MBuffManagerComponent.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MInventoryComponent.h"
-#include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
 
@@ -39,6 +39,8 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("InventoryrComponent"));
 
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
+
+	BuffManagerComponent = CreateDefaultSubobject<UMBuffManagerComponent>(TEXT("BuffManager"));
 
 	AttackPuddleComponent = CreateDefaultSubobject<UMAttackPuddleComponent>(TEXT("AttackPuddle"));
 	AttackPuddleComponent->SetupAttachment(RootComponent);
@@ -115,6 +117,7 @@ void AMCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
+	BuffManagerComponent->CreateWidget();
 	RepresentationComponent->PostInitChildren();
 }
 
@@ -143,13 +146,23 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 {
 	if (Damage)
 	{
-		const auto LaunchVelocity = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal() * 140.f; // TODO: add a UPROPERTY for the knock back length
-		LaunchCharacter(LaunchVelocity, false, false);
+		if (BuffManagerComponent)
+		{
+			if (BuffManagerComponent->IsBuffSet(EBuffType::Invulnerability))
+			{
+				return 0.f;
+			}
 
-		RepresentationComponent->SetColor(FLinearColor(1.f, 0.2f, 0.2f, 1.f));
+			const auto LaunchVelocity = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal() * 140.f; // TODO: add a UPROPERTY for the knock back length
+			LaunchCharacter(LaunchVelocity, false, false);
 
-		IsTakingDamage = true;
-		UpdateAnimation();
+			RepresentationComponent->SetColor(FLinearColor(1.f, 0.2f, 0.2f, 1.f));
+
+			IsTakingDamage = true;
+			UpdateAnimation();
+
+			//BuffManagerComponent->AddBuff(EBuffType::Invulnerability, 2.f); // TODO: Add a perk for the duration
+		}
 	}
 	return Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 }

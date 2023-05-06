@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "MCharacter.generated.h"
 
+class UMBuffManagerComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStarted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStopped);
 
@@ -82,6 +83,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UMIsActiveCheckerComponent* IsActiveCheckerComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UMBuffManagerComponent* BuffManagerComponent;
 
 	//TODO: Consider creating separate manager for all underfoot UI
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)

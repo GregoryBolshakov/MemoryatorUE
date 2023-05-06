@@ -115,11 +115,8 @@ void UMAttackPuddleComponent::SetAngle(float Value)
 	}
 }
 
-void UMAttackPuddleComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
+void UMAttackPuddleComponent::UpdateRotation()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
 	if (const auto OwnerActor = GetOwner())
 	{
 		if (const auto RepresentationComponent = OwnerActor->FindComponentByClass<UM2DRepresentationComponent>())
@@ -129,6 +126,14 @@ void UMAttackPuddleComponent::TickComponent(float DeltaTime, ELevelTick TickType
 			AddWorldRotation(FRotator(0.f, Angle / -2.f, 0.f)); // Shift to face the the segment center
 		}
 	}
+}
+
+void UMAttackPuddleComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+                                            FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	UpdateRotation();
 }
 
 void UMAttackPuddleComponent::FindIntersectionPoints(FVector O1, float r1, FVector O2, float r2, FVector& point1, FVector& point2) const

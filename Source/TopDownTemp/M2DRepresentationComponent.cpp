@@ -6,6 +6,7 @@
 #include "PaperSpriteComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "MRotatableFlipbookComponent.h"
+#include "Components/WidgetComponent.h"
 
 UM2DRepresentationComponent::UM2DRepresentationComponent(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer),
@@ -67,6 +68,10 @@ void UM2DRepresentationComponent::CreateShadowTwins()
 	{
 		UMeshComponent* ShadowComponent = nullptr;
 
+		if (Cast<UWidgetComponent>(RenderComponent))
+		{
+			continue; // We don't need to cast shadows from widget meshes
+		}
 		if (const auto PaperSpriteComponent = Cast<UPaperSpriteComponent>(RenderComponent))
 		{
 			//TODO: In the future actors will use only UMRotatableFlipbookComponent, this case is temporary
@@ -202,7 +207,17 @@ void UM2DRepresentationComponent::FaceToCamera()
 
 		const FRotator Rotation = FRotationMatrix::MakeFromX(DirectionVector).Rotator();
 		RenderComponent->SetWorldRotation(Rotation);
-		RenderComponent->AddLocalRotation(FRotator(0.f, 90.f, 0.f));
+		if (!Cast<UWidgetComponent>(RenderComponent)) 
+		{
+			// we always add 90 for 2D objects because they are arranged along the x-axis, not across
+			RenderComponent->AddLocalRotation(FRotator(0.f, 90.f, 0.f));
+		}
+		else
+		{
+			// For some reason widget components aren't arranged along the x-axis (as all paper sprites do).
+			// Moreover, by default they look away from the camera, not at it
+			RenderComponent->AddLocalRotation(FRotator(0.f, -180.f, 0.f));
+		}
 		RenderComponent->AddLocalRotation(RotationWhileFacingCamera);
 
 		// Move sprite so that its origin point matches its starting position.

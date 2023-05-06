@@ -248,21 +248,27 @@ void AMMobController::OnHit()
 	if (!MyCharacter)
 		return;
 
-	if (const auto AttackPuddleComponent = MyCharacter->GetAttackPuddleComponent())
-	{
-		TArray<AActor*> OutActors;
-		UKismetSystemLibrary::BoxOverlapActors(GetWorld(), AttackPuddleComponent->GetComponentLocation(), AttackPuddleComponent->Bounds.BoxExtent, {UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)}, AMCharacter::StaticClass(), {MyCharacter}, OutActors);
-		for (const auto Actor : OutActors)
-		{
-			if (!Actor)
-				continue;
+	const auto AttackPuddleComponent = MyCharacter->GetAttackPuddleComponent();
+	if (!AttackPuddleComponent)
+		return;
 
-			if (const auto CapsuleComponent = Cast<UCapsuleComponent>(Actor->GetRootComponent()))
+	// Make sure we rotate towards victim at the moment of hit
+	DoFightBehavior(*GetWorld(), *MyCharacter);
+	MyCharacter->Tick(0.f);
+	AttackPuddleComponent->UpdateRotation();
+
+	TArray<AActor*> OutActors;
+	UKismetSystemLibrary::BoxOverlapActors(GetWorld(), AttackPuddleComponent->GetComponentLocation(), AttackPuddleComponent->Bounds.BoxExtent, {UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)}, AMCharacter::StaticClass(), {MyCharacter}, OutActors);
+	for (const auto Actor : OutActors)
+	{
+		if (!Actor)
+			continue;
+
+		if (const auto CapsuleComponent = Cast<UCapsuleComponent>(Actor->GetRootComponent()))
+		{
+			if (AttackPuddleComponent->IsCircleWithin(Actor->GetActorLocation(), CapsuleComponent->GetScaledCapsuleRadius()))
 			{
-				if (AttackPuddleComponent->IsCircleWithin(Actor->GetActorLocation(), CapsuleComponent->GetScaledCapsuleRadius()))
-				{
-					Actor->TakeDamage(MyCharacter->GetStrength(), {}, this, MyCharacter);
-				}
+				Actor->TakeDamage(MyCharacter->GetStrength(), {}, this, MyCharacter);
 			}
 		}
 	}

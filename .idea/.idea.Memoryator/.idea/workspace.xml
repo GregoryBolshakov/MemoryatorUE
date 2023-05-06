@@ -67,22 +67,25 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Materials/My_TranslucentUnlitSpriteMaterial.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_BuffBar.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MBuffBarWidget.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MBuffBarWidget.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MBuffManagerComponent.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Source/TopDownTemp/MBuffManagerComponent.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v15/.suo" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Memoryator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Memoryator.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Nightmare_Small.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Nightmare_Small.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_VillageGenerator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_VillageGenerator.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_Gap.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_Gap.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Materials/Mat_CircularSweep.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Materials/Mat_CircularSweep.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MAttackPuddleComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MAttackPuddleComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MAttackPuddleComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MAttackPuddleComponent.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23124,7 +23127,7 @@
       <workItem from="1683056660119" duration="4933000" />
       <workItem from="1683118657908" duration="19946000" />
       <workItem from="1683203922560" duration="20300000" />
-      <workItem from="1683297602672" duration="6734000" />
+      <workItem from="1683297602672" duration="35911000" />
     </task>
     <servers />
   </component>
