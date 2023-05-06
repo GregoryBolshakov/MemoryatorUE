@@ -22,6 +22,12 @@ public:
 
 	void StopAIMovement();
 
+	void OnMove();
+
+	void TurnSprintOn();
+
+	void TurnSprintOff();
+
 	const TMap<TSubclassOf<APawn>, ERelationType>& GetRelationshipMap() const { return RelationshipMap; }
 
 //Dash

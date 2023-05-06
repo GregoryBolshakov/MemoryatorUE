@@ -67,7 +67,7 @@ void AMMemoryator::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	HandleAnimationStates();
+	HandleMovementState();
 
 	HandleCursor();
 }
@@ -103,22 +103,31 @@ void AMMemoryator::HandleCursor() const
 }
 
 
-void AMMemoryator::HandleAnimationStates()
+void AMMemoryator::HandleMovementState()
 {
 	// TODO: Send this logic to custom Movement Component
 	const auto Velocity = GetVelocity();
 
+	const auto PlayerController = Cast<AMPlayerController>(GetController());
+	if (!PlayerController)
+		return;
+
 	if (IsDashing) return;
-	
-	if (IsMoving && Velocity.IsZero())
+
+	// We consider movement as changing of either X or Y. Moving only along Z is falling.
+	if (IsMoving && FMath::IsNearlyZero(Velocity.X) && FMath::IsNearlyZero(Velocity.Y))
 	{
 		IsMoving = false;
 		UpdateAnimation();
+
+		PlayerController->TurnSprintOff();
 	}
-	if (!IsMoving && !Velocity.IsZero())
+	if (!IsMoving && !(FMath::IsNearlyZero(Velocity.X) && FMath::IsNearlyZero(Velocity.Y)))
 	{
 		IsMoving = true;
 		UpdateAnimation();
+
+		PlayerController->OnMove();
 	}
 }
 

@@ -169,7 +169,7 @@ void AMVillagerMobController::SetRetreatBehavior(const UWorld& World, AMCharacte
 
 	CurrentBehavior = EMobBehaviors::Retreat;
 
-	MyCharacter.GetCharacterMovement()->MaxWalkSpeed = MyCharacter.GetRunSpeed();
+	MyCharacter.GetCharacterMovement()->MaxWalkSpeed = MyCharacter.GetSprintSpeed();
 
 	if (const auto EntryPointComponent = Cast<USceneComponent>(HomeBuilding->GetDefaultSubobjectByName(TEXT("EntryPoint"))))
 	{

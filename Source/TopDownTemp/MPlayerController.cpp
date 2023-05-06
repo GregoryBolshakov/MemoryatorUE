@@ -45,6 +45,9 @@ void AMPlayerController::TimelineProgress(float Value)
 			MyCharacter->SetIsDashing(false);
 			MyCharacter->UpdateAnimation();
 			DashVelocityTimeline.Stop();
+
+			TurnSprintOff();
+
 			return;
 		}
 
@@ -88,6 +91,47 @@ void AMPlayerController::StopAIMovement()
 		return;
 
 	PathFollowingComponent->AbortMove(*this, FPathFollowingResultFlags::OwnerFinished);
+}
+
+FTimerHandle RunningTimerHandle;
+void AMPlayerController::OnMove()
+{
+	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()))
+	{
+		if (auto& TimerManager = GetWorld()->GetTimerManager();
+			!TimerManager.IsTimerActive(RunningTimerHandle))
+		{
+			TimerManager.SetTimer(RunningTimerHandle, [this, &MyCharacter]
+			{
+				TurnSprintOn();
+			}, MyCharacter->GetTimeBeforeSprint(), false);
+		}
+	}
+}
+
+void AMPlayerController::TurnSprintOn()
+{
+	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()); MyCharacter && !MyCharacter->GetIsSprinting())
+	{
+		MyCharacter->SetIsSprinting(true);
+		if (const auto MovementComponent = MyCharacter->GetCharacterMovement())
+		{
+			MovementComponent->MaxWalkSpeed = MyCharacter->GetSprintSpeed();
+		}
+	}
+}
+
+void AMPlayerController::TurnSprintOff()
+{
+	GetWorld()->GetTimerManager().ClearTimer(RunningTimerHandle);
+	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()); MyCharacter && MyCharacter->GetIsSprinting())
+	{
+		MyCharacter->SetIsSprinting(false);
+		if (const auto CharacterMovement = MyCharacter->GetCharacterMovement())
+		{
+			CharacterMovement->MaxWalkSpeed = MyCharacter->GetWalkSpeed();
+		}
+	}
 }
 
 void AMPlayerController::PlayerTick(float DeltaTime)

@@ -27,10 +27,11 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	, ForgetEnemyRange(1000.f)
 	, Strength(10.f)
 	, RetreatRange(200.f)
-	, WalkSpeed(100.f)
-	, RunSpeed(140.f)
 	, bCanRetreat(true)
 	, MeleeSpread(40.f)
+	, WalkSpeed(185.f)
+	, SprintSpeed(260.f)
+	, TimeBeforeSprint(1.f)
 {
 	// Collection of sprites or flipbooks representing the character. It's not the Root Component!
 	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("2DRepresentation"));

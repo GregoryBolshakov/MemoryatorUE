@@ -26,7 +26,7 @@ private:
 
 	void HandleCursor() const;
 
-	void HandleAnimationStates();
+	void HandleMovementState();
 
 	virtual void PostInitializeComponents() override;
 

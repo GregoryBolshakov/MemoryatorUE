@@ -31,11 +31,15 @@ public:
 
 	float GetWalkSpeed() const { return WalkSpeed; }
 
-	float GetRunSpeed() const { return RunSpeed; }
+	float GetSprintSpeed() const { return SprintSpeed; }
 
 	float GetStrength() const { return Strength; }
 
+	bool GetIsSprinting() const { return IsSprinting; }
+
 	bool GetCanRetreat() const { return bCanRetreat; }
+
+	float GetTimeBeforeSprint() const { return TimeBeforeSprint; }
 
 	FVector GetForcedGazeVector() const { return ForcedGazeVector; }
 
@@ -55,6 +59,8 @@ public:
 	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; UpdateAnimation(); }
 
 	void SetIsDashing(bool bIsDashing) { IsDashing = bIsDashing; }
+
+	void SetIsSprinting(bool IN_bIsSprinting) { IsSprinting = IN_bIsSprinting; }
 
 	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
 
@@ -118,6 +124,8 @@ protected:
 	bool IsPicking;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
 	bool IsDashing;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
+	bool IsSprinting;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float MaxHealth;
@@ -134,13 +142,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float RetreatRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float WalkSpeed;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float RunSpeed;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	bool bCanRetreat;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float MeleeSpread;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float WalkSpeed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float SprintSpeed;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
+	float TimeBeforeSprint;
+
 	//TODO: Create variables for original values e.g. MaxHealth, DefaultSightRange, etc.
 };
 
