@@ -91,7 +91,7 @@ protected:
 	UMIsActiveCheckerComponent* IsActiveCheckerComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UMBuffManagerComponent* BuffManagerComponent;
+	class UMBuffBarComponent* BuffBarComponent;
 
 	//TODO: Consider creating separate manager for all underfoot UI
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
@@ -111,46 +111,50 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent", meta=(AllowPrivateAccess=true))
 	FOnReverseMovementStopped OnReverseMovementStoppedDelegate;
 
+	//TODO: create a separate entity to store this. Now it needs to be set for each ancestor (it's bad).
+	UPROPERTY(EditDefaultsOnly, Category=MBuffManagerComponent)
+	TSubclassOf<UUserWidget> BuffBarWidgetBPClass;
+
 	//TODO: It's hard to say if these booleans should be here or in Controller
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsDying;
+	bool IsDying = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsTakingDamage;
+	bool IsTakingDamage = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsFighting;
+	bool IsFighting = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsMoving;
+	bool IsMoving = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsPicking;
+	bool IsPicking = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsDashing;
+	bool IsDashing = false;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsSprinting;
+	bool IsSprinting = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float MaxHealth;
+	float MaxHealth = 100.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float Health;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float SightRange;
+	float SightRange = 500.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float FightRange;
+	float FightRange = 50.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float ForgetEnemyRange;
+	float ForgetEnemyRange = 1000.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float Strength;
+	float Strength = 10.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float RetreatRange;
+	float RetreatRange = 200.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	bool bCanRetreat;
+	bool bCanRetreat = true;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float MeleeSpread;
+	float MeleeSpread = 40.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float WalkSpeed;
+	float WalkSpeed = 185.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float SprintSpeed;
+	float SprintSpeed = 260.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float TimeBeforeSprint;
+	float TimeBeforeSprint = 1.f;
 
 	//TODO: Create variables for original values e.g. MaxHealth, DefaultSightRange, etc.
 };

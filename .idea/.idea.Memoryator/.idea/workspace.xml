@@ -67,13 +67,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v15/.suo" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Memoryator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Memoryator.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Nightmare_Small.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Nightmare_Small.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_BuffBar.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_BuffBar.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBuffBarWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MBuffBarWidget.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBuffBarWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MBuffBarWidget.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBuffManagerComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MBuffManagerComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBuffManagerComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MBuffManagerComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBuffManagerComponent.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBuffManagerComponent.h" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23116,6 +23122,7 @@
       <workItem from="1683118657908" duration="19946000" />
       <workItem from="1683203922560" duration="20300000" />
       <workItem from="1683297602672" duration="43631000" />
+      <workItem from="1683444776931" duration="10032000" />
     </task>
     <servers />
   </component>

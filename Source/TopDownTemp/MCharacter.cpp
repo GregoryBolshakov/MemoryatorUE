@@ -7,31 +7,16 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "M2DRepresentationComponent.h"
 #include "MAttackPuddleComponent.h"
-#include "MBuffManagerComponent.h"
+#include "MBuffBarComponent.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MInventoryComponent.h"
+#include "MMemoryator.h" // temporary include
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0")))
-	, IsDying(false)
-	, IsTakingDamage(false)
-	, IsFighting(false)
-	, IsMoving(false)
-	, IsPicking(false)
-	, MaxHealth(100.f)
 	, Health(MaxHealth)
-	, SightRange(500.f)
-	, FightRange(50.f)
-	, ForgetEnemyRange(1000.f)
-	, Strength(10.f)
-	, RetreatRange(200.f)
-	, bCanRetreat(true)
-	, MeleeSpread(40.f)
-	, WalkSpeed(185.f)
-	, SprintSpeed(260.f)
-	, TimeBeforeSprint(1.f)
 {
 	// Collection of sprites or flipbooks representing the character. It's not the Root Component!
 	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("2DRepresentation"));
@@ -41,7 +26,9 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
 
-	BuffManagerComponent = CreateDefaultSubobject<UMBuffManagerComponent>(TEXT("BuffManager"));
+	BuffBarComponent = CreateDefaultSubobject<UMBuffBarComponent>(TEXT("BuffBar"));
+	BuffBarComponent->SetupAttachment(RepresentationComponent);
+	BuffBarComponent->SetWidgetClass(BuffBarWidgetBPClass);
 
 	AttackPuddleComponent = CreateDefaultSubobject<UMAttackPuddleComponent>(TEXT("AttackPuddle"));
 	AttackPuddleComponent->SetupAttachment(RootComponent);
@@ -118,7 +105,6 @@ void AMCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	BuffManagerComponent->CreateWidget();
 	RepresentationComponent->PostInitChildren();
 }
 
@@ -147,9 +133,9 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 {
 	if (Damage)
 	{
-		if (BuffManagerComponent)
+		if (BuffBarComponent)
 		{
-			if (BuffManagerComponent->IsBuffSet(EBuffType::Invulnerability))
+			if (BuffBarComponent->IsBuffSet(EBuffType::Invulnerability))
 			{
 				return 0.f;
 			}
@@ -162,7 +148,17 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 			IsTakingDamage = true;
 			UpdateAnimation();
 
-			BuffManagerComponent->AddBuff(EBuffType::Invulnerability, 0.75f); // TODO: Add a perk for the duration
+			Health = FMath::Max(Health - abs(Damage), 0.f);
+			if (FMath::IsNearlyZero(Health))
+			{
+				if (!GetClass()->IsChildOf(AMMemoryator::StaticClass())) // Temporary check
+				{
+					Destroy();
+					return 0.f;
+				}
+			}
+
+			BuffBarComponent->AddBuff(EBuffType::Invulnerability, 0.75f); // TODO: Add a perk for the duration
 		}
 	}
 	return Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);

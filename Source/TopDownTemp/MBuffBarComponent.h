@@ -1,9 +1,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MBuffManagerComponent.generated.h"
+#include "Components/WidgetComponent.h"
+#include "MBuffBarComponent.generated.h"
 
-class UWidgetComponent;
 class UMBuffBarWidget;
 UENUM(BlueprintType)
 enum class EBuffType : uint8
@@ -27,11 +27,11 @@ struct FBuff
 };
 
 UCLASS(BlueprintType)
-class TOPDOWNTEMP_API UMBuffManagerComponent : public UActorComponent
+class TOPDOWNTEMP_API UMBuffBarComponent : public UWidgetComponent
 {
 	GENERATED_BODY()
 
-	UMBuffManagerComponent();
+	UMBuffBarComponent();
 
 public:
 
@@ -51,12 +51,7 @@ protected:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	virtual void BeginPlay() override;
+
 	TMap<EBuffType, FBuff> ActiveBuffs;
-
-	UPROPERTY()
-	UWidgetComponent* BuffBarWidgetComponent;
-
-	//TODO: create a separate entity to store this. Now it needs to be set for each ancestor (it's bad).
-	UPROPERTY(EditDefaultsOnly, Category=MBuffManagerComponent)
-	TSubclassOf<UMBuffBarWidget> BuffBarWidgetBPClass;
 };

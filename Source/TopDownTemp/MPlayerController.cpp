@@ -250,14 +250,14 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 	}
 
 	const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
+	bool bEnemyWasValid = IsValid(ClosestEnemy);
 	ClosestEnemy = nullptr;
 
 	float ClosestEnemyRadius = 0.f;
 	for (const auto [Name, EnemyActor] : EnemiesNearby)
 	{
-		if (!EnemyActor)
+		if (!IsValid(EnemyActor))
 		{
-			check(false);
 			continue;
 		}
 		const auto Capsule = EnemyActor->FindComponentByClass<UCapsuleComponent>();
@@ -294,7 +294,10 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 	{
 		MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
 		PuddleComponent->SetHiddenInGame(true);
-		StartSprintTimer();
+		if (bEnemyWasValid) // Was valid but no there is no such
+		{
+			StartSprintTimer();
+		}
 	}
 }
 

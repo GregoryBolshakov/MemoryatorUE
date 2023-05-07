@@ -1,11 +1,12 @@
-#include "MBuffManagerComponent.h"
+#include "MBuffBarComponent.h"
 
 #include "M2DRepresentationComponent.h"
 #include "MBuffBarWidget.h"
+#include "MCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 
-UMBuffManagerComponent::UMBuffManagerComponent()
+UMBuffBarComponent::UMBuffBarComponent()
 {
 	// Create delegates for all buff types
 	if (const UEnum* EnumClass = StaticEnum<EBuffType>())
@@ -17,11 +18,15 @@ UMBuffManagerComponent::UMBuffManagerComponent()
 		}
 	}
 
+	SetDrawSize({100.f, 30.f});
+	SetTwoSided(false);
+	CastShadow = false;
+
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 }
 
-void UMBuffManagerComponent::AddBuff(EBuffType Type, float Duration)
+void UMBuffBarComponent::AddBuff(EBuffType Type, float Duration)
 {
 	// Find buff if exists or create new otherwise
 	FBuff* Buff = ActiveBuffs.Find(Type);
@@ -44,27 +49,27 @@ void UMBuffManagerComponent::AddBuff(EBuffType Type, float Duration)
 		RemoveBuff(Type);
 	}, TimeRemain, false);
 
-	if (const auto BuffBarWidget = Cast<UMBuffBarWidget>(BuffBarWidgetComponent->GetWidget()))
+	if (const auto BuffBarWidget = Cast<UMBuffBarWidget>(GetWidget()))
 	{
 		BuffBarWidget->AddBuff(Type);
 	}
 }
 
-void UMBuffManagerComponent::RemoveBuff(EBuffType Type)
+void UMBuffBarComponent::RemoveBuff(EBuffType Type)
 {
 	FBuff* Buff = ActiveBuffs.Find(Type);
 	if (Buff)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(Buff->TimerHandle);
-		if (const auto Widget = Cast<UMBuffBarWidget>(BuffBarWidgetComponent->GetWidget()))
+		if (const auto BuffBarWidget = Cast<UMBuffBarWidget>(GetWidget()))
 		{
-			Widget->RemoveBuff(Type);
+			BuffBarWidget->RemoveBuff(Type);
 		}
 		ActiveBuffs.Remove(Type);
 	}
 }
 
-bool UMBuffManagerComponent::IsBuffSet(EBuffType Type)
+bool UMBuffBarComponent::IsBuffSet(EBuffType Type)
 {
 	if (const auto Buff = ActiveBuffs.Find(Type))
 	{
@@ -80,48 +85,37 @@ bool UMBuffManagerComponent::IsBuffSet(EBuffType Type)
 	return false;
 }
 
-void UMBuffManagerComponent::CreateWidget()
-{
-	const auto pOwner = GetOwner();
-	if (!pOwner)
-		return;
-
-	const auto RepresentationComponent = pOwner->FindComponentByClass<UM2DRepresentationComponent>();
-	if (!RepresentationComponent)
-		return;
-
-	BuffBarWidgetComponent = NewObject<UWidgetComponent>(this, UWidgetComponent::StaticClass());
-	BuffBarWidgetComponent->SetWidgetClass(BuffBarWidgetBPClass);
-	BuffBarWidgetComponent->CreationMethod = EComponentCreationMethod::Instance;
-	BuffBarWidgetComponent->RegisterComponent();
-	BuffBarWidgetComponent->AttachToComponent(RepresentationComponent, FAttachmentTransformRules::KeepRelativeTransform);
-
-	BuffBarWidgetComponent->SetTwoSided(false);
-	BuffBarWidgetComponent->CastShadow = false;
-	BuffBarWidgetComponent->SetDrawSize({100.f, 30.f});
-}
-
-void UMBuffManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+void UMBuffBarComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	BuffBarWidgetComponent->UpdateChildTransforms();
-	BuffBarWidgetComponent->UpdateBounds();
+	UpdateChildTransforms();
+	UpdateBounds();
 
-	if (const auto Widget = BuffBarWidgetComponent->GetWidget())
+	if (const auto MyWidget = GetWidget())
 	{
-		Widget->InvalidateLayoutAndVolatility();
-		Widget->ForceLayoutPrepass();
-		const auto DesiredSize = Widget->GetDesiredSize();
-		BuffBarWidgetComponent->SetDrawSize(DesiredSize);
+		MyWidget->InvalidateLayoutAndVolatility();
+		MyWidget->ForceLayoutPrepass();
+		const auto DesiredSize = MyWidget->GetDesiredSize();
+		SetDrawSize(DesiredSize);
 	}
 
 	if (const auto pOwner = GetOwner())
 	{
 		const auto OwnerCapsule = pOwner->FindComponentByClass<UCapsuleComponent>();
 		const auto TopCapsulePoint = OwnerCapsule->GetComponentLocation() + FVector(0.f, 0.f, OwnerCapsule->GetScaledCapsuleHalfHeight());
-		const auto NewLocation = TopCapsulePoint + FVector(0.f, 0.f, BuffBarWidgetComponent->Bounds.BoxExtent.Z / 2.f);
-		BuffBarWidgetComponent->SetWorldLocation(NewLocation);
+		const auto NewLocation = TopCapsulePoint + FVector(0.f, 0.f, Bounds.BoxExtent.Z / 2.f);
+		SetWorldLocation(NewLocation);
+	}
+}
+
+void UMBuffBarComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (const auto BuffBarWidget = Cast<UMBuffBarWidget>(GetWidget()))
+	{
+		BuffBarWidget->SetCharacter(Cast<AMCharacter>(GetOwner()));
 	}
 }

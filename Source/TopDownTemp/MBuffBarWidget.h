@@ -1,7 +1,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MBuffManagerComponent.h"
 #include "Blueprint/UserWidget.h"
 #include "MBuffBarWidget.generated.h"
 
@@ -17,6 +16,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void RemoveBuff(EBuffType Type);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetCharacter(class AMCharacter* IN_Character);
 
 protected:
 
