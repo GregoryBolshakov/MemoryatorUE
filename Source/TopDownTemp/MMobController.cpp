@@ -3,6 +3,7 @@
 #include "M2DRepresentationComponent.h"
 #include "MAttackPuddleComponent.h"
 #include "MMemoryator.h"
+#include "MMob.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "MWorldManager.h"
@@ -70,8 +71,12 @@ void AMMobController::DoChaseBehavior(const UWorld& World, AMCharacter& MyCharac
 	{
 		VictimRadius = VictimCapsule->GetScaledCapsuleRadius();
 	}
+
+	const auto MyMob = Cast<AMMob>(&MyCharacter);
+	const float PileInLength = MyMob ? MyMob->GetPileInLength() : 0.f;
+
 	// For reliability, update the move goal
-	MoveToLocation(Victim->GetActorLocation(), MyCharacter.GetFightRangePlusMyRadius() + VictimRadius, false);
+	MoveToLocation(Victim->GetActorLocation(), MyCharacter.GetFightRangePlusMyRadius() + VictimRadius - PileInLength, false);
 
 	//TODO: Add a logic to do during chase (shouts, effects, etc.)
 }
@@ -150,7 +155,11 @@ void AMMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyChara
 	{
 		VictimRadius = VictimCapsule->GetScaledCapsuleRadius();
 	}
-	MoveToLocation(Victim->GetActorLocation(), MyCharacter.GetFightRangePlusMyRadius() + VictimRadius, false);
+
+	const auto MyMob = Cast<AMMob>(&MyCharacter);
+	const float PileInLength = MyMob ? MyMob->GetPileInLength() : 0.f;
+
+	MoveToLocation(Victim->GetActorLocation(), MyCharacter.GetFightRangePlusMyRadius() + VictimRadius - PileInLength, false);
 
 	OnBehaviorChanged(MyCharacter);
 }

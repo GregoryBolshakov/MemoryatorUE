@@ -127,7 +127,7 @@ void AMMemoryator::HandleMovementState()
 		IsMoving = true;
 		UpdateAnimation();
 
-		PlayerController->OnMove();
+		PlayerController->StartSprintTimer();
 	}
 }
 

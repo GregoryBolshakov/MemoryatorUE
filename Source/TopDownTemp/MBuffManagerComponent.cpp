@@ -41,12 +41,26 @@ void UMBuffManagerComponent::AddBuff(EBuffType Type, float Duration)
 	GetWorld()->GetTimerManager().SetTimer(Buff->TimerHandle, [this, Buff, Type]
 	{
 		BuffDelegates[Type].ExecuteIfBound(Buff->Stack);
-		ActiveBuffs.Remove(Type);
+		RemoveBuff(Type);
 	}, TimeRemain, false);
 
 	if (const auto BuffBarWidget = Cast<UMBuffBarWidget>(BuffBarWidgetComponent->GetWidget()))
 	{
 		BuffBarWidget->AddBuff(Type);
+	}
+}
+
+void UMBuffManagerComponent::RemoveBuff(EBuffType Type)
+{
+	FBuff* Buff = ActiveBuffs.Find(Type);
+	if (Buff)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(Buff->TimerHandle);
+		if (const auto Widget = Cast<UMBuffBarWidget>(BuffBarWidgetComponent->GetWidget()))
+		{
+			Widget->RemoveBuff(Type);
+		}
+		ActiveBuffs.Remove(Type);
 	}
 }
 
@@ -84,7 +98,7 @@ void UMBuffManagerComponent::CreateWidget()
 
 	BuffBarWidgetComponent->SetTwoSided(false);
 	BuffBarWidgetComponent->CastShadow = false;
-	BuffBarWidgetComponent->SetDrawSize({90.f, 90.f});
+	BuffBarWidgetComponent->SetDrawSize({100.f, 30.f});
 }
 
 void UMBuffManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -95,14 +109,19 @@ void UMBuffManagerComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	BuffBarWidgetComponent->UpdateChildTransforms();
 	BuffBarWidgetComponent->UpdateBounds();
 
-	auto test0 = BuffBarWidgetComponent->GetWidget()->GetDesiredSize();
-	auto test1 = BuffBarWidgetComponent->GetDrawSize();
-	auto test = BuffBarWidgetComponent->CalcBounds(BuffBarWidgetComponent->GetComponentTransform());
+	if (const auto Widget = BuffBarWidgetComponent->GetWidget())
+	{
+		Widget->InvalidateLayoutAndVolatility();
+		Widget->ForceLayoutPrepass();
+		const auto DesiredSize = Widget->GetDesiredSize();
+		BuffBarWidgetComponent->SetDrawSize(DesiredSize);
+	}
+
 	if (const auto pOwner = GetOwner())
 	{
 		const auto OwnerCapsule = pOwner->FindComponentByClass<UCapsuleComponent>();
 		const auto TopCapsulePoint = OwnerCapsule->GetComponentLocation() + FVector(0.f, 0.f, OwnerCapsule->GetScaledCapsuleHalfHeight());
-		const auto NewLocation = TopCapsulePoint + FVector(0.f, 0.f, BuffBarWidgetComponent->CalcBounds(BuffBarWidgetComponent->GetComponentTransform()).BoxExtent.Z / 2.f);
+		const auto NewLocation = TopCapsulePoint + FVector(0.f, 0.f, BuffBarWidgetComponent->Bounds.BoxExtent.Z / 2.f);
 		BuffBarWidgetComponent->SetWorldLocation(NewLocation);
 	}
 }

@@ -14,7 +14,7 @@ enum class EBuffType : uint8
 	Fire
 };
 
-DECLARE_DYNAMIC_DELEGATE_OneParam(FOnBuffEffect, int, Stack);
+DECLARE_DYNAMIC_DELEGATE_OneParam(FOnBuffFinished, int, Stack);
 
 USTRUCT()
 struct FBuff
@@ -37,11 +37,13 @@ public:
 
 	void AddBuff(EBuffType Type, float Duration);
 
+	void RemoveBuff(EBuffType Type);
+
 	bool IsBuffSet(EBuffType Type);
 
 	void CreateWidget();
 
-	TMap<EBuffType, FOnBuffEffect> BuffDelegates;
+	TMap<EBuffType, FOnBuffFinished> BuffDelegates;
 
 protected:
 

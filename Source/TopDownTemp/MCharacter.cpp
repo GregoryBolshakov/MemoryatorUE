@@ -162,7 +162,7 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 			IsTakingDamage = true;
 			UpdateAnimation();
 
-			//BuffManagerComponent->AddBuff(EBuffType::Invulnerability, 2.f); // TODO: Add a perk for the duration
+			BuffManagerComponent->AddBuff(EBuffType::Invulnerability, 0.75f); // TODO: Add a perk for the duration
 		}
 	}
 	return Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);

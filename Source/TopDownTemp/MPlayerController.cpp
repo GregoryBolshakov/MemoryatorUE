@@ -94,7 +94,7 @@ void AMPlayerController::StopAIMovement()
 }
 
 FTimerHandle RunningTimerHandle;
-void AMPlayerController::OnMove()
+void AMPlayerController::StartSprintTimer()
 {
 	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()))
 	{
@@ -294,6 +294,7 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 	{
 		MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
 		PuddleComponent->SetHiddenInGame(true);
+		StartSprintTimer();
 	}
 }
 

@@ -15,4 +15,11 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void AddBuff(EBuffType Type);
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void RemoveBuff(EBuffType Type);
+
+protected:
+
+	UPROPERTY(BlueprintReadWrite)
+	TMap<EBuffType, class UImage*> BuffImages;
 };

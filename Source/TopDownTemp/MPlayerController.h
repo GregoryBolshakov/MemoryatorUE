@@ -22,10 +22,11 @@ public:
 
 	void StopAIMovement();
 
-	void OnMove();
+	void StartSprintTimer();
 
 	void TurnSprintOn();
 
+	UFUNCTION(BlueprintCallable)
 	void TurnSprintOff();
 
 	const TMap<TSubclassOf<APawn>, ERelationType>& GetRelationshipMap() const { return RelationshipMap; }
