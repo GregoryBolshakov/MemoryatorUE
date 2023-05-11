@@ -1,5 +1,9 @@
 #include "MMobControllerBase.h"
 #include "MCharacter.h"
+#include "MCommunicationManager.h"
+#include "MWorldGenerator.h"
+#include "MWorldManager.h"
+#include "Kismet/GameplayStatics.h"
 
 AMMobControllerBase::AMMobControllerBase(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -30,11 +34,23 @@ void AMMobControllerBase::Tick(float DeltaSeconds)
 
 	if (CurrentBehavior == EMobBehaviors::Idle)
 	{
+		// Communication check
+		if (IsPlayerSpeakingToMe() && GetRelationshipWithPlayer() != ERelationType::Enemy)
+		{
+			SetIdleBehavior(pWorld, MyCharacter); // To reset all possible idle timers
+			return; // If the mob is having a conversation with player, do nothing and keep standing
+		}
 		// Wait some time, then find a random point within the village to go
 		DoIdleBehavior(*pWorld, *MyCharacter);
 	}
 	if (CurrentBehavior == EMobBehaviors::Walk)
 	{
+		// Communication check
+		if (IsPlayerSpeakingToMe() && GetRelationshipWithPlayer() != ERelationType::Enemy)
+		{
+			SetIdleBehavior(pWorld, MyCharacter); // To reset all possible idle timers
+			return; // If the mob is having a conversation with player, do nothing and keep standing
+		}
 		// Go to the destination point
 		DoWalkBehavior(*pWorld, *MyCharacter);
 	}
@@ -85,4 +101,45 @@ void AMMobControllerBase::OnMoveCompleted(FAIRequestID RequestID, const FPathFol
 	}
 
 	OnMoveCompletedDelegate.Execute();
+}
+
+bool AMMobControllerBase::IsPlayerSpeakingToMe()
+{
+	const auto MyCharacter = Cast<AMCharacter>(GetPawn());
+	if (!MyCharacter) { check(false); return false; }
+
+	const auto pWorld = GetWorld();
+	if (!pWorld) { check(false); return false; }
+
+	if (const auto WorldManager = pWorld->GetSubsystem<UMWorldManager>())
+	{
+		if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
+		{
+			if (const auto CommunicationManager = WorldGenerator->GetCommunicationManager())
+			{
+				if (const auto InterlocutorCharacter = CommunicationManager->GetInterlocutorCharacter(); InterlocutorCharacter && InterlocutorCharacter == MyCharacter)
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+ERelationType AMMobControllerBase::GetRelationshipWithPlayer()
+{
+	const auto pWorld = GetWorld();
+	if (!pWorld) { check(false); return ERelationType::Neutral; }
+
+	if (const auto PlayerCharacter = UGameplayStatics::GetPlayerCharacter(pWorld, 0))
+	{
+		if (const auto RelationshipWithPlayer = RelationshipMap.Find(PlayerCharacter->GetClass()))
+		{
+			return *RelationshipWithPlayer;
+		}
+	}
+	check(false);
+	return ERelationType::Neutral;
 }

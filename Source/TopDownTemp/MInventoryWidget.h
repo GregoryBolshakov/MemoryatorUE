@@ -7,7 +7,6 @@
 class AMPickableItem;
 class UWrapBox;
 
-//TODO: Try the feature: take the full stack on double click;
 //TODO: Scroll when the dragged item is near the top/bottom side of the scrollbox.
 UCLASS()
 class TOPDOWNTEMP_API UMInventoryWidget : public UUserWidget
@@ -16,10 +15,14 @@ class TOPDOWNTEMP_API UMInventoryWidget : public UUserWidget
 
 public:
 
+	virtual void PostInitProperties() override;
+
 	virtual void NativeDestruct() override;
 
 	UFUNCTION(BlueprintCallable)
-	void CreateSlots();
+	static void CreateSlots(UUserWidget* pOwner, UMInventoryComponent* pInventoryComponent, UWrapBox* pItemSlotsWrapBox);
+
+	static TSubclassOf<UUserWidget> gItemSlotWidgetBPClass; // TODO: think about another place for this one
 
 protected:
 

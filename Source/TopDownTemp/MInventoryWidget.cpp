@@ -7,6 +7,14 @@
 #include "Components/WrapBox.h"
 #include "MInventoryComponent.h"
 
+TSubclassOf<UUserWidget> UMInventoryWidget::gItemSlotWidgetBPClass = nullptr;
+
+void UMInventoryWidget::PostInitProperties()
+{
+	Super::PostInitProperties();
+	UMInventoryWidget::gItemSlotWidgetBPClass = ItemSlotWidgetBPClass;
+}
+
 void UMInventoryWidget::NativeDestruct()
 {
 	Super::NativeDestruct();
@@ -15,25 +23,20 @@ void UMInventoryWidget::NativeDestruct()
 	{
 		if (const auto InventoryComponent = pPlayerCharacter->GetInventoryComponent())
 		{
-			for (auto& [Item, OnChangedDelegate] : InventoryComponent->GetSlots())
+			for (auto& ItemSlot : InventoryComponent->GetSlots())
 			{
-				OnChangedDelegate.Unbind();
+				ItemSlot.OnSlotChangedDelegate.Unbind();
 			}
 		}
 	}
 }
 
-void UMInventoryWidget::CreateSlots()
+void UMInventoryWidget::CreateSlots(UUserWidget* pOwner, UMInventoryComponent* pInventoryComponent, UWrapBox* pItemSlotsWrapBox)
 {
-	const auto pPlayerCharacter = Cast<AMCharacter>(GetOwningPlayerPawn());
-	if (!IsValid(pPlayerCharacter) || !ItemSlotWidgetBPClass)
+	if (!pInventoryComponent || !pItemSlotsWrapBox)
 		return;
 
-	const auto InventoryComponent = pPlayerCharacter->GetInventoryComponent();
-	if (!InventoryComponent)
-		return;
-
-	const auto pGameInstance = GetGameInstance<UMGameInstance>();
+	const auto pGameInstance = pOwner->GetGameInstance<UMGameInstance>();
 	if (!pGameInstance)
 		return;
 
@@ -43,14 +46,14 @@ void UMInventoryWidget::CreateSlots()
 
 	int Index = 0;
 	// Create widgets for player's inventory slots
-	for (auto& [Item, OnChangedDelegate] : InventoryComponent->GetSlots())
+	for (auto& [Item, OnChangedDelegate, IsLocked, IsSecret] : pInventoryComponent->GetSlots())
 	{
-		const auto SlotWidget = CreateWidget<UMInventorySlotWidget>(this, ItemSlotWidgetBPClass);
+		const auto SlotWidget = CreateWidget<UMInventorySlotWidget>(pOwner, gItemSlotWidgetBPClass);
 		if (!SlotWidget)
 			continue;
 
 		SlotWidget->SetNumberInArray(Index++);
-		SlotWidget->SetOwnerInventory(InventoryComponent);
+		SlotWidget->SetOwnerInventory(pInventoryComponent);
 		SlotWidget->SetStoredItem(Item);
 		OnChangedDelegate.BindDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
 
@@ -58,24 +61,30 @@ void UMInventoryWidget::CreateSlots()
 		const auto QuantityTextWidget = Cast<URichTextBlock>(SlotWidget->GetWidgetFromName(TEXT("QuantityTextBlock")));
 		if (IconWidget && QuantityTextWidget) // Icon and QuantityText widgets exist
 		{
-			if (Item.Quantity > 0 && Item.ID < ItemsData.Num())
+			if (!IsSecret)
 			{
-				// Item data is valid, don't draw quantity of a single item
-				IconWidget->SetBrushFromTexture(ItemsData[Item.ID].IconTexture);
-				IconWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+				if (Item.Quantity > 0 && Item.ID < ItemsData.Num())
+				{
+					// Item data is valid, don't draw quantity of a single item
+					IconWidget->SetBrushFromTexture(ItemsData[Item.ID].IconTexture);
+					IconWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
-				QuantityTextWidget->SetText(FText::FromString(FString::FromInt(Item.Quantity)));
-				QuantityTextWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+					QuantityTextWidget->SetText(FText::FromString(FString::FromInt(Item.Quantity)));
+					QuantityTextWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+				}
+				else // Slot is empty
+				{
+					IconWidget->SetVisibility(ESlateVisibility::Hidden);
+					QuantityTextWidget->SetVisibility(ESlateVisibility::Hidden);
+				}
 			}
-			else // Slot is empty
+			else
 			{
-				IconWidget->SetVisibility(ESlateVisibility::Hidden);
+				IconWidget->SetBrushFromTexture(pGameInstance->ItemsDataAsset->UnknownIconTexture);
+				IconWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 				QuantityTextWidget->SetVisibility(ESlateVisibility::Hidden);
 			}
 		}
-		if (pItemSlotsWrapBox)
-		{
-			pItemSlotsWrapBox->AddChild(SlotWidget);
-		}
+		pItemSlotsWrapBox->AddChild(SlotWidget);
 	}
 }

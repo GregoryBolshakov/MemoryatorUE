@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "MRotatableFlipbookComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 UM2DRepresentationComponent::UM2DRepresentationComponent(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer),
@@ -119,6 +120,8 @@ void UM2DRepresentationComponent::TickComponent(float DeltaTime, ELevelTick Tick
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	FaceToCamera();
+
+	InterpolateColor(DeltaTime);
 }
 
 void UM2DRepresentationComponent::SetMeshByGazeAndVelocity(const FVector& IN_Gaze, const FVector& IN_Velocity,
@@ -140,17 +143,7 @@ void UM2DRepresentationComponent::SetMeshByGazeAndVelocity(const FVector& IN_Gaz
 
 void UM2DRepresentationComponent::SetColor(const FLinearColor& Color)
 {
-	for (const auto RenderComponent : RenderComponentArray)
-	{
-		if (const auto Flipbook = Cast<UPaperFlipbookComponent>(RenderComponent))
-		{
-			Flipbook->SetSpriteColor(Color);
-		}
-		if (const auto Sprite = Cast<UPaperSpriteComponent>(RenderComponent))
-		{
-			Sprite->SetSpriteColor(Color);
-		}
-	}
+	DesiredColor = Color;
 }
 
 void UM2DRepresentationComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
@@ -165,6 +158,26 @@ void UM2DRepresentationComponent::PostEditChangeProperty(FPropertyChangedEvent& 
 		PostInitChildren();
 	}
 #endif
+}
+
+void UM2DRepresentationComponent::InterpolateColor(const float DeltaTime)
+{
+	CurrentColor.R = UKismetMathLibrary::FInterpTo(CurrentColor.R, DesiredColor.R, DeltaTime, ColorChangingSpeed);
+	CurrentColor.G = UKismetMathLibrary::FInterpTo(CurrentColor.G, DesiredColor.G, DeltaTime, ColorChangingSpeed);
+	CurrentColor.B = UKismetMathLibrary::FInterpTo(CurrentColor.B, DesiredColor.B, DeltaTime, ColorChangingSpeed);
+	CurrentColor.A = UKismetMathLibrary::FInterpTo(CurrentColor.A, DesiredColor.A, DeltaTime, ColorChangingSpeed);
+
+	for (const auto RenderComponent : RenderComponentArray)
+	{
+		if (const auto Flipbook = Cast<UPaperFlipbookComponent>(RenderComponent))
+		{
+			Flipbook->SetSpriteColor(CurrentColor);
+		}
+		if (const auto Sprite = Cast<UPaperSpriteComponent>(RenderComponent))
+		{
+			Sprite->SetSpriteColor(CurrentColor);
+		}
+	}
 }
 
 void UM2DRepresentationComponent::FaceToCamera()

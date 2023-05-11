@@ -143,7 +143,7 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 			const auto LaunchVelocity = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal() * 140.f; // TODO: add a UPROPERTY for the knock back length
 			LaunchCharacter(LaunchVelocity, false, false);
 
-			RepresentationComponent->SetColor(FLinearColor(1.f, 0.2f, 0.2f, 1.f));
+			RepresentationComponent->SetColor(FLinearColor(1.f, 0.25f, 0.25f, 1.f));
 
 			IsTakingDamage = true;
 			UpdateAnimation();

@@ -7,6 +7,7 @@
 #include "MWorldGeneratorTypes.h"
 #include "MWorldGenerator.generated.h"
 
+class AMCommunicationManager;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*)
 
 class UMBlockGenerator;
@@ -59,6 +60,9 @@ public:
 
 	UMDropManager* GetDropManager() const { return DropManager; }
 
+	UFUNCTION(BlueprintCallable)
+	AMCommunicationManager* GetCommunicationManager() const { return CommunicationManager; }
+
 	const TMap<FIntPoint, UBlockOfActors*>& GetGridOfActors() { return GridOfActors; }
 
 	FVector GetGroundBlockSize();
@@ -75,6 +79,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UMDropManager> DropManagerBPClass;
+
+	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
+	TSubclassOf<AMCommunicationManager> CommunicationManagerBPClass;
 
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UMBlockGenerator> BlockGeneratorBPClass;
@@ -146,6 +153,9 @@ private:
 
 	UPROPERTY()
 	UMDropManager* DropManager;
+
+	UPROPERTY()
+	AMCommunicationManager* CommunicationManager;
 
 	UPROPERTY()
 	UMBlockGenerator* BlockGenerator;

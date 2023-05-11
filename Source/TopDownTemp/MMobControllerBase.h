@@ -27,6 +27,10 @@ protected:
 
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 
+	bool IsPlayerSpeakingToMe();
+
+	ERelationType GetRelationshipWithPlayer();
+
 	/** Represents relationship with other pawns. Neutral if not listed */
 	UPROPERTY(EditAnywhere, Category = BehaviorParameters, meta=(AllowPrivateAccess = true))
 	TMap<TSubclassOf<APawn>, ERelationType> RelationshipMap;

@@ -106,14 +106,17 @@ private:
 	/** Navigate player to the given world location. */
 	void SetNewMoveDestination(const FVector DestLocation);
 
+	//TODO: Figure out of we're gonna need this at all
 	/** Input handlers for SetDestination action. */
-	void OnSetDestinationPressed();
-	void OnSetDestinationReleased();
+	//void OnSetDestinationPressed();
+	//void OnSetDestinationReleased();
 
 	void OnToggleTurnAroundPressed();
 	void OnToggleTurnAroundReleased();
 
 	void OnToggleFightPressed();
+
+	void OnLeftMouseClick();
 
 	virtual bool ProcessConsoleExec(const TCHAR* Cmd, FOutputDevice& Ar, UObject* Executor) override;
 };

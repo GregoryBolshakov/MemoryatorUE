@@ -23,6 +23,8 @@ struct FSlot
 	GENERATED_BODY()
 	FItem Item;
 	FOnSlotChanged OnSlotChangedDelegate;
+	bool IsLocked = false; //TODO: think about a flag. Might be secret but show quantity, whatever
+	bool IsSecret = false;
 };
 
 UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent, IgnoreCategoryKeywordsInSubclasses, ShortTooltip="A character's inventory component. Store items, support put-in, get-out and sort logic"))
@@ -31,6 +33,7 @@ class TOPDOWNTEMP_API UMInventoryComponent : public UActorComponent
 	GENERATED_UCLASS_BODY()
 
 public:
+
 	void Initialize(int IN_SlotsNumber, const TArray<FItem>& StartingItems);
 
 	TArray<FSlot>& GetSlots() { return Slots; }
@@ -48,6 +51,13 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SwapItems(UPARAM(ref)FItem& A, int SlotNumberInArray);
+
+	/** From external observers, e.g. the peeping player */
+	void MakeAllItemsSecret();
+
+	/** Prohibit interaction with items, e.g. player takes something out.
+	 *  Called for every mob by default, any unlocked items may be stolen */
+	void LockAllItems();
 
 protected:
 

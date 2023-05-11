@@ -5,10 +5,12 @@
 #include "Runtime/Engine/Classes/Components/DecalComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "MAttackPuddleComponent.h"
+#include "MCommunicationManager.h"
 #include "MMemoryator.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "MConsoleCommandsManager.h"
 #include "MInterfaceMobController.h"
+#include "MMob.h"
 #include "MWorldManager.h"
 #include "MWorldGenerator.h"
 #include "Components/CapsuleComponent.h"
@@ -178,18 +180,20 @@ void AMPlayerController::SetupInputComponent()
 	// set up gameplay key bindings
 	Super::SetupInputComponent();
 
-	InputComponent->BindAction("SetDestination", IE_Pressed, this, &AMPlayerController::OnSetDestinationPressed);
-	InputComponent->BindAction("SetDestination", IE_Released, this, &AMPlayerController::OnSetDestinationReleased);
+	//InputComponent->BindAction("SetDestination", IE_Pressed, this, &AMPlayerController::OnSetDestinationPressed);
+	//InputComponent->BindAction("SetDestination", IE_Released, this, &AMPlayerController::OnSetDestinationReleased);
 
 	InputComponent->BindAction("ToggleIsTurningAround", IE_Pressed, this,
 	                           &AMPlayerController::OnToggleTurnAroundPressed);
 	InputComponent->BindAction("ToggleIsTurningAround", IE_Released, this,
 	                           &AMPlayerController::OnToggleTurnAroundReleased);
 
-	InputComponent->BindAction("ToggleIsFighting", IE_Pressed, this, &AMPlayerController::OnToggleFightPressed);
+	//InputComponent->BindAction("ToggleIsFighting", IE_Pressed, this, &AMPlayerController::OnToggleFightPressed);
 
 	// we use only pressed, because player cannot stop performing the dash by himself
 	InputComponent->BindAction("Dash", IE_Pressed, this, &AMPlayerController::OnDashPressed);
+
+	InputComponent->BindAction("LeftMouseClick", IE_Released, this, &AMPlayerController::OnLeftMouseClick);
 
 	// support touch devices 
 	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AMPlayerController::MoveToTouchLocation);
@@ -310,6 +314,7 @@ void AMPlayerController::OnHit()
 	if (const auto AttackPuddleComponent = MyCharacter->GetAttackPuddleComponent())
 	{
 		TArray<AActor*> OutActors;
+		auto test0 = UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn);
 		UKismetSystemLibrary::BoxOverlapActors(GetWorld(), AttackPuddleComponent->GetComponentLocation(), AttackPuddleComponent->Bounds.BoxExtent, {UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)}, AMCharacter::StaticClass(), {MyCharacter}, OutActors);
 		for (const auto Actor : OutActors)
 		{
@@ -434,7 +439,7 @@ void AMPlayerController::SetNewMoveDestination(const FVector DestLocation)
 	}
 }
 
-void AMPlayerController::OnSetDestinationPressed()
+/*void AMPlayerController::OnSetDestinationPressed()
 {
 	// set flag to keep updating destination until released
 	bMoveToMouseCursor = true;
@@ -444,7 +449,7 @@ void AMPlayerController::OnSetDestinationReleased()
 {
 	// clear flag to indicate we should stop updating the destination
 	bMoveToMouseCursor = false;
-}
+}*/
 
 void AMPlayerController::OnToggleTurnAroundPressed()
 {
@@ -461,6 +466,29 @@ void AMPlayerController::OnToggleFightPressed()
 	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && !MyCharacter->GetIsFighting())
 	{
 		MyCharacter->SetIsFighting(true);
+	}
+}
+
+void AMPlayerController::OnLeftMouseClick()
+{
+	FHitResult HitResult;
+	auto test0 = UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn);
+	if (GetHitResultUnderCursorForObjects({UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)}, true, HitResult))
+	{
+		AMMob* ClickedMob = Cast<AMMob>(HitResult.GetActor());
+		if (ClickedMob)
+		{
+			if (const auto WorldManager = GetWorld()->GetSubsystem<UMWorldManager>())
+			{
+				if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
+				{
+					if (const auto CommunicationManager = WorldGenerator->GetCommunicationManager())
+					{
+						CommunicationManager->SpeakTo(ClickedMob);
+					}
+				}
+			}
+		}
 	}
 }
 

@@ -62,6 +62,8 @@ private:
 
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
+	void InterpolateColor(float DeltaTime);
+
 	UPROPERTY() 
 	TArray<UCapsuleComponent*> CapsuleComponentArray;
 
@@ -76,4 +78,9 @@ private:
 	
 	UPROPERTY()
 	APlayerCameraManager* CameraManager;
+
+	FLinearColor CurrentColor = FLinearColor::White;
+	FLinearColor DesiredColor = FLinearColor::White;
+	UPROPERTY(EditDefaultsOnly, Category=Rendering)
+	float ColorChangingSpeed = 15.f;
 };

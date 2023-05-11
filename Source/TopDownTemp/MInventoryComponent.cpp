@@ -9,7 +9,8 @@ UMInventoryComponent::UMInventoryComponent(const FObjectInitializer& ObjectIniti
 
 void UMInventoryComponent::Initialize(int IN_SlotsNumber, const TArray<FItem>& StartingItems)
 {
-	Slots.SetNum(IN_SlotsNumber);
+	Slots.Empty();
+	Slots.AddDefaulted(IN_SlotsNumber);
 	for (const auto& Item : StartingItems)
 	{
 		StoreItem(Item);
@@ -172,4 +173,20 @@ void UMInventoryComponent::SwapItems(FItem& A, int SlotNumberInArray)
 	Swap(A, Slots[SlotNumberInArray].Item);
 
 	Slots[SlotNumberInArray].OnSlotChangedDelegate.ExecuteIfBound(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
+}
+
+void UMInventoryComponent::MakeAllItemsSecret()
+{
+	for (auto& Slot : Slots)
+	{
+		Slot.IsSecret = true;
+	}
+}
+
+void UMInventoryComponent::LockAllItems()
+{
+	for (auto& Slot : Slots)
+	{
+		Slot.IsLocked = true;
+	}
 }

@@ -19,6 +19,7 @@ class TOPDOWNTEMP_API UMWorldManager : public UWorldSubsystem
 
 public:
 
+	UFUNCTION(BlueprintCallable)
 	class AMWorldGenerator* GetWorldGenerator() const { return WorldGenerator; }
 
 private:

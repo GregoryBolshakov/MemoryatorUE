@@ -33,4 +33,12 @@ public:
 
 	UPROPERTY(Category=ItemsData, EditAnywhere, BlueprintReadOnly)
 	TArray<FItemData> ItemsData;
+
+	/** For the UI */
+	UPROPERTY(Category=ItemData, EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail="true"))
+	UTexture2D* UnknownIconTexture;
+
+	/** For the in-world usage */
+	UPROPERTY(Category=ItemData, EditAnywhere, BlueprintReadOnly, meta=(DisplayThumbnail="true"))
+	UPaperSprite* UnknownIconSprite;
 };

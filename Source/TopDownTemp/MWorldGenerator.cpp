@@ -8,6 +8,7 @@
 #include "MGroundBlock.h"
 #include "MAICrowdManager.h"
 #include "MBlockGenerator.h"
+#include "MCommunicationManager.h"
 #include "MDropManager.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MVillageGenerator.h"
@@ -22,6 +23,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	, DynamicActorsCheckInterval(0.5f)
 	, DynamicActorsCheckTimer(0.f)
 	, DropManager(nullptr)
+	, CommunicationManager(nullptr)
 	, BlockGenerator(nullptr)
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;
@@ -56,10 +58,10 @@ void AMWorldGenerator::GenerateActiveZone()
 		GenerateBlock(BlockInRadius);
 	}
 
-	/*FActorSpawnParameters SpawnParameters;
+	FActorSpawnParameters SpawnParameters;
 	const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
 	const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator, SpawnParameters);
-	VillageGenerator->Generate();*/
+	VillageGenerator->Generate();
 	UpdateNavigationMesh();
 }
 
@@ -104,6 +106,10 @@ void AMWorldGenerator::BeginPlay()
 	// Create the Drop Manager
 	DropManager = DropManagerBPClass ? NewObject<UMDropManager>(this, DropManagerBPClass, TEXT("DropManager")) : nullptr;
 	check(DropManager);
+
+	// Spawn the Communication Manager
+	CommunicationManager = CommunicationManagerBPClass ? GetWorld()->SpawnActor<AMCommunicationManager>(CommunicationManagerBPClass) : nullptr;
+	check(CommunicationManager);
 
 	// Create the Block Generator
 	BlockGenerator = BlockGeneratorBPClass ? NewObject<UMBlockGenerator>(this, BlockGeneratorBPClass, TEXT("BlockGenerator")) : nullptr;

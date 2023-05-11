@@ -44,5 +44,13 @@ protected:
 	/** A pointer for easier access of World Generator's Drop Manager */
 	UPROPERTY(BlueprintReadOnly)
 	UMDropManager* pDropManager;
+
+	/** If the item cannot be taken or interacted with in any way */
+	UPROPERTY(BlueprintReadOnly)
+	bool IsLocked = false;
+
+	/** If the item does not display its contents (ID, Quantity) */
+	UPROPERTY(BlueprintReadOnly)
+	bool IsSecret = false;
 };
 
