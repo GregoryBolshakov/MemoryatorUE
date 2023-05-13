@@ -27,7 +27,7 @@ protected:
 
 	virtual void OnMoveCompleted(FAIRequestID RequestID, const FPathFollowingResult& Result) override;
 
-	bool IsPlayerSpeakingToMe();
+	bool IsPlayerSpeakingToMe(); //TODO: Move to the AMCommunicationManager
 
 	ERelationType GetRelationshipWithPlayer();
 

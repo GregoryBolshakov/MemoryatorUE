@@ -1,19 +1,12 @@
 #include "MInventoryWidget.h"
 #include "MCharacter.h"
+#include "MDropManager.h"
 #include "MGameInstance.h"
 #include "MInventorySlotWidget.h"
 #include "Components/Image.h"
 #include "Components/RichTextBlock.h"
 #include "Components/WrapBox.h"
 #include "MInventoryComponent.h"
-
-TSubclassOf<UUserWidget> UMInventoryWidget::gItemSlotWidgetBPClass = nullptr;
-
-void UMInventoryWidget::PostInitProperties()
-{
-	Super::PostInitProperties();
-	UMInventoryWidget::gItemSlotWidgetBPClass = ItemSlotWidgetBPClass;
-}
 
 void UMInventoryWidget::NativeDestruct()
 {
@@ -31,10 +24,13 @@ void UMInventoryWidget::NativeDestruct()
 	}
 }
 
-void UMInventoryWidget::CreateSlots(UUserWidget* pOwner, UMInventoryComponent* pInventoryComponent, UWrapBox* pItemSlotsWrapBox)
+void UMInventoryWidget::CreateItemSlotWidgets(UUserWidget* pOwner, UMInventoryComponent* pInventoryComponent, UWrapBox* pItemSlotsWrapBox)
 {
-	if (!pInventoryComponent || !pItemSlotsWrapBox)
+	if (!pInventoryComponent || !pItemSlotsWrapBox || !UMDropManager::gItemSlotWidgetBPClass)
+	{
+		check(false);
 		return;
+	}
 
 	const auto pGameInstance = pOwner->GetGameInstance<UMGameInstance>();
 	if (!pGameInstance)
@@ -48,13 +44,15 @@ void UMInventoryWidget::CreateSlots(UUserWidget* pOwner, UMInventoryComponent* p
 	// Create widgets for player's inventory slots
 	for (auto& [Item, OnChangedDelegate, IsLocked, IsSecret] : pInventoryComponent->GetSlots())
 	{
-		const auto SlotWidget = CreateWidget<UMInventorySlotWidget>(pOwner, gItemSlotWidgetBPClass);
+		const auto SlotWidget = CreateWidget<UMInventorySlotWidget>(pOwner, UMDropManager::gItemSlotWidgetBPClass);
 		if (!SlotWidget)
 			continue;
 
 		SlotWidget->SetNumberInArray(Index++);
 		SlotWidget->SetOwnerInventory(pInventoryComponent);
 		SlotWidget->SetStoredItem(Item);
+		SlotWidget->SetIsLocked(IsLocked);
+		SlotWidget->SetIsSecret(IsSecret);
 		OnChangedDelegate.BindDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
 
 		const auto IconWidget = Cast<UImage>(SlotWidget->GetWidgetFromName(TEXT("ItemIcon")));

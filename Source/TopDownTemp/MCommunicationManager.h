@@ -22,13 +22,19 @@ public:
 
 	AMCharacter* GetInterlocutorCharacter() const { return InterlocutorCharacter; }
 
-	UMInventoryComponent* GetInventory() const { return InventoryToOffer; }
+	UMInventoryComponent* GetInventoryToOffer() const { return InventoryToOffer; }
+
+	UMInventoryComponent* GetInventoryToReward() const { return InventoryToReward; }
 
 protected:
 
 	virtual void BeginPlay() override;
 
 	virtual void Tick(float DeltaSeconds) override;
+
+	void GenerateInventoryToReward();
+
+	void ReturnAllPlayerItems();
 
 	UPROPERTY()
 	AMCharacter* InterlocutorCharacter;
@@ -42,8 +48,12 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = MCommunicationManager)
 	float CommunicationDistance = 100.f;
 
-	/** This is a temporary inventory with empty slots player uses to offer their items to an interlocutor */
+	/** Temporary inventory with empty slots player uses to offer their items to an interlocutor */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCommunicationManager)
 	UMInventoryComponent* InventoryToOffer;
+
+	/** Temporary inventory. Source of reward items which don't belong to a mob but can be given out */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCommunicationManager)
+	UMInventoryComponent* InventoryToReward;
 };
 

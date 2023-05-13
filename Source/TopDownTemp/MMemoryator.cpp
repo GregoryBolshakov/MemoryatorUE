@@ -131,11 +131,11 @@ void AMMemoryator::HandleMovementState()
 	}
 }
 
-void AMMemoryator::PostInitializeComponents()
+void AMMemoryator::BeginPlay()
 {
-	Super::PostInitializeComponents();
+	Super::BeginPlay();
 
-	InventoryComponent->Initialize(40, {{0, 8}, {0, 8}, {1, 8}, {1, 8}, {2, 8}, {2, 8}, {3, 8}, {3, 8}});
+	InventoryComponent->Initialize(30, {{0, 8}, {0, 8}, {1, 8}, {1, 8}, {2, 8}, {2, 8}, {3, 8}, {3, 8}});
 }
 
 void AMMemoryator::NotifyActorBeginOverlap(AActor* OtherActor)

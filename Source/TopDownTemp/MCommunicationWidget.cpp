@@ -18,9 +18,23 @@ void UMCommunicationWidget::NativeDestruct()
 	{
 		if (const auto InventoryComponent = pPlayerCharacter->GetInventoryComponent())
 		{
-			for (auto& [Item, OnChangedDelegate, IsLocked, IsSecret] : InventoryComponent->GetSlots())
+			for (auto& ItemSlot : InventoryComponent->GetSlots())
 			{
-				OnChangedDelegate.Unbind();
+				ItemSlot.OnSlotChangedDelegate.Unbind();
+			}
+		}
+	}
+
+	if (const auto pWorld = GetWorld())
+	{
+		if (const auto WorldManager = pWorld->GetSubsystem<UMWorldManager>())
+		{
+			if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
+			{
+				if (const auto CommunicationManager = WorldGenerator->GetCommunicationManager(); CommunicationManager)
+				{
+					CommunicationManager->StopSpeaking();
+				}
 			}
 		}
 	}
@@ -29,7 +43,10 @@ void UMCommunicationWidget::NativeDestruct()
 void UMCommunicationWidget::CreateSlots()
 {
 	if (!ItemSlotWidgetBPClass || !pMyItemSlotsWrapBox || !pTheirItemSlotsWrapBox || !pRewardItemSlotsWrapBox)
+	{
+		check(false);
 		return;
+	}
 
 	const auto pWorld = GetWorld();
 	if (!pWorld) { check(false); return; }
@@ -50,13 +67,18 @@ void UMCommunicationWidget::CreateSlots()
 		}
 	}
 
-	const auto MyInventoryComponent = CommunicationManager->GetInventory();
-	if (!MyInventoryComponent) return;
+	const auto InventoryToOffer = CommunicationManager->GetInventoryToOffer(); // Place player can put their items to offer
+	if (!InventoryToOffer) return;
 
-	UMInventoryWidget::CreateSlots(this, MyInventoryComponent, pMyItemSlotsWrapBox);
+	UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToOffer, pMyItemSlotsWrapBox);
 
-	const auto InterlocutorInventoryComponent = InterlocutorCharacter->GetInventoryComponent();
-	if (!InterlocutorInventoryComponent) return;
+	const auto InterlocutorInventory = InterlocutorCharacter->GetInventoryComponent();
+	if (!InterlocutorInventory) return;
 
-	UMInventoryWidget::CreateSlots(this, InterlocutorInventoryComponent, pTheirItemSlotsWrapBox);
+	UMInventoryWidget::CreateItemSlotWidgets(this, InterlocutorInventory, pTheirItemSlotsWrapBox);
+
+	const auto InventoryToReward = CommunicationManager->GetInventoryToReward();
+	if (!InventoryToReward) return;
+
+	UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
 }

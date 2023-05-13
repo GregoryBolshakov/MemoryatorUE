@@ -9,6 +9,7 @@
 AMCommunicationManager::AMCommunicationManager()
 {
 	InventoryToOffer = CreateDefaultSubobject<UMInventoryComponent>("InventoryToOffer");
+	InventoryToReward = CreateDefaultSubobject<UMInventoryComponent>("InventoryToReward");
 
 	//TODO: Either turn tick off when not speaking or disable the whole actor with MIsActiveCheckerComponent
 	PrimaryActorTick.bCanEverTick = true;
@@ -23,14 +24,17 @@ void AMCommunicationManager::SpeakTo(AMCharacter* IN_InterlocutorCharacter)
 	if (FVector::Dist(PlayerCharacter->GetActorLocation(), IN_InterlocutorCharacter->GetActorLocation()) > 100.f) // TODO: put to variables
 		return;
 
+	// Remove the communication screen widget from previous conversation if it was present
 	if (CommunicationWidget && IN_InterlocutorCharacter != InterlocutorCharacter)
 	{
-		CommunicationWidget->RemoveFromParent(); // Remove widget instantly on purpose, don't need hide animation overlapping open animation
+		CommunicationWidget->RemoveFromParent(); // Remove widget instantly on purpose, don't need the hide animation overlapping the opening animation
 		CommunicationWidget = nullptr;
 	}
 
 	InterlocutorCharacter = IN_InterlocutorCharacter;
+	GenerateInventoryToReward();
 
+	// Create the communication screen widget
 	if (!CommunicationWidget)
 	{
 		CommunicationWidget = CreateWidget<UMCommunicationWidget>(GetWorld()->GetFirstPlayerController(), CommunicationWidgetBPClass);
@@ -46,6 +50,7 @@ void AMCommunicationManager::StopSpeaking()
 		CommunicationWidget = nullptr;
 	}
 	InterlocutorCharacter = nullptr;
+	ReturnAllPlayerItems();
 }
 
 void AMCommunicationManager::BeginPlay()
@@ -67,6 +72,32 @@ void AMCommunicationManager::Tick(float DeltaSeconds)
 			if (FVector::Dist(PlayerCharacter->GetActorLocation(), InterlocutorCharacter->GetActorLocation()) > CommunicationDistance)
 			{
 				StopSpeaking();
+			}
+		}
+	}
+}
+
+void AMCommunicationManager::GenerateInventoryToReward()
+{
+	if (!InterlocutorCharacter) return;
+	InventoryToReward->Initialize(1, {{2, 3}});
+	InventoryToReward->LockAllItems();
+}
+
+void AMCommunicationManager::ReturnAllPlayerItems()
+{
+	if (const auto World = GetWorld())
+	{
+		if (const auto PlayerCharacter = Cast<AMCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0)))
+		{
+			if (const auto PlayerInventory = PlayerCharacter->GetInventoryComponent())
+			{
+				// Return all the items to the player inventory. If doesn't fit, spawn as a drop
+				for (auto& ItemSlot : InventoryToOffer->GetSlots())
+				{
+					PlayerInventory->StoreItem(ItemSlot.Item);
+					ItemSlot.Item = {0, 0};
+				}
 			}
 		}
 	}

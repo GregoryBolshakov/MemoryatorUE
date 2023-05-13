@@ -1,6 +1,9 @@
 #include "MInventoryComponent.h"
 
+#include "MDropManager.h"
 #include "MGameInstance.h"
+#include "MWorldGenerator.h"
+#include "MWorldManager.h"
 
 UMInventoryComponent::UMInventoryComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -44,19 +47,22 @@ void UMInventoryComponent::SortItems(const TArray<FItemData>& ItemsData)
 	});
 }
 
-FItem UMInventoryComponent::StoreItem(const FItem& ItemToStore)
+void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 {
 	FItem ItemLeft = ItemToStore;
 
+	const auto pWorld = GetWorld();
+	if (!IsValid(pWorld)) { check(false); return; }
+
 	const auto pMGameInstance = GetWorld()->GetGameInstance<UMGameInstance>();
 	if (!IsValid(pMGameInstance) || !pMGameInstance->ItemsDataAsset)
-		return ItemLeft;
+		return;
 
 	const auto ItemsData = pMGameInstance->ItemsDataAsset->ItemsData;
 	if (ItemToStore.ID >= ItemsData.Num())
 	{
 		check(false);
-		return ItemLeft;
+		return;
 	}
 
 	// We consider any slot as empty if its Quantity is 0, no matter what ID it has
@@ -106,7 +112,20 @@ FItem UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 		}
 	}
 
-	return ItemLeft;
+	if (ItemLeft.Quantity == 0)
+		return;
+
+	// Item doesn't fit in the inventory, drop it on the ground
+	if (const auto WorldManager = GetWorld()->GetSubsystem<UMWorldManager>())
+	{
+		if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
+		{
+			if (const auto DropManager = WorldGenerator->GetDropManager())
+			{
+				DropManager->SpawnPickableItem(ItemLeft);
+			}
+		}
+	}
 }
 
 FItem UMInventoryComponent::StoreItemToSpecificSlot(int SlotNumberInArray, const FItem& ItemToStore)

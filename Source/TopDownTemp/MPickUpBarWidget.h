@@ -22,6 +22,8 @@ public:
 
 protected:
 
+	virtual void NativeDestruct() override;
+
 	UPROPERTY(EditDefaultsOnly, Category=MPickUpBarWidget, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UUserWidget> ItemSlotWidgetBPClass;
 

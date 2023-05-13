@@ -28,7 +28,7 @@ private:
 
 	void HandleMovementState();
 
-	virtual void PostInitializeComponents() override;
+	virtual void BeginPlay() override;
 
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 

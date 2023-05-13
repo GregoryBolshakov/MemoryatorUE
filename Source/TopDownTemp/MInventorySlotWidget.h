@@ -28,6 +28,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnChangedData(int NewItemID, int NewQuantity);
 
+	void SetIsLocked(bool IN_IsLocked) { IsLocked = IN_IsLocked; }
+	void SetIsSecret(bool IN_IsSecret) { IsSecret = IN_IsSecret; }
+
 protected:
 
 	/** Number of the slot (container) in the wrap box, it doesn't change even if we swap items! */
@@ -45,6 +48,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	UMDropManager* pDropManager;
 
+	// IsLocked and IsSecret don't take visual effect after setting, you need to reconstruct widget again to see the difference
 	/** If the item cannot be taken or interacted with in any way */
 	UPROPERTY(BlueprintReadOnly)
 	bool IsLocked = false;

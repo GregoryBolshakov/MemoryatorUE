@@ -57,7 +57,7 @@ void UMDropManager::Update()
 	}
 }
 
-bool UMDropManager::OnDraggedItemDropped(const FItem& Item)
+void UMDropManager::SpawnPickableItem(const FItem& Item)
 {
 	check(Item.Quantity != 0);
 	if (const auto pWorld = GetWorld())
@@ -67,17 +67,24 @@ bool UMDropManager::OnDraggedItemDropped(const FItem& Item)
 			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
 			{
 				const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
-				if (!pPlayer)
-					return false;
+				if (!pPlayer) { check(false); return; }
 
-				FActorSpawnParameters EmptySpawnParameters;
-				if (const auto PickableItem = pWorldGenerator->SpawnActorInRadius<AMPickableItem>(AMPickableItemBPClass, pPlayer->GetActorLocation(), FRotator::ZeroRotator, EmptySpawnParameters, 25.f, 0.f))
+				if (const auto PickableItem = pWorldGenerator->SpawnActorInRadius<AMPickableItem>(AMPickableItemBPClass, pPlayer->GetActorLocation(), FRotator::ZeroRotator, {}, 25.f, 0.f))
 				{
 					PickableItem->Initialise(Item);
-					return true;
+					return;
 				}
 			}
 		}
 	}
-	return false;
+	check(false);
+}
+
+TSubclassOf<UUserWidget> UMDropManager::gItemSlotWidgetBPClass = nullptr;
+
+void UMDropManager::PostInitProperties()
+{
+	UObject::PostInitProperties();
+
+	UMDropManager::gItemSlotWidgetBPClass = ItemSlotWidgetBPClass;
 }

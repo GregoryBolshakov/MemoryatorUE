@@ -26,9 +26,15 @@ public:
 	void Update();
 
 	UFUNCTION(BlueprintCallable)
-	bool OnDraggedItemDropped(const FItem& Item);
+	void SpawnPickableItem(const FItem& Item);
+
+	const TSet<UMInventoryComponent*>& GetInventoriesToRepresent() { return InventoriesToRepresent; }
+
+	static TSubclassOf<UUserWidget> gItemSlotWidgetBPClass;
 
 private:
+
+	virtual void PostInitProperties() override;
 
 	UPROPERTY()
 	UMPickUpBarWidget* PickUpBarWidget;
@@ -41,5 +47,8 @@ private:
 
 	UPROPERTY()
 	TSet<UMInventoryComponent*> InventoriesToRepresent;
+
+	UPROPERTY(EditDefaultsOnly, Category=MInventoryWidgetSettings)
+	TSubclassOf<UUserWidget> ItemSlotWidgetBPClass;
 };
 

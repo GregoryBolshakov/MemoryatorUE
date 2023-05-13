@@ -27,6 +27,8 @@ struct FSlot
 	bool IsSecret = false;
 };
 
+
+//TODO: Add additional checks for IsLocked in c++ functions. Now there are only some in the slot widget blueprint
 UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent, IgnoreCategoryKeywordsInSubclasses, ShortTooltip="A character's inventory component. Store items, support put-in, get-out and sort logic"))
 class TOPDOWNTEMP_API UMInventoryComponent : public UActorComponent
 {
@@ -40,8 +42,9 @@ public:
 
 	void SortItems(const TArray<struct FItemData>& ItemsData);
 
+	/** Try to store the item in the inventory. If does not fit, drop it on the ground */
 	UFUNCTION(BlueprintCallable)
-	FItem StoreItem(const FItem& ItemToStore);
+	void StoreItem(const FItem& ItemToStore);
 
 	UFUNCTION(BlueprintCallable)
 	FItem StoreItemToSpecificSlot(int SlotNumberInArray, const FItem& ItemToStore);

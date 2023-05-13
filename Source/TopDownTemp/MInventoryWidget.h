@@ -15,23 +15,13 @@ class TOPDOWNTEMP_API UMInventoryWidget : public UUserWidget
 
 public:
 
-	virtual void PostInitProperties() override;
-
 	virtual void NativeDestruct() override;
 
 	UFUNCTION(BlueprintCallable)
-	static void CreateSlots(UUserWidget* pOwner, UMInventoryComponent* pInventoryComponent, UWrapBox* pItemSlotsWrapBox);
-
-	static TSubclassOf<UUserWidget> gItemSlotWidgetBPClass; // TODO: think about another place for this one
+	static void CreateItemSlotWidgets(UUserWidget* pOwner, UMInventoryComponent* pInventoryComponent, UWrapBox* pItemSlotsWrapBox);
 
 protected:
 
-	UPROPERTY(EditDefaultsOnly, Category=MInventoryWidgetSettings)
-	TSubclassOf<UUserWidget> ItemSlotWidgetBPClass;
-
 	UPROPERTY(BlueprintReadWrite, Category=MInventoryWidgetSettings)
 	UWrapBox* pItemSlotsWrapBox;
-
-	UPROPERTY(BlueprintReadWrite, Category=MInventoryWidgetSettings)
-	bool IsDraggedItemOutside;
 };
