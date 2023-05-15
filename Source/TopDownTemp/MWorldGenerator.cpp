@@ -76,6 +76,9 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 				*GridOfActors.Find(BlockIndex) :
 				GridOfActors.Add(BlockIndex, NewObject<UBlockOfActors>(this));
 
+	if (BlockOfActors->IsConstant)
+		return;
+
 	// Empty the block if already spawned
 	for (auto It = BlockOfActors->StaticActors.CreateIterator(); It; ++It)
 	{
@@ -229,7 +232,7 @@ void AMWorldGenerator::UpdateActiveZone()
 	TMap<FIntPoint, bool> ActiveBlocksMap_New;
 
 	//TODO: Consider spreading the block logic over multiple ticks as done in OnTickGenerateBlocks()
-	for (const auto Block : GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius + 1)) // you can add +1 to the ActiveZoneRadius if you need to see how the perimeter is generated in PIE
+	for (const auto Block : GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius)) // you can add +1 to the ActiveZoneRadius if you need to see how the perimeter is generated in PIE
 	{
 		ActiveBlocksMap_New.Add(Block, true);
 		ActiveBlocksMap.Remove(Block);

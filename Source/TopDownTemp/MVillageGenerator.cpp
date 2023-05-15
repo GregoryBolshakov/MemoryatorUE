@@ -93,7 +93,7 @@ void AMVillageGenerator::Generate()
 		// We try to find a location to fit the building
 		if (TryToPlaceBuilding(*TestingBuildingActor, BuildingIndex, DistanceFromCenter, BuildingClassName, *BuildingMetadata))
 		{
-			pWorldGenerator->EnrollActorToGrid(TestingBuildingActor);
+			pWorldGenerator->EnrollActorToGrid(TestingBuildingActor, true);
 		}
 		else
 		{
