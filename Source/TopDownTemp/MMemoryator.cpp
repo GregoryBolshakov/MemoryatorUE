@@ -135,7 +135,10 @@ void AMMemoryator::BeginPlay()
 {
 	Super::BeginPlay();
 
-	InventoryComponent->Initialize(30, {{0, 8}, {0, 8}, {1, 8}, {1, 8}, {2, 8}, {2, 8}, {3, 8}, {3, 8}});
+	if (InventoryComponent)
+	{
+		InventoryComponent->Initialize(30, {{0, 8}, {0, 8}, {1, 8}, {1, 8}, {2, 8}, {2, 8}, {3, 8}, {3, 8}});
+	}
 }
 
 void AMMemoryator::NotifyActorBeginOverlap(AActor* OtherActor)

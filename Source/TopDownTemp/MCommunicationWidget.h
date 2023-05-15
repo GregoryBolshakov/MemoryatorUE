@@ -20,7 +20,10 @@ public:
 	void Close();
 
 	UFUNCTION(BlueprintCallable)
-	void CreateSlots();
+	void CreateItemSlotWidgets();
+
+	UFUNCTION()
+	void ReCreateRewardItemSlotWidgets();
 
 protected:
 

@@ -4,6 +4,7 @@
 #include "MInventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnSlotChanged, int, NewItemID, int, NewQuantity);
+DECLARE_MULTICAST_DELEGATE(FOnAnySlotChanged);
 
 USTRUCT(BlueprintType)
 struct FItem
@@ -29,7 +30,8 @@ struct FSlot
 
 
 //TODO: Add additional checks for IsLocked in c++ functions. Now there are only some in the slot widget blueprint
-UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent, IgnoreCategoryKeywordsInSubclasses, ShortTooltip="A character's inventory component. Store items, support put-in, get-out and sort logic"))
+/** A character's inventory component. Store items, support put-in, get-out and sort logic */
+UCLASS(BlueprintType)
 class TOPDOWNTEMP_API UMInventoryComponent : public UActorComponent
 {
 	GENERATED_UCLASS_BODY()
@@ -61,6 +63,8 @@ public:
 	/** Prohibit interaction with items, e.g. player takes something out.
 	 *  Called for every mob by default, any unlocked items may be stolen */
 	void LockAllItems();
+
+	FOnAnySlotChanged OnAnySlotChangedDelegate;
 
 protected:
 

@@ -40,7 +40,7 @@ void UMCommunicationWidget::NativeDestruct()
 	}
 }
 
-void UMCommunicationWidget::CreateSlots()
+void UMCommunicationWidget::CreateItemSlotWidgets()
 {
 	if (!ItemSlotWidgetBPClass || !pMyItemSlotsWrapBox || !pTheirItemSlotsWrapBox || !pRewardItemSlotsWrapBox)
 	{
@@ -81,4 +81,27 @@ void UMCommunicationWidget::CreateSlots()
 	if (!InventoryToReward) return;
 
 	UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
+}
+
+void UMCommunicationWidget::ReCreateRewardItemSlotWidgets()
+{
+	if (const auto pWorld = GetWorld())
+	{
+		if (const auto WorldManager = pWorld->GetSubsystem<UMWorldManager>())
+		{
+			if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
+			{
+				if (const auto CommunicationManager = WorldGenerator->GetCommunicationManager())
+				{
+					if (const auto InventoryToReward = CommunicationManager->GetInventoryToReward())
+					{
+						pRewardItemSlotsWrapBox->ClearChildren();
+						UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
+						return;
+					}
+				}
+			}
+		}
+	}
+	check(false);
 }

@@ -49,6 +49,8 @@ public:
 
 	class UMAttackPuddleComponent* GetAttackPuddleComponent() const { return AttackPuddleComponent; }
 
+	class UMCommunicationComponent* GetCommunicationComponent() const { return CommunicationComponent; }
+
 	FVector GetLastNonZeroVelocity() const { return LastNonZeroVelocity; }
 
 	bool GetIsDashing() const { return IsDashing; }
@@ -84,8 +86,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
 	class UM2DRepresentationComponent* RepresentationComponent;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMInventoryComponent* InventoryComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UMCommunicationComponent* CommunicationComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UMIsActiveCheckerComponent* IsActiveCheckerComponent;

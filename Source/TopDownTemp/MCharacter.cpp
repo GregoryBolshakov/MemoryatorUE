@@ -8,6 +8,7 @@
 #include "M2DRepresentationComponent.h"
 #include "MAttackPuddleComponent.h"
 #include "MBuffBarComponent.h"
+#include "MCommunicationComponent.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MInventoryComponent.h"
 #include "MMemoryator.h" // temporary include
@@ -23,6 +24,8 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	RepresentationComponent->SetupAttachment(RootComponent);
 
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("InventoryrComponent"));
+
+	CommunicationComponent = CreateDefaultSubobject<UMCommunicationComponent>(TEXT("CommunicationComponent"));
 
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
 

@@ -112,6 +112,10 @@ void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 		}
 	}
 
+	if (ItemToStore.Quantity != ItemLeft.Quantity)
+	{
+		OnAnySlotChangedDelegate.Broadcast();
+	}
 	if (ItemLeft.Quantity == 0)
 		return;
 
@@ -130,6 +134,7 @@ void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 
 FItem UMInventoryComponent::StoreItemToSpecificSlot(int SlotNumberInArray, const FItem& ItemToStore)
 {
+	// Validity checks---------------
 	if (Slots.Num() <= SlotNumberInArray)
 		return ItemToStore;
 
@@ -153,6 +158,7 @@ FItem UMInventoryComponent::StoreItemToSpecificSlot(int SlotNumberInArray, const
 
 	if (QuantityToStore == 0)
 		return ItemToStore;
+	//-------------------------------
 
 	Slots[SlotNumberInArray].Item.ID = ItemToStore.ID;
 	Slots[SlotNumberInArray].Item.Quantity += QuantityToStore;
@@ -161,6 +167,8 @@ FItem UMInventoryComponent::StoreItemToSpecificSlot(int SlotNumberInArray, const
 	auto ItemToReturn = ItemToStore;
 	ItemToReturn.Quantity -= QuantityToStore;
 
+	OnAnySlotChangedDelegate.Broadcast();
+
 	return ItemToReturn;
 }
 
@@ -168,7 +176,7 @@ FItem UMInventoryComponent::TakeItemFromSpecificSlot(int SlotNumberInArray, int 
 {
 	//TODO: Should be replicated and do validation
 
-	if (Slots.Num() <= SlotNumberInArray)
+	if (Slots.Num() <= SlotNumberInArray || Quantity == 0)
 	{
 		check(false);
 		return {};
@@ -180,6 +188,8 @@ FItem UMInventoryComponent::TakeItemFromSpecificSlot(int SlotNumberInArray, int 
 
 	Slots[SlotNumberInArray].OnSlotChangedDelegate.ExecuteIfBound(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
 
+	OnAnySlotChangedDelegate.Broadcast();
+
 	check(QuantityToTake != 0);
 	return {Slots[SlotNumberInArray].Item.ID, QuantityToTake};
 }
@@ -190,6 +200,11 @@ void UMInventoryComponent::SwapItems(FItem& A, int SlotNumberInArray)
 		return;
 
 	Swap(A, Slots[SlotNumberInArray].Item);
+
+	if (A.ID != Slots[SlotNumberInArray].Item.ID || A.Quantity != Slots[SlotNumberInArray].Item.Quantity) // At least any difference
+	{
+		OnAnySlotChangedDelegate.Broadcast();
+	}
 
 	Slots[SlotNumberInArray].OnSlotChangedDelegate.ExecuteIfBound(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
 }

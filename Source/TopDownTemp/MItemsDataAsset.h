@@ -21,7 +21,11 @@ struct FItemData
 	UPaperSprite* IconSprite;
 
 	UPROPERTY(Category=ItemData, EditAnywhere, BlueprintReadOnly)
-	int MaxStack;
+	int MaxStack = 1;
+
+	/** The unified price of the item in the quantity of one */
+	UPROPERTY(Category=ItemData, EditAnywhere, BlueprintReadOnly)
+	int Price = 0;
 };
 
 UCLASS(BlueprintType)

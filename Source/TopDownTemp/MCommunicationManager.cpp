@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "MCommunicationWidget.h"
 #include "MInventoryComponent.h"
-
+#pragma optimize("", off)
 AMCommunicationManager::AMCommunicationManager()
 {
 	InventoryToOffer = CreateDefaultSubobject<UMInventoryComponent>("InventoryToOffer");
@@ -33,6 +33,14 @@ void AMCommunicationManager::SpeakTo(AMCharacter* IN_InterlocutorCharacter)
 
 	InterlocutorCharacter = IN_InterlocutorCharacter;
 	GenerateInventoryToReward();
+	InventoryToOffer->OnAnySlotChangedDelegate.AddLambda([this]
+	{
+		GenerateInventoryToReward();
+		if (CommunicationWidget)
+		{
+			CommunicationWidget->ReCreateRewardItemSlotWidgets();
+		}
+	});
 
 	// Create the communication screen widget
 	if (!CommunicationWidget)
@@ -102,3 +110,4 @@ void AMCommunicationManager::ReturnAllPlayerItems()
 		}
 	}
 }
+#pragma optimize("", on)
