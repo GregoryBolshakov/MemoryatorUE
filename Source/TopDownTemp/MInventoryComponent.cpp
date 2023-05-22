@@ -12,6 +12,10 @@ UMInventoryComponent::UMInventoryComponent(const FObjectInitializer& ObjectIniti
 
 void UMInventoryComponent::Initialize(int IN_SlotsNumber, const TArray<FItem>& StartingItems)
 {
+	for (auto Slot : Slots)
+	{
+		Slot.OnSlotChangedDelegate.Unbind();
+	}
 	Slots.Empty();
 	Slots.AddDefaulted(IN_SlotsNumber);
 	for (const auto& Item : StartingItems)
@@ -20,31 +24,240 @@ void UMInventoryComponent::Initialize(int IN_SlotsNumber, const TArray<FItem>& S
 	}
 }
 
-void UMInventoryComponent::SortItems(const TArray<FItemData>& ItemsData)
+TArray<FItem> UMInventoryComponent::GetItemCopies()
 {
-	Slots.Sort([&ItemsData](const FSlot& A, const FSlot& B)
+	TArray<FItem> Result;
+	for (const auto& Slot : Slots)
 	{
-		if (ItemsData.Num() <= A.Item.ID || ItemsData.Num() <= B.Item.ID)
+		if (Slot.Item.Quantity != 0)
 		{
-			check(false);
-			return true;
+			Result.Add(Slot.Item);
 		}
-		if (A.Item.ID == B.Item.ID)
+	}
+	return Result;
+}
+
+UMItemsDataAsset* GetItemsDataAsset(const UObject* WorldContextObject)
+{
+	if (const auto pWorld = WorldContextObject->GetWorld())
+	{
+		if (const auto pGameInstance = pWorld->GetGameInstance<UMGameInstance>())
 		{
-			if (A.Item.Quantity == B.Item.Quantity)
+			if (const auto pItemsDataAsset = pGameInstance->ItemsDataAsset)
 			{
-				return ItemsData[A.Item.ID].MaxStack > ItemsData[B.Item.ID].MaxStack;
+				return pItemsDataAsset;
+			}
+		}
+	}
+	check(false);
+	return nullptr;
+}
+
+int UMInventoryComponent::GetTotallPrice(const TArray<FSlot>& Slots, const UObject* WorldContextObject)
+{
+	float Price = 0.f; // We do all the calculations in float and trunc the result
+	if (const auto pItemsDataAsset = GetItemsDataAsset(WorldContextObject))
+	{
+		for (const auto ItemSlot : Slots)
+		{
+			if (pItemsDataAsset->ItemsData.Num() <= ItemSlot.Item.ID)
+			{
+				check(false);
+				continue;
+			}
+			const auto ItemData = pItemsDataAsset->ItemsData[ItemSlot.Item.ID];
+			Price += static_cast<float>(ItemData.Price) * ItemSlot.Item.Quantity;
+		}
+	}
+
+	return FMath::TruncToInt(Price);
+}
+
+int GetCost(int ID, const UObject* WorldContextObject)
+{
+	if (const auto pItemsDataAsset = GetItemsDataAsset(WorldContextObject))
+	{
+		if (pItemsDataAsset->ItemsData.Num() > ID)
+		{
+			return pItemsDataAsset->ItemsData[ID].Price;
+		}
+	}
+
+	check(false);
+	return 0;
+}
+
+TArray<FItem> UMInventoryComponent::MaxPriceCombination(int M)
+{
+	TArray<FItem> NonZeroItems;
+	for (const auto Slot : Slots)
+	{
+		if (Slot.Item.Quantity > 0)
+		{
+			NonZeroItems.Add({Slot.Item});
+		}
+	}
+
+	int n = NonZeroItems.Num();
+	TArray<TArray<int>> dp;
+	dp.SetNum(n + 1);
+
+	for (int i = 0; i < n + 1; i++)
+	{
+		dp[i].SetNum(M + 1);
+	}
+
+	TArray<TArray<TArray<FItem>>> picks;
+	picks.SetNum(n + 1);
+
+	for (int i = 0; i < n + 1; i++)
+	{
+		picks[i].SetNum(M + 1);
+	}
+
+	for (int i = 0; i <= n; i++)
+	{
+		for (int j = 0; j <= M; j++)
+		{
+			if (i == 0 || j == 0)
+			{
+				dp[i][j] = 0;
 			}
 			else
 			{
-				return A.Item.Quantity > B.Item.Quantity;
+				int cost = GetCost(NonZeroItems[i - 1].ID, this);
+				if (cost <= j)
+				{
+					int maxValWithoutCurr = dp[i - 1][j];
+					int maxValWithCurr = 0;
+					int maxQtyWithCurr = 0;
+
+					for (int k = 1; k <= NonZeroItems[i - 1].Quantity && k * cost <= j; k++)
+					{
+						int valWithCurr = k * cost + dp[i - 1][j - k * cost];
+
+						if (valWithCurr > maxValWithCurr)
+						{
+							maxValWithCurr = valWithCurr;
+							maxQtyWithCurr = k;
+						}
+					}
+
+					if (maxValWithoutCurr > maxValWithCurr)
+					{
+						dp[i][j] = maxValWithoutCurr;
+
+						if (i > 0 && j > 0)
+						{
+							picks[i][j] = picks[i - 1][j];
+						}
+					}
+					else
+					{
+						dp[i][j] = maxValWithCurr;
+
+						if (i > 0 && j > 0)
+						{
+							picks[i][j] = picks[i - 1][j - maxQtyWithCurr * cost];
+							FItem item = NonZeroItems[i - 1];
+							item.Quantity = maxQtyWithCurr;
+							picks[i][j].Add(item);
+						}
+					}
+				}
+				else
+				{
+					dp[i][j] = dp[i - 1][j];
+
+					if (i > 0 && j > 0)
+					{
+						picks[i][j] = picks[i - 1][j];
+					}
+				}
 			}
 		}
-		else
+	}
+
+	return picks[n][M];
+}
+
+void UMInventoryComponent::SortSlots(TArray<FSlot>& IN_Slots, const UObject* WorldContextObject)
+{
+	//aaaaaa!z
+	if (const auto ItemsDataAsset = GetItemsDataAsset(WorldContextObject))
+	{
+		const auto ItemsData = ItemsDataAsset->ItemsData;
+		IN_Slots.Sort([&ItemsData](const FSlot& A, const FSlot& B)
 		{
+			if (ItemsData.Num() <= A.Item.ID || ItemsData.Num() <= B.Item.ID)
+			{
+				check(false);
+				return true;
+			}
+			if (A.Item.ID == B.Item.ID)
+			{
+				if (A.Item.Quantity == B.Item.Quantity)
+				{
+					return ItemsData[A.Item.ID].MaxStack > ItemsData[B.Item.ID].MaxStack;
+				}
+				return A.Item.Quantity > B.Item.Quantity;
+			}
 			return A.Item.ID < B.Item.ID;
-		}
-	});
+		});
+	}
+}
+
+void UMInventoryComponent::SortItems(TArray<FItem>& IN_Items, const UObject* WorldContextObject)
+{
+	if (const auto ItemsDataAsset = GetItemsDataAsset(WorldContextObject))
+	{
+		const auto ItemsData = ItemsDataAsset->ItemsData;
+		IN_Items.Sort([&ItemsData](const FItem& A, const FItem& B)
+		{
+			if (ItemsData.Num() <= A.ID || ItemsData.Num() <= B.ID)
+			{
+				check(false);
+				return true;
+			}
+			if (A.ID == B.ID)
+			{
+				if (A.Quantity == B.Quantity)
+				{
+					return ItemsData[A.ID].MaxStack > ItemsData[B.ID].MaxStack;
+				}
+				return A.Quantity > B.Quantity;
+			}
+			return A.ID < B.ID;
+		});
+	}
+}
+
+void UMInventoryComponent::StackItems(TArray<FItem>& IN_Items)
+{
+	// Create a map to hold the combined quantities for each unique ID.
+	TMap<int, int> IDToQuantity;
+
+	// Iterate over the input array.
+	for (const auto& Item : IN_Items)
+	{
+		// If the ID already exists in the map, add the current quantity.
+		// If it doesn't exist, this will initialize it with the current quantity.
+		IDToQuantity.FindOrAdd(Item.ID) += Item.Quantity;
+	}
+
+	// Create an array to hold the combined items.
+	TArray<FItem> StackedItems;
+
+	// Iterate over the map and add each ID/quantity pair as an item in the new array.
+	for (const auto& pair : IDToQuantity)
+	{
+		FItem StackedItem;
+		StackedItem.ID = pair.Key;
+		StackedItem.Quantity = pair.Value;
+		StackedItems.Add(StackedItem);
+	}
+
+	IN_Items = StackedItems;
 }
 
 void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
@@ -194,6 +407,52 @@ FItem UMInventoryComponent::TakeItemFromSpecificSlot(int SlotNumberInArray, int 
 	return {Slots[SlotNumberInArray].Item.ID, QuantityToTake};
 }
 
+bool UMInventoryComponent::DoesContainEnough(FItem ItemToCheck)
+{
+	if (ItemToCheck.Quantity == 0) {check(false); return true;}
+	for (auto Slot : Slots)
+	{
+		if (Slot.Item.ID == ItemToCheck.ID)
+		{
+			const int QuantityToTake = FMath::Min(Slot.Item.Quantity, ItemToCheck.Quantity);
+			ItemToCheck.Quantity -= QuantityToTake;
+
+			if (ItemToCheck.Quantity == 0)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+void UMInventoryComponent::RemoveItem(FItem ItemToRemove)
+{
+	if (ItemToRemove.Quantity == 0 || !DoesContainEnough(ItemToRemove))
+	{
+		check(false);
+		return;
+	}
+
+	for (int i = 0; i < Slots.Num(); ++i)
+	{
+		if (Slots[i].Item.ID == ItemToRemove.ID)
+		{
+			const int QuantityToTake = FMath::Min(Slots[i].Item.Quantity, ItemToRemove.Quantity);
+			Slots[i].Item.Quantity -= QuantityToTake;
+			ItemToRemove.Quantity -= QuantityToTake;
+
+			Slots[i].OnSlotChangedDelegate.ExecuteIfBound(Slots[i].Item.ID, Slots[i].Item.Quantity);
+			OnAnySlotChangedDelegate.Broadcast();
+
+			if (ItemToRemove.Quantity == 0)
+			{
+				return;
+			}
+		}
+	}
+}
+
 void UMInventoryComponent::SwapItems(FItem& A, int SlotNumberInArray)
 {
 	if (SlotNumberInArray >= Slots.Num())
@@ -209,18 +468,21 @@ void UMInventoryComponent::SwapItems(FItem& A, int SlotNumberInArray)
 	Slots[SlotNumberInArray].OnSlotChangedDelegate.ExecuteIfBound(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
 }
 
-void UMInventoryComponent::MakeAllItemsSecret()
+void UMInventoryComponent::Empty()
 {
-	for (auto& Slot : Slots)
+	// In current implementation we keep the inventory capacity but just remove all the items
+	for (int i = 0; i < Slots.Num(); ++i)
 	{
-		Slot.IsSecret = true;
+		Slots[i].Item = {0, 0};
+		Slots[i].OnSlotChangedDelegate.ExecuteIfBound(0, 0);
+		OnAnySlotChangedDelegate.Broadcast();
 	}
 }
 
-void UMInventoryComponent::LockAllItems()
+void UMInventoryComponent::SetFlagToAllSlots(FSlot::ESlotFlags Flag)
 {
 	for (auto& Slot : Slots)
 	{
-		Slot.IsLocked = true;
+		Slot.SetFlag(Flag);
 	}
 }

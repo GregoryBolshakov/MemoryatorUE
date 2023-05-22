@@ -5,7 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "MCommunicationWidget.h"
 #include "MInventoryComponent.h"
-#pragma optimize("", off)
+
 AMCommunicationManager::AMCommunicationManager()
 {
 	InventoryToOffer = CreateDefaultSubobject<UMInventoryComponent>("InventoryToOffer");
@@ -87,9 +87,38 @@ void AMCommunicationManager::Tick(float DeltaSeconds)
 
 void AMCommunicationManager::GenerateInventoryToReward()
 {
+	InventoryToReward->Empty();
+	InventoryToReward->Initialize(0, {});
+
 	if (!InterlocutorCharacter) return;
-	InventoryToReward->Initialize(1, {{2, 3}});
-	InventoryToReward->LockAllItems();
+
+	if (InventoryToOffer->GetSlots().IsEmpty())
+	{
+		//TODO: Check if quest is complete and offer some reward, etc. 
+	}
+	else
+	{
+		// Trade:
+		//TODO: Come up with a text that the mob says
+		if (InterlocutorCharacter)
+		{
+			if (const auto Inventory = InterlocutorCharacter->GetInventoryComponent())
+			{
+				// The items the interlocutor offers for the 
+				auto CounterOfferItems = Inventory->MaxPriceCombination(UMInventoryComponent::GetTotallPrice(InventoryToOffer->GetSlots(), this));
+				UMInventoryComponent::StackItems(CounterOfferItems);
+				UMInventoryComponent::SortItems(CounterOfferItems, this);
+				auto OfferItemCopies = InventoryToOffer->GetItemCopies();
+				UMInventoryComponent::StackItems(OfferItemCopies);
+				UMInventoryComponent::SortItems(OfferItemCopies, this);
+				if (CounterOfferItems != OfferItemCopies) // TODO: IMPORTANT! Implement randomize in MaxPriceCombination to avoid this case
+				{
+					InventoryToReward->Initialize(CounterOfferItems.Num(), CounterOfferItems); // TODO: Not initialize, but append. There might be some free reward for quest
+					InventoryToReward->SetFlagToAllSlots(FSlot::ESlotFlags::PreviewOnly);
+				}
+			}
+		}
+	}
 }
 
 void AMCommunicationManager::ReturnAllPlayerItems()
@@ -110,4 +139,35 @@ void AMCommunicationManager::ReturnAllPlayerItems()
 		}
 	}
 }
-#pragma optimize("", on)
+
+void AMCommunicationManager::MakeADeal()
+{
+	auto InterlocutorInventory = InterlocutorCharacter->GetInventoryComponent();
+	if (!InterlocutorInventory) { check(false); return; }
+
+	// Player takes all unlocked items from the reward inventory
+	if (const auto World = GetWorld())
+	{
+		if (const auto PlayerCharacter = Cast<AMCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0)))
+		{
+			if (const auto PlayerInventory = PlayerCharacter->GetInventoryComponent())
+			{
+				for (const auto& Slot : InventoryToReward->GetSlots())
+				{
+					InterlocutorInventory->RemoveItem(Slot.Item);
+					PlayerInventory->StoreItem(Slot.Item);
+				}
+			}
+		}
+	}
+
+	InventoryToReward->Empty();
+
+	// Interlocutor takes all items from the offer inventory
+	for (const auto& Slot : InventoryToOffer->GetSlots())
+	{
+		InterlocutorInventory->StoreItem(Slot.Item);
+	}
+
+	InventoryToOffer->Empty();
+}

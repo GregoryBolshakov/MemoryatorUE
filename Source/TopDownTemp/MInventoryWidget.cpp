@@ -42,7 +42,7 @@ void UMInventoryWidget::CreateItemSlotWidgets(UUserWidget* pOwner, UMInventoryCo
 
 	int Index = 0;
 	// Create widgets for player's inventory slots
-	for (auto& [Item, OnChangedDelegate, IsLocked, IsSecret] : pInventoryComponent->GetSlots())
+	for (auto& Slot : pInventoryComponent->GetSlots())
 	{
 		const auto SlotWidget = CreateWidget<UMInventorySlotWidget>(pOwner, UMDropManager::gItemSlotWidgetBPClass);
 		if (!SlotWidget)
@@ -50,24 +50,25 @@ void UMInventoryWidget::CreateItemSlotWidgets(UUserWidget* pOwner, UMInventoryCo
 
 		SlotWidget->SetNumberInArray(Index++);
 		SlotWidget->SetOwnerInventory(pInventoryComponent);
-		SlotWidget->SetStoredItem(Item);
-		SlotWidget->SetIsLocked(IsLocked);
-		SlotWidget->SetIsSecret(IsSecret);
-		OnChangedDelegate.BindDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
+		SlotWidget->SetStoredItem(Slot.Item);
+		SlotWidget->SetIsLocked(Slot.CheckFlag(FSlot::ESlotFlags::Locked));
+		SlotWidget->SetIsSecret(Slot.CheckFlag(FSlot::ESlotFlags::Secret));
+		SlotWidget->SetIsPreviewOnly(Slot.CheckFlag(FSlot::ESlotFlags::PreviewOnly));
+		Slot.OnSlotChangedDelegate.BindDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
 
 		const auto IconWidget = Cast<UImage>(SlotWidget->GetWidgetFromName(TEXT("ItemIcon")));
 		const auto QuantityTextWidget = Cast<URichTextBlock>(SlotWidget->GetWidgetFromName(TEXT("QuantityTextBlock")));
 		if (IconWidget && QuantityTextWidget) // Icon and QuantityText widgets exist
 		{
-			if (!IsSecret)
+			if (!Slot.CheckFlag(FSlot::ESlotFlags::Secret))
 			{
-				if (Item.Quantity > 0 && Item.ID < ItemsData.Num())
+				if (Slot.Item.Quantity > 0 && Slot.Item.ID < ItemsData.Num())
 				{
 					// Item data is valid, don't draw quantity of a single item
-					IconWidget->SetBrushFromTexture(ItemsData[Item.ID].IconTexture);
+					IconWidget->SetBrushFromTexture(ItemsData[Slot.Item.ID].IconTexture);
 					IconWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
-					QuantityTextWidget->SetText(FText::FromString(FString::FromInt(Item.Quantity)));
+					QuantityTextWidget->SetText(FText::FromString(FString::FromInt(Slot.Item.Quantity)));
 					QuantityTextWidget->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 				}
 				else // Slot is empty

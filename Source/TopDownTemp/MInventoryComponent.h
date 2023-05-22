@@ -16,6 +16,9 @@ struct FItem
 
 	UPROPERTY(Category=FItem, EditAnywhere, BlueprintReadOnly)
 	int Quantity = 0;
+
+	bool operator ==(const FItem& Other) const { return ID == Other.ID && Quantity == Other.Quantity; }
+	bool operator !=(const FItem& Other) const { return !(*this == Other); }
 };
 
 USTRUCT(BlueprintType)
@@ -24,8 +27,28 @@ struct FSlot
 	GENERATED_BODY()
 	FItem Item;
 	FOnSlotChanged OnSlotChangedDelegate;
-	bool IsLocked = false; //TODO: think about a flag. Might be secret but show quantity, whatever
-	bool IsSecret = false;
+
+	enum class ESlotFlags : uint8 {
+		None = 0x00,
+		Locked = 0x01,
+		Secret = 0x02,
+		PreviewOnly = 0x04
+	};
+
+	void SetFlag(ESlotFlags flag) {
+		Flags = static_cast<ESlotFlags>(static_cast<uint8>(Flags) | static_cast<uint8>(flag));
+	}
+
+	void UnsetFlag(ESlotFlags flag) {
+		Flags = static_cast<ESlotFlags>(static_cast<uint8>(Flags) & ~static_cast<uint8>(flag));
+	}
+
+	bool CheckFlag(ESlotFlags flag) const {
+		return static_cast<uint8>(Flags) & static_cast<uint8>(flag);
+	}
+
+private:
+	ESlotFlags Flags = ESlotFlags::None;
 };
 
 
@@ -40,9 +63,21 @@ public:
 
 	void Initialize(int IN_SlotsNumber, const TArray<FItem>& StartingItems);
 
+	TArray<FItem> GetItemCopies();
+
+	static int GetTotallPrice(const TArray<FSlot>& Slots, const UObject* WorldContextObject);
+
+	TArray<FItem> MaxPriceCombination(int M);
+	//TArray<FItem> GetMaximumItemsForPrice(int Price);
+
 	TArray<FSlot>& GetSlots() { return Slots; }
 
-	void SortItems(const TArray<struct FItemData>& ItemsData);
+	static void SortSlots(TArray<FSlot>& IN_Slots, const UObject* WorldContextObject);
+
+	static void SortItems(TArray<FItem>& IN_Items, const UObject* WorldContextObject);
+
+	/** Combine any pair of items with same ID and not at max Quantity */
+	static void StackItems(TArray<FItem>& IN_Items);
 
 	/** Try to store the item in the inventory. If does not fit, drop it on the ground */
 	UFUNCTION(BlueprintCallable)
@@ -54,15 +89,18 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FItem TakeItemFromSpecificSlot(int SlotNumberInArray, int Quantity);
 
+	// The function is needed because we need to be sure there are enough items before pulling items out of different slots in TakeItem
+	bool DoesContainEnough(FItem ItemToCheck);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveItem(FItem ItemToRemove);
+
 	UFUNCTION(BlueprintCallable)
 	void SwapItems(UPARAM(ref)FItem& A, int SlotNumberInArray);
 
-	/** From external observers, e.g. the peeping player */
-	void MakeAllItemsSecret();
+	void Empty();
 
-	/** Prohibit interaction with items, e.g. player takes something out.
-	 *  Called for every mob by default, any unlocked items may be stolen */
-	void LockAllItems();
+	void SetFlagToAllSlots(FSlot::ESlotFlags Flag);
 
 	FOnAnySlotChanged OnAnySlotChangedDelegate;
 

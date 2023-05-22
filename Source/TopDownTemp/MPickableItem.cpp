@@ -128,9 +128,9 @@ void AMPickableItem::OnItemChanged(int NewItemID, int NewQuantity)
 	}
 
 	bool IsEmpty = true;
-	for (const auto [Item, OnChangedDelegate, IsLocked, IsSecret] : InventoryComponent->GetSlots())
+	for (const auto Slot : InventoryComponent->GetSlots())
 	{
-		if (Item.Quantity > 0)
+		if (Slot.Item.Quantity > 0)
 		{
 			IsEmpty = false;
 			break;

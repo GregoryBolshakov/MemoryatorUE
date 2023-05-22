@@ -67,8 +67,28 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v15/.suo" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_MGameInstance.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_MGameInstance.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_VillagerMobController.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_VillagerMobController.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/DataAssets/CharacterSpeciesDataAsset.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/DataAssets/CharacterSpeciesDataAsset.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/Inventory/WBP_InventorySlot.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/Inventory/WBP_InventorySlot.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_CommunicationScreen.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_CommunicationScreen.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Memoryator.sln" beforeDir="false" afterPath="$PROJECT_DIR$/Memoryator.sln" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacterSpeciesDataAsset.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacterSpeciesDataAsset.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationWidget.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPickableItem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MPickableItem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillagerMobController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MVillagerMobController.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23119,7 +23139,16 @@
       <workItem from="1683907191316" duration="7070000" />
       <workItem from="1683971425001" duration="12692000" />
       <workItem from="1684050365190" duration="19780000" />
-      <workItem from="1684174700035" duration="1033000" />
+      <workItem from="1684174700035" duration="5295000" />
+      <workItem from="1684331430810" duration="4125000" />
+      <workItem from="1684347904730" duration="2927000" />
+      <workItem from="1684356342925" duration="1662000" />
+      <workItem from="1684505748507" duration="1170000" />
+      <workItem from="1684585366526" duration="3946000" />
+      <workItem from="1684589554375" duration="4327000" />
+      <workItem from="1684657792134" duration="21053000" />
+      <workItem from="1684744584050" duration="2026000" />
+      <workItem from="1684774351936" duration="592000" />
     </task>
     <servers />
   </component>
@@ -23179,6 +23208,11 @@
           <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/AIModule/Private/Navigation/PathFollowingComponent.cpp</url>
           <line>1089</line>
           <option name="timeStamp" value="243" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.cpp</url>
+          <line>107</line>
+          <option name="timeStamp" value="261" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

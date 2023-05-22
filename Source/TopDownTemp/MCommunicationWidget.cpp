@@ -9,6 +9,25 @@
 #include "MInventoryWidget.h"
 #include "MWorldGenerator.h"
 #include "MWorldManager.h"
+#include "Components/Button.h"
+
+void UMCommunicationWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+	if (const auto pWorld = GetWorld())
+	{
+		if (const auto WorldManager = pWorld->GetSubsystem<UMWorldManager>())
+		{
+			if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
+			{
+				if (const auto CommunicationManager = WorldGenerator->GetCommunicationManager(); CommunicationManager)
+				{
+					pTakeAllButton->OnClicked.AddDynamic(CommunicationManager, &AMCommunicationManager::MakeADeal);
+				}
+			}
+		}
+	}
+}
 
 void UMCommunicationWidget::NativeDestruct()
 {
@@ -34,6 +53,7 @@ void UMCommunicationWidget::NativeDestruct()
 				if (const auto CommunicationManager = WorldGenerator->GetCommunicationManager(); CommunicationManager)
 				{
 					CommunicationManager->StopSpeaking();
+					pTakeAllButton->OnClicked.RemoveAll(CommunicationManager);
 				}
 			}
 		}
@@ -97,6 +117,28 @@ void UMCommunicationWidget::ReCreateRewardItemSlotWidgets()
 					{
 						pRewardItemSlotsWrapBox->ClearChildren();
 						UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
+
+						// Enable/Disable TakeAllButton depending on the slots locked state
+						bool bHasAnyUnlocked = false;
+						for (const auto ItemSlot : InventoryToReward->GetSlots())
+						{
+							if (!ItemSlot.CheckFlag(FSlot::ESlotFlags::Locked)) // At least one slot isn't locked
+							{
+								bHasAnyUnlocked = true;
+								if (pTakeAllButton)
+								{
+									pTakeAllButton->SetVisibility(ESlateVisibility::Visible);
+									pTakeAllButton->SetIsEnabled(true);
+								}
+								break;
+							}
+						}
+						if (!bHasAnyUnlocked && pTakeAllButton)
+						{
+							pTakeAllButton->SetVisibility(ESlateVisibility::Hidden);
+							pTakeAllButton->SetIsEnabled(false);
+						}
+
 						return;
 					}
 				}

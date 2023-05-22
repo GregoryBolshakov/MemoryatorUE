@@ -1,6 +1,7 @@
 #include "MVillagerMobController.h"
 
 #include "MActor.h"
+#include "MGameInstance.h"
 #include "MInventoryComponent.h"
 #include "MIsActiveCheckerComponent.h"
 #include "MMemoryator.h"
@@ -21,7 +22,6 @@ AMVillagerMobController::AMVillagerMobController(const FObjectInitializer& Objec
 
 void AMVillagerMobController::PreTick(float DeltaSeconds, const UWorld& World, AMCharacter& MyCharacter)
 {
-	return;
 	if (const auto pWorldGenerator = World.GetSubsystem<UMWorldManager>()->GetWorldGenerator())
 	{
 		const auto MyLocation = MyCharacter.GetTransform().GetLocation();
@@ -65,15 +65,7 @@ void AMVillagerMobController::Initialize(AActor& _HomeBuilding, const FVector& _
 	VillageCenter = _VillageCenter;
 	VillageRadius = _VillageRadius;
 
-	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()))
-	{
-		if (const auto Inventory = MyCharacter->GetInventoryComponent())
-		{
-			Inventory->Initialize(3, {{1, 1}, {2, 2}, {3, 3}});
-			Inventory->MakeAllItemsSecret();
-			Inventory->LockAllItems();
-		}
-	}
+	
 }
 
 void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)

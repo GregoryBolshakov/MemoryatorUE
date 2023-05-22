@@ -26,6 +26,10 @@ public:
 
 	UMInventoryComponent* GetInventoryToReward() const { return InventoryToReward; }
 
+	/** Take all unlocked items from the reward inventory. Give all items from the offer inventory */
+	UFUNCTION(BlueprintCallable)
+	void MakeADeal();
+
 protected:
 
 	virtual void BeginPlay() override;

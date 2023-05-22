@@ -55,6 +55,8 @@ public:
 
 	bool GetIsDashing() const { return IsDashing; }
 
+	FName GetSpeciesName() const { return SpeciesName; }
+
 	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; UpdateAnimation(); }
 
 	UFUNCTION(BlueprintCallable)
@@ -104,6 +106,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	class UPaperSpriteComponent* PerimeterOutlineComponent;
+
+	UPROPERTY()
+	FName SpeciesName;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);

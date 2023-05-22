@@ -30,6 +30,7 @@ public:
 
 	void SetIsLocked(bool IN_IsLocked) { IsLocked = IN_IsLocked; }
 	void SetIsSecret(bool IN_IsSecret) { IsSecret = IN_IsSecret; }
+	void SetIsPreviewOnly(bool IN_IsPreviewOnly) { IsPreviewOnly = IN_IsPreviewOnly; }
 
 protected:
 
@@ -48,13 +49,18 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	UMDropManager* pDropManager;
 
-	// IsLocked and IsSecret don't take visual effect after setting, you need to reconstruct widget again to see the difference
-	/** If the item cannot be taken or interacted with in any way */
+	// IsLocked/IsSecret/PreviewOnly don't take visual effect after setting, you need to reconstruct widget again to see the difference
+
+	/** If the item is transparent and temporarily cannot be taken or interacted with in any way */
 	UPROPERTY(BlueprintReadOnly)
 	bool IsLocked = false;
 
 	/** If the item does not display its contents (ID, Quantity) */
 	UPROPERTY(BlueprintReadOnly)
 	bool IsSecret = false;
+
+	/** If the item does not have the frame and cannot be taken or interacted with in any way */
+	UPROPERTY(BlueprintReadOnly)
+	bool IsPreviewOnly = false;
 };
 

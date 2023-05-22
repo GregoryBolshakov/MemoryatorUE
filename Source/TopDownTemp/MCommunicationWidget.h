@@ -4,6 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "MCommunicationWidget.generated.h"
 
+class UButton;
 class AMPickableItem;
 class UWrapBox;
 
@@ -13,6 +14,8 @@ class TOPDOWNTEMP_API UMCommunicationWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+
+	virtual void NativeConstruct() override;
 
 	virtual void NativeDestruct() override;
 
@@ -38,4 +41,7 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, Category=MInventoryWidgetSettings)
 	UWrapBox* pRewardItemSlotsWrapBox;
+
+	UPROPERTY(BlueprintReadWrite, Category=MInventoryWidgetSettings)
+	UButton* pTakeAllButton;
 };
