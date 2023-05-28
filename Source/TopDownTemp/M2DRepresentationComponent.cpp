@@ -193,8 +193,18 @@ void UM2DRepresentationComponent::FaceToCamera()
 
 	const auto CameraLocation = CameraManager->GetCameraLocation();
 	//TODO: Not to get Pawn reference every tick; Remember this field and update by event (CPU)
-	const auto PlayerLocation = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetTransform().GetLocation();
-	auto FarCameraLocation = CameraLocation + (CameraLocation - PlayerLocation);
+	TOptional<FVector> PlayerLocation;
+	if (const auto PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
+	{
+		PlayerLocation = PlayerPawn->GetTransform().GetLocation();
+	}
+	if (!PlayerLocation.IsSet())
+	{
+		check(false);
+		return;
+	}
+
+	auto FarCameraLocation = CameraLocation + (CameraLocation - PlayerLocation.GetValue());
 	FarCameraLocation.Z /= 2; //TODO: bring the option out to the editor
 
 	for (const auto& RenderComponent : RenderComponentArray)

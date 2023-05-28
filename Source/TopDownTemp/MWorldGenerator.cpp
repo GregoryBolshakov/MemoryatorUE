@@ -80,22 +80,25 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 		return;
 
 	// Empty the block if already spawned
-	for (auto It = BlockOfActors->StaticActors.CreateIterator(); It; ++It)
+	for (const auto [Name, Actor] : BlockOfActors->StaticActors)
 	{
-		if (!IsValid(It->Value))
-			continue;
-		It->Value->Destroy();
-		It.RemoveCurrent();
+		if (Actor)
+		{
+			Actor->Destroy();
+		}
 	}
+	BlockOfActors->StaticActors.Empty();
+
 	if (EraseDynamicObjects)
 	{
-		for (auto It = BlockOfActors->DynamicActors.CreateIterator(); It; ++It)
+		for (const auto [Name, Actor] : BlockOfActors->DynamicActors)
 		{
-			if (!IsValid(It->Value))
-				continue;
-			It->Value->Destroy();
-			It.RemoveCurrent();
+			if (Actor)
+			{
+				Actor->Destroy();
+			}
 		}
+		BlockOfActors->DynamicActors.Empty();
 	}
 
 	BlockGenerator->Generate(BlockIndex, this, BlockOfActors->Biome);
@@ -300,25 +303,23 @@ void AMWorldGenerator::UpdateActiveZone()
 
 void AMWorldGenerator::UpdateNavigationMesh()
 {
-	const auto pWorld = GetWorld();
-	if (!pWorld)
+	if (const auto pWorld = GetWorld())
 	{
-		check(false);
-		return;
-	}
-
-	const auto PlayerLocation = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetTransform().GetLocation();
-	if (const auto NavMeshVolume = Cast<ANavMeshBoundsVolume>(UGameplayStatics::GetActorOfClass(pWorld, ANavMeshBoundsVolume::StaticClass())))
-	{
-		NavMeshVolume->SetActorLocation(PlayerLocation);
-
-		if (const auto NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+		if (const auto PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 		{
-			NavSystem->OnNavigationBoundsUpdated(NavMeshVolume);
-		}
-		else
-		{
-			check(false);
+			if (const auto NavMeshVolume = Cast<ANavMeshBoundsVolume>(UGameplayStatics::GetActorOfClass(pWorld, ANavMeshBoundsVolume::StaticClass())))
+			{
+				NavMeshVolume->SetActorLocation(PlayerPawn->GetTransform().GetLocation());
+
+				if (const auto NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+				{
+					NavSystem->OnNavigationBoundsUpdated(NavMeshVolume);
+				}
+				else
+				{
+					check(false);
+				}
+			}
 		}
 	}
 }
@@ -452,7 +453,10 @@ void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIn
 				*GridOfActors.Find(Block) :
 				GridOfActors.Add(Block, NewObject<UBlockOfActors>(this));
 
-			BlockOfActors->Biome = Delimiters[DelimiterIndex].Biome;
+			if (!BlockOfActors->IsConstant) // We keep the biome as well as all other objects
+			{
+				BlockOfActors->Biome = Delimiters[DelimiterIndex].Biome;
+			}
 			++BlockIndex;
 		}
 	}

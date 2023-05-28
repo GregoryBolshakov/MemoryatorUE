@@ -90,7 +90,11 @@ public:
 	FItem TakeItemFromSpecificSlot(int SlotNumberInArray, int Quantity);
 
 	// The function is needed because we need to be sure there are enough items before pulling items out of different slots in TakeItem
+	/** Check if there exist enough quantity of items with the given ID */
 	bool DoesContainEnough(FItem ItemToCheck);
+
+	/** Check if the given quantity of items with given ID fit in the inventory */
+	bool IsEnoughSpace(FItem ItemToCheck, const UObject* WorldContextObject);
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveItem(FItem ItemToRemove);

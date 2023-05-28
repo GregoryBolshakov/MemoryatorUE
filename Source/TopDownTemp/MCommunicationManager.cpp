@@ -105,12 +105,12 @@ void AMCommunicationManager::GenerateInventoryToReward()
 			if (const auto Inventory = InterlocutorCharacter->GetInventoryComponent())
 			{
 				// The items the interlocutor offers for the 
-				auto CounterOfferItems = Inventory->MaxPriceCombination(UMInventoryComponent::GetTotallPrice(InventoryToOffer->GetSlots(), this));
+				auto CounterOfferItems = Inventory->MaxPriceCombination(UMInventoryComponent::GetTotallPrice(InventoryToOffer->GetSlots(), GetWorld()));
 				UMInventoryComponent::StackItems(CounterOfferItems);
-				UMInventoryComponent::SortItems(CounterOfferItems, this);
+				UMInventoryComponent::SortItems(CounterOfferItems, GetWorld());
 				auto OfferItemCopies = InventoryToOffer->GetItemCopies();
 				UMInventoryComponent::StackItems(OfferItemCopies);
-				UMInventoryComponent::SortItems(OfferItemCopies, this);
+				UMInventoryComponent::SortItems(OfferItemCopies, GetWorld());
 				if (CounterOfferItems != OfferItemCopies) // TODO: IMPORTANT! Implement randomize in MaxPriceCombination to avoid this case
 				{
 					InventoryToReward->Initialize(CounterOfferItems.Num(), CounterOfferItems); // TODO: Not initialize, but append. There might be some free reward for quest
@@ -166,7 +166,13 @@ void AMCommunicationManager::MakeADeal()
 	// Interlocutor takes all items from the offer inventory
 	for (const auto& Slot : InventoryToOffer->GetSlots())
 	{
+		if (Slot.Item.Quantity == 0)
+			continue;
+		if (!InterlocutorInventory->IsEnoughSpace(Slot.Item, GetWorld()))
+			break;
 		InterlocutorInventory->StoreItem(Slot.Item);
+		// The current implementation is such that if the item doesn't fit, it is deleted and no longer available.
+		// It is no longer in their inventory. We assume the interlocutor hid it somewhere.
 	}
 
 	InventoryToOffer->Empty();

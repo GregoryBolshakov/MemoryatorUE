@@ -125,7 +125,7 @@ TArray<FItem> UMInventoryComponent::MaxPriceCombination(int M)
 			}
 			else
 			{
-				int cost = GetCost(NonZeroItems[i - 1].ID, this);
+				int cost = GetCost(NonZeroItems[i - 1].ID, GetWorld());
 				if (cost <= j)
 				{
 					int maxValWithoutCurr = dp[i - 1][j];
@@ -423,6 +423,36 @@ bool UMInventoryComponent::DoesContainEnough(FItem ItemToCheck)
 			}
 		}
 	}
+	return false;
+}
+
+bool UMInventoryComponent::IsEnoughSpace(FItem ItemToCheck, const UObject* WorldContextObject)
+{
+	if (ItemToCheck.Quantity == 0) { check(false); return true; }
+
+	if (const auto ItemsDataAsset = GetItemsDataAsset(WorldContextObject))
+	{
+		const auto ItemsData = ItemsDataAsset->ItemsData;
+		if (ItemsData.Num() <= ItemToCheck.ID) { check(false); return false; }
+		const auto MaxStack = ItemsData[ItemToCheck.ID].MaxStack;
+		for (int i = 0; i < Slots.Num(); ++i)
+		{
+			if (Slots[i].Item.Quantity == 0) // The slot is empty
+			{
+				ItemToCheck.Quantity -= MaxStack;
+			}
+			else
+			if (Slots[i].Item.ID == ItemToCheck.ID)
+			{
+				ItemToCheck.Quantity -= FMath::Max(MaxStack - Slots[i].Item.Quantity, 0);
+			}
+
+			if (ItemToCheck.Quantity <= 0)
+				return true;
+		}
+		return false;
+	}
+	check(false);
 	return false;
 }
 
