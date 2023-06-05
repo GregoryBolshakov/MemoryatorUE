@@ -9,6 +9,7 @@ public class TopDownTempTarget : TargetRules
 	{
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
+		//bUsesSteam = true;
 		ExtraModuleNames.Add("TopDownTemp");
 	}
 }

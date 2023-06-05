@@ -13,9 +13,14 @@ class TOPDOWNTEMP_API UMGameInstance : public UGameInstance
 
 public:
 
+	//TODO: Put these to the game mode
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MGameInstance")
 	UMItemsDataAsset* ItemsDataAsset;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "MGameInstance")
 	UMCharacterSpeciesDataAsset* CharacterSpeciesDataAsset;
+
+private:
+
+	class FNakamaManagerModule* NakamaManagerModule;
 };

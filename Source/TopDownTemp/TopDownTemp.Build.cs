@@ -8,7 +8,26 @@ public class TopDownTemp : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "Paper2D", "HeadMountedDisplay", "NavigationSystem", "AIModule", "UMG" });
-        PrivateDependencyModuleNames.AddRange(new string[] { "GoogleTest", "CADKernel" });
-    }
+		PublicDependencyModuleNames.AddRange(
+			new string[]
+			{
+				"AIModule",
+				"Core",
+				"CoreUObject",
+				"Engine",
+				"HeadMountedDisplay",
+				"NavigationSystem",
+				"InputCore",
+				"NakamaManager",
+				"NakamaUnreal",
+				"NakamaCore",
+				"OnlineSubsystemSteam",
+				"OnlineSubsystem",
+				"OnlineSubsystemUtils",
+				"Paper2D",
+				"Steamworks",
+				"UMG",
+			});
+		PrivateDependencyModuleNames.AddRange(new string[] { "GoogleTest", "CADKernel" });
+	}
 }
