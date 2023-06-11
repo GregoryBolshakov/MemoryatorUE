@@ -15,14 +15,19 @@ struct FShopItem
 {
 	GENERATED_BODY()
 
+	UPROPERTY()
 	uint32 itemid;
-  
+
+	UPROPERTY()
 	int16 qty;
 
+	UPROPERTY()
 	int64 amount;
 
+	UPROPERTY()
 	FString description;
 
+	UPROPERTY()
 	FString category;
 };
 
@@ -31,8 +36,10 @@ struct FBundle
 {
 	GENERATED_BODY()
 
+	UPROPERTY()
 	uint32 itemcount;
 
+	UPROPERTY()
 	TArray<FShopItem> items;
 };
 
@@ -41,8 +48,10 @@ struct FBundleByID
 {
 	GENERATED_BODY()
 
+	UPROPERTY()
 	uint32 bundleid;
 
+	UPROPERTY()
 	FBundle bundle;
 };
 
@@ -51,14 +60,19 @@ struct FPayload
 {
 	GENERATED_BODY()
 
+	UPROPERTY()
 	FString steamid;
 
+	UPROPERTY()
 	FString language;
 
+	UPROPERTY()
 	FString currency;
 
+	UPROPERTY()
 	uint32 bundleid;
 
+	UPROPERTY()
 	bool issandbox;
 };
 
