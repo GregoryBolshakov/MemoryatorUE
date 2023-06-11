@@ -15,11 +15,12 @@
 
 using namespace NAKAMA_NAMESPACE;
 
-class UNakamaRegistrationManager;
+#define USING_STEAM = 1
+
 class UNakamaClient;
 class UNakamaRealtimeClient;
 class UNakamaSession;
-class UNakamaPrivateLobbyManager;
+class UNakamaShopManager;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNakamaManager, Log, All);
 
@@ -147,126 +148,6 @@ struct FLeaderboardEntriesJson
 	UPROPERTY()
 	bool inverseSocial;
 };
-
-/*USTRUCT()
-struct FLeaderboardEntryJson
-{
-	GENERATED_BODY()
-
-	FLeaderboardEntryJson()
-	    : city()
-	    , country()
-	    , externalIds()
-	    , rank(0)
-	    , score(0)
-	    , userId()
-	    , userName()
-	    , when()
-	    , HASH()
-	    , SECTOR1(0)
-	    , SECTOR2(0)
-	    , SECTOR3(0)
-	{
-	}
-
-	UPROPERTY()
-	FString city;
-	UPROPERTY()
-	FString country;
-	UPROPERTY()
-	TMap<FString, FString> externalIds;
-	UPROPERTY()
-	int32 rank;
-	UPROPERTY()
-	int32 score;
-	UPROPERTY()
-	FString userId;
-	UPROPERTY()
-	FString userName;
-	UPROPERTY()
-	FString when;
-	UPROPERTY()
-	FString HASH;
-	UPROPERTY()
-	int32 SECTOR1;
-	UPROPERTY()
-	int32 SECTOR2;
-	UPROPERTY()
-	int32 SECTOR3;
-
-	FLeaderboardEntry ToLeaderboardEntry() const;
-};
-
-USTRUCT()
-struct FLeaderboardEntryArrayJson
-{
-	GENERATED_BODY()
-
-	FLeaderboardEntryArrayJson()
-	    : leaderboardShortCode()
-	    , data()
-	    , first()
-	    , last()
-	{
-	}
-
-	UPROPERTY()
-	FString leaderboardShortCode;
-	UPROPERTY()
-	TArray<FLeaderboardEntryJson> data;
-	UPROPERTY()
-	TArray<FLeaderboardEntryJson> first;
-	UPROPERTY()
-	TArray<FLeaderboardEntryJson> last;
-
-	FLeaderboardData ToLeaderboardData() const;
-};
-
-USTRUCT()
-struct FFriendJson
-{
-	GENERATED_BODY()
-
-	FFriendJson()
-	    : achievements()
-	    , displayName()
-	    , externalIds()
-	    , id()
-	{
-	}
-
-	UPROPERTY()
-	TArray<FString> achievements;
-	UPROPERTY()
-	FString displayName;
-	UPROPERTY()
-	TMap<FString, FString> externalIds;
-	UPROPERTY()
-	FString id;
-
-	UPROPERTY()
-	bool online = false;
-	// Unused
-	// UPROPERTY()
-	// TArray<Something> virtualGoods;
-	FFriend ToFriend() const;
-};
-
-USTRUCT()
-struct FFriendArrayJson
-{
-	GENERATED_BODY()
-
-	FFriendArrayJson()
-	    : friends()
-	{
-	}
-
-	UPROPERTY()
-	TArray<FFriendJson> friends;
-
-	FFriendsList ToFriendsList() const;
-};*/
 
 USTRUCT()
 struct FCurrencies
@@ -470,7 +351,6 @@ public:
 	virtual void Initialise(bool IN_IsDedicatedServer);
 	bool IsInitialised() const;
 
-	// Auth
 	UFUNCTION(BlueprintCallable)
 	bool IsAuthenticatedWithSteam() const;
 
@@ -483,109 +363,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Backend")
 	virtual UNakamaClient* GetNakamaClient() const { return this->NakamaClient; }
 
-	/*// Achievements
-
-	virtual FOnAchievementEarnedEvent& GetOnAchievementEarnedEvent() override;
-	virtual void GetAchievementsEarnedThisRuntime(TArray<FAchievementEarned>& OUT_AchievementsEarned) override;
-
-	// Analytics
-
-	virtual void AnalyticsRequest(const FString& IN_Key, bool IN_bStart, bool IN_bEnd, const FOnAnalyticsRequestCompleteDelegate& IN_Callback) override;
-	virtual void EndSessionRequest(const FOnEndSessionRequestCompleteDelegate& IN_Callback) override;
-
-	// Currencies
-
-	virtual FOnXpLevelUpEvent& GetOnXpLevelUpEvent() override;
-	virtual void GetXpLevelsTable(const FOnGetXPLevelsTableCompleteDelegate& IN_Callback) override;
-	virtual void AddXP(int32 IN_DeltaXP, FOnXPChange IN_Callback) override;
-	virtual void AddVC(int32 IN_DeltaVC, FOnVCChange IN_Callback) override;
-
-	// Maintenance
-
-	virtual const FMaintenanceStatus& GetCachedMaintenanceStatus() const override;
-	virtual FOnMaintenanceStartedEvent& GetOnMaintenanceStartedEvent() override;
-	virtual FOnMaintenanceEndedEvent& GetOnMaintenanceEndedEvent() override;
-
-	// Storage
-
-	UFUNCTION(BlueprintCallable)
-	virtual void WriteToStorage(const FString& Collection, const FString& Key, const FString& Value);    //, const FString& Version);
-
-	// Events
-	FOnAchievementEarnedEvent Event_OnAchievementEarned;
-	FOnXpLevelUpEvent Event_OnXpLevelUp;
-	FOnMaintenanceStartedEvent Event_OnMaintenanceStarted;
-	FOnMaintenanceEndedEvent Event_OnMaintenanceEnded;*/
+	const FString& GetSteamID() const { return SteamID; }
 
 private:
 	// Authenticated data
 
 	void SetAuthenticatedUserDisplayName(const FString& IN_DisplayName);
-	void SetAuthenticatedUserID(const FName& IN_UserID);
 	void SetAuthenticatedUserCountry(const FString& IN_Country);
 	void SetAuthenticatedUserCity(const FString& IN_City);
 	virtual bool IsConnected() const;
 	virtual bool IsUsingPreviewServer() const;
-	virtual const FName& GetAuthenticatedUserID() const;    // #todo: Rename/split in to cloud doc user id
-	virtual const FName& GetCloudDocumentUserID() const;
-	virtual const FString& GetAuthenticatedUserDisplayName() const;
-	virtual const FString& GetAuthenticatedUserCountry() const;
-	virtual const FString& GetAuthenticatedUserCity() const;
-	//virtual void GetAccountDetails(const FOnGetAccountDetailsCompleteDelegate& IN_Callback);
-	//virtual void GetFriendsList(const FOnGetFriendsListCompleteDelegate& IN_Callback);
-
-	// Events
-
-	//virtual void LogEvent(const FString& IN_EventKey, const TMap<FString, int32>& IN_Attributes, const FOnLogEventCompleteDelegate& IN_Callback) override;
-	//virtual void LogEvent(const FString& IN_EventKey, const TMap<FString, FString>& IN_Attributes, const FOnLogEventCompleteDelegate& IN_Callback) override;
-
-	// Leaderboards
-
-	/*virtual void LeaderboardSubmitScore(const FString& IN_LeaderboardName, const TMap<FString, FString>& IN_Attributes, const FOnLeaderboardSubmitScoreCompleteDelegate& IN_Callback) override;
-	virtual void GetLeaderboardData(bool IN_bGlobal,
-	                                const FString& IN_LeaderboardID,
-	                                int32 IN_Entries,
-	                                int32 IN_Offset,
-	                                const TArray<FName>& IN_FriendIDs,
-	                                int32 IN_IncludeFirst,
-	                                int32 IN_IncludeLast,
-	                                bool IN_bSocial,
-	                                bool IN_bInverseSocial,
-	                                const TArray<FName>& IN_TeamIDs,
-	                                const TArray<FName>& IN_TeamTypes,
-	                                const FOnGetLeaderboardDataCompleteDelegate& IN_Callback) override;
-	virtual void GetLeaderboardEntries(
-	    bool bIsGlobal, const TArray<FString>& IN_LeaderboardIDs, const FName& IN_PlayerID, bool IN_bIncludeSocial, bool IN_bInverseSocial, const TArray<FName>& IN_TeamTypes, const FOnGetLeaderboardEntriesCompleteDelegate& IN_Callback) override;
-	virtual void GetLeaderboardEntriesAroundPlayer(bool IN_bGlobal,
-	                                               const FString& IN_LeaderboardID,
-	                                               int32 IN_Entries,
-	                                               const TArray<FName>& IN_FriendIDs,
-	                                               int32 IN_IncludeFirst,
-	                                               int32 IN_IncludeLast,
-	                                               bool IN_bSocial,
-	                                               bool IN_bInverseSocial,
-	                                               const TArray<FName>& IN_TeamIDs,
-	                                               const TArray<FName>& IN_TeamTypes,
-	                                               const FOnGetLeaderboardEntriesAroundPlayerCompleteDelegate& IN_Callback) override;
-	virtual void GetLeaderboardEntry(bool IN_bGlobal, const FString& IN_LeaderboardID, const FName& IN_PlayerID, const FOnGetLeaderboardEntryCompleteDelegate& IN_Callback) override;
-
-	virtual void GetLeaderboardNewHighScores(TArray<FLeaderboardNewHighScore>& OUT_NewHighScores) override;
-	virtual void GetLeaderboardGlobalRankChanges(TArray<FLeaderboardRankChanged>& OUT_GlobalRankChanges) override;
-	virtual void GetLeaderboardSocialRankChanges(TArray<FLeaderboardRankChanged>& OUT_SocialRankChanges) override;
-
-	FOnLeaderboardNewHighScoreEvent Event_OnLeaderboardNewHighScore;
-	virtual FOnLeaderboardNewHighScoreEvent& GetOnLeaderboardNewHighScoreEvent() override;
-
-	FOnLeaderboardRankChangedEvent Event_OnLeaderboardGlobalRankChangedEvent;
-	virtual FOnLeaderboardRankChangedEvent& GetOnLeaderboardGlobalRankChangedEvent() override;
-
-	FOnLeaderboardRankChangedEvent Event_OnLeaderboardSocialRankChangedEvent;
-	virtual FOnLeaderboardRankChangedEvent& GetOnLeaderboardSocialRankChangedEvent() override;
-
-	UFUNCTION()
-	void OnWriteToStorageComplete(const FNakamaStoreObjectAcks& StorageObjectsAcks);
-	UFUNCTION()
-	void OnWriteToStorageError(const FNakamaError& IN_Error);*/
+	const FName& GetAuthenticatedUserID() const;    // #todo: Rename/split in to cloud doc user id
+	const FString& GetAuthenticatedUserDisplayName() const;
+	const FString& GetAuthenticatedUserCountry() const;
+	const FString& GetAuthenticatedUserCity() const;
 
 private:
 	UPROPERTY()
@@ -595,10 +386,10 @@ private:
 	FString UserDisplayName;
 
 	UPROPERTY()
-	FName MongoDBUserID;
+	FName NakamaUserID;
 
 	UPROPERTY()
-	FName NakamaUserID;
+	FString SteamID;
 
 	UPROPERTY()
 	FString UserCountry;
@@ -647,10 +438,10 @@ public:
 	UNakamaRealtimeClient* NakamaRealtimeClient;
 
 	UPROPERTY()
-	UNakamaSession* UserSession;
+	UNakamaShopManager* NakamaShopManager;
 
-	UFUNCTION()
-	void OnAuthenticationSuccessIDRetrieval(UNakamaSession* IN_LoginData);
+	UPROPERTY()
+	UNakamaSession* UserSession;
 
 	UFUNCTION()
 	void OnAuthenticationSuccess(UNakamaSession* IN_LoginData);
@@ -685,9 +476,6 @@ public:
 	UFUNCTION()
 	void OnLogEventSuccess(const FNakamaRPC& IN_RPC);
 
-	UFUNCTION()
-	void OnGamesparksIDRetrieved(const FNakamaRPC& IN_RPC);
-
 	// JSON
 public:
 	static FString ConvertToJson(const TMap<FString, int32>& IN_Map);
@@ -700,8 +488,6 @@ private:
 	// UFUNCTION()
 	// void OnNewHighScore(FGSNewHighScoreMessage IN_GSNewHighScoreMessage);
 
-	void Authenticate();
-	void AuthenticateUsingGamesparksID(FString IN_GamesparksID);
 	void AuthenticateUsingSteam();
 	void AuthenticateAnonymous();
 	void AuthenticateServer();

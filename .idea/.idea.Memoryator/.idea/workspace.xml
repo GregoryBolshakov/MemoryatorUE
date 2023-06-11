@@ -6,6 +6,7 @@
     <projectFile>Intermediate/ProjectFiles/BlankProgram.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/BootstrapPackagedGame.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/BuildPatchTool.vcxproj</projectFile>
+    <projectFile>Intermediate/ProjectFiles/ChaosUserDataPTTests.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/ChaosVisualDebugger.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/CrashReportClient.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/CrashReportClientEditor.vcxproj</projectFile>
@@ -40,6 +41,7 @@
     <projectFile>Intermediate/ProjectFiles/DatasmithSketchUpRuby2022.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/DatasmithSolidworks2021.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/DatasmithUE4ArchiCAD.vcxproj</projectFile>
+    <projectFile>Intermediate/ProjectFiles/DotNetPerforceLib.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/EpicWebHelper.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/HeadlessChaos.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/HeadlessChaosPerf.vcxproj</projectFile>
@@ -47,9 +49,12 @@
     <projectFile>Intermediate/ProjectFiles/LiveCodingConsole.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/LowLevelTests.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/Memoryator.vcxproj</projectFile>
+    <projectFile>Intermediate/ProjectFiles/ReplicationSystemTest.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/ShaderCompileWorker.vcxproj</projectFile>
+    <projectFile>Intermediate/ProjectFiles/SlateUGS.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/SlateViewer.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/SwitchboardListener.vcxproj</projectFile>
+    <projectFile>Intermediate/ProjectFiles/SymsLibDump.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/TestPAL.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/TextureShareSDK.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/UE4.vcxproj</projectFile>
@@ -59,36 +64,120 @@
     <projectFile>Intermediate/ProjectFiles/UnrealInsights.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/UnrealLightmass.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/UnrealMultiUserServer.vcxproj</projectFile>
+    <projectFile>Intermediate/ProjectFiles/UnrealMultiUserSlateServer.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/UnrealObjectPtrTool.vcxproj</projectFile>
+    <projectFile>Intermediate/ProjectFiles/UnrealPackageTool.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/UnrealPak.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/UnrealRecoverySvc.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/UnrealVersionSelector.vcxproj</projectFile>
+    <projectFile>Intermediate/ProjectFiles/UnrealVirtualizationTool.vcxproj</projectFile>
+    <projectFile>Intermediate/ProjectFiles/Unsync.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/ZenDashboard.vcxproj</projectFile>
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v15/.suo" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_MGameInstance.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_MGameInstance.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_VillagerMobController.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/BP_VillagerMobController.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultInput.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultInput.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_CrowdAIManager.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Memoryator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_Memoryator.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_NightmareMedium.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_NightmareMedium.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Big.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Big.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Intermediate.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Intermediate.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Medium.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Medium.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Small.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Small.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Tiny.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Village/Buildings/BP_House_Tiny.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/DataAssets/CharacterSpeciesDataAsset.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/DataAssets/CharacterSpeciesDataAsset.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/Inventory/WBP_InventorySlot.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/Inventory/WBP_InventorySlot.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/DataAssets/ItemsDataAsset.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/DataAssets/ItemsDataAsset.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/TopDownExampleMap.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/Inventory/WBP_ToggleInventoryButton.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/Inventory/WBP_ToggleInventoryButton.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_CommunicationScreen.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Widgets/WBP_CommunicationScreen.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Memoryator.sln" beforeDir="false" afterPath="$PROJECT_DIR$/Memoryator.sln" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacterSpeciesDataAsset.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCharacterSpeciesDataAsset.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationWidget.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationWidget.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPickableItem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MPickableItem.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillagerMobController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/MVillagerMobController.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Memoryator.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/Memoryator.uproject" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/NakamaManager/Config/DefaultNakamaManager.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/NakamaManager/Config/DefaultNakamaManager.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Private/NakamaManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Private/NakamaManager.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Private/NakamaManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Private/NakamaManager.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationBlueprintLibrary.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/M2DRepresentationComponent.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/M2DShadowControllerComponent.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/M2DShadowControllerComponent.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MAICrowdManager.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MAICrowdManager.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MActor.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MAttackPuddleComponent.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MAttackPuddleComponent.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBlockGenerator.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBlockGenerator.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBuffBarComponent.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBuffBarComponent.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBuffBarWidget.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MBuffBarWidget.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacter.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacterSpeciesDataAsset.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCharacterSpeciesDataAsset.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationComponent.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationComponent.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationWidget.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MCommunicationWidget.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommands.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommands.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsManager.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsManager.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsWorld.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MConsoleCommandsWorld.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MDropManager.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MDropManager.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGameInstance.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGameInstance.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGameMode.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGameMode.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MGroundBlock.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInterfaceMobController.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInterfaceMobController.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryComponent.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventorySlotWidget.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MIsActiveCheckerComponent.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MItemsDataAsset.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMemoryator.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMob.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMob.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMobController.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMobControllerBase.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MMobControllerBase.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPickUpBarWidget.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPickUpBarWidget.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPickableItem.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPickableItem.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MPlayerController.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MRotatableFlipbookComponent.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillageGenerator.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillagerMobController.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MVillagerMobController.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGenerator.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldGeneratorTypes.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/MWorldManager.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/TopDownTemp.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/TopDownTemp.h" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,17 +185,18 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Intermediate/Build/Win64/UnrealEditor/Inc/Engine/Actor.gen.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/2D/Paper2D/Source/Paper2D/Classes/PaperSpriteActor.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/2D/Paper2D/Source/Paper2D/Private/PaperSpriteActor.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Developer/GraphColor/Private/graph.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Developer/GraphColor/Private/graphColorVertices.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Developer/GraphColor/Private/graphExtensions.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Editor/SwarmInterface/DotNET/SwarmInterface.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Programs/Enterprise/Datasmith/DatasmithFacadeCSharp/Public/FDatasmithFacadeMaterialExpression.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Programs/Enterprise/Datasmith/DatasmithFacadeCSharp/Public/FDatasmithFacadeMesh.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Programs/Enterprise/Datasmith/DatasmithRhinoExporter/Private/Utils/DatasmithRhinoUniqueNameGenerator.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Programs/Enterprise/Datasmith/DatasmithSolidworksExporter/Private/DatasmithExporter.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Programs/UnrealBuildTool/Configuration/TargetRules.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Programs/UnrealBuildTool/Configuration/UEBuildTarget.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Classes/Engine/EngineBaseTypes.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Classes/GameFramework/PlayerController.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/Runtime/Engine/Private/Components/CharacterMovementComponent.cpp" root0="SKIP_HIGHLIGHTING" />
@@ -117,9 +207,59 @@
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/ThirdParty/NVIDIA/nvapi/nvapi_lite_common.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/ThirdParty/NVIDIA/nvapi/nvapi_lite_d3dext.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Source/ThirdParty/mimalloc/src/alloc.c" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MActor.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MActor.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/MInventoryWidget.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/thirdparty/spdlog/include/spdlog/fmt/bundled/ostream.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MCharacter.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MCharacter.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MMemoryator.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MMemoryator.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MMob.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MMob.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Components/M2DRepresentationComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Components/M2DRepresentationComponent.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MCommunicationComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MCommunicationComponent.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MInventoryComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MInventoryComponent.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MIsActiveCheckerComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MIsActiveCheckerComponent.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MRotatableFlipbookComponent.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MRotatableFlipbookComponent.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Console/MConsoleCommandsWorld.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MMobController.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MMobController.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MMobControllerBase.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MMobControllerBase.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MPlayerController.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MPlayerController.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MVillagerMobController.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MVillagerMobController.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Framework/MGameInstance.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Framework/MGameInstance.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MCommunicationManager.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MCommunicationManager.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MDropManager.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MDropManager.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MVillageGenerator.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MVillageGenerator.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MWorldGenerator.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MWorldGenerator.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MWorldManager.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MActor.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MActor.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MGroundBlock.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MGroundBlock.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MPickableItem.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MPickableItem.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MCommunicationWidget.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MCommunicationWidget.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MInventorySlotWidget.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MInventoryWidget.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MInventoryWidget.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MPickUpBarWidget.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MPickUpBarWidget.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MShopWidget.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MShopWidget.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/TopDownTemp.Build.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -138,6 +278,7 @@
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;XThreadsFramesViewSplitterKey&quot;: &quot;0.4727955&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
@@ -22959,6 +23100,71 @@
         <option name="Build" />
       </method>
     </configuration>
+    <list>
+      <item itemvalue="C++ Project.BaseTextureBuildWorker" />
+      <item itemvalue="C++ Project.BenchmarkTool" />
+      <item itemvalue="C++ Project.BlankProgram" />
+      <item itemvalue="C++ Project.BootstrapPackagedGame" />
+      <item itemvalue="C++ Project.BuildPatchTool" />
+      <item itemvalue="C++ Project.ChaosVisualDebugger" />
+      <item itemvalue="C++ Project.CrashReportClient" />
+      <item itemvalue="C++ Project.CrashReportClientEditor" />
+      <item itemvalue="C++ Project.DatasmithArchiCAD" />
+      <item itemvalue="C++ Project.DatasmithCADWorker" />
+      <item itemvalue="C++ Project.DatasmithFacadeCSharp" />
+      <item itemvalue="C++ Project.DatasmithMax2016" />
+      <item itemvalue="C++ Project.DatasmithMax2017" />
+      <item itemvalue="C++ Project.DatasmithMax2018" />
+      <item itemvalue="C++ Project.DatasmithMax2019" />
+      <item itemvalue="C++ Project.DatasmithMax2020" />
+      <item itemvalue="C++ Project.DatasmithMax2021" />
+      <item itemvalue="C++ Project.DatasmithMax2022" />
+      <item itemvalue="C++ Project.DatasmithMax2023" />
+      <item itemvalue="C++ Project.DatasmithNavisworks2019" />
+      <item itemvalue="C++ Project.DatasmithNavisworks2020" />
+      <item itemvalue="C++ Project.DatasmithNavisworks2021" />
+      <item itemvalue="C++ Project.DatasmithNavisworks2022" />
+      <item itemvalue="C++ Project.DatasmithNavisworks2023" />
+      <item itemvalue="C++ Project.DatasmithRevit2018" />
+      <item itemvalue="C++ Project.DatasmithRevit2019" />
+      <item itemvalue="C++ Project.DatasmithRevit2020" />
+      <item itemvalue="C++ Project.DatasmithRevit2021" />
+      <item itemvalue="C++ Project.DatasmithRevit2022" />
+      <item itemvalue="C++ Project.DatasmithRevit2023" />
+      <item itemvalue="C++ Project.DatasmithRhino6" />
+      <item itemvalue="C++ Project.DatasmithRhino7" />
+      <item itemvalue="C++ Project.DatasmithSDK" />
+      <item itemvalue="C++ Project.DatasmithSketchUpRuby2019" />
+      <item itemvalue="C++ Project.DatasmithSketchUpRuby2020" />
+      <item itemvalue="C++ Project.DatasmithSketchUpRuby2021" />
+      <item itemvalue="C++ Project.DatasmithSketchUpRuby2022" />
+      <item itemvalue="C++ Project.DatasmithSolidworks2021" />
+      <item itemvalue="C++ Project.DatasmithUE4ArchiCAD" />
+      <item itemvalue="C++ Project.EpicWebHelper" />
+      <item itemvalue="C++ Project.HeadlessChaos" />
+      <item itemvalue="C++ Project.HeadlessChaosPerf" />
+      <item itemvalue="C++ Project.InterchangeWorker" />
+      <item itemvalue="C++ Project.LiveCodingConsole" />
+      <item itemvalue="C++ Project.LowLevelTests" />
+      <item itemvalue="C++ Project.ShaderCompileWorker" />
+      <item itemvalue="C++ Project.SlateViewer" />
+      <item itemvalue="C++ Project.SwitchboardListener" />
+      <item itemvalue="C++ Project.TestPAL" />
+      <item itemvalue="C++ Project.TextureShareSDK" />
+      <item itemvalue="C++ Project.UnrealFrontend" />
+      <item itemvalue="C++ Project.UnrealHeaderTool" />
+      <item itemvalue="C++ Project.UnrealInsights" />
+      <item itemvalue="C++ Project.UnrealLightmass" />
+      <item itemvalue="C++ Project.UnrealMultiUserServer" />
+      <item itemvalue="C++ Project.UnrealObjectPtrTool" />
+      <item itemvalue="C++ Project.UnrealPak" />
+      <item itemvalue="C++ Project.UnrealRecoverySvc" />
+      <item itemvalue="C++ Project.UnrealVersionSelector" />
+      <item itemvalue="C++ Project.ZenDashboard" />
+      <item itemvalue="C++ Project.Memoryator" />
+      <item itemvalue="C++ Project.UE4" />
+      <item itemvalue="C++ Project.UE5" />
+    </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -23149,6 +23355,44 @@
       <workItem from="1684657792134" duration="21053000" />
       <workItem from="1684744584050" duration="2026000" />
       <workItem from="1684774351936" duration="592000" />
+      <workItem from="1685287719120" duration="5166000" />
+      <workItem from="1685293012141" duration="567000" />
+      <workItem from="1685293648991" duration="1754000" />
+      <workItem from="1685305320005" duration="2423000" />
+      <workItem from="1685351092071" duration="2838000" />
+      <workItem from="1685354237952" duration="6875000" />
+      <workItem from="1685363095101" duration="8784000" />
+      <workItem from="1685394763642" duration="758000" />
+      <workItem from="1685455906811" duration="1648000" />
+      <workItem from="1685461049697" duration="3877000" />
+      <workItem from="1685466153831" duration="2073000" />
+      <workItem from="1685472649942" duration="893000" />
+      <workItem from="1685474069826" duration="1166000" />
+      <workItem from="1685475298561" duration="155000" />
+      <workItem from="1685475522492" duration="2822000" />
+      <workItem from="1685481641652" duration="172000" />
+      <workItem from="1685481855933" duration="1304000" />
+      <workItem from="1685534577122" duration="2294000" />
+      <workItem from="1685543107821" duration="507000" />
+      <workItem from="1685543669492" duration="3618000" />
+      <workItem from="1685568423966" duration="348000" />
+      <workItem from="1685605575957" duration="10929000" />
+      <workItem from="1685700014779" duration="521000" />
+      <workItem from="1685700600295" duration="10880000" />
+      <workItem from="1685783577945" duration="2731000" />
+      <workItem from="1685859117392" duration="2767000" />
+      <workItem from="1685979628672" duration="1876000" />
+      <workItem from="1686066703690" duration="4726000" />
+      <workItem from="1686144227545" duration="1531000" />
+      <workItem from="1686151332171" duration="3103000" />
+      <workItem from="1686234594385" duration="5581000" />
+      <workItem from="1686258195067" duration="379000" />
+      <workItem from="1686258757231" duration="3916000" />
+      <workItem from="1686338256439" duration="6249000" />
+      <workItem from="1686388663650" duration="22492000" />
+      <workItem from="1686472247379" duration="1509000" />
+      <workItem from="1686475345890" duration="7683000" />
+      <workItem from="1686502705842" duration="584000" />
     </task>
     <servers />
   </component>
@@ -23210,9 +23454,24 @@
           <option name="timeStamp" value="243" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Source/TopDownTemp/MCommunicationManager.cpp</url>
-          <line>107</line>
-          <option name="timeStamp" value="261" />
+          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/Online/OnlineSubsystemSteam/Source/Private/OnlineAuthInterfaceSteam.cpp</url>
+          <line>92</line>
+          <option name="timeStamp" value="258" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/../../../../UnrealEngine/Engine/Plugins/Online/OnlineSubsystemSteam/Source/Private/OnlineAuthHandlerSteam.cpp</url>
+          <line>183</line>
+          <option name="timeStamp" value="260" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Private/NakamaManager.cpp</url>
+          <line>408</line>
+          <option name="timeStamp" value="264" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Private/NakamaManager.cpp</url>
+          <line>378</line>
+          <option name="timeStamp" value="283" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
