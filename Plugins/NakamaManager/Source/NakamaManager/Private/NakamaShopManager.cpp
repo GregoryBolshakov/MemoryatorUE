@@ -1,11 +1,10 @@
 #include "NakamaShopManager.h"
 
-#include <steam/isteamuser.h>
-
 #include "JsonObjectConverter.h"
 #include "NakamaClient.h"
 #include "NakamaManager.h"
 #include "NakamaSession.h"
+#include "Kismet/GameplayStatics.h"
 
 void UNakamaShopManager::Initialise(UNakamaClient* IN_NakamaClient, UNakamaSession* IN_UserSession, UNakamaManager* IN_NakamaManager)
 {
@@ -66,4 +65,48 @@ void UNakamaShopManager::OnReceivedAllBundles(const FNakamaRPC& RPC)
 	{
 		Bundles.Add(BundleByID.bundleid, BundleByID.bundle);
 	}
+}
+
+# ifdef USING_STEAM
+void UNakamaShopManager::OnMicroTxnAuthorizationResponse(MicroTxnAuthorizationResponse_t* pParam)
+{
+	if (pParam->m_bAuthorized)
+	{
+		if (NakamaManager)
+		{
+			TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
+
+			JsonObject->SetStringField(TEXT("orderid"), FString::FromInt(pParam->m_ulOrderID));
+			JsonObject->SetNumberField(TEXT("appid"), pParam->m_unAppID);
+
+			FString Payload;
+			TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Payload);
+			FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+
+			FOnRPC OnTxnFinalizedDelegate;
+			OnTxnFinalizedDelegate.AddDynamic(this, &UNakamaShopManager::OnTxnFinalized);
+			if (NakamaClient)
+				NakamaClient->RPC(UserSession, "steam_finalize_purchase", Payload, OnTxnFinalizedDelegate, {});
+		}
+	}
+	else
+	{
+		//TODO: Handle this nicely
+	}
+}
+#endif
+
+void UNakamaShopManager::OnTxnFinalized(const FNakamaRPC& RPC)
+{
+	const FString JsonPayload = RPC.Payload;
+
+	// Array to hold the bundles after conversion from JSON
+	FBundle Bundle;
+	if (!FJsonObjectConverter::JsonObjectStringToUStruct<FBundle>(JsonPayload, &Bundle, 0, 0))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to parse JSON."));
+		return;
+	}
+
+	OnBundleTxnFinalizedDelegate.ExecuteIfBound(Bundle);
 }

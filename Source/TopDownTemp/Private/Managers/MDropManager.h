@@ -8,11 +8,12 @@ class UMPickUpBarWidget;
 class UMInventoryComponent;
 class UUserWidget;
 class AMPickableItem;
+struct FBundle;
 
 UCLASS(Blueprintable)
-class UMDropManager : public UObject
+class UMDropManager : public UObject //TODO: Rename to ItemManager or whatever..
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
 public:
 
@@ -27,6 +28,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SpawnPickableItem(const FItem& Item);
+
+	UFUNCTION()
+	void GiveBundleToPlayer(const FBundle& Bundle);
 
 	const TSet<UMInventoryComponent*>& GetInventoriesToRepresent() { return InventoriesToRepresent; }
 

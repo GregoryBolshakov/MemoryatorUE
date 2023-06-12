@@ -5,8 +5,25 @@
 #include "StationaryActors/MPickableItem.h"
 #include "MWorldManager.h"
 #include "MWorldGenerator.h"
+#include "Characters/MCharacter.h"
 #include "Components/MInventoryComponent.h"
+#include "Framework/MGameInstance.h"
 #include "Kismet/GameplayStatics.h"
+#include "NakamaManager/Private/NakamaShopManager.h"
+
+UMDropManager::UMDropManager(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	if (const auto World = UObject::GetWorld())
+	{
+		if (const auto GameInstance = World->GetGameInstance<UMGameInstance>())
+		{
+			if (const auto NakamaManager = GameInstance->GetNakamaManager())
+			{
+				NakamaManager->NakamaShopManager->OnBundleTxnFinalizedDelegate.BindUObject(this, &UMDropManager::GiveBundleToPlayer);
+			}
+		}
+	}
+}
 
 void UMDropManager::AddInventory(UMInventoryComponent* Inventory)
 {
@@ -78,6 +95,20 @@ void UMDropManager::SpawnPickableItem(const FItem& Item)
 		}
 	}
 	check(false);
+}
+
+void UMDropManager::GiveBundleToPlayer(const FBundle& Bundle)
+{
+	if (const auto pPlayer = Cast<AMCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+	{
+		if (const auto InventoryComponent = pPlayer->GetInventoryComponent())
+		{
+			for (const auto& Item : Bundle.items)
+			{
+				InventoryComponent->StoreItem({int(Item.itemid), Item.qty});
+			}
+		}
+	}
 }
 
 TSubclassOf<UUserWidget> UMDropManager::gItemSlotWidgetBPClass = nullptr;

@@ -1,5 +1,6 @@
 #include "MGameInstance.h"
 #include "NakamaManagerModule.h"
+#include "NakamaManager/Private/NakamaManager.h"
 
 UMGameInstance::UMGameInstance(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

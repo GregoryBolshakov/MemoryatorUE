@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+#include <steam/isteamuser.h>
+#include <steam/steam_api_common.h>
+
 #include "CoreMinimal.h"
 #include "NakamaManager.h"
 
@@ -9,6 +12,8 @@ class UNakamaClient;
 class UNakamaSession;
 class UNakamaManager;
 struct FNakamaRPC;
+
+DECLARE_DELEGATE_OneParam(FOnBundleTxnFinalized, const FBundle& Bundle);
 
 USTRUCT()
 struct FShopItem
@@ -89,10 +94,19 @@ public:
 
 	const TMap<uint32, FBundle>& GetBundles() { return Bundles; }
 
+	FOnBundleTxnFinalized OnBundleTxnFinalizedDelegate;
+
 private:
 
 	UFUNCTION()
 	void OnReceivedAllBundles(const FNakamaRPC& RPC);
+
+#ifdef USING_STEAM
+	STEAM_CALLBACK(UNakamaShopManager, OnMicroTxnAuthorizationResponse, MicroTxnAuthorizationResponse_t);
+#endif
+
+	UFUNCTION()
+	void OnTxnFinalized(const FNakamaRPC& RPC);
 
 	UPROPERTY()
 	UNakamaClient* NakamaClient;
