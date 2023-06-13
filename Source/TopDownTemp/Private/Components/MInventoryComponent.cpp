@@ -60,6 +60,8 @@ int UMInventoryComponent::GetTotallPrice(const TArray<FSlot>& Slots, const UObje
 	{
 		for (const auto ItemSlot : Slots)
 		{
+			if (ItemSlot.Item.Quantity <= 0)
+				continue;
 			if (pItemsDataAsset->ItemsData.Num() <= ItemSlot.Item.ID || ItemSlot.Item.ID <= 0)
 			{
 				check(false);
@@ -348,7 +350,7 @@ void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 FItem UMInventoryComponent::StoreItemToSpecificSlot(int SlotNumberInArray, const FItem& ItemToStore)
 {
 	// Validity checks---------------
-	if (Slots.Num() <= SlotNumberInArray)
+	if (Slots.Num() <= SlotNumberInArray || ItemToStore.Quantity <= 0 || ItemToStore.ID <= 0)
 		return ItemToStore;
 
 	if (Slots[SlotNumberInArray].Item.Quantity > 0 && Slots[SlotNumberInArray].Item.ID != ItemToStore.ID)

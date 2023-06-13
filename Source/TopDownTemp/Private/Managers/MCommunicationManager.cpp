@@ -132,6 +132,8 @@ void AMCommunicationManager::ReturnAllPlayerItems()
 				// Return all the items to the player inventory. If doesn't fit, spawn as a drop
 				for (auto& ItemSlot : InventoryToOffer->GetSlots())
 				{
+					if (ItemSlot.Item.Quantity <= 0)
+						continue;
 					PlayerInventory->StoreItem(ItemSlot.Item);
 					ItemSlot.Item = {0, 0};
 				}

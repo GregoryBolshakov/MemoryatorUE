@@ -305,9 +305,8 @@ void UNakamaManager::OnAuthenticationSuccess(UNakamaSession* IN_LoginData)
 	// Realtime client (grpc)
 	static bool s_StartRealtimeClient = true;
 
-	if (s_StartRealtimeClient)
+	/*if (s_StartRealtimeClient)
 	{
-
 		// Setup Delegates of same type and bind them to local functions
 		FOnRealtimeClientConnected ConnectionSuccessDelegate;
 		ConnectionSuccessDelegate.AddDynamic(this, &UNakamaManager::OnRealtimeClientConnectSuccess);
@@ -320,7 +319,7 @@ void UNakamaManager::OnAuthenticationSuccess(UNakamaSession* IN_LoginData)
 
 		// Remember to Connect
 		NakamaRealtimeClient->Connect(ConnectionSuccessDelegate, ConnectionErrorDelegate);
-	}
+	}*/
 
 	NakamaShopManager->Initialise(NakamaClient, UserSession, this);
 
