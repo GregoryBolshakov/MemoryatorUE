@@ -39,7 +39,13 @@ Here, I am testing a full-fledged 3D environment created using assets I obtained
 ![Memoryator  DebugGame  - Unreal Editor 2023-06-20 16-29-12 (online-video-cutter com) (3)](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/7fb808a6-8fe8-4d5d-a3cf-685fb683083f)
 
 
-The game uses Nakama server for authentication with platworms, transactions, friends and storing data. But Nakama doesn't implement transactions with Steam, I implemented the pipeline for microtransactions in a separate Go runtime module.
+The game uses Nakama server for authentication with platforms, transactions, friends and storing data. But Nakama doesn't implement transactions with Steam, I implemented the pipeline for microtransactions in a separate Go runtime module.
 
 
 ![Memoryator  DebugGame  - Unreal Editor 2023-06-12 19-33-55](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/cb41398f-5f91-4837-927d-1196e043590e)
+
+
+You can also speak and trade with any mob, for instance, villagers. The communication widget is flexible, providing space for text and item exchange. This logic can be used not only for trades but also for quests, rewards, or stealing (similar to Fallout/Skyrim games). Improving your communication skills grants you better knowledge of the mob's items. Currently, they are completely hidden and represented by question marks. Mobs utilize the "knapsack" algorithm to determine the best counter-offer, but they have their own price coefficients for each item, which may vary depending on their attitude towards you or their disposition.
+![Memoryator Preview  NetMode_ Standalone 0  (64-bit_D3D Shader Model 5) 2023-07-13 19-24-46](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/a8a64860-1cae-435a-b335-6d3eefbdef29)
+
+![Memoryator Preview  NetMode_ Standalone 0  (64-bit_D3D Shader Model 5) 2023-07-13 19-24-46 (1)](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/1597f753-0748-4973-b223-81bb6fc8945e)
