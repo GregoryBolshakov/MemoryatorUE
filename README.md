@@ -28,3 +28,12 @@ Rooarr! The villagers are afraid of us and scatter to their homes.
 
 
 ![Memoryator Preview  NetMode_ Standalone  (64-bit_SM5) 2023-05-15 20-40-08](https://github.com/GregoryBolshakov/GameSources/assets/19948668/26b78e24-0603-4b76-9364-8e64417a9ed6)
+
+
+Here, I am testing a full-fledged 3D environment created using assets I obtained through a giveaway
+
+
+![Memoryator  DebugGame  - Unreal Editor 2023-06-20 16-29-12 (online-video-cutter com) (1)](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/f9470a12-99fe-45a5-9360-d27712623727)
+
+
+![Memoryator  DebugGame  - Unreal Editor 2023-06-20 16-29-12 (online-video-cutter com) (3)](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/7fb808a6-8fe8-4d5d-a3cf-685fb683083f)
