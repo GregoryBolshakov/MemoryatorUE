@@ -52,7 +52,7 @@ void UMConsoleCommandsWorld::SpawnMob(const FString& MobClassString, int Quantit
 						return;
 
 					FActorSpawnParameters EmptySpawnParameters;
-					pWorldGenerator->SpawnActorInRadius<AActor>(Class, pPlayer->GetActorLocation(), FRotator::ZeroRotator, EmptySpawnParameters, 150.f, 150.f);
+					pWorldGenerator->SpawnActorInRadius<AActor>(Class, pPlayer->GetActorLocation(), FRotator::ZeroRotator, EmptySpawnParameters, 150.f, 350.f);
 				}
 			}
 		}

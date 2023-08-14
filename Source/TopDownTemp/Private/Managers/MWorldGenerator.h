@@ -7,6 +7,7 @@
 #include "MWorldGeneratorTypes.h"
 #include "MWorldGenerator.generated.h"
 
+class UMReputationManager;
 class AMCommunicationManager;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*)
 
@@ -61,6 +62,9 @@ public:
 	UMDropManager* GetDropManager() const { return DropManager; }
 
 	UFUNCTION(BlueprintCallable)
+	UMReputationManager* GetReputationManager() const { return ReputationManager; }
+
+	UFUNCTION(BlueprintCallable)
 	AMCommunicationManager* GetCommunicationManager() const { return CommunicationManager; }
 
 	const TMap<FIntPoint, UBlockOfActors*>& GetGridOfActors() { return GridOfActors; }
@@ -79,6 +83,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UMDropManager> DropManagerBPClass;
+
+	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
+	TSubclassOf<UMReputationManager> ReputationManagerBPClass;
 
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<AMCommunicationManager> CommunicationManagerBPClass;
@@ -153,6 +160,9 @@ private:
 
 	UPROPERTY()
 	UMDropManager* DropManager;
+
+	UPROPERTY()
+	UMReputationManager* ReputationManager;
 
 	UPROPERTY()
 	AMCommunicationManager* CommunicationManager;

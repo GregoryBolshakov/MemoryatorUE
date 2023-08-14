@@ -367,7 +367,7 @@ FItem UMInventoryComponent::StoreItemToSpecificSlot(int SlotNumberInArray, const
     	return ItemToStore;
     }
 
-	const auto MaxStack = ItemsData[Slots[SlotNumberInArray].Item.ID].MaxStack;
+	const auto MaxStack = ItemsData[ItemToStore.ID].MaxStack;
 	const auto QuantityToStore = FMath::Min(ItemToStore.Quantity, MaxStack - Slots[SlotNumberInArray].Item.Quantity);
 	check(QuantityToStore >= 0);
 

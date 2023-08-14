@@ -137,7 +137,8 @@ void AMMemoryator::BeginPlay()
 
 	if (InventoryComponent)
 	{
-		InventoryComponent->Initialize(30, {});
+		//InventoryComponent->Initialize(30, {});
+		InventoryComponent->Initialize(30, {{1, 8}, {1, 8}, {2, 8}, {2, 8}, {3, 8}, {3, 8}, {4, 8}, {4, 8}});
 	}
 }
 

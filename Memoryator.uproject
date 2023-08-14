@@ -34,6 +34,10 @@
 		{
 			"Name": "NakamaManager",
 			"Enabled": true
+		},
+		{
+			"Name": "Landmass",
+			"Enabled": true
 		}
 	]
 }

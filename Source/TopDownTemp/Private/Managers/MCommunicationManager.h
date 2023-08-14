@@ -6,7 +6,7 @@
 class UMInventoryComponent;
 class AMCharacter;
 
-//TODO: Consider implementing conversations between mobs as well
+//TODO: Consider implementing conversations between mobs as well. If is doesn't make any sense, make this UObject
 UCLASS(Blueprintable, BlueprintType)
 class AMCommunicationManager : public AActor
 {

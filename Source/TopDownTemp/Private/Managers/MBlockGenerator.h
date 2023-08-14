@@ -17,9 +17,6 @@ struct FObjectConfig
 	GENERATED_BODY()
 
 	UPROPERTY(Category = ObjectConfig, EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<AActor> ToSpawnClass;
-
-	UPROPERTY(Category = ObjectConfig, EditDefaultsOnly, BlueprintReadOnly)
 	int MinNumberOfInstances;
 
 	UPROPERTY(Category = ObjectConfig, EditDefaultsOnly, BlueprintReadOnly)
@@ -32,20 +29,12 @@ struct FPreset
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig, meta=(AllowPrivateAccess=true, DisplayThumbnail=true))
-	FObjectConfig TreesConfig;
+	/** How often a specific block will occur among generated blocks. The higher - the less frequency */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig)
+	int Rarity;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig, meta=(AllowPrivateAccess=true, DisplayThumbnail=true))
-	FObjectConfig PlantsConfig;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig, meta=(AllowPrivateAccess=true, DisplayThumbnail=true))
-	FObjectConfig RocksConfig;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig, meta=(AllowPrivateAccess=true, DisplayThumbnail=true))
-	FObjectConfig StumpsConfig;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig, meta=(AllowPrivateAccess=true, DisplayThumbnail=true))
-	FObjectConfig BushesConfig;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig)
+	TMap<TSubclassOf<AActor>, FObjectConfig> ObjectsConfig;
 };
 
 /**
@@ -58,13 +47,16 @@ class TOPDOWNTEMP_API UMBlockGenerator : public UObject
 
 public:
 
-	void Generate(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome);
+	void Generate(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName = {});
 
 protected:
 
+	/** Returns a randomly selected preset basing on their Rarity value */
+	FPreset GetRandomPreset();
+
 	//TODO: Support multiple presets
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig)
-	FPreset Preset;
+	TMap<FName, FPreset> PresetMap;
 
 	UPROPERTY(Category = ContentConfig, EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<AMGroundBlock> GroundBlockBPClass;

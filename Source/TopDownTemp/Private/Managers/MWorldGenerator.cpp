@@ -9,6 +9,7 @@
 #include "MBlockGenerator.h"
 #include "MCommunicationManager.h"
 #include "MDropManager.h"
+#include "MReputationManager.h"
 #include "Components/MIsActiveCheckerComponent.h"
 #include "MVillageGenerator.h"
 #include "NavigationSystem.h"
@@ -21,6 +22,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	, DynamicActorsCheckInterval(0.5f)
 	, DynamicActorsCheckTimer(0.f)
 	, DropManager(nullptr)
+	, ReputationManager(nullptr)
 	, CommunicationManager(nullptr)
 	, BlockGenerator(nullptr)
 {
@@ -112,6 +114,17 @@ void AMWorldGenerator::BeginPlay()
 	// Create the Drop Manager
 	DropManager = DropManagerBPClass ? NewObject<UMDropManager>(this, DropManagerBPClass, TEXT("DropManager")) : nullptr;
 	check(DropManager);
+
+	// Create the Reputation Manager
+	ReputationManager = ReputationManagerBPClass ? NewObject<UMReputationManager>(this, ReputationManagerBPClass, TEXT("ReputationManager")) : nullptr;
+	if (ReputationManager)
+	{
+		ReputationManager->Initialize({{EFaction::Humans, {100, 10}}, {EFaction::Nightmares, {5, 4}}, {EFaction::Witches, {1, 0}}}); // temporary set manually
+	}
+	else
+	{
+		check(false);
+	}
 
 	// Spawn the Communication Manager
 	CommunicationManager = CommunicationManagerBPClass ? GetWorld()->SpawnActor<AMCommunicationManager>(CommunicationManagerBPClass) : nullptr;

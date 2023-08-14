@@ -230,7 +230,7 @@ void UNakamaManager::AuthenticateUsingSteam()
 	if (!bHasSteam)
 	{
 		InitialisationStatus = ENakamaInitialisationStatus::ErrorFailedToAuthenticate;
-		ensure(false);
+		//ensure(false);
 		return;
 	}
 
@@ -401,7 +401,7 @@ bool UNakamaManager::GetSteamData(FString& OUT_ID, FString& OUT_Token, FString& 
 	IOnlineIdentityPtr Result = nullptr;
 
 	IOnlineSubsystem* pOnlineSubsystem = IOnlineSubsystem::Get(STEAM_SUBSYSTEM);
-	ensure(pOnlineSubsystem);
+	//ensure(pOnlineSubsystem);
 	if (!pOnlineSubsystem)
 	{
 		UE_LOG(LogNakamaManager, Log, TEXT("Failed to authenticate with Steam: No subsystem loaded."));
