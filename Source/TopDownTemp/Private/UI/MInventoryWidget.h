@@ -4,7 +4,7 @@
 #include "Blueprint/UserWidget.h"
 #include "MInventoryWidget.generated.h"
 
-class AMPickableItem;
+class AMPickableActor;
 class UWrapBox;
 
 //TODO: Scroll when the dragged item is near the top/bottom side of the scrollbox.

@@ -31,7 +31,7 @@ struct FReputation
 //TODO: This class should communicate with Nakama server to obtain/update reputation
 //** The class responsible for storing and managing player's reputation points with all factions */
 UCLASS(Blueprintable, BlueprintType)
-class UMReputationManager : public UObject
+class TOPDOWNTEMP_API UMReputationManager : public UObject
 {
 
 public:

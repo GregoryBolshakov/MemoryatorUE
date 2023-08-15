@@ -2,7 +2,7 @@
 
 #include "MDropManager.h"
 #include "UI/MPickUpBarWidget.h"
-#include "StationaryActors/MPickableItem.h"
+#include "StationaryActors/MPickableActor.h"
 #include "MWorldManager.h"
 #include "MWorldGenerator.h"
 #include "Characters/MCharacter.h"
@@ -86,9 +86,9 @@ void UMDropManager::SpawnPickableItem(const FItem& Item)
 				const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
 				if (!pPlayer) { check(false); return; }
 
-				if (const auto PickableItem = pWorldGenerator->SpawnActorInRadius<AMPickableItem>(AMPickableItemBPClass, pPlayer->GetActorLocation(), FRotator::ZeroRotator, {}, 25.f, 0.f))
+				if (const auto PickableItem = pWorldGenerator->SpawnActorInRadius<AMPickableActor>(AMPickableItemBPClass, pPlayer->GetActorLocation(), FRotator::ZeroRotator, {}, 25.f, 0.f))
 				{
-					PickableItem->Initialise(Item);
+					PickableItem->InitialiseInventory({Item});
 					return;
 				}
 			}

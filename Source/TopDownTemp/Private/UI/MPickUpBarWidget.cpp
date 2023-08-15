@@ -3,7 +3,7 @@
 #include "Managers/MDropManager.h"
 #include "UI/MInventorySlotWidget.h"
 #include "UI/MInventoryWidget.h"
-#include "StationaryActors/MPickableItem.h"
+#include "StationaryActors/MPickableActor.h"
 #include "Managers/MWorldGenerator.h"
 #include "Managers/MWorldManager.h"
 #include "Components/Image.h"
@@ -32,13 +32,13 @@ void UMPickUpBarWidget::CreateSlots(TSet<UMInventoryComponent*>& InventoriesToRe
 	for (const auto& InventoryComponent : InventoriesToRepresent)
 	{
 		UMInventoryWidget::CreateItemSlotWidgets(this, InventoryComponent, pItemSlotsWrapBox);
-		if (const auto InventoryOwner = Cast<AMPickableItem>(InventoryComponent->GetOwner()))
+		if (const auto InventoryOwner = Cast<AMPickableActor>(InventoryComponent->GetOwner()))
 		{
 			for (auto& ItemSlot : InventoryComponent->GetSlots())
 			{
 				if (!ItemSlot.OnSlotChangedDelegate.IsBoundToObject(InventoryOwner))
 				{
-					ItemSlot.OnSlotChangedDelegate.BindDynamic(InventoryOwner, &AMPickableItem::OnItemChanged);
+					ItemSlot.OnSlotChangedDelegate.BindDynamic(InventoryOwner, &AMPickableActor::OnItemChanged);
 				}
 				else
 				{
@@ -63,7 +63,7 @@ void UMPickUpBarWidget::NativeDestruct()
 				{
 					for (const auto& Inventory : DropManager->GetInventoriesToRepresent())
 					{
-						if (const auto InventoryOwner = Cast<AMPickableItem>(Inventory->GetOwner()))
+						if (const auto InventoryOwner = Cast<AMPickableActor>(Inventory->GetOwner()))
 						{
 							for (auto& ItemSlot : Inventory->GetSlots())
 							{

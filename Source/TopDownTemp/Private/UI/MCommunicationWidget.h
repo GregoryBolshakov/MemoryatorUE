@@ -5,7 +5,7 @@
 #include "MCommunicationWidget.generated.h"
 
 class UButton;
-class AMPickableItem;
+class AMPickableActor;
 class UWrapBox;
 
 UCLASS()

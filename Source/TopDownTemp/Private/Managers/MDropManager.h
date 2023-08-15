@@ -7,7 +7,7 @@
 class UMPickUpBarWidget;
 class UMInventoryComponent;
 class UUserWidget;
-class AMPickableItem;
+class AMPickableActor;
 struct FBundle;
 
 UCLASS(Blueprintable)
@@ -47,7 +47,7 @@ private:
 	TSubclassOf<UUserWidget> PickUpBarWidgetBPClass;
 
 	UPROPERTY(EditDefaultsOnly, Category=UMDropManager)
-	TSubclassOf<AMPickableItem> AMPickableItemBPClass;
+	TSubclassOf<AMPickableActor> AMPickableItemBPClass;
 
 	UPROPERTY()
 	TSet<UMInventoryComponent*> InventoriesToRepresent;

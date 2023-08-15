@@ -1,25 +1,22 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "MPickableItem.h"
+#include "MPickableActor.h"
 
 #include "Components/M2DRepresentationComponent.h"
 #include "Managers/MDropManager.h"
 #include "PaperSprite.h"
-#include "PaperSpriteComponent.h"
-#include "Framework/MGameInstance.h"
 #include "Characters/MMemoryator.h"
 #include "Managers/MWorldGenerator.h"
 #include "Managers/MWorldManager.h"
 #include "Components/CapsuleComponent.h"
-#include "Components/Widget.h"
 #include "Kismet/GameplayStatics.h"
 
-AMPickableItem::AMPickableItem(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+AMPickableActor::AMPickableActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("Inventory"));
 }
 
-void AMPickableItem::PostInitializeComponents()
+void AMPickableActor::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
@@ -48,50 +45,12 @@ void AMPickableItem::PostInitializeComponents()
 	}
 }
 
-void AMPickableItem::Initialise(const FItem& IN_Item)
+void AMPickableActor::InitialiseInventory(const TArray<FItem>& IN_Items)
 {
-	InventoryComponent->Initialize(1, {IN_Item});
-
-	// Try to set sprite and quantity text using the data asset stored in the UMGameInstance
-	if (const auto TaggedComponents = GetComponentsByTag(UPaperSpriteComponent::StaticClass(), "ItemSprite");
-		!TaggedComponents.IsEmpty())
-	{
-		if (auto SpriteComponent = Cast<UPaperSpriteComponent>(TaggedComponents[0]))
-		{
-			if (const auto pGameInstace = GetGameInstance<UMGameInstance>();
-				pGameInstace->ItemsDataAsset && pGameInstace->ItemsDataAsset->ItemsData.Num() > IN_Item.ID && IN_Item.ID > 0)
-			{
-				const auto ItemData = pGameInstace->ItemsDataAsset->ItemsData[IN_Item.ID];
-
-				SpriteComponent->SetSprite(ItemData.IconSprite);
-			}
-		}
-	}
-	else
-	{
-		check(false);
-	}
-
-	if (const auto pWorld = GetWorld(); pDropManager)
-	{
-		if (const auto pPlayerPawn = UGameplayStatics::GetPlayerPawn(pWorld, 0))
-		{
-			if (const auto Capsule = Cast<UCapsuleComponent>(GetDefaultSubobjectByName(TEXT("CollectScopeCapsule"))))
-			{
-				auto Location2D = GetActorLocation();
-				Location2D.Z = 0.f;
-				auto PlayerLocation2D = pPlayerPawn->GetActorLocation();
-				PlayerLocation2D.Z = 0.f;
-				if (FVector::Distance(Location2D, PlayerLocation2D) < Capsule->GetScaledCapsuleRadius())
-				{
-					NotifyActorBeginOverlap(pPlayerPawn);
-				}
-			}
-		}
-	}
+	InventoryComponent->Initialize(IN_Items.Num(), IN_Items);
 }
 
-void AMPickableItem::NotifyActorBeginOverlap(AActor* OtherActor)
+void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
 
@@ -105,7 +64,7 @@ void AMPickableItem::NotifyActorBeginOverlap(AActor* OtherActor)
 	}
 }
 
-void AMPickableItem::NotifyActorEndOverlap(AActor* OtherActor)
+void AMPickableActor::NotifyActorEndOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorEndOverlap(OtherActor);
 
@@ -119,8 +78,9 @@ void AMPickableItem::NotifyActorEndOverlap(AActor* OtherActor)
 	}
 }
 
-void AMPickableItem::OnItemChanged(int NewItemID, int NewQuantity)
+void AMPickableActor::OnItemChanged(int NewItemID, int NewQuantity)
 {
+
 	if (!pDropManager)
 	{
 		check(false);
@@ -137,7 +97,7 @@ void AMPickableItem::OnItemChanged(int NewItemID, int NewQuantity)
 		}
 	}
 
-	if (IsEmpty)
+	if (IsEmpty && bDisappearIfEmptyInventory)
 	{
 		pDropManager->RemoveInventory(InventoryComponent);
 		Destroy();

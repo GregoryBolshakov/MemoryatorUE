@@ -3,21 +3,22 @@
 #include "CoreMinimal.h"
 #include "MActor.h"
 #include "Components/MInventoryComponent.h"
-#include "MPickableItem.generated.h"
+#include "MPickableActor.generated.h"
 
 class UMDropManager;
 //~=============================================================================
 /**
- * Item that can be picked up
+ * MActor with Inventory Component. Player can pick up/pull out items from it.
+ * This might be some drop on any container.
  */
 UCLASS(Blueprintable)
-class AMPickableItem : public AMActor //For now is useless
+class AMPickableActor : public AMActor
 {
 	GENERATED_UCLASS_BODY()
 
 public:
 
-	void Initialise(const FItem& IN_Item);
+	virtual void InitialiseInventory(const TArray<FItem>& IN_Items);
 
 	UFUNCTION()
 	void OnItemChanged(int NewItemID, int NewQuantity);
@@ -29,6 +30,9 @@ protected:
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
+
+	UPROPERTY(EditDefaultsOnly, Category = AMPickableItem)
+	bool bDisappearIfEmptyInventory;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AMPickableItem, meta = (AllowPrivateAccess = "true"))
 	UMInventoryComponent* InventoryComponent;

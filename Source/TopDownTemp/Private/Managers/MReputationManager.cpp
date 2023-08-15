@@ -11,7 +11,7 @@ FReputation UMReputationManager::GetReputation(EFaction IN_Faction)
 
 FString UMReputationManager::FactionToString(const EFaction Faction)
 {
-	UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EFaction"), true);
+	const UEnum* EnumPtr = FindObject<UEnum>(GetOuter(), TEXT("EFaction"), true);
 	if (!EnumPtr) return "";
 
 	return EnumPtr->GetNameStringByValue(static_cast<int64>(Faction));
