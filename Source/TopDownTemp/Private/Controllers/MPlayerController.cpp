@@ -136,6 +136,14 @@ void AMPlayerController::TurnSprintOff()
 	}
 }
 
+void AMPlayerController::OnExperienceAdded(int Amount)
+{
+	if (const auto pCharacter = GetCharacter())
+	{
+		MakeFloatingNumber(pCharacter->GetActorLocation(), Amount, EFloatingNumberType::Experience);
+	}
+}
+
 void AMPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);

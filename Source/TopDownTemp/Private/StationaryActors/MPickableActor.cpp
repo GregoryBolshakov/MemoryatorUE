@@ -99,6 +99,7 @@ void AMPickableActor::OnItemChanged(int NewItemID, int NewQuantity)
 
 	if (IsEmpty && bDisappearIfEmptyInventory)
 	{
+		PickedUpCompletelyDelegate.Broadcast(GetClass());
 		pDropManager->RemoveInventory(InventoryComponent);
 		Destroy();
 	}

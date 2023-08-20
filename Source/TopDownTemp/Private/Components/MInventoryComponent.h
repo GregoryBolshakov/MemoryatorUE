@@ -11,10 +11,12 @@ struct FItem
 {
 	GENERATED_BODY()
 
-	UPROPERTY(Category=FItem, EditAnywhere, BlueprintReadOnly)
+	// BlueprintReadWrite access on purpose. We make it possible to play standalone with no internet.
+	// Game will sync the time and remove all the items that was not possible to get (calculating the total cost)
+	UPROPERTY(Category=FItem, EditAnywhere, BlueprintReadWrite)
 	int ID = 0;
 
-	UPROPERTY(Category=FItem, EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(Category=FItem, EditAnywhere, BlueprintReadWrite)
 	int Quantity = 0;
 
 	bool operator ==(const FItem& Other) const { return ID == Other.ID && Quantity == Other.Quantity; }
@@ -25,6 +27,8 @@ USTRUCT(BlueprintType)
 struct FSlot
 {
 	GENERATED_BODY()
+
+	UPROPERTY()
 	FItem Item;
 	FOnSlotChanged OnSlotChangedDelegate;
 

@@ -7,6 +7,8 @@
 #include "MWorldGeneratorTypes.h"
 #include "MWorldGenerator.generated.h"
 
+class AMPickableActor;
+class UMExperienceManager;
 class UMReputationManager;
 class AMCommunicationManager;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*)
@@ -65,6 +67,9 @@ public:
 	UMReputationManager* GetReputationManager() const { return ReputationManager; }
 
 	UFUNCTION(BlueprintCallable)
+	UMExperienceManager* GetExperienceManager() const { return ExperienceManager; }
+
+	UFUNCTION(BlueprintCallable)
 	AMCommunicationManager* GetCommunicationManager() const { return CommunicationManager; }
 
 	const TMap<FIntPoint, UBlockOfActors*>& GetGridOfActors() { return GridOfActors; }
@@ -81,11 +86,15 @@ protected:
 	virtual ~AMWorldGenerator() override { DefaultBoundsMap.Empty(); };
 #endif
 
+	// TODO: Remove excess meta modifiers
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UMDropManager> DropManagerBPClass;
 
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UMReputationManager> ReputationManagerBPClass;
+
+	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
+	TSubclassOf<UMExperienceManager> ExperienceManagerBPClass;
 
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<AMCommunicationManager> CommunicationManagerBPClass;
@@ -163,6 +172,9 @@ private:
 
 	UPROPERTY()
 	UMReputationManager* ReputationManager;
+
+	UPROPERTY()
+	UMExperienceManager* ExperienceManager;
 
 	UPROPERTY()
 	AMCommunicationManager* CommunicationManager;

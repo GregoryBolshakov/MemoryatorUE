@@ -11,6 +11,14 @@ class AMCharacter;
 class UCurveFloat;
 enum class ERelationType;
 
+UENUM(BlueprintType)
+enum class EFloatingNumberType : uint8
+{
+	Experience = 0,
+	Damage,
+	Healing
+};
+
 UCLASS()
 class AMPlayerController : public APlayerController
 {
@@ -29,9 +37,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void TurnSprintOff();
 
+	UFUNCTION()
+	void OnExperienceAdded(int Amount);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void MakeFloatingNumber(const FVector& Location, int Value, EFloatingNumberType Type);
+
 	const TMap<TSubclassOf<APawn>, ERelationType>& GetRelationshipMap() const { return RelationshipMap; }
 
-//Dash
+//Dash // TODO: Use gameplay ability system 
 protected:
 
 	UFUNCTION()

@@ -5,6 +5,8 @@
 #include "Components/MInventoryComponent.h"
 #include "MPickableActor.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPickedUpCompletely, TSubclassOf<AMPickableActor>, Class)
+
 class UMDropManager;
 //~=============================================================================
 /**
@@ -18,10 +20,14 @@ class AMPickableActor : public AMActor
 
 public:
 
+	UFUNCTION(BlueprintCallable)
 	virtual void InitialiseInventory(const TArray<FItem>& IN_Items);
 
 	UFUNCTION()
 	void OnItemChanged(int NewItemID, int NewQuantity);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnPickedUpCompletely PickedUpCompletelyDelegate;
 
 protected:
 

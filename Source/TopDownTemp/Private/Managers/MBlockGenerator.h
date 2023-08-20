@@ -34,6 +34,9 @@ struct FPreset
 	int Rarity;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig)
+	TSet<EBiome> SupportedBiomes;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig)
 	TMap<TSubclassOf<AActor>, FObjectConfig> ObjectsConfig;
 };
 
@@ -52,7 +55,7 @@ public:
 protected:
 
 	/** Returns a randomly selected preset basing on their Rarity value */
-	FPreset GetRandomPreset();
+	FPreset GetRandomPreset(EBiome Biome);
 
 	//TODO: Support multiple presets
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig)

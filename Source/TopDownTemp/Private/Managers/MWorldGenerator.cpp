@@ -10,11 +10,14 @@
 #include "MCommunicationManager.h"
 #include "MDropManager.h"
 #include "MReputationManager.h"
+#include "MExperienceManager.h"
 #include "Components/MIsActiveCheckerComponent.h"
 #include "MVillageGenerator.h"
 #include "NavigationSystem.h"
+#include "Controllers/MPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
+#include "StationaryActors/MPickableActor.h"
 
 AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -23,6 +26,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	, DynamicActorsCheckTimer(0.f)
 	, DropManager(nullptr)
 	, ReputationManager(nullptr)
+	, ExperienceManager(nullptr)
 	, CommunicationManager(nullptr)
 	, BlockGenerator(nullptr)
 {
@@ -45,6 +49,7 @@ void AMWorldGenerator::GenerateActiveZone()
 		return;
 	const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
 	EnrollActorToGrid(pPlayer);
+	ExperienceManager->ExperienceAddedDelegate.AddDynamic(Cast<AMPlayerController>(pPlayer->GetController()), &AMPlayerController::OnExperienceAdded);
 
 	// We add 1 to the radius on purpose. Generated area always has to be further then visible
 	const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
@@ -65,6 +70,8 @@ void AMWorldGenerator::GenerateActiveZone()
 	const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator, SpawnParameters);
 	VillageGenerator->Generate();
 	UpdateNavigationMesh();
+
+	BlockGenerator->Generate(PlayerBlockIndex, this, EBiome::DarkWoods, "PoppyBLock");
 }
 
 void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDynamicObjects)
@@ -112,14 +119,24 @@ void AMWorldGenerator::BeginPlay()
 	UpdateActiveZone();
 
 	// Create the Drop Manager
-	DropManager = DropManagerBPClass ? NewObject<UMDropManager>(this, DropManagerBPClass, TEXT("DropManager")) : nullptr;
+	DropManager = DropManagerBPClass ? NewObject<UMDropManager>(GetOuter(), DropManagerBPClass, TEXT("DropManager")) : nullptr;
 	check(DropManager);
 
 	// Create the Reputation Manager
-	ReputationManager = ReputationManagerBPClass ? NewObject<UMReputationManager>(this, ReputationManagerBPClass, TEXT("ReputationManager")) : nullptr;
+	ReputationManager = ReputationManagerBPClass ? NewObject<UMReputationManager>(GetOuter(), ReputationManagerBPClass, TEXT("ReputationManager")) : nullptr;
 	if (ReputationManager)
 	{
 		ReputationManager->Initialize({{EFaction::Humans, {100, 10}}, {EFaction::Nightmares, {5, 4}}, {EFaction::Witches, {1, 0}}}); // temporary set manually
+	}
+	else
+	{
+		check(false);
+	}
+
+	ExperienceManager = ExperienceManagerBPClass ? NewObject<UMExperienceManager>(GetOuter(), ExperienceManagerBPClass, TEXT("ExperienceManager")) : nullptr;
+	if (ExperienceManager)
+	{
+		ExperienceManager->Initialize();
 	}
 	else
 	{
@@ -131,7 +148,7 @@ void AMWorldGenerator::BeginPlay()
 	check(CommunicationManager);
 
 	// Create the Block Generator
-	BlockGenerator = BlockGeneratorBPClass ? NewObject<UMBlockGenerator>(this, BlockGeneratorBPClass, TEXT("BlockGenerator")) : nullptr;
+	BlockGenerator = BlockGeneratorBPClass ? NewObject<UMBlockGenerator>(GetOuter(), BlockGeneratorBPClass, TEXT("BlockGenerator")) : nullptr;
 	check(BlockGenerator);
 
 	// We want to set the biome coloring since the first block change
@@ -665,6 +682,11 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 	}
 
 	EnrollActorToGrid(Actor);
+
+	if (const auto PickableActor = Cast<AMPickableActor>(Actor); PickableActor && ExperienceManager)
+	{ // Enroll pickable actor to experience manager
+		PickableActor->PickedUpCompletelyDelegate.AddDynamic(ExperienceManager, &UMExperienceManager::OnActorPickedUp);
+	}
 
 	return Actor;
 }

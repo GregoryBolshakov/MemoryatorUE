@@ -39,7 +39,7 @@ void UMBlockGenerator::Generate(const FIntPoint BlockIndex, AMWorldGenerator* pW
 
 	FPreset Preset;
 	const auto pPreset = PresetMap.Find(PresetName);
-	Preset = pPreset ? *pPreset : GetRandomPreset();
+	Preset = pPreset ? *pPreset : GetRandomPreset(Biome);
 
 	for (const auto& [BPClass, Config] : Preset.ObjectsConfig)
 	{
@@ -84,14 +84,14 @@ FPreset GetRandomPresetWithHighestRarity(const TArray<FPreset>& SufficientRarity
 	return FPreset();
 }
 
-FPreset UMBlockGenerator::GetRandomPreset()
+FPreset UMBlockGenerator::GetRandomPreset(EBiome Biome)
 {
 	const auto RandNumber = FMath::RandRange(0.f, 1.f);
 
 	TArray<FPreset> SufficientRarityPresets;
 	for (const auto& [Name, Preset] : PresetMap)
 	{
-		if (1.f / Preset.Rarity >= RandNumber)
+		if (Preset.SupportedBiomes.Contains(Biome) && 1.f / Preset.Rarity >= RandNumber)
 		{
 			SufficientRarityPresets.Add(Preset);
 		}
