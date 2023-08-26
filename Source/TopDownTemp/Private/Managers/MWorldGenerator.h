@@ -170,9 +170,11 @@ private:
 	UPROPERTY()
 	UMDropManager* DropManager;
 
+	//TODO: Very likely it will be moved to the Player Controller
 	UPROPERTY()
 	UMReputationManager* ReputationManager;
 
+	//TODO: Very likely it will be moved to the Player Controller
 	UPROPERTY()
 	UMExperienceManager* ExperienceManager;
 

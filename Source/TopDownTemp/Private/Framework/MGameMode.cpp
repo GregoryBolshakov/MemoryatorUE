@@ -17,3 +17,7 @@ AMGameMode::AMGameMode()
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
 }
+
+void AMGameMode::GoOffline()
+{
+}

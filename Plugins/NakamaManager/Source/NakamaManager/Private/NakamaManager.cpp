@@ -3,7 +3,8 @@
 #include "JsonObjectConverter.h"
 #include "NakamaClient.h"
 #include <Templates/SharedPointer.h>
-#include "NakamaShopManager.h"
+#include "ShopManagerClient.h"
+#include "UserManagerClient.h"
 
 #if PLATFORM_WINDOWS
 #include "Interfaces/OnlineIdentityInterface.h"
@@ -111,22 +112,22 @@ FString UNakamaManager::GetJsonStringFromRPC(const FNakamaRPC& IN_RPC)
 }
 
 UNakamaManager::UNakamaManager(const FObjectInitializer& ObjectInitializer)
-    : Super(ObjectInitializer)
-    , bIsConnected(false)
-    , AuthenticationRetriesMax(5)
-    , bUsePreviewServer(true)
-    , bVCChangeAllowed(false)
-    //, CachedMaintenanceStatus(FMaintenanceStatus())
-    , PreviewServerKey(TEXT("1hP9lwynAatdvFC5"))
-    , ProductionServerKey(TEXT("vrTxrvK441T3O6bk"))
-    , PreviewHost(TEXT("kartkraft.as-neast3-a.nakamacloud.io"))
-    , ProductionHost(TEXT("kartkraft-prod.us-east1-c.nakamacloud.io"))
-    , InitialisationStatus(ENakamaInitialisationStatus::Uninitialised)
-    , bIsDedicatedServer(false)
+	: Super(ObjectInitializer)
+	, bIsConnected(false)
+	, AuthenticationRetriesMax(5)
+	, bUsePreviewServer(true)
+	, bVCChangeAllowed(false)
+	, UserManagerClient(CreateDefaultSubobject<UUserManagerClient>("UserManager"))
+	, ShopManagerClient(CreateDefaultSubobject<UShopManagerClient>("ShopManager"))
+	//, CachedMaintenanceStatus(FMaintenanceStatus())
+	, PreviewServerKey(TEXT("1hP9lwynAatdvFC5"))
+	, ProductionServerKey(TEXT("vrTxrvK441T3O6bk"))
+	, PreviewHost(TEXT("kartkraft.as-neast3-a.nakamacloud.io"))
+	, ProductionHost(TEXT("kartkraft-prod.us-east1-c.nakamacloud.io"))
+	, InitialisationStatus(ENakamaInitialisationStatus::Uninitialised)
+	, bIsDedicatedServer(false)
 {
 	LoadConfig();
-
-	NakamaShopManager = CreateDefaultSubobject<UNakamaShopManager>("NakamaShopManager");
 
 	SteamAuthenticationRetries = AuthenticationRetriesMax;
 }
@@ -168,54 +169,11 @@ void UNakamaManager::Initialise(bool IN_IsDedicatedServer)
 		case EAuthenticationMethod::Steam:
 			AuthenticateUsingSteam();
 			break;
-		case EAuthenticationMethod::Anonymous:
-			AuthenticateAnonymous();
-			break;
-		case EAuthenticationMethod::Custom:
-			AuthenticateCustom();
-			break;
-			// 		case EAuthenticationMethod::Microsoft:
-			// 			AuthenticateUsingMicrosoft();
-			// 			break;
-			// 		case EAuthenticationMethod::Sony:
-			// 			AuthenticateUsingSony();
-			// 			break;
 		default:
 			ensure(false);
 			break;
 	};
-
-	// Add listeners for events
-
-	// 	ensure(GameSparksMessageListeners);
-	// 	GameSparksMessageListeners->OnNewHighScoreMessage.AddDynamic(this, &UGameSparksManager::OnNewHighScore);
-	// 	GameSparksMessageListeners->OnGlobalRankChangedMessage.AddDynamic(this, &UGameSparksManager::OnGlobalRankChanged);
-	// 	GameSparksMessageListeners->OnSocialRankChangedMessage.AddDynamic(this, &UGameSparksManager::OnSocialRankChanged);
-	// 	GameSparksMessageListeners->OnAchievementEarnedMessage.AddDynamic(this, &UGameSparksManager::OnAchievementEarned);
-	// 	GameSparksMessageListeners->OnScriptMessage.AddDynamic(this, &UGameSparksManager::OnScriptMessage);*/
 }
-
-bool UNakamaManager::IsInitialised() const { return InitialisationStatus > ENakamaInitialisationStatus::Initialising; }
-
-bool UNakamaManager::IsAuthenticatedWithSteam() const { return false;/*return IsValid(UserSession);*//* && GetDefault<UBackendServiceSettings>()->AuthenticationMethod == EAuthenticationMethod::Steam;*/ }
-
-void UNakamaManager::SetAuthenticatedUserDisplayName(const FString& IN_DisplayName) { UserDisplayName = IN_DisplayName; }
-
-void UNakamaManager::SetAuthenticatedUserCountry(const FString& IN_Country) { UserCountry = IN_Country; }
-
-void UNakamaManager::SetAuthenticatedUserCity(const FString& IN_City) { UserCity = IN_City; }
-
-bool UNakamaManager::IsConnected() const { return bIsConnected; }
-
-bool UNakamaManager::IsUsingPreviewServer() const { return bUsePreviewServer; }
-
-const FName& UNakamaManager::GetAuthenticatedUserID() const { return NakamaUserID; }
-
-const FString& UNakamaManager::GetAuthenticatedUserDisplayName() const { return UserDisplayName; }
-
-const FString& UNakamaManager::GetAuthenticatedUserCountry() const { return UserCountry; }
-
-const FString& UNakamaManager::GetAuthenticatedUserCity() const { return UserCity; }
 
 void UNakamaManager::AuthenticateUsingSteam()
 {
@@ -253,83 +211,20 @@ void UNakamaManager::AuthenticateUsingSteam()
 	}
 }
 
-void UNakamaManager::AuthenticateAnonymous()
-{
-	// throw std::logic_error("The method or operation is not implemented.");
-
-	FOnAuthUpdate AuthenticationSuccessDelegate;
-	AuthenticationSuccessDelegate.AddDynamic(this, &UNakamaManager::OnAuthenticationSuccess);
-
-	FOnError AuthenticationErrorDelegate;
-	AuthenticationErrorDelegate.AddDynamic(this, &UNakamaManager::OnAuthenticationError);
-
-	FString DeviceID = FGuid::NewGuid().ToString();
-	NakamaClient->AuthenticateDevice(DeviceID, UserName, true, {}, AuthenticationSuccessDelegate, AuthenticationErrorDelegate);
-}
-
-void UNakamaManager::AuthenticateServer()
-{
-	FOnAuthUpdate AuthenticationSuccessDelegate;
-	AuthenticationSuccessDelegate.AddDynamic(this, &UNakamaManager::OnAuthenticationSuccess);
-
-	FOnError AuthenticationErrorDelegate;
-	AuthenticationErrorDelegate.AddDynamic(this, &UNakamaManager::OnAuthenticationError);
-
-	const FString DeviceID = FGuid::NewGuid().ToString();
-	NakamaClient->AuthenticateDevice(DeviceID, "", true, {}, AuthenticationSuccessDelegate, AuthenticationErrorDelegate);
-}
-
-void UNakamaManager::AuthenticateCustom()
-{
-	FOnAuthUpdate AuthenticationSuccessDelegate;
-	AuthenticationSuccessDelegate.AddDynamic(this, &UNakamaManager::OnAuthenticationSuccess);
-
-	FOnError AuthenticationErrorDelegate;
-	AuthenticationErrorDelegate.AddDynamic(this, &UNakamaManager::OnAuthenticationError);
-
-	UserDisplayName = UserName;
-
-	NakamaClient->AuthenticateCustom(UserID, UserName, true, {}, AuthenticationSuccessDelegate, AuthenticationErrorDelegate);
-}
-
 void UNakamaManager::OnAuthenticationSuccess(UNakamaSession* IN_LoginData)
 {
-	//TODO: IMPLEMENT
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, FString::Printf(TEXT("Authenticated As %s"), *IN_LoginData->SessionData.Username));
-
 	UE_LOG(LogNakamaManager, Log, TEXT("Successfully authenticated as %s"), *IN_LoginData->SessionData.UserId);
 
 	UserSession = IN_LoginData;
 	NakamaUserID = FName(*IN_LoginData->SessionData.UserId);
 
-	// Realtime client (grpc)
-	static bool s_StartRealtimeClient = true;
+	UserManagerClient->Initialise(this);
+	UserManagerClient->RequestHeroData();
 
-	/*if (s_StartRealtimeClient)
-	{
-		// Setup Delegates of same type and bind them to local functions
-		FOnRealtimeClientConnected ConnectionSuccessDelegate;
-		ConnectionSuccessDelegate.AddDynamic(this, &UNakamaManager::OnRealtimeClientConnectSuccess);
-
-		FOnRealtimeClientError ConnectionErrorDelegate;
-		ConnectionErrorDelegate.AddDynamic(this, &UNakamaManager::OnRealtimeClientConnectError);
-
-		// This is our realtime client (socket) ready to use
-		NakamaRealtimeClient = NakamaClient->SetupRealtimeClient(UserSession, true, 7350, ENakamaRealtimeClientProtocol::Protobuf, 0.05f, "");
-
-		// Remember to Connect
-		NakamaRealtimeClient->Connect(ConnectionSuccessDelegate, ConnectionErrorDelegate);
-	}*/
-
-	NakamaShopManager->Initialise(NakamaClient, UserSession, this);
+	ShopManagerClient->Initialise(NakamaClient, UserSession, this);
 
 	InitialisationStatus = ENakamaInitialisationStatus::Initialised;
-}
-
-void UNakamaManager::OnAuthenticationError(const FNakamaError& IN_Error)
-{
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, FString::Printf(TEXT("Authentication failed. Code: %s %s"), *UEnum::GetDisplayValueAsText(IN_Error.Code).ToString(), *IN_Error.Message));
-	UE_LOG(LogNakamaManager, Log, TEXT("Failed to authenticate. Code: %s %s"), *UEnum::GetDisplayValueAsText(IN_Error.Code).ToString(), *IN_Error.Message);
 }
 
 void UNakamaManager::OnSteamAuthenticationError(const FNakamaError& IN_Error)
@@ -348,38 +243,6 @@ void UNakamaManager::OnSteamAuthenticationError(const FNakamaError& IN_Error)
 	GetWorld()->GetTimerManager().SetTimer(UnusedHandle, this, &UNakamaManager::AuthenticateUsingSteam, 1.5f, false);
 }
 
-void UNakamaManager::OnAccountUpdateSucceeded()
-{
-	UE_LOG(LogNakamaManager, Log, TEXT("Account update succeeded."));
-}
-
-void UNakamaManager::OnAccountUpdateFailed(const FNakamaError& IN_Error)
-{
-	UE_LOG(LogNakamaManager, Log, TEXT("Account Update Failed: %s - %s"), *UEnum::GetDisplayValueAsText(IN_Error.Code).ToString(), *IN_Error.Message);
-}
-
-void UNakamaManager::OnRealtimeClientConnectSuccess()
-{
-	ensure(NakamaRealtimeClient);
-	if (NakamaRealtimeClient)
-	{
-		FOnReceivedNotification NotificationReceivedDelegate;
-		//NotificationReceivedDelegate.AddDynamic(this, &UNakamaManager::OnReceivedNotification); //TODO: IMPLEMENT
-
-		//NakamaRealtimeClient->NotificationReceived = NotificationReceivedDelegate;
-		//NakamaRealtimeClient->SetListenerNotificationsCallback();
-
-		//NakamaRealtimeClient->SetListenerAllCallbacks();
-	}
-}
-
-void UNakamaManager::OnRealtimeClientConnectError()
-{
-	UE_LOG(LogNakamaManager, Error, TEXT("OnRealtimeClientConnectError!"));
-}
-
-const int32 NEW_HIGH_SCORE = 1;
-
 void UNakamaManager::OnRPCSuccess(const FNakamaRPC& IN_RPC)
 {
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, FString::Printf(TEXT("RPC succeeded. ID: %s Payload: %s"), *IN_RPC.Id, *IN_RPC.Payload));
@@ -388,11 +251,6 @@ void UNakamaManager::OnRPCSuccess(const FNakamaRPC& IN_RPC)
 void UNakamaManager::OnRPCError(const FNakamaError& IN_Error)
 {
 	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, FString::Printf(TEXT("RPC failed: %s"), *IN_Error.Message));
-}
-
-void UNakamaManager::OnLogEventSuccess(const FNakamaRPC& IN_RPC)
-{
-	if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, FString::Printf(TEXT("RPC succeeded. ID: %s Payload: %s"), *IN_RPC.Id, *IN_RPC.Payload));
 }
 
 bool UNakamaManager::GetSteamData(FString& OUT_ID, FString& OUT_Token, FString& OUT_NickName) const

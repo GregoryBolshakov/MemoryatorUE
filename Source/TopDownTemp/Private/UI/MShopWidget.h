@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "NakamaManager/Private/NakamaShopManager.h"
+#include "NakamaManager/Private/ShopManagerClient.h"
 #include "MShopWidget.generated.h"
 
 class UWrapBox;

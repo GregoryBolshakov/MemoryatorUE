@@ -4,7 +4,7 @@
 #include "MExperienceManager.generated.h"
 
 class AMPickableActor;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnExperienceAdded, int, Amount)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnExperienceAdded, int, Amount);
 
 USTRUCT()
 struct FMyStruct

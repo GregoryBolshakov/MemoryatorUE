@@ -5,7 +5,7 @@
 #include "Components/MInventoryComponent.h"
 #include "MPickableActor.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPickedUpCompletely, TSubclassOf<AMPickableActor>, Class)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPickedUpCompletely, TSubclassOf<AMPickableActor>, Class);
 
 class UMDropManager;
 //~=============================================================================

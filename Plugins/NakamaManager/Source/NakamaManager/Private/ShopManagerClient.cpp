@@ -1,4 +1,4 @@
-#include "NakamaShopManager.h"
+#include "ShopManagerClient.h"
 
 #include "JsonObjectConverter.h"
 #include "NakamaClient.h"
@@ -6,7 +6,7 @@
 #include "NakamaSession.h"
 #include "Kismet/GameplayStatics.h"
 
-void UNakamaShopManager::Initialise(UNakamaClient* IN_NakamaClient, UNakamaSession* IN_UserSession, UNakamaManager* IN_NakamaManager)
+void UShopManagerClient::Initialise(UNakamaClient* IN_NakamaClient, UNakamaSession* IN_UserSession, UNakamaManager* IN_NakamaManager)
 {
 	if (!IsValid(IN_NakamaClient) || !IsValid(IN_UserSession))
 	{
@@ -19,11 +19,11 @@ void UNakamaShopManager::Initialise(UNakamaClient* IN_NakamaClient, UNakamaSessi
 	NakamaManager = IN_NakamaManager;
 
 	FOnRPC OnReceivedAllBundlesSuccess;
-	OnReceivedAllBundlesSuccess.AddDynamic(this, &UNakamaShopManager::OnReceivedAllBundles);
+	OnReceivedAllBundlesSuccess.AddDynamic(this, &UShopManagerClient::OnReceivedAllBundles);
 	NakamaClient->RPC(UserSession, "get_all_bundles", "", OnReceivedAllBundlesSuccess, {});
 }
 
-void UNakamaShopManager::BuyBundle(const uint32 BundleID)
+void UShopManagerClient::BuyBundle(const uint32 BundleID)
 {
 	//TODO: Branch defines for different platforms
 
@@ -48,7 +48,7 @@ void UNakamaShopManager::BuyBundle(const uint32 BundleID)
 # endif
 }
 
-void UNakamaShopManager::OnReceivedAllBundles(const FNakamaRPC& RPC)
+void UShopManagerClient::OnReceivedAllBundles(const FNakamaRPC& RPC)
 {
 	const FString JsonPayload = RPC.Payload;
 
@@ -68,7 +68,7 @@ void UNakamaShopManager::OnReceivedAllBundles(const FNakamaRPC& RPC)
 }
 
 # ifdef USING_STEAM
-void UNakamaShopManager::OnMicroTxnAuthorizationResponse(MicroTxnAuthorizationResponse_t* pParam)
+void UShopManagerClient::OnMicroTxnAuthorizationResponse(MicroTxnAuthorizationResponse_t* pParam)
 {
 	if (pParam->m_bAuthorized)
 	{
@@ -84,7 +84,7 @@ void UNakamaShopManager::OnMicroTxnAuthorizationResponse(MicroTxnAuthorizationRe
 			FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
 
 			FOnRPC OnTxnFinalizedDelegate;
-			OnTxnFinalizedDelegate.AddDynamic(this, &UNakamaShopManager::OnTxnFinalized);
+			OnTxnFinalizedDelegate.AddDynamic(this, &UShopManagerClient::OnTxnFinalized);
 			if (NakamaClient)
 				NakamaClient->RPC(UserSession, "steam_finalize_purchase", Payload, OnTxnFinalizedDelegate, {});
 		}
@@ -96,7 +96,7 @@ void UNakamaShopManager::OnMicroTxnAuthorizationResponse(MicroTxnAuthorizationRe
 }
 #endif
 
-void UNakamaShopManager::OnTxnFinalized(const FNakamaRPC& RPC)
+void UShopManagerClient::OnTxnFinalized(const FNakamaRPC& RPC)
 {
 	const FString JsonPayload = RPC.Payload;
 

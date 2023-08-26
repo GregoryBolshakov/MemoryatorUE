@@ -6,7 +6,7 @@
 #include "CoreMinimal.h"
 #include "NakamaManager.h"
 
-#include "NakamaShopManager.generated.h"
+#include "ShopManagerClient.generated.h"
 
 class UNakamaClient;
 class UNakamaSession;
@@ -82,7 +82,7 @@ struct FPayload
 };
 
 UCLASS()
-class NAKAMAMANAGER_API UNakamaShopManager : public UObject
+class NAKAMAMANAGER_API UShopManagerClient : public UObject
 {
 	GENERATED_BODY()
 
@@ -102,7 +102,7 @@ private:
 	void OnReceivedAllBundles(const FNakamaRPC& RPC);
 
 #ifdef USING_STEAM
-	STEAM_CALLBACK(UNakamaShopManager, OnMicroTxnAuthorizationResponse, MicroTxnAuthorizationResponse_t);
+	STEAM_CALLBACK(UShopManagerClient, OnMicroTxnAuthorizationResponse, MicroTxnAuthorizationResponse_t);
 #endif
 
 	UFUNCTION()

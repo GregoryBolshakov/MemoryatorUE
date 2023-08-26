@@ -2,7 +2,7 @@
 
 #include "Framework/MGameInstance.h"
 #include "NakamaManager/Private/NakamaManager.h"
-#include "NakamaManager/Private/NakamaShopManager.h"
+#include "NakamaManager/Private/ShopManagerClient.h"
 
 
 void UMShopItemWidget::OnButtonClicked()
@@ -11,7 +11,7 @@ void UMShopItemWidget::OnButtonClicked()
 	{
 		if (const auto NakamaManager = GameInstance->GetNakamaManager())
 		{
-			if (const auto ShopManager = NakamaManager->NakamaShopManager)
+			if (const auto ShopManager = NakamaManager->ShopManagerClient)
 			{
 				ShopManager->BuyBundle(BundleID);
 			}
