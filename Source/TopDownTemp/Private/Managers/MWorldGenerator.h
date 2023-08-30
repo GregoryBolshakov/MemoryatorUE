@@ -21,6 +21,7 @@ class AMActor;
 class AMCharacter;
 class AMMemoryator;
 
+inline FString SaveGameWorldSlot {"WorldSave"}; // Move this into USaveGameWorld
 /**
  * The class responsible for world generation. At the moment it must be placed in the world manually..
  */
@@ -31,8 +32,8 @@ class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 
 public:
 
-	/** One-time generation. Performed at the game start to create the surrounding area */
-	void GenerateActiveZone();
+	/** Performed at the game start to create the surrounding area */
+	void PrepareVisibleZone();
 
 	void GenerateBlock(const FIntPoint& BlockIndex, bool EraseDynamicObjects = false);
 
@@ -40,7 +41,7 @@ public:
 	void UpdateActiveZone();
 
 	template< class T >
-	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround = false, const FOnSpawnActorStarted& OnSpawnActorStarted = {})
+	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters = {}, bool bForceAboveGround = false, const FOnSpawnActorStarted& OnSpawnActorStarted = {})
 	{
 		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters, bForceAboveGround, OnSpawnActorStarted),ECastCheckedType::NullAllowed);
 	}
@@ -136,6 +137,10 @@ private:
 	/** Lists all the blocks lying within the circle with the given coordinates and radius */
 	TSet<FIntPoint> GetBlocksInRadius(int BlockX, int BlockY, int RadiusInBlocks) const;
 
+	void LoadFromMemory();
+
+	void SetupAutoSaves();
+
 	/** The radius of the visible area (in blocks) */
 	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess=true))
 	int ActiveZoneRadius;
@@ -150,6 +155,10 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = MWorldGenerator, meta = (AllowPrivateAccess = "true"))
 	int BiomesPerimeterColoringRate = 10;
 
+	static TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;
+
+private: // Saved to memory
+
 	/** The number of blocks player passed since the last biomes perimeter coloring */
 	int BlocksPassedSinceLastPerimeterColoring;
 
@@ -159,25 +168,21 @@ private:
 	UPROPERTY()
 	TMap<FName, FActorWorldMetadata> ActorsMetadata;
 
+	UPROPERTY()
 	TMap<FIntPoint, bool> ActiveBlocksMap;
 
-	// TODO: Use FTimerHandle
-	float DynamicActorsCheckInterval;
-	float DynamicActorsCheckTimer;
-
-	static TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;
+private: // Managers
 
 	UPROPERTY()
 	UMDropManager* DropManager;
 
-	//TODO: Very likely it will be moved to the Player Controller
 	UPROPERTY()
 	UMReputationManager* ReputationManager;
 
-	//TODO: Very likely it will be moved to the Player Controller
 	UPROPERTY()
 	UMExperienceManager* ExperienceManager;
 
+	//TODO: Fix needed: items disappear when game crashes/closes during a trade after items were moved to the widget
 	UPROPERTY()
 	AMCommunicationManager* CommunicationManager;
 

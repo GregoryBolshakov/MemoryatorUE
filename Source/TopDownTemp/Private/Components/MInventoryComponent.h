@@ -67,7 +67,7 @@ public:
 
 	void Initialize(int IN_SlotsNumber, const TArray<FItem>& StartingItems);
 
-	TArray<FItem> GetItemCopies();
+	TArray<FItem> GetItemCopies(bool bSkipEmpty = true);
 
 	static int GetTotallPrice(const TArray<FSlot>& Slots, const UObject* WorldContextObject);
 

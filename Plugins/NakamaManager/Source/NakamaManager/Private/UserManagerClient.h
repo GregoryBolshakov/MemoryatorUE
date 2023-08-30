@@ -39,28 +39,16 @@ struct FHero
 {
 	GENERATED_USTRUCT_BODY()
 
-	UPROPERTY(BlueprintReadOnly)
-	FString Id;
-
-	UPROPERTY(BlueprintReadOnly)
-	FString SteamId;
-
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	FString Name;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	int32 Level = 1;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadWrite)
 	int32 Experience = 0;
 
 	// TODO: Reputation. Skills
-
-	UPROPERTY(BlueprintReadOnly)
-	FDateTime LastNameChange;
-
-	UPROPERTY(BlueprintReadOnly)
-	FProfile Profile;
 };
 
 /** Client that gets and updates user data */
@@ -82,11 +70,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RequestHeroData();
 
+	UFUNCTION(BlueprintCallable)
+	void SendHeroData();
+
 	UFUNCTION()
 	void OnHeroDataReceived(const FNakamaRPC& RPC);
-
-	UFUNCTION(BlueprintCallable)
-	FHero GetHero() const { return Hero; }
 
 	UPROPERTY(BlueprintAssignable)
 	FOnRPC HeroExistsResponseDelegate;
@@ -97,11 +85,14 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnHeroDataUpdated HeroDataUpdatedDelegate;
 
+	UPROPERTY(BlueprintAssignable)
+	FOnRPC HeroDataSentDelegate;
+
+	UPROPERTY(BlueprintReadWrite)
+	FHero Hero;
+
 private:
 	UPROPERTY()
 	UNakamaManager* NakamaManager;
-
-	UPROPERTY()
-	FHero Hero;
 };
 

@@ -27,6 +27,8 @@ public:
 
 	float GetForgetEnemyRange() const { return ForgetEnemyRange; }
 
+	float GetHealth() const { return Health; }
+
 	float GetRetreatRange() const { return RetreatRange; }
 
 	float GetWalkSpeed() const { return WalkSpeed; }

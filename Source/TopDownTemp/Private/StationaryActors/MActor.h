@@ -11,16 +11,24 @@ class TOPDOWNTEMP_API AMActor : public AActor
 {
 	GENERATED_UCLASS_BODY()
 
+public: // Have effect only when called under FOnSpawnActorStarted
+
+	void SetBiome(EBiome IN_Biome) { Biome = IN_Biome; }
+	void SetAppearanceID(int IN_AppearanceID) { AppearanceID = IN_AppearanceID; }
+	void MakeRandom() { IsRandomizedAppearance = true; }
+
 public:
 
-	void SetBiomeForRandomization(EBiome Biome) { BiomeForRandomization = Biome; }
+	EBiome GetBiome() const { return Biome; }
+	int GetAppearanceID() const { return AppearanceID; }
+	bool GetIsRandomizedAppearance() const { return IsRandomizedAppearance; }
 
 protected:
 
 	virtual void PostInitializeComponents() override;
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void Randomize(EBiome Biome);
+	void Randomize(EBiome IN_Biome);
 
 	UPROPERTY()
 	USceneComponent* PointComponent;
@@ -32,5 +40,8 @@ protected:
 	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;
 
 	/** Objects like trees/plants/mushrooms/stones/etc. may have different appearances. If true, the type will be picked randomly */
-	TOptional<EBiome> BiomeForRandomization;
+	bool IsRandomizedAppearance = false;
+
+	EBiome Biome;
+	int AppearanceID;
 };

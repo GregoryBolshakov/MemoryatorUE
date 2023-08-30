@@ -13,21 +13,19 @@ struct FMyStruct
 	
 };
 
-//TODO: This class should communicate with Nakama server to limit experience growth over time
-//** The class responsible for managing player's experience points (current level, exp boost, etc.) */
+//** The class responsible for managing player's experience points (current level, exp boost, etc.).
+//   Doesn't store data, but takes it from Nakama User Manager Client */
 UCLASS(Blueprintable, BlueprintType)
 class TOPDOWNTEMP_API UMExperienceManager : public UObject
 {
 public:
 	GENERATED_BODY()
 
-	void Initialize();
+	UFUNCTION(BlueprintCallable)
+	int GetLevel();
 
 	UFUNCTION(BlueprintCallable)
-	int GetLevel() { return Level; }
-
-	UFUNCTION(BlueprintCallable)
-	int GetCurrentExperience() { return CurrentExperience; }
+	int GetCurrentExperience();
 
 	UFUNCTION(BlueprintCallable)
 	float GetExperiencePercent();
@@ -43,11 +41,8 @@ public:
 	FOnExperienceAdded ExperienceAddedDelegate;
 
 protected:
-	int Level = 1;
 
-	int CurrentExperience = 0.f;
-
-	float ExperienceBoost = 0.f;
+	float ExperienceBoost = 0.f; //TODO: move to UserManagerClient's Hero
 
 	/** Denotes experience cost for each level. Initialized using Nakama server data. Although is indexed from 0, indexes MATCH levels */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=MExperienceManager)

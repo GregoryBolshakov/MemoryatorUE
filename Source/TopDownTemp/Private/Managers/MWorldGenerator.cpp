@@ -15,15 +15,16 @@
 #include "MVillageGenerator.h"
 #include "NavigationSystem.h"
 #include "Controllers/MPlayerController.h"
+#include "Framework/MGameInstance.h"
 #include "Kismet/GameplayStatics.h"
+#include "NakamaManager/Private/NakamaManager.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "StationaryActors/MPickableActor.h"
+#include "MWorldGeneratorSaveTypes.h"
 
 AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, ActiveZoneRadius(0)
-	, DynamicActorsCheckInterval(0.5f)
-	, DynamicActorsCheckTimer(0.f)
 	, DropManager(nullptr)
 	, ReputationManager(nullptr)
 	, ExperienceManager(nullptr)
@@ -34,44 +35,67 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void AMWorldGenerator::GenerateActiveZone()
+void AMWorldGenerator::PrepareVisibleZone()
 {
 	auto* pWorld = GetWorld();
 	if (!pWorld)
 		return;
 
-	// Fill ActiveBlocksMap with the active blocks
-	UpdateActiveZone();
-
-	// Add player to the Grid
-	const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+	// Spawn player and add it to the Grid
+	APawn* pPlayer = nullptr;
+	if (const auto pPlayerMetadata = ActorsMetadata.Find("Player"))
+	{
+		pPlayer = Cast<APawn>(pPlayerMetadata->Actor);
+	}
+	else
+	{
+		if (const auto PlayerClass = ToSpawnActorClasses.Find("Player"))
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Name = "Player";
+			pPlayer = SpawnActor<AMCharacter>(*PlayerClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams, true);
+			EnrollActorToGrid(pPlayer);
+		}
+	}
 	if (!IsValid(pPlayer))
+	{
+		check(false);
 		return;
+	}
+	if (const auto pPlayerController = UGameplayStatics::GetPlayerController(pWorld, 0))
+		pPlayerController->Possess(pPlayer);
+	else
+		check(false);
+
 	const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
-	EnrollActorToGrid(pPlayer);
 	ExperienceManager->ExperienceAddedDelegate.AddDynamic(Cast<AMPlayerController>(pPlayer->GetController()), &AMPlayerController::OnExperienceAdded);
 
-	// We add 1 to the radius on purpose. Generated area always has to be further then visible
-	const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
-	for (const auto BlockInRadius : BlocksInRadius)
-	{ // Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
-		auto* BlockOfActors = GridOfActors.Contains(BlockInRadius) ?
-					*GridOfActors.Find(BlockInRadius) :
-					GridOfActors.Add(BlockInRadius, NewObject<UBlockOfActors>(this));
-		BlockOfActors->Biome = EBiome::DarkWoods;
-	}
-	for (const auto BlockInRadius : BlocksInRadius)
+	if (GridOfActors.IsEmpty() || ActiveBlocksMap.IsEmpty() || ActorsMetadata.IsEmpty()) // Empty world check
 	{
-		GenerateBlock(BlockInRadius);
+		check(GridOfActors.Num() == 1 && ActiveBlocksMap.IsEmpty() && ActorsMetadata.Num() == 1); // Error occured while loading save
+
+		// We add 1 to the radius on purpose. Generated area always has to be further then visible
+		const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
+		for (const auto BlockInRadius : BlocksInRadius)
+		{ // Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
+			auto* BlockOfActors = GridOfActors.Contains(BlockInRadius) ?
+						*GridOfActors.Find(BlockInRadius) :
+						GridOfActors.Add(BlockInRadius, NewObject<UBlockOfActors>(this));
+			BlockOfActors->Biome = EBiome::DarkWoods;
+		}
+		for (const auto BlockInRadius : BlocksInRadius)
+		{
+			GenerateBlock(BlockInRadius);
+		}
+
+		FActorSpawnParameters SpawnParameters;
+		const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
+		const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator, SpawnParameters);
+		VillageGenerator->Generate();
+		UpdateNavigationMesh();
+
+		BlockGenerator->Generate(PlayerBlockIndex, this, EBiome::DarkWoods, "PoppyBLock");
 	}
-
-	FActorSpawnParameters SpawnParameters;
-	const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
-	const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator, SpawnParameters);
-	VillageGenerator->Generate();
-	UpdateNavigationMesh();
-
-	BlockGenerator->Generate(PlayerBlockIndex, this, EBiome::DarkWoods, "PoppyBLock");
 }
 
 void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDynamicObjects)
@@ -116,7 +140,6 @@ void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDyna
 void AMWorldGenerator::BeginPlay()
 {
 	Super::BeginPlay();
-	UpdateActiveZone();
 
 	// Create the Drop Manager
 	DropManager = DropManagerBPClass ? NewObject<UMDropManager>(GetOuter(), DropManagerBPClass, TEXT("DropManager")) : nullptr;
@@ -134,14 +157,7 @@ void AMWorldGenerator::BeginPlay()
 	}
 
 	ExperienceManager = ExperienceManagerBPClass ? NewObject<UMExperienceManager>(GetOuter(), ExperienceManagerBPClass, TEXT("ExperienceManager")) : nullptr;
-	if (ExperienceManager)
-	{
-		ExperienceManager->Initialize();
-	}
-	else
-	{
-		check(false);
-	}
+	check(ExperienceManager);
 
 	// Spawn the Communication Manager
 	CommunicationManager = CommunicationManagerBPClass ? GetWorld()->SpawnActor<AMCommunicationManager>(CommunicationManagerBPClass) : nullptr;
@@ -154,7 +170,9 @@ void AMWorldGenerator::BeginPlay()
 	// We want to set the biome coloring since the first block change
 	BlocksPassedSinceLastPerimeterColoring = BiomesPerimeterColoringRate;
 
-	GenerateActiveZone();
+	LoadFromMemory();
+	PrepareVisibleZone();
+	UpdateActiveZone();
 
 	// Bind to the player-moves-to-another-block event 
 	if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
@@ -164,6 +182,8 @@ void AMWorldGenerator::BeginPlay()
 			PlayerMetadata->OnBlockChangedDelegate.AddDynamic(this, &AMWorldGenerator::OnPlayerChangedBlock);
 		}
 	}
+
+	SetupAutoSaves();
 }
 
 void AMWorldGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -610,7 +630,6 @@ TSet<FIntPoint> AMWorldGenerator::GetBlocksInRadius(int BlockX, int BlockY, int 
 	{
 		for (float Y = BlockY - RadiusInBlocks; Y <= BlockY + RadiusInBlocks; ++Y)
 		{
-			
 			if (sqrt(pow(X - BlockX, 2) + pow(Y - BlockY, 2)) <= static_cast<float>(RadiusInBlocks)) {
 				Blocks.Add({ static_cast<int>(X), static_cast<int>(Y) });
 			}
@@ -620,16 +639,102 @@ TSet<FIntPoint> AMWorldGenerator::GetBlocksInRadius(int BlockX, int BlockY, int 
 	return Blocks;
 }
 
+void AMWorldGenerator::LoadFromMemory()
+{
+	//TODO: Consider explicit destroying GridOfActors
+
+	return;
+
+	if (const auto SaveGameWorld = Cast<USaveGameWorld>(UGameplayStatics::LoadGameFromSlot(SaveGameWorldSlot, 0)))
+	{
+		for (const auto& MActorData : SaveGameWorld->AMActorData)
+		{
+			FActorSpawnParameters Params;
+			Params.Name = FName(MActorData.Name);
+
+			FOnSpawnActorStarted OnSpawnActorStarted;
+			OnSpawnActorStarted.AddLambda([this, &MActorData](AActor* Actor)
+			{
+				if (const auto MActor = Cast<AMActor>(Actor))
+				{
+					MActor->SetBiome(MActorData.Biome);
+					MActor->SetAppearanceID(MActorData.AppearanceID);
+					return;
+				}
+				check(false);
+			});
+			SpawnActor<AMActor>(MActorData.FinalClass, MActorData.Location, MActorData.Rotation, Params, true);
+		}
+	}
+}
+
+FTimerHandle AutoSaveTimer;
+void AMWorldGenerator::SetupAutoSaves()
+{
+	if (const auto World = GetWorld(); IsValid(World))
+	{
+		World->GetTimerManager().SetTimer(AutoSaveTimer, [this]
+		{
+			if (const auto SaveGameWorld = Cast<USaveGameWorld>(UGameplayStatics::CreateSaveGameObject(USaveGameWorld::StaticClass())))
+			{
+				for (const auto pMetadata : ActorsMetadata)
+				{
+					if (const auto pActor = pMetadata.Value.Actor)
+					{
+						FActorSaveData* ActorSaveData = nullptr;
+						// Start from the most derivative
+						if (const auto pMCharacterActor = Cast<AMCharacter>(pActor))
+						{
+							ActorSaveData = new FMCharacterSaveData();
+							auto* MCharacterSaveData = static_cast<FMCharacterSaveData*>(ActorSaveData);
+							MCharacterSaveData->Health = pMCharacterActor->GetHealth();
+							MCharacterSaveData->SpeciesName = pMCharacterActor->GetSpeciesName();
+						}
+						else
+						{
+							if (const auto pMPickableActor = Cast<AMPickableActor>(pActor))
+							{
+								ActorSaveData = new FMPickableActorSaveData();
+								auto* MMPickableActorSaveData = static_cast<FMPickableActorSaveData*>(ActorSaveData);
+								if (const auto InventoryComponent = Cast<UMInventoryComponent>(pMPickableActor->GetComponentByClass(UMInventoryComponent::StaticClass())))
+								{
+									MMPickableActorSaveData->InventoryContents = InventoryComponent->GetItemCopies(false);
+								}
+							}
+							if (const auto pMActor = Cast<AMActor>(pActor))
+							{
+								if (!ActorSaveData)
+									ActorSaveData = new FMActorSaveData();
+								auto* MActorSaveData = static_cast<FMActorSaveData*>(ActorSaveData);
+								MActorSaveData->Biome = pMActor->GetBiome();
+								MActorSaveData->AppearanceID = pMActor->GetAppearanceID();
+								MActorSaveData->IsRandomizedAppearance = pMActor->GetIsRandomizedAppearance();
+							}
+						}
+						if (!ActorSaveData)
+							ActorSaveData = new FActorSaveData();
+						ActorSaveData->FinalClass = pActor->GetClass();
+						ActorSaveData->Location = pActor->GetActorLocation();
+						ActorSaveData->Rotation = pActor->GetActorRotation();
+						ActorSaveData->Name = pActor->GetName();
+
+						auto test = ActorSaveData->StaticStruct();
+						auto test2 = 1;
+					}
+				}
+			}
+		}, 5.f, true);
+		return;
+	}
+	check(false);
+}
+
+// Tick interval is set in the blueprint
 void AMWorldGenerator::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	DynamicActorsCheckTimer += DeltaSeconds;
-	if (DynamicActorsCheckTimer >= DynamicActorsCheckInterval)
-	{
-		DynamicActorsCheckTimer = 0.f;
-		CheckDynamicActorsBlocks();
-	}
+	CheckDynamicActorsBlocks();
 }
 
 AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation,
@@ -700,7 +805,7 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant)
 
 	// If there's an empty block, add it to the map
 	UBlockOfActors* BlockOfActors;
-	if (!GridOfActors.Contains(GroundBlockIndex))
+	if (!GridOfActors.Contains(GroundBlockIndex)) //TODO: rewrite this dirty scope
 	{
 		BlockOfActors = GridOfActors.Add(GroundBlockIndex, NewObject<UBlockOfActors>(this));
 	}

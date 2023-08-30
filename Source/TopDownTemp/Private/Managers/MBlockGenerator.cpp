@@ -31,7 +31,8 @@ void UMBlockGenerator::Generate(const FIntPoint BlockIndex, AMWorldGenerator* pW
 	{
 		if (const auto MActor = Cast<AMActor>(Actor))
 		{
-			MActor->SetBiomeForRandomization(Biome);
+			MActor->SetBiome(Biome);
+			MActor->MakeRandom(); //TODO: Add an option to disable this in preset
 			return;
 		}
 		check(false);

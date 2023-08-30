@@ -47,4 +47,3 @@ protected:
 	UPROPERTY()
 	UMDropManager* pDropManager;
 };
-

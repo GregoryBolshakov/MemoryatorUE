@@ -21,9 +21,9 @@ void AMActor::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	if (BiomeForRandomization.IsSet())
+	if (IsRandomizedAppearance)
 	{
-		Randomize(BiomeForRandomization.GetValue());
+		Randomize(Biome);
 	}
 
 	RepresentationComponent->PostInitChildren();
