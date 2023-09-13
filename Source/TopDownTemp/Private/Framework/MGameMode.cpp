@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MGameMode.h"
 #include "Controllers/MPlayerController.h"
 #include "Characters/MCharacter.h"

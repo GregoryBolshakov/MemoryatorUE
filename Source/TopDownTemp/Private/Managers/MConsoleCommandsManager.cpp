@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MConsoleCommandsManager.h"
 #include "Net/UnrealNetwork.h"
 

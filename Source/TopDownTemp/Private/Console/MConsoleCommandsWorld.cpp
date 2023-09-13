@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MConsoleCommandsWorld.h"
 #include "Managers/MWorldManager.h"
 #include "Managers/MWorldGenerator.h"
@@ -51,8 +49,7 @@ void UMConsoleCommandsWorld::SpawnMob(const FString& MobClassString, int Quantit
 					if (!pPlayer)
 						return;
 
-					FActorSpawnParameters EmptySpawnParameters;
-					pWorldGenerator->SpawnActorInRadius<AActor>(Class, pPlayer->GetActorLocation(), FRotator::ZeroRotator, EmptySpawnParameters, 150.f, 350.f);
+					pWorldGenerator->SpawnActorInRadius<AActor>(Class, pPlayer->GetActorLocation(), FRotator::ZeroRotator, {}, 150.f, 350.f);
 				}
 			}
 		}

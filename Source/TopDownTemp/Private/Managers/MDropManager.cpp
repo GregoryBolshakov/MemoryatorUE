@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MDropManager.h"
 #include "UI/MPickUpBarWidget.h"
 #include "StationaryActors/MPickableActor.h"

@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MCharacter.h"
 
 #include "Helpers/M2DRepresentationBlueprintLibrary.h"
@@ -15,6 +13,8 @@
 #include "MMemoryator.h" // temporary include
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
+#include "Managers/MWorldGenerator.h"
+#include "Managers/MWorldManager.h"
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0")))
@@ -72,6 +72,22 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	}
 
 	//TODO: Make Z position constant. Now there is a performance loss due to floor collisions.
+}
+
+bool AMCharacter::Destroy(bool bNetForce, bool bShouldModifyLevel)
+{
+	if (const auto pWorld = GetWorld())
+	{
+		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
+		{
+			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
+			{
+				pWorldGenerator->RemoveActorFromGrid(this);
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 float AMCharacter::GetRadius() const
@@ -192,7 +208,7 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 			{
 				if (!GetClass()->IsChildOf(AMMemoryator::StaticClass())) // Temporary check
 				{
-					Destroy();
+					//Destroy(); TODO: Fix this
 					return 0.f;
 				}
 			}

@@ -49,7 +49,7 @@ class TOPDOWNTEMP_API UMBlockGenerator : public UObject
 
 public:
 
-	void Generate(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName = {});
+	void SpawnActors(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName = {});
 
 protected:
 

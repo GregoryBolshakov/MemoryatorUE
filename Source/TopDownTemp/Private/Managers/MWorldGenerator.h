@@ -10,18 +10,17 @@
 class AMPickableActor;
 class UMExperienceManager;
 class UMReputationManager;
+class UMDropManager;
+class UMSaveManager;
 class AMCommunicationManager;
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*)
 
 class UMBlockGenerator;
-class UMDropManager;
 class AMGroundBlock;
 class AMTree;
 class AMActor;
 class AMCharacter;
 class AMMemoryator;
 
-inline FString SaveGameWorldSlot {"WorldSave"}; // Move this into USaveGameWorld
 /**
  * The class responsible for world generation. At the moment it must be placed in the world manually..
  */
@@ -32,21 +31,24 @@ class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 
 public:
 
-	/** Performed at the game start to create the surrounding area */
-	void PrepareVisibleZone();
+	/** Executed once on first run to create the surrounding area */
+	void InitNewWorld();
 
-	void GenerateBlock(const FIntPoint& BlockIndex, bool EraseDynamicObjects = false);
+	UBlockOfActors* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy = false);
+
+	UBlockOfActors* GenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects = true);
 
 	/** Turns on all actors in the active zone, turn off all others*/
 	void UpdateActiveZone();
 
 	template< class T >
-	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters = {}, bool bForceAboveGround = false, const FOnSpawnActorStarted& OnSpawnActorStarted = {})
+	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters(), bool bForceAboveGround = false, const FOnSpawnActorStarted& OnSpawnActorStarted = {})
 	{
 		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters, bForceAboveGround, OnSpawnActorStarted),ECastCheckedType::NullAllowed);
 	}
 
-	void EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant = false);
+	void EnrollActorToGrid(AActor* Actor);
+	void RemoveActorFromGrid(AActor* Actor);
 
 	TSubclassOf<AActor> GetClassToSpawn(FName Name); 
 
@@ -64,6 +66,8 @@ public:
 
 	UMDropManager* GetDropManager() const { return DropManager; }
 
+	UMSaveManager* GetSaveManager() const { return SaveManager; }
+
 	UFUNCTION(BlueprintCallable)
 	UMReputationManager* GetReputationManager() const { return ReputationManager; }
 
@@ -73,11 +77,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AMCommunicationManager* GetCommunicationManager() const { return CommunicationManager; }
 
-	const TMap<FIntPoint, UBlockOfActors*>& GetGridOfActors() { return GridOfActors; }
+	UMBlockGenerator* GetBlockGenerator() const { return BlockGenerator; }
 
-	FVector GetGroundBlockSize();
+	//const TMap<FIntPoint, UBlockOfActors*>& GetGridOfActors() { return GridOfActors; }
+	UBlockOfActors* GetBlock(FIntPoint Index) { return GridOfActors.Get(Index); }
 
-	FIntPoint GetGroundBlockIndex(FVector Position);
+	FVector GetGroundBlockSize() const;
+
+	FIntPoint GetGroundBlockIndex(FVector Position) const;
 
 	FVector GetGroundBlockLocation(FIntPoint BlockIndex);
 
@@ -97,6 +104,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
 	TSubclassOf<UMExperienceManager> ExperienceManagerBPClass;
 
+	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
+	TSubclassOf<UMSaveManager> SaveManagerBPClass;
+
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<AMCommunicationManager> CommunicationManagerBPClass;
 
@@ -115,7 +125,7 @@ private:
 
 	virtual void Tick(float DeltaSeconds) override;
 
-	/** Matches all enabled dynamic actors with the blocks they are on*/
+	/** Matches all enabled dynamic actors with the blocks they are on. Triggers all OnBlockChangedDelegates*/
 	void CheckDynamicActorsBlocks();
 
 	/** Moves the navigation mesh to the player's position */
@@ -136,10 +146,6 @@ private:
 
 	/** Lists all the blocks lying within the circle with the given coordinates and radius */
 	TSet<FIntPoint> GetBlocksInRadius(int BlockX, int BlockY, int RadiusInBlocks) const;
-
-	void LoadFromMemory();
-
-	void SetupAutoSaves();
 
 	/** The radius of the visible area (in blocks) */
 	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess=true))
@@ -163,8 +169,10 @@ private: // Saved to memory
 	int BlocksPassedSinceLastPerimeterColoring;
 
 	UPROPERTY()
-	TMap<FIntPoint, UBlockOfActors*> GridOfActors;
+	FLRUCache GridOfActors;
 
+	/** Maps all the actors in the world with their names.
+	 * Once a world is loaded, ActorsMetadata is not immediately available. It loads in parallel */
 	UPROPERTY()
 	TMap<FName, FActorWorldMetadata> ActorsMetadata;
 
@@ -181,6 +189,9 @@ private: // Managers
 
 	UPROPERTY()
 	UMExperienceManager* ExperienceManager;
+
+	UPROPERTY()
+	UMSaveManager* SaveManager;
 
 	//TODO: Fix needed: items disappear when game crashes/closes during a trade after items were moved to the widget
 	UPROPERTY()

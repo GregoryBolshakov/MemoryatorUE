@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 using UnrealBuildTool;
 
 public class TopDownTemp : ModuleRules
@@ -7,6 +5,7 @@ public class TopDownTemp : ModuleRules
 	public TopDownTemp(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+		OptimizeCode = CodeOptimization.Never;
 
 		PublicDependencyModuleNames.AddRange(
 			new string[]

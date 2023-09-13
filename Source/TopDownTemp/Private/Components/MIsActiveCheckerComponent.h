@@ -27,7 +27,7 @@ class TOPDOWNTEMP_API UMIsActiveCheckerComponent : public UActorComponent
 	GENERATED_UCLASS_BODY()
 
 public:
-	bool GetIsActive() const { return bIsActive; }
+	bool GetIsActive() const { return bIsOwnerActive; }
 
 	UPrimitiveComponent* GetPrimitive() const { return CollisionPrimitive; }
 	
@@ -41,9 +41,10 @@ public:
 	virtual void SetUpCollisionPrimitive();
 
 private:
-	bool bIsActive;
+	UPROPERTY(VisibleAnywhere)
+	bool bIsOwnerActive;
 
-	bool bIsDisabledByForce;
+	bool bIsOwnerDisabledByForce;
 
 	TOptional<bool> bActorWasHiddenInGame;
 

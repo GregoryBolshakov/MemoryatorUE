@@ -27,36 +27,34 @@ AMGroundBlock::AMGroundBlock(const FObjectInitializer& ObjectInitializer) : Supe
 
 void AMGroundBlock::UpdateBiome(EBiome IN_Biome)
 {
-	// Get the grid of actors to access adjacent blocks (for their possible disabling)
+	// Get the grid of actors to access adjacent blocks (for possible disabling of their transitions)
 	if (const auto pWorld = GetWorld())
 	{
 		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
 		{
 			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
 			{
-				const auto GridOfActors = pWorldGenerator->GetGridOfActors();
-
 				const FIntPoint MyIndex = pWorldGenerator->GetGroundBlockIndex(GetActorLocation());
 
 				// Disable transitions if they contact with the same biome or the adjacent block doesn't even exist
 				TArray<FIntPoint> AdjacentBlockOffsets{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}; // Left; Right; Top; Bottom
 				for (const auto& AdjacentBlockOffset : AdjacentBlockOffsets)
 				{
-					const auto Block = GridOfActors.Find({ MyIndex.X + AdjacentBlockOffset.X, MyIndex.Y + AdjacentBlockOffset.Y });
-					if (!Block || (*Block)->Biome == IN_Biome)
+					const auto Block = pWorldGenerator->GetBlock({ MyIndex.X + AdjacentBlockOffset.X, MyIndex.Y + AdjacentBlockOffset.Y });
+					if (!Block || Block->Biome == IN_Biome)
 					{
 						if (const auto Transition = GetTransitionByOffset(AdjacentBlockOffset))
 							Transition->SetHiddenInGame(true);
 					}
-					else if ((*Block)->pGroundBlock)
+					else if (Block->pGroundBlock)
 					{
-						(*Block)->pGroundBlock->UpdateTransition(AdjacentBlockOffset * -1, IN_Biome); // *-1 because we update the opposite side of the adjacent block
+						Block->pGroundBlock->UpdateTransition(AdjacentBlockOffset * -1, IN_Biome); // *-1 because we update the opposite side of the adjacent block
 					}
 				}
 			}
 		}
 	}
-	//TODO: Consider hiding lower block transitions 
+	//TODO: Consider hiding lower block transitions
 
 	OnBiomeUpdated();
 }
@@ -89,27 +87,4 @@ UPaperSpriteComponent* AMGroundBlock::GetTransitionByOffset(FIntPoint Offset) co
 	}
 	check(false);
 	return nullptr;
-}
-
-EBiome AMGroundBlock::GetMyBiome()
-{
-	if (const auto pWorld = GetWorld())
-	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
-			{
-				const auto GridOfActors = pWorldGenerator->GetGridOfActors();
-
-				const FIntPoint MyIndex = pWorldGenerator->GetGroundBlockIndex(GetActorLocation());
-
-				if (const auto MyBlockInGrid = GridOfActors.Find(MyIndex))
-				{
-					return (*MyBlockInGrid)->Biome;
-				}
-			}
-		}
-	}
-	check(false);
-	return EBiome::DarkWoods;
 }

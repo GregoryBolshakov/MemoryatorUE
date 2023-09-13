@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -16,6 +14,12 @@ class AMCharacter : public ACharacter
 	GENERATED_UCLASS_BODY()
 
 public:
+
+	/** Use AMWorldGenerator::RemoveFromGrid instead */
+	//bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = true ) = delete;
+
+	// Temp workaraund
+	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = true);
 
 	float GetRadius() const;
 

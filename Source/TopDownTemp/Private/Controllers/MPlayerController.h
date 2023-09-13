@@ -1,4 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
 // Save/Load and server validation logic is exposed to the blueprint
 
 #pragma once

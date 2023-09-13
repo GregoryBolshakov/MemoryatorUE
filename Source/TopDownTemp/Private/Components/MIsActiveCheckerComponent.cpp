@@ -4,8 +4,8 @@
 
 UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, bIsActive(true)
-	, bIsDisabledByForce(false)
+	, bIsOwnerActive(true)
+	, bIsOwnerDisabledByForce(false)
 	, CollisionPrimitive(nullptr)
 	, bAlwaysEnabled(false)
 {
@@ -14,12 +14,12 @@ UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer&
 void UMIsActiveCheckerComponent::DisableOwner(bool bForce)
 {
 	// No need to disable if either already disabled or configured to always be enabled
-	if (!bIsActive || bAlwaysEnabled)
+	if (!bIsOwnerActive || bAlwaysEnabled)
 	{
 		return;
 	}
 
-	bIsDisabledByForce = bForce;
+	bIsOwnerDisabledByForce = bForce;
 
 	const auto pOwner = GetOwner();
 	if (!pOwner)
@@ -60,7 +60,7 @@ void UMIsActiveCheckerComponent::DisableOwner(bool bForce)
 		DisabledComponentsData.Add(ComponentData);
 	}
 
-	bIsActive = false;
+	bIsOwnerActive = false;
 	//TODO: Disable actor's controller if present
 }
 
@@ -68,7 +68,7 @@ void UMIsActiveCheckerComponent::EnableOwner(bool bForce)
 {
 	// No need to enable if bAlwaysEnabled is true, because it has never been disabled.
 	// If was disabled by force, then can be enabled only by force
-	if (bIsActive || bAlwaysEnabled || (bIsDisabledByForce && !bForce))
+	if (bIsOwnerActive || bAlwaysEnabled || (bIsOwnerDisabledByForce && !bForce))
 	{
 		return;
 	}
@@ -119,7 +119,7 @@ void UMIsActiveCheckerComponent::EnableOwner(bool bForce)
 	}
 	DisabledComponentsData.Empty();
 
-	bIsActive = true;
+	bIsOwnerActive = true;
 	//TODO: Enable actor's controller if present
 }
 

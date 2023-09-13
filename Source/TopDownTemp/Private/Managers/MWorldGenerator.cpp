@@ -15,12 +15,11 @@
 #include "MVillageGenerator.h"
 #include "NavigationSystem.h"
 #include "Controllers/MPlayerController.h"
-#include "Framework/MGameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "NakamaManager/Private/NakamaManager.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "StationaryActors/MPickableActor.h"
-#include "MWorldGeneratorSaveTypes.h"
+#include "MSaveManager.h"
 
 AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -28,6 +27,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	, DropManager(nullptr)
 	, ReputationManager(nullptr)
 	, ExperienceManager(nullptr)
+	, SaveManager(nullptr)
 	, CommunicationManager(nullptr)
 	, BlockGenerator(nullptr)
 {
@@ -35,7 +35,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	PrimaryActorTick.bCanEverTick = true;
 }
 
-void AMWorldGenerator::PrepareVisibleZone()
+void AMWorldGenerator::InitNewWorld()
 {
 	auto* pWorld = GetWorld();
 	if (!pWorld)
@@ -54,7 +54,6 @@ void AMWorldGenerator::PrepareVisibleZone()
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Name = "Player";
 			pPlayer = SpawnActor<AMCharacter>(*PlayerClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams, true);
-			EnrollActorToGrid(pPlayer);
 		}
 	}
 	if (!IsValid(pPlayer))
@@ -68,19 +67,20 @@ void AMWorldGenerator::PrepareVisibleZone()
 		check(false);
 
 	const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
-	ExperienceManager->ExperienceAddedDelegate.AddDynamic(Cast<AMPlayerController>(pPlayer->GetController()), &AMPlayerController::OnExperienceAdded);
 
-	if (GridOfActors.IsEmpty() || ActiveBlocksMap.IsEmpty() || ActorsMetadata.IsEmpty()) // Empty world check
+	if (GridOfActors.Num() == 1 || ActorsMetadata.Num() == 1) // Empty world check
 	{
-		check(GridOfActors.Num() == 1 && ActiveBlocksMap.IsEmpty() && ActorsMetadata.Num() == 1); // Error occured while loading save
+		check(GridOfActors.Num() == 1 && ActorsMetadata.Num() == 1); // Error occured while loading save
 
 		// We add 1 to the radius on purpose. Generated area always has to be further then visible
 		const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
 		for (const auto BlockInRadius : BlocksInRadius)
 		{ // Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
-			auto* BlockOfActors = GridOfActors.Contains(BlockInRadius) ?
-						*GridOfActors.Find(BlockInRadius) :
-						GridOfActors.Add(BlockInRadius, NewObject<UBlockOfActors>(this));
+			auto* BlockOfActors = GridOfActors.Get(BlockInRadius);
+			if (!BlockOfActors)
+			{
+				BlockOfActors = GridOfActors.Add(BlockInRadius, NewObject<UBlockOfActors>(this));
+			}
 			BlockOfActors->Biome = EBiome::DarkWoods;
 		}
 		for (const auto BlockInRadius : BlocksInRadius)
@@ -88,53 +88,62 @@ void AMWorldGenerator::PrepareVisibleZone()
 			GenerateBlock(BlockInRadius);
 		}
 
-		FActorSpawnParameters SpawnParameters;
-		const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
-		const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator, SpawnParameters);
+		/*const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
+		const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
 		VillageGenerator->Generate();
-		UpdateNavigationMesh();
+		UpdateNavigationMesh();*/
 
-		BlockGenerator->Generate(PlayerBlockIndex, this, EBiome::DarkWoods, "PoppyBLock");
+		EmptyBlock(PlayerBlockIndex, true);
+		BlockGenerator->SpawnActors(PlayerBlockIndex, this, EBiome::DarkWoods, "PoppyBLock");
 	}
 }
 
-void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool EraseDynamicObjects)
+UBlockOfActors* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy)
 {
 	const auto pWorld = GetWorld();
 	if (!pWorld)
-		return;
+		return nullptr;
 
 	// Get the block from grid or add if doesn't exist
-	auto* BlockOfActors = GridOfActors.Contains(BlockIndex) ?
-				*GridOfActors.Find(BlockIndex) :
-				GridOfActors.Add(BlockIndex, NewObject<UBlockOfActors>(this));
+	auto* BlockOfActors = GridOfActors.Get(BlockIndex);
+	if (!BlockOfActors)
+	{
+		BlockOfActors = GridOfActors.Add(BlockIndex, NewObject<UBlockOfActors>(this));
+	}
 
-	if (BlockOfActors->IsConstant)
-		return;
+	if (BlockOfActors->ConstantActorsCount > 0 && !IgnoreConstancy)
+		return BlockOfActors;
 
 	// Empty the block if already spawned
 	for (const auto [Name, Actor] : BlockOfActors->StaticActors)
 	{
 		if (Actor)
 		{
-			Actor->Destroy();
+			RemoveActorFromGrid(Actor);
 		}
 	}
-	BlockOfActors->StaticActors.Empty();
+	check(BlockOfActors->StaticActors.IsEmpty());
 
-	if (EraseDynamicObjects)
+	if (!KeepDynamicObjects)
 	{
 		for (const auto [Name, Actor] : BlockOfActors->DynamicActors)
 		{
 			if (Actor)
 			{
-				Actor->Destroy();
+				RemoveActorFromGrid(Actor);
 			}
 		}
-		BlockOfActors->DynamicActors.Empty();
+		check(BlockOfActors->DynamicActors.IsEmpty());
 	}
 
-	BlockGenerator->Generate(BlockIndex, this, BlockOfActors->Biome);
+	return BlockOfActors;
+}
+
+UBlockOfActors* AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects)
+{
+	const auto Block = EmptyBlock(BlockIndex, KeepDynamicObjects);
+	BlockGenerator->SpawnActors(BlockIndex, this, Block->Biome);
+	return Block;
 }
 
 void AMWorldGenerator::BeginPlay()
@@ -159,6 +168,13 @@ void AMWorldGenerator::BeginPlay()
 	ExperienceManager = ExperienceManagerBPClass ? NewObject<UMExperienceManager>(GetOuter(), ExperienceManagerBPClass, TEXT("ExperienceManager")) : nullptr;
 	check(ExperienceManager);
 
+	SaveManager = SaveManagerBPClass ? NewObject<UMSaveManager>(GetOuter(), SaveManagerBPClass, TEXT("SaveManager")) : nullptr;
+	if (!IsValid(SaveManager))
+	{
+		check(false);
+		return;
+	}
+
 	// Spawn the Communication Manager
 	CommunicationManager = CommunicationManagerBPClass ? GetWorld()->SpawnActor<AMCommunicationManager>(CommunicationManagerBPClass) : nullptr;
 	check(CommunicationManager);
@@ -170,33 +186,30 @@ void AMWorldGenerator::BeginPlay()
 	// We want to set the biome coloring since the first block change
 	BlocksPassedSinceLastPerimeterColoring = BiomesPerimeterColoringRate;
 
-	LoadFromMemory();
-	PrepareVisibleZone();
+	if (!SaveManager->AsyncLoadFromMemory(this))
+	{
+		InitNewWorld();
+	}
 	UpdateActiveZone();
 
 	// Bind to the player-moves-to-another-block event 
 	if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
 	{
+		ExperienceManager->ExperienceAddedDelegate.AddDynamic(Cast<AMPlayerController>(pPlayer->GetController()), &AMPlayerController::OnExperienceAdded);
 		if (const auto PlayerMetadata = ActorsMetadata.Find(FName(pPlayer->GetName())))
 		{
 			PlayerMetadata->OnBlockChangedDelegate.AddDynamic(this, &AMWorldGenerator::OnPlayerChangedBlock);
 		}
 	}
 
-	SetupAutoSaves();
+	SaveManager->SetUpAutoSaves(GridOfActors, this);
 }
 
 void AMWorldGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
-	{
-		if (const auto PlayerMetadata = ActorsMetadata.Find(FName(pPlayer->GetName())))
-		{
-			PlayerMetadata->OnBlockChangedDelegate.RemoveDynamic(this, &AMWorldGenerator::OnPlayerChangedBlock);
-		}
-	}
+	SaveManager->SaveToMemory(GridOfActors, this);
 }
 
 void AMWorldGenerator::CheckDynamicActorsBlocks()
@@ -227,16 +240,16 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 			check(false)
 			continue;
 		}
-		if (const auto Block = GridOfActors.Find(Index); Block && !(*Block)->DynamicActors.IsEmpty())
+		if (const auto Block = GridOfActors.Get(Index); Block && !Block->DynamicActors.IsEmpty())
 		{
-			for (const auto& [Name, Data] : (*Block)->DynamicActors)
+			for (const auto& [Name, Data] : Block->DynamicActors)
 			{
 				if (const auto ActorMetadata = ActorsMetadata.Find(Name))
 				{
 					if (!ActorMetadata->Actor) //TODO: Remove this temporary solution
 					{
 						// If the metadata has invalid Actor pointer, just delete this record
-						const FTransition NewTransition{*ActorMetadata, **Block, nullptr};
+						const FTransition NewTransition{*ActorMetadata, *Block, nullptr};
 						TransitionList.Add(Name, NewTransition);
 					}
 					else
@@ -244,9 +257,9 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 						if (const auto ActualBlockIndex = GetGroundBlockIndex(Data->GetTransform().GetLocation());
 							ActorMetadata->GroundBlockIndex != ActualBlockIndex)
 						{
-							if (const auto NewBlock = GridOfActors.Find(ActualBlockIndex))
+							if (const auto NewBlock = GridOfActors.Get(ActualBlockIndex))
 							{
-								const FTransition NewTransition{*ActorMetadata, **Block, *NewBlock};
+								const FTransition NewTransition{*ActorMetadata, *Block, NewBlock};
 								TransitionList.Add(Name, NewTransition);
 								ActorMetadata->GroundBlockIndex = ActualBlockIndex;
 							}
@@ -294,30 +307,33 @@ void AMWorldGenerator::UpdateActiveZone()
 	{
 		ActiveBlocksMap_New.Add(Block, true);
 		ActiveBlocksMap.Remove(Block);
-		if (const auto GridBlock = GridOfActors.Find(Block);
-			GridBlock && !(*GridBlock)->StaticActors.IsEmpty())
+		if (const auto GridBlock = GridOfActors.Get(Block);
+			GridBlock && !GridBlock->StaticActors.IsEmpty())
 		{
 			// Enable all the static Actors in the block
-			for (const auto& [Index, Data] : (*GridBlock)->StaticActors)
+			for (const auto& [Index, Data] : GridBlock->StaticActors)
 			{
-				//TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
-				if (Data) // temporary
+				if (!Data)
+				{ //TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
+					check(false);
+					continue;
+				}
+				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 				{
-					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-					{
-						IsActiveCheckerComponent->EnableOwner();
-					}
+					IsActiveCheckerComponent->EnableOwner();
 				}
 			}
 			// Enable all dynamic Actors in the block
-			for (const auto& [Index, Data] : (*GridBlock)->DynamicActors)
+			for (const auto& [Index, Data] : GridBlock->DynamicActors)
 			{
-				if (Data) // temporary
+				if (!Data)
 				{
-					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-					{
-						IsActiveCheckerComponent->EnableOwner();
-					}
+					check(false);
+					continue;
+				}
+				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+				{
+					IsActiveCheckerComponent->EnableOwner();
 				}
 			}
 		}
@@ -326,26 +342,30 @@ void AMWorldGenerator::UpdateActiveZone()
 	// Disable/Remove all the rest of objects that were in PlayerActiveZone in the previous check but no longer there.
 	for (const auto& [BlockIndex, IsActive] : ActiveBlocksMap)
 	{
-		if (const auto GridBlock = GridOfActors.Find(BlockIndex))
+		if (const auto GridBlock = GridOfActors.Get(BlockIndex))
 		{
-			for (const auto& [Index, Data] : (*GridBlock)->StaticActors)
+			for (const auto& [Index, Data] : GridBlock->StaticActors)
 			{
-				if (Data) // temporary
+				if (!Data)
+				{ //TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
+					check(false);
+					continue;
+				}
+				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 				{
-					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-					{
-						IsActiveCheckerComponent->DisableOwner();
-					}
+					IsActiveCheckerComponent->DisableOwner();
 				}
 			}
-			for (const auto& [Index, Data] : (*GridBlock)->DynamicActors)
+			for (const auto& [Index, Data] : GridBlock->DynamicActors)
 			{
-				if (Data) // temporary
+				if (!Data)
 				{
-					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-					{
-						IsActiveCheckerComponent->DisableOwner();
-					}
+					check(false);
+					continue;
+				}
+				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+				{
+					IsActiveCheckerComponent->DisableOwner();
 				}
 			}
 		}
@@ -504,11 +524,13 @@ void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIn
 				++DelimiterIndex;
 			}
 
-			auto* BlockOfActors = GridOfActors.Contains(Block) ?
-				*GridOfActors.Find(Block) :
-				GridOfActors.Add(Block, NewObject<UBlockOfActors>(this));
+			auto* BlockOfActors = GridOfActors.Get(Block);
+			if (!BlockOfActors)
+			{
+				BlockOfActors = GridOfActors.Add(Block, NewObject<UBlockOfActors>(this));
+			}
 
-			if (!BlockOfActors->IsConstant) // We keep the biome as well as all other objects
+			if (BlockOfActors->ConstantActorsCount <= 0) // We keep the biome as well as all other objects
 			{
 				BlockOfActors->Biome = Delimiters[DelimiterIndex].Biome;
 			}
@@ -517,9 +539,9 @@ void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIn
 	}
 }
 
-int BlocksPerFrame = 1;
 void AMWorldGenerator::OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate)
 {
+	constexpr int BlocksPerFrame = 1;
 	int Index = 0;
 	for (auto It = BlocksToGenerate.CreateIterator(); It; ++It)
 	{
@@ -534,7 +556,7 @@ void AMWorldGenerator::OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate)
 	}
 }
 
-FVector AMWorldGenerator::GetGroundBlockSize()
+FVector AMWorldGenerator::GetGroundBlockSize() const
 {
 	if (const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock")); GetWorld())
 	{
@@ -545,7 +567,7 @@ FVector AMWorldGenerator::GetGroundBlockSize()
 	return FVector::ZeroVector;
 }
 
-FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position)
+FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position) const
 {
 	const auto GroundBlockSize = GetGroundBlockSize();
 	if (GroundBlockSize.IsZero())
@@ -639,96 +661,6 @@ TSet<FIntPoint> AMWorldGenerator::GetBlocksInRadius(int BlockX, int BlockY, int 
 	return Blocks;
 }
 
-void AMWorldGenerator::LoadFromMemory()
-{
-	//TODO: Consider explicit destroying GridOfActors
-
-	return;
-
-	if (const auto SaveGameWorld = Cast<USaveGameWorld>(UGameplayStatics::LoadGameFromSlot(SaveGameWorldSlot, 0)))
-	{
-		for (const auto& MActorData : SaveGameWorld->AMActorData)
-		{
-			FActorSpawnParameters Params;
-			Params.Name = FName(MActorData.Name);
-
-			FOnSpawnActorStarted OnSpawnActorStarted;
-			OnSpawnActorStarted.AddLambda([this, &MActorData](AActor* Actor)
-			{
-				if (const auto MActor = Cast<AMActor>(Actor))
-				{
-					MActor->SetBiome(MActorData.Biome);
-					MActor->SetAppearanceID(MActorData.AppearanceID);
-					return;
-				}
-				check(false);
-			});
-			SpawnActor<AMActor>(MActorData.FinalClass, MActorData.Location, MActorData.Rotation, Params, true);
-		}
-	}
-}
-
-FTimerHandle AutoSaveTimer;
-void AMWorldGenerator::SetupAutoSaves()
-{
-	if (const auto World = GetWorld(); IsValid(World))
-	{
-		World->GetTimerManager().SetTimer(AutoSaveTimer, [this]
-		{
-			if (const auto SaveGameWorld = Cast<USaveGameWorld>(UGameplayStatics::CreateSaveGameObject(USaveGameWorld::StaticClass())))
-			{
-				for (const auto pMetadata : ActorsMetadata)
-				{
-					if (const auto pActor = pMetadata.Value.Actor)
-					{
-						FActorSaveData* ActorSaveData = nullptr;
-						// Start from the most derivative
-						if (const auto pMCharacterActor = Cast<AMCharacter>(pActor))
-						{
-							ActorSaveData = new FMCharacterSaveData();
-							auto* MCharacterSaveData = static_cast<FMCharacterSaveData*>(ActorSaveData);
-							MCharacterSaveData->Health = pMCharacterActor->GetHealth();
-							MCharacterSaveData->SpeciesName = pMCharacterActor->GetSpeciesName();
-						}
-						else
-						{
-							if (const auto pMPickableActor = Cast<AMPickableActor>(pActor))
-							{
-								ActorSaveData = new FMPickableActorSaveData();
-								auto* MMPickableActorSaveData = static_cast<FMPickableActorSaveData*>(ActorSaveData);
-								if (const auto InventoryComponent = Cast<UMInventoryComponent>(pMPickableActor->GetComponentByClass(UMInventoryComponent::StaticClass())))
-								{
-									MMPickableActorSaveData->InventoryContents = InventoryComponent->GetItemCopies(false);
-								}
-							}
-							if (const auto pMActor = Cast<AMActor>(pActor))
-							{
-								if (!ActorSaveData)
-									ActorSaveData = new FMActorSaveData();
-								auto* MActorSaveData = static_cast<FMActorSaveData*>(ActorSaveData);
-								MActorSaveData->Biome = pMActor->GetBiome();
-								MActorSaveData->AppearanceID = pMActor->GetAppearanceID();
-								MActorSaveData->IsRandomizedAppearance = pMActor->GetIsRandomizedAppearance();
-							}
-						}
-						if (!ActorSaveData)
-							ActorSaveData = new FActorSaveData();
-						ActorSaveData->FinalClass = pActor->GetClass();
-						ActorSaveData->Location = pActor->GetActorLocation();
-						ActorSaveData->Rotation = pActor->GetActorRotation();
-						ActorSaveData->Name = pActor->GetName();
-
-						auto test = ActorSaveData->StaticStruct();
-						auto test2 = 1;
-					}
-				}
-			}
-		}, 5.f, true);
-		return;
-	}
-	check(false);
-}
-
 // Tick interval is set in the blueprint
 void AMWorldGenerator::Tick(float DeltaSeconds)
 {
@@ -769,7 +701,16 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 	AActor* Actor;
 	if (OnSpawnActorStarted.IsBound())
 	{
-		Actor = pWorld->SpawnActorDeferred<AActor>(Class, ActorTransform, nullptr, nullptr, SpawnParameters.SpawnCollisionHandlingOverride);
+		Actor = UGameplayStatics::BeginDeferredActorSpawnFromClass(
+			pWorld,
+			Class,
+			ActorTransform,
+			SpawnParameters.SpawnCollisionHandlingOverride,
+			SpawnParameters.Owner,
+			SpawnParameters.TransformScaleMethod
+		);
+		const auto FinalName = SpawnParameters.Name.IsNone() ? MakeUniqueObjectName(pWorld, Class) : *SpawnParameters.Name.ToString();
+		Actor->Rename(*FinalName.ToString());
 
 		OnSpawnActorStarted.Broadcast(Actor);
 
@@ -796,7 +737,7 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 	return Actor;
 }
 
-void AMWorldGenerator::EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant)
+void AMWorldGenerator::EnrollActorToGrid(AActor* Actor)
 {
 	if (!Actor)
 		return;
@@ -804,19 +745,10 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant)
 	const auto GroundBlockIndex = GetGroundBlockIndex(Actor->GetActorLocation());
 
 	// If there's an empty block, add it to the map
-	UBlockOfActors* BlockOfActors;
-	if (!GridOfActors.Contains(GroundBlockIndex)) //TODO: rewrite this dirty scope
+	auto BlockOfActors = GridOfActors.Get(GroundBlockIndex);
+	if (!BlockOfActors)
 	{
 		BlockOfActors = GridOfActors.Add(GroundBlockIndex, NewObject<UBlockOfActors>(this));
-	}
-	else
-	{
-		BlockOfActors = *GridOfActors.Find(GroundBlockIndex);
-	}
-
-	if (bMakeBlockConstant)
-	{
-		BlockOfActors->IsConstant = true;
 	}
 
 	// Determine whether the object is static or movable
@@ -832,7 +764,7 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant)
 	{
 		if (IsActiveCheckerComponent->GetAlwaysEnabled())
 		{
-			BlockOfActors->IsConstant = true;
+			BlockOfActors->ConstantActorsCount++; //TODO: Disable constancy when the object no longer on the block
 		}
 		else
 		{
@@ -841,6 +773,41 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant)
 				IsActiveCheckerComponent->DisableOwner();
 			}
 		}
+	}
+}
+
+void AMWorldGenerator::RemoveActorFromGrid(AActor* Actor)
+{
+	//TODO: Accumulate and process such calls asynchronously. Now processed immediately.
+
+	if (!IsValid(Actor))
+	{
+		check(false);
+		return;
+	}
+	const auto BlockIndex = GetGroundBlockIndex(Actor->GetActorLocation());
+	if (const auto BlockOfActors = GridOfActors.Get(BlockIndex))
+	{
+		if (const auto ActiveCheckerComp = Cast<UMIsActiveCheckerComponent>(Actor->GetComponentByClass(UMIsActiveCheckerComponent::StaticClass())))
+		{
+			if (ActiveCheckerComp->GetAlwaysEnabled())
+			{
+				BlockOfActors->ConstantActorsCount--;
+			}
+		}
+		const auto ActorName = FName(Actor->GetName());
+		if (Actor->GetClass()->IsChildOf(APawn::StaticClass()))
+		{
+			BlockOfActors->DynamicActors.Remove(ActorName);
+		}
+		else
+		{
+			BlockOfActors->StaticActors.Remove(ActorName);
+		}
+
+		ActorsMetadata.Remove(ActorName);
+
+		Actor->Destroy();
 	}
 }
 
@@ -864,9 +831,9 @@ TMap<FName, AActor*> AMWorldGenerator::GetActorsInRect(FVector UpperLeft, FVecto
 	{
 		for (auto Y = StartBlock.Y; Y <= FinishBlock.Y; ++Y)
 		{
-			if (const auto Block = GridOfActors.Find({X, Y}))
+			if (const auto Block = GridOfActors.Get({X, Y}))
 			{
-				if (const auto& Actors = bDynamic ? (*Block)->DynamicActors : (*Block)->StaticActors;
+				if (const auto& Actors = bDynamic ? Block->DynamicActors : Block->StaticActors;
 					!Actors.IsEmpty())
 				{
 					for (const auto& [Name, Actor] : Actors)
@@ -892,10 +859,10 @@ void AMWorldGenerator::CleanArea(const FVector& Location, float Radius)
 	{
 		for (auto Y = StartBlock.Y; Y <= FinishBlock.Y; ++Y)
 		{
-			if (const auto Block = GridOfActors.Find({X, Y}))
+			if (const auto Block = GridOfActors.Get({X, Y}))
 			{
 				//TEMP SOLUTION
-				for (auto It = (*Block)->StaticActors.CreateIterator(); It; ++It)
+				for (auto It = Block->StaticActors.CreateIterator(); It; ++It)
 				{
 					if (Cast<AMGroundBlock>(It.Value()))
 					{
@@ -925,6 +892,7 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 	if (const auto pWorld = WorldContextObject->GetWorld())
 	{
 		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.Name = FName("TestBounds_" + IN_ActorClass->GetName());
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		if (const auto Actor = pWorld->SpawnActor(IN_ActorClass, nullptr, nullptr, SpawnParameters))
 		{

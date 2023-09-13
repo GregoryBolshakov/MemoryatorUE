@@ -1,7 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
-
-
 #include "NakamaBlueprints.h"
 #include "nakama-cpp/log/NLogger.h"
 #include "Modules/ModuleManager.h"

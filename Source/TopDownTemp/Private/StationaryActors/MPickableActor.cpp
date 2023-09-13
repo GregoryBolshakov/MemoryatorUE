@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MPickableActor.h"
 
 #include "Components/M2DRepresentationComponent.h"

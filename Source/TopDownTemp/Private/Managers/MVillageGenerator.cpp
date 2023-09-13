@@ -64,7 +64,7 @@ void AMVillageGenerator::Generate()
 	DetermineAllBuildingsNumberOfInstances();
 	while(!RequiredNumberOfInstances.IsEmpty())
 	{
-		FActorSpawnParameters SpawnParameters{};
+		FActorSpawnParameters SpawnParameters;
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 		// The class of the new building is random
@@ -93,7 +93,7 @@ void AMVillageGenerator::Generate()
 		// We try to find a location to fit the building
 		if (TryToPlaceBuilding(*TestingBuildingActor, BuildingIndex, DistanceFromCenter, BuildingClassName, *BuildingMetadata))
 		{
-			pWorldGenerator->EnrollActorToGrid(TestingBuildingActor, true);
+			pWorldGenerator->EnrollActorToGrid(TestingBuildingActor);
 		}
 		else
 		{

@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MAttackPuddleComponent.h"
 
 #include "Helpers/M2DRepresentationBlueprintLibrary.h"

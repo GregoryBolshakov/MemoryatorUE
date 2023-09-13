@@ -7,7 +7,7 @@
 
 class UNakamaManager;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHeroDataUpdated)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnHeroDataUpdated);
 
 USTRUCT(BlueprintType)
 struct FProfile

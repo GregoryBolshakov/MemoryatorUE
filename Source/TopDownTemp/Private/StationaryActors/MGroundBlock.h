@@ -31,9 +31,6 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnBiomeUpdated();
 
-	UFUNCTION(BlueprintCallable)
-	EBiome GetMyBiome();
-
 	UPaperSpriteComponent* GetTransitionByOffset(FIntPoint Offset) const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
