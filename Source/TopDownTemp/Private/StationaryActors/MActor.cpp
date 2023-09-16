@@ -41,8 +41,10 @@ void AMActor::PostInitializeComponents()
 
 	if (IsRandomizedAppearance)
 	{
-		Randomize();
+		RandomizeAppearanceID();
 	}
+
+	ApplyAppearanceID();
 
 	RepresentationComponent->PostInitChildren();
 }

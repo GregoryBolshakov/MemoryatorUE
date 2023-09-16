@@ -79,12 +79,15 @@ public:
 
 	UMBlockGenerator* GetBlockGenerator() const { return BlockGenerator; }
 
-	//const TMap<FIntPoint, UBlockOfActors*>& GetGridOfActors() { return GridOfActors; }
 	UBlockOfActors* GetBlock(FIntPoint Index) { return GridOfActors.Get(Index); }
 
 	FVector GetGroundBlockSize() const;
 
 	FIntPoint GetGroundBlockIndex(FVector Position) const;
+
+	/** Is more reliable than manually using player via UGameplayStatics,
+	 * because player controller might be invalid during game shutdown */
+	FIntPoint GetPlayerGroundBlockIndex() const;
 
 	FVector GetGroundBlockLocation(FIntPoint BlockIndex);
 
@@ -161,8 +164,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = MWorldGenerator, meta = (AllowPrivateAccess = "true"))
 	int BiomesPerimeterColoringRate = 10;
 
-	static TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;
-
 private: // Saved to memory
 
 	/** The number of blocks player passed since the last biomes perimeter coloring */
@@ -171,6 +172,8 @@ private: // Saved to memory
 	UPROPERTY()
 	FLRUCache GridOfActors;
 
+private:
+
 	/** Maps all the actors in the world with their names.
 	 * Once a world is loaded, ActorsMetadata is not immediately available. It loads in parallel */
 	UPROPERTY()
@@ -178,6 +181,9 @@ private: // Saved to memory
 
 	UPROPERTY()
 	TMap<FIntPoint, bool> ActiveBlocksMap;
+
+	UPROPERTY()
+	TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;
 
 private: // Managers
 

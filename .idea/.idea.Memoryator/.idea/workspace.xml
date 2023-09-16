@@ -77,63 +77,18 @@
   <component name="ChangeListManager">
     <list default="true" id="e6aefbb4-21b4-457e-865d-4518e05c9884" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Memoryator/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" beforeDir="false" afterPath="$PROJECT_DIR$/.vs/Memoryator/v16/.suo" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vsconfig" beforeDir="false" afterPath="$PROJECT_DIR$/.vsconfig" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_BlockGenerator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_BlockGenerator.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/BP_WorldGenerator.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Environment/BP_GroundBlock.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Environment/BP_GroundBlock.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Environment/BP_Plant.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Environment/BP_Plant.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Environment/BP_Tree.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Blueprints/Environment/BP_Tree.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Maps/GameWorld.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Maps/GameWorld.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Memoryator/Textures/Environment/DarkWoods/Frames/DarkWoods_ground_1_png.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Memoryator/Textures/Environment/DarkWoods/Frames/DarkWoods_ground_1_png.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Memoryator.sln" beforeDir="false" afterPath="$PROJECT_DIR$/Memoryator.sln" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Memoryator.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/Memoryator.sln.DotSettings.user" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Memoryator.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/Memoryator.uproject" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Nakama/Source/NakamaBlueprints/NakamaBlueprints.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Nakama/Source/NakamaBlueprints/NakamaBlueprints.Build.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Nakama/Source/NakamaBlueprints/Private/NakamaBlueprints.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Nakama/Source/NakamaBlueprints/Private/NakamaBlueprints.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Nakama/Source/NakamaBlueprints/Public/NakamaBlueprints.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Nakama/Source/NakamaBlueprints/Public/NakamaBlueprints.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Nakama/Source/NakamaUnreal/NakamaUnreal.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Nakama/Source/NakamaUnreal/NakamaUnreal.Build.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/NakamaManager.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/NakamaManager.Build.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Private/NakamaManagerModule.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Private/NakamaManagerModule.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Private/UserManagerClient.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Private/UserManagerClient.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Public/NakamaManagerModule.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/NakamaManager/Source/NakamaManager/Public/NakamaManagerModule.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp.Target.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp.Target.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MCharacter.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MCharacter.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MMemoryator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MMemoryator.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MMob.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Characters/MMob.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MAttackPuddleComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MAttackPuddleComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MAttackPuddleComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MAttackPuddleComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MIsActiveCheckerComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MIsActiveCheckerComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MIsActiveCheckerComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MIsActiveCheckerComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MRotatableFlipbookComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MRotatableFlipbookComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MRotatableFlipbookComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Components/MRotatableFlipbookComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Console/MConsoleCommands.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Console/MConsoleCommands.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Console/MConsoleCommandsWorld.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Console/MConsoleCommandsWorld.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MPlayerController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MPlayerController.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MPlayerController.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Controllers/MPlayerController.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/DataAssets/MItemsDataAsset.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/DataAssets/MItemsDataAsset.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Framework/MGameMode.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Framework/MGameMode.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Framework/MGameMode.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Framework/MGameMode.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MBlockGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MBlockGenerator.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MBlockGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MBlockGenerator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MConsoleCommandsManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MConsoleCommandsManager.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MDropManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MDropManager.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MVillageGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MVillageGenerator.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MSaveManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MSaveManager.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MVillageGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MVillageGenerator.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MWorldGenerator.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MWorldGenerator.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MWorldGenerator.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MWorldGenerator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MWorldGeneratorSaveTypes.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MWorldGeneratorTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MWorldGeneratorTypes.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MActor.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MActor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MActor.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MDropActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MDropActor.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MGroundBlock.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MGroundBlock.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MGroundBlock.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MGroundBlock.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MPickableActor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/StationaryActors/MPickableActor.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/TopDownTemp.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/TopDownTemp.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/TopDownTemp.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/TopDownTemp.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MInventorySlotWidget.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MInventorySlotWidget.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTemp/TopDownTemp.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTemp/TopDownTemp.Build.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/TopDownTempEditor.Target.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Source/TopDownTempEditor.Target.cs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -191,6 +146,7 @@
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MShopWidget.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/Private/UI/MShopWidget.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/TopDownTemp/TopDownTemp.Build.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../Program Files/Epic Games/UE_5.2/Engine/Source/Runtime/Engine/Private/UnrealEngine.cpp" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -216,9 +172,9 @@
   },
   &quot;keyToStringList&quot;: {
     &quot;rider.external.source.directories&quot;: [
-      &quot;C:\\Users\\Gregory\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\DecompilerCache&quot;,
-      &quot;C:\\Users\\Gregory\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\SourcesCache&quot;,
-      &quot;C:\\Users\\Gregory\\AppData\\Local\\Symbols\\src&quot;
+      &quot;C:\\Users\\GregoryBolshakov\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\DecompilerCache&quot;,
+      &quot;C:\\Users\\GregoryBolshakov\\AppData\\Roaming\\JetBrains\\Rider2022.3\\resharper-host\\SourcesCache&quot;,
+      &quot;C:\\Users\\GregoryBolshakov\\AppData\\Local\\Symbols\\src&quot;
     ]
   }
 }</component>
@@ -23331,6 +23287,9 @@
       <workItem from="1693472716893" duration="14844000" />
       <workItem from="1693662744096" duration="39837000" />
       <workItem from="1694014689675" duration="2118000" />
+      <workItem from="1694698452027" duration="2286000" />
+      <workItem from="1694717701093" duration="5672000" />
+      <workItem from="1694853445526" duration="14678000" />
     </task>
     <servers />
   </component>
@@ -23418,23 +23377,8 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MSaveManager.cpp</url>
-          <line>125</line>
-          <option name="timeStamp" value="321" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MSaveManager.cpp</url>
-          <line>105</line>
-          <option name="timeStamp" value="324" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MSaveManager.cpp</url>
-          <line>100</line>
-          <option name="timeStamp" value="326" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Source/TopDownTemp/Private/Managers/MSaveManager.cpp</url>
-          <line>98</line>
-          <option name="timeStamp" value="327" />
+          <line>46</line>
+          <option name="timeStamp" value="299" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

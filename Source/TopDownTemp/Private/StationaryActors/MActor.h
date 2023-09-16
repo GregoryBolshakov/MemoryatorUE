@@ -33,7 +33,10 @@ protected:
 	virtual void PostInitializeComponents() override;
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void Randomize();
+	void RandomizeAppearanceID();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ApplyAppearanceID();
 
 	UFUNCTION(BlueprintCallable)
 	EBiome GetMyBiome();
@@ -50,5 +53,6 @@ protected:
 	/** Objects like trees/plants/mushrooms/stones/etc. may have different appearances. If true, the type will be picked randomly */
 	bool IsRandomizedAppearance = false;
 
+	UPROPERTY(BlueprintReadOnly)
 	int AppearanceID = 0;
 };

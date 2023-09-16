@@ -29,11 +29,16 @@ void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator
 
 	for (const auto& [BlockIndex, pBlockOfActors] : GridOfActors.GetMap())
 	{
+		FBlockSaveData* SavedBlock;
 		if (!SaveGameWorld->SavedGrid.Contains(BlockIndex))
 		{
-			SaveGameWorld->SavedGrid.Add(BlockIndex, {});
+			SavedBlock = &SaveGameWorld->SavedGrid.Add(BlockIndex, {});
 		}
-		const auto SavedBlock = SaveGameWorld->SavedGrid.Find(BlockIndex);
+		else
+		{
+			SavedBlock = SaveGameWorld->SavedGrid.Find(BlockIndex);
+		}
+		SavedBlock->Biome = pBlockOfActors->Biome;
 		for (const auto& [Name, pActor] : pBlockOfActors->StaticActors)
 		{
 			if (!IsValid(pActor))
@@ -95,17 +100,14 @@ void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator
 	}
 
 	// Access player's block to raise their block on top of the priority queue
-	//TODO: store a pointer to the player in worldgenerator to guarantee its validity here
-	if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
-	{
-		GridOfActors.Get(WorldGenerator->GetGroundBlockIndex(pPlayer->GetActorLocation()));
-	}
+	GridOfActors.Get(WorldGenerator->GetPlayerGroundBlockIndex());
 
 	SaveGameWorld->GridOrder = GridOfActors.GetCacheOrder();
 
 	UGameplayStatics::SaveGameToSlot(SaveGameWorld, USaveGameWorld::SlotName, 0);
 }
 
+int BlockToLoadIndex = 0;
 bool UMSaveManager::AsyncLoadFromMemory(AMWorldGenerator* WorldGenerator)
 {
 	//TODO: Consider explicit destroying GridOfActors if loading in the middle of the game
@@ -115,6 +117,7 @@ bool UMSaveManager::AsyncLoadFromMemory(AMWorldGenerator* WorldGenerator)
 	if (!LoadedGameWorld || !WorldGenerator)
 		return false;
 
+	BlockToLoadIndex = 0;
 	LoadPerTick(WorldGenerator);
 
 	return true;
@@ -124,19 +127,18 @@ bool UMSaveManager::AsyncLoadFromMemory(AMWorldGenerator* WorldGenerator)
 void UMSaveManager::LoadPerTick(AMWorldGenerator* WorldGenerator)
 {
 	constexpr int BlocksPerFrame = 4;
-	int Index = 0;
-	for (auto It = LoadedGameWorld->GridOrder.CreateIterator(); It; ++It)
+	int Index;
+	for (Index = BlockToLoadIndex; Index < FMath::Min(BlockToLoadIndex + BlocksPerFrame, LoadedGameWorld->GridOrder.Num()); ++Index)
 	{
-		const auto Block = LoadedGameWorld->SavedGrid.Find(*It);
+		const auto Block = LoadedGameWorld->SavedGrid.Find(LoadedGameWorld->GridOrder[Index]);
 		check(Block);
-		LoadBlock(*It, *Block, WorldGenerator);
-		It.RemoveCurrent();
+		LoadBlock(LoadedGameWorld->GridOrder[Index], *Block, WorldGenerator);
+		BlockToLoadIndex++;
+	}
 
-		if (++Index >= BlocksPerFrame)
-		{
-			GetWorld()->GetTimerManager().SetTimerForNextTick([this, WorldGenerator]{ LoadPerTick(WorldGenerator); });
-			break;
-		}
+	if (Index < LoadedGameWorld->GridOrder.Num() - 1) // Haven't loaded all the blocks, live it for the next frame
+	{
+		GetWorld()->GetTimerManager().SetTimerForNextTick([this, WorldGenerator]{ LoadPerTick(WorldGenerator); });
 	}
 }
 
@@ -192,7 +194,7 @@ AMActor* UMSaveManager::LoadMActor(const FMActorSaveData& MActorSD, AMWorldGener
 		}
 		check(false);
 	});
-	return WorldGenerator->SpawnActor<AMActor>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, true);
+	return WorldGenerator->SpawnActor<AMActor>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, true, OnSpawnActorStarted);
 }
 
 AMPickableActor* UMSaveManager::LoadMPickableActor(const FMPickableActorSaveData& MPickableActorSD,
@@ -218,5 +220,21 @@ AMCharacter* UMSaveManager::LoadMCharacter(const FMCharacterSaveData& MCharacter
 	FActorSpawnParameters Params;
 	Params.Name = FName(ActorSD.NameString);
 
-	return WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, true);
+	// Spawn the character using saved data
+	if (const auto SpawnedCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, true))
+	{
+		// If it was the player, make it possessed by the player controller
+		if (Params.Name == FName("Player"))
+		{
+			if (const auto pPlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+			{
+				pPlayerController->Possess(SpawnedCharacter);
+			}
+		}
+
+		return SpawnedCharacter;
+	}
+
+	check(false);
+	return nullptr;
 }

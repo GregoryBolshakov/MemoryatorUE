@@ -20,6 +20,7 @@
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "StationaryActors/MPickableActor.h"
 #include "MSaveManager.h"
+#include "MWorldManager.h"
 
 AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -37,6 +38,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 
 void AMWorldGenerator::InitNewWorld()
 {
+	//TODO: Erase the old code. Now we consider this function to be called ONLY in the new empty world.
 	auto* pWorld = GetWorld();
 	if (!pWorld)
 		return;
@@ -115,22 +117,22 @@ UBlockOfActors* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 		return BlockOfActors;
 
 	// Empty the block if already spawned
-	for (const auto [Name, Actor] : BlockOfActors->StaticActors)
+	for (auto It = BlockOfActors->StaticActors.CreateIterator(); It; ++It)
 	{
-		if (Actor)
+		if (It->Value)
 		{
-			RemoveActorFromGrid(Actor);
+			RemoveActorFromGrid(It->Value);
 		}
 	}
 	check(BlockOfActors->StaticActors.IsEmpty());
 
 	if (!KeepDynamicObjects)
 	{
-		for (const auto [Name, Actor] : BlockOfActors->DynamicActors)
+		for (auto It = BlockOfActors->DynamicActors.CreateIterator(); It; ++It)
 		{
-			if (Actor)
+			if (It->Value)
 			{
-				RemoveActorFromGrid(Actor);
+				RemoveActorFromGrid(It->Value);
 			}
 		}
 		check(BlockOfActors->DynamicActors.IsEmpty());
@@ -556,6 +558,16 @@ void AMWorldGenerator::OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate)
 	}
 }
 
+FIntPoint AMWorldGenerator::GetPlayerGroundBlockIndex() const
+{
+	if (const auto pPlayerMetadata = ActorsMetadata.Find("Player"))
+	{
+		return GetGroundBlockIndex(pPlayerMetadata->Actor->GetActorLocation());
+	}
+	check(false);
+	return {};
+}
+
 FVector AMWorldGenerator::GetGroundBlockSize() const
 {
 	if (const auto ToSpawnGroundBlock = ToSpawnActorClasses.Find(FName("GroundBlock")); GetWorld())
@@ -701,20 +713,24 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 	AActor* Actor;
 	if (OnSpawnActorStarted.IsBound())
 	{
-		Actor = UGameplayStatics::BeginDeferredActorSpawnFromClass(
-			pWorld,
+		Actor = pWorld->SpawnActorDeferred<AActor>(
 			Class,
 			ActorTransform,
+			nullptr,
+			nullptr,
 			SpawnParameters.SpawnCollisionHandlingOverride,
-			SpawnParameters.Owner,
 			SpawnParameters.TransformScaleMethod
 		);
-		const auto FinalName = SpawnParameters.Name.IsNone() ? MakeUniqueObjectName(pWorld, Class) : *SpawnParameters.Name.ToString();
-		Actor->Rename(*FinalName.ToString());
 
-		OnSpawnActorStarted.Broadcast(Actor);
+		check(Actor);
+		if (Actor)
+		{
+			Actor->Rename(); // Guarantees unique name
 
-		UGameplayStatics::FinishSpawningActor(Actor, ActorTransform);
+			OnSpawnActorStarted.Broadcast(Actor);
+
+			UGameplayStatics::FinishSpawningActor(Actor, ActorTransform);
+		}
 	}
 	else
 	{
@@ -875,46 +891,60 @@ void AMWorldGenerator::CleanArea(const FVector& Location, float Radius)
 		}
 	}
 }
-TMap<UClass*, FBoxSphereBounds> AMWorldGenerator::DefaultBoundsMap;
+
 /** Finds the bounds of the default object for a blueprint. You have to mark components with AffectsDefaultBounds tag in order to affect bounds! */
 FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObject* WorldContextObject)
 {
-	if (const auto FoundBounds = DefaultBoundsMap.Find(IN_ActorClass))
-	{
-		return *FoundBounds;
-	}
-
 	FBoxSphereBounds ActorBounds(ForceInitToZero);
-
-	if (!IN_ActorClass)
-		return ActorBounds;
 
 	if (const auto pWorld = WorldContextObject->GetWorld())
 	{
-		FActorSpawnParameters SpawnParameters;
-		SpawnParameters.Name = FName("TestBounds_" + IN_ActorClass->GetName());
-		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		if (const auto Actor = pWorld->SpawnActor(IN_ActorClass, nullptr, nullptr, SpawnParameters))
+		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
 		{
-			// Calculate the Actor bounds by accumulating the bounds of its components
-			FBox ActorBox(EForceInit::ForceInitToZero);
-			for (UActorComponent* Component : Actor->GetComponents())
+			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
 			{
-				if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component); PrimitiveComponent &&
-					PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds")) //TODO: Come up with getting collision enabled state of not fully initialized component
+				if (const auto FoundBounds = pWorldGenerator->DefaultBoundsMap.Find(IN_ActorClass))
 				{
-					FTransform ComponentTransform = PrimitiveComponent->GetComponentTransform();
-					FBoxSphereBounds ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);
-					ActorBox += ComponentBounds.GetBox();
+					return *FoundBounds;
+				}
+
+				if (!IN_ActorClass)
+				{
+					check(false)
+					return ActorBounds;
+				}
+
+				if (!pWorldGenerator->GridOfActors.Get(FIntPoint::ZeroValue))
+				{
+					auto Block = pWorldGenerator->GridOfActors.Add(FIntPoint::ZeroValue, NewObject<UBlockOfActors>(pWorldGenerator));
+				}
+
+				FActorSpawnParameters SpawnParameters;
+				SpawnParameters.Name = FName("TestBounds_" + IN_ActorClass->GetName());
+				SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+				if (const auto Actor = pWorld->SpawnActor(IN_ActorClass, nullptr, nullptr, SpawnParameters))
+				{
+					// Calculate the Actor bounds by accumulating the bounds of its components
+					FBox ActorBox(EForceInit::ForceInitToZero);
+					for (UActorComponent* Component : Actor->GetComponents())
+					{
+						if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component); PrimitiveComponent &&
+							PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds")) //TODO: Come up with getting collision enabled state of not fully initialized component
+								{
+							FTransform ComponentTransform = PrimitiveComponent->GetComponentTransform();
+							FBoxSphereBounds ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);
+							ActorBox += ComponentBounds.GetBox();
+								}
+					}
+
+					ActorBounds.Origin = ActorBox.GetCenter();
+					ActorBounds.BoxExtent = ActorBox.GetExtent();
+					ActorBounds.SphereRadius = ActorBox.GetExtent().Size2D();
+					pWorldGenerator->DefaultBoundsMap.Add(IN_ActorClass, ActorBounds);
+
+					Actor->Destroy();
 				}
 			}
-
-			ActorBounds.Origin = ActorBox.GetCenter();
-			ActorBounds.BoxExtent = ActorBox.GetExtent();
-			ActorBounds.SphereRadius = ActorBox.GetExtent().Size2D();
-			DefaultBoundsMap.Add(IN_ActorClass, ActorBounds);
-
-			Actor->Destroy();
 		}
 	}
 
