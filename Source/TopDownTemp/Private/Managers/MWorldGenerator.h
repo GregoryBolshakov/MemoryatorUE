@@ -7,6 +7,8 @@
 #include "MWorldGeneratorTypes.h"
 #include "MWorldGenerator.generated.h"
 
+#define ECC_Pickable ECollisionChannel::ECC_GameTraceChannel2
+
 class AMPickableActor;
 class UMExperienceManager;
 class UMReputationManager;

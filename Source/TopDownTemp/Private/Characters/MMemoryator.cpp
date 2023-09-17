@@ -42,9 +42,6 @@ AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
 	}
 	CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
 	CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
-
-	DirectionMarkerComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("DirectionMarker"));
-	DirectionMarkerComponent->SetupAttachment(RootComponent);
 }
 
 void AMMemoryator::AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce)

@@ -33,6 +33,7 @@ protected:
 
 	virtual void PostInitializeComponents() override;
 
+	//TODO: Consider making player in charge of tracking overlaps, it improves performance, but limits possible player character switches
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;

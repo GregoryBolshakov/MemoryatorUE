@@ -95,8 +95,8 @@ void AMWorldGenerator::InitNewWorld()
 		VillageGenerator->Generate();
 		UpdateNavigationMesh();*/
 
-		EmptyBlock(PlayerBlockIndex, true);
-		BlockGenerator->SpawnActors(PlayerBlockIndex, this, EBiome::DarkWoods, "PoppyBLock");
+		//EmptyBlock(PlayerBlockIndex, true);
+		//BlockGenerator->SpawnActors(PlayerBlockIndex, this, EBiome::DarkWoods, "PoppyBLock");
 	}
 }
 
@@ -593,7 +593,7 @@ FIntPoint AMWorldGenerator::GetGroundBlockIndex(FVector Position) const
 FVector AMWorldGenerator::GetGroundBlockLocation(FIntPoint BlockIndex)
 {
 	const auto GroundBlockSize = GetGroundBlockSize();
-	return FVector(BlockIndex) * GroundBlockSize;
+	return FVector(BlockIndex.X * GroundBlockSize.X, BlockIndex.Y * GroundBlockSize.Y, 0.);
 }
 
 static bool RayPlaneIntersection(const FVector& RayOrigin, const FVector& RayDirection, float PlaneZ, FVector& IntersectionPoint)
@@ -930,11 +930,11 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 					{
 						if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component); PrimitiveComponent &&
 							PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds")) //TODO: Come up with getting collision enabled state of not fully initialized component
-								{
+						{
 							FTransform ComponentTransform = PrimitiveComponent->GetComponentTransform();
 							FBoxSphereBounds ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);
 							ActorBox += ComponentBounds.GetBox();
-								}
+						}
 					}
 
 					ActorBounds.Origin = ActorBox.GetCenter();

@@ -183,6 +183,7 @@ AMActor* UMSaveManager::LoadMActor(const FMActorSaveData& MActorSD, AMWorldGener
 
 	FActorSpawnParameters Params;
 	Params.Name = FName(ActorSD.NameString);
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	FOnSpawnActorStarted OnSpawnActorStarted;
 	OnSpawnActorStarted.AddLambda([this, &MActorSD](AActor* Actor)
@@ -194,7 +195,7 @@ AMActor* UMSaveManager::LoadMActor(const FMActorSaveData& MActorSD, AMWorldGener
 		}
 		check(false);
 	});
-	return WorldGenerator->SpawnActor<AMActor>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, true, OnSpawnActorStarted);
+	return WorldGenerator->SpawnActor<AMActor>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, false, OnSpawnActorStarted);
 }
 
 AMPickableActor* UMSaveManager::LoadMPickableActor(const FMPickableActorSaveData& MPickableActorSD,
@@ -219,9 +220,11 @@ AMCharacter* UMSaveManager::LoadMCharacter(const FMCharacterSaveData& MCharacter
 	const auto& ActorSD = MCharacterSD.ActorSaveData;
 	FActorSpawnParameters Params;
 	Params.Name = FName(ActorSD.NameString);
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	// Spawn the character using saved data
-	if (const auto SpawnedCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, true))
+	//TODO: Understand why passing a non-zero rotation causes issues with components bounds (box extent) (e.g. AttackPuddleComponent) 
+	if (const auto SpawnedCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, /*ActorSD.Rotation*/ FRotator::ZeroRotator, Params, true))
 	{
 		// If it was the player, make it possessed by the player controller
 		if (Params.Name == FName("Player"))
