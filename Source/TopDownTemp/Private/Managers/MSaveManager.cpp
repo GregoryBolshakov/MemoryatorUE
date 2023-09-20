@@ -9,6 +9,8 @@
 #include "StationaryActors/MPickableActor.h"
 #include "StationaryActors/MGroundBlock.h"
 
+DEFINE_LOG_CATEGORY(LogSaveManager);
+
 void UMSaveManager::SetUpAutoSaves(FLRUCache& GridOfActors, const AMWorldGenerator* WorldGenerator)
 {
 	const auto World = GetWorld();
@@ -23,88 +25,105 @@ void UMSaveManager::SetUpAutoSaves(FLRUCache& GridOfActors, const AMWorldGenerat
 
 void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator* WorldGenerator)
 {
-	const auto SaveGameWorld = Cast<USaveGameWorld>(UGameplayStatics::CreateSaveGameObject(USaveGameWorld::StaticClass()));
+	const auto SaveGameWorld = LoadedGameWorld ? LoadedGameWorld : Cast<USaveGameWorld>(UGameplayStatics::CreateSaveGameObject(USaveGameWorld::StaticClass()));
 	if (!SaveGameWorld || !WorldGenerator)
 		return;
-
-	for (const auto& [BlockIndex, pBlockOfActors] : GridOfActors.GetMap())
-	{
-		FBlockSaveData* SavedBlock;
-		if (!SaveGameWorld->SavedGrid.Contains(BlockIndex))
-		{
-			SavedBlock = &SaveGameWorld->SavedGrid.Add(BlockIndex, {});
-		}
-		else
-		{
-			SavedBlock = SaveGameWorld->SavedGrid.Find(BlockIndex);
-		}
-		SavedBlock->Biome = pBlockOfActors->Biome;
-		for (const auto& [Name, pActor] : pBlockOfActors->StaticActors)
-		{
-			if (!IsValid(pActor))
-				continue;
-
-			// Start from the base and compose structs upwards
-			FActorSaveData ActorSaveData{
-				pActor->GetClass(),
-				pActor->GetActorLocation(),
-				pActor->GetActorRotation(),
-				Name.ToString()
-			};
-			if (const auto pMActor = Cast<AMActor>(pActor))
-			{
-				FMActorSaveData MActorSD{
-					ActorSaveData,
-					pMActor->GetAppearanceID(),
-					pMActor->GetIsRandomizedAppearance()
-				};
-				if (const auto pMPickableActor = Cast<AMPickableActor>(pActor))
-				{
-					if (const auto InventoryComponent = Cast<UMInventoryComponent>(pMPickableActor->GetComponentByClass(UMInventoryComponent::StaticClass())))
-					{
-						FMPickableActorSaveData MPickableActorSD{
-							MActorSD,
-							InventoryComponent->GetItemCopies(false)
-						};
-						SavedBlock->SavedMPickableActors.Add(MPickableActorSD);
-					}
-				}
-				else
-				{
-					SavedBlock->SavedMActors.Add(MActorSD);
-				}
-			}
-		}
-		for (const auto& [Name, pActor] : pBlockOfActors->DynamicActors)
-		{
-			if (!IsValid(pActor))
-				continue;
-
-			// Start from the base and compose structs upwards
-			FActorSaveData ActorSaveData{
-				pActor->GetClass(),
-				pActor->GetActorLocation(),
-				pActor->GetActorRotation(),
-				Name.ToString()
-			};
-			if (const auto pMCharacter = Cast<AMCharacter>(pActor))
-			{
-				FMCharacterSaveData MCharacterSD{
-					ActorSaveData,
-					pMCharacter->GetSpeciesName(),
-					pMCharacter->GetHealth()
-				};
-				SavedBlock->SavedMCharacters.Add(MCharacterSD);
-			}
-		}
-	}
 
 	// Access player's block to raise their block on top of the priority queue
 	GridOfActors.Get(WorldGenerator->GetPlayerGroundBlockIndex());
 
-	SaveGameWorld->GridOrder = GridOfActors.GetCacheOrder();
+	// Get the block indexes existing in the real world and prepend them to the saved cache order.
+	// (Saved cache order is very likely to be much bigger than the real world's one)
+	TSet<FIntPoint> CacheOrderSet(GridOfActors.GetCacheOrder());
+	SaveGameWorld->GridOrder.RemoveAll([&](const FIntPoint& Point) {
+		return CacheOrderSet.Contains(Point);
+	});
+	SaveGameWorld->GridOrder.Insert(GridOfActors.GetCacheOrder(), 0);
 
-	UGameplayStatics::SaveGameToSlot(SaveGameWorld, USaveGameWorld::SlotName, 0);
+	// Iterate the LRU cache, saving blocks in descending priority order in case the process suddenly aborts
+	for (const auto BlockIndex : GridOfActors.GetCacheOrder())
+	{
+		if (const auto pBlockOfActors = GridOfActors.Get(BlockIndex))
+		{
+			FBlockSaveData* SavedBlock = SavedBlock = SaveGameWorld->SavedGrid.Find(BlockIndex);;
+			if (!SavedBlock)
+			{
+				SavedBlock = &SaveGameWorld->SavedGrid.Add(BlockIndex, {});
+			}
+
+			SavedBlock->Biome = pBlockOfActors->Biome;
+			// Empty in case they've been there since last load
+			SavedBlock->SavedMActors.Empty();
+			SavedBlock->SavedMPickableActors.Empty();
+			SavedBlock->SavedMCharacters.Empty();
+
+			for (const auto& [Name, pActor] : pBlockOfActors->StaticActors)
+			{
+				if (!IsValid(pActor))
+					continue;
+
+				// Start from the base and compose structs upwards
+				FActorSaveData ActorSaveData{
+					pActor->GetClass(),
+					pActor->GetActorLocation(),
+					pActor->GetActorRotation(),
+					Name.ToString()
+				};
+				if (const auto pMActor = Cast<AMActor>(pActor))
+				{
+					FMActorSaveData MActorSD{
+						ActorSaveData,
+						pMActor->GetAppearanceID(),
+						pMActor->GetIsRandomizedAppearance()
+					};
+					if (const auto pMPickableActor = Cast<AMPickableActor>(pActor))
+					{
+						if (const auto InventoryComponent = Cast<UMInventoryComponent>(pMPickableActor->GetComponentByClass(UMInventoryComponent::StaticClass())))
+						{
+							FMPickableActorSaveData MPickableActorSD{
+								MActorSD,
+								InventoryComponent->GetItemCopies(false)
+							};
+							SavedBlock->SavedMPickableActors.Add(MPickableActorSD);
+						}
+					}
+					else
+					{
+						SavedBlock->SavedMActors.Add(MActorSD);
+					}
+				}
+			}
+			for (const auto& [Name, pActor] : pBlockOfActors->DynamicActors)
+			{
+				if (!IsValid(pActor))
+					continue;
+
+				// Start from the base and compose structs upwards
+				FActorSaveData ActorSaveData{
+					pActor->GetClass(),
+					pActor->GetActorLocation(),
+					pActor->GetActorRotation(),
+					Name.ToString()
+				};
+				if (const auto pMCharacter = Cast<AMCharacter>(pActor))
+				{
+					FMCharacterSaveData MCharacterSD{
+						ActorSaveData,
+						pMCharacter->GetSpeciesName(),
+						pMCharacter->GetHealth()
+					};
+					SavedBlock->SavedMCharacters.Add(MCharacterSD);
+				}
+			}
+		}
+	}
+	ensure(SaveGameWorld->SavedGrid.Num() == SaveGameWorld->GridOrder.Num());
+
+	check(SaveGameWorld);
+	if (SaveGameWorld)
+	{
+		UGameplayStatics::SaveGameToSlot(SaveGameWorld, USaveGameWorld::SlotName, 0);
+	}
 }
 
 int BlockToLoadIndex = 0;
@@ -132,13 +151,20 @@ void UMSaveManager::LoadPerTick(AMWorldGenerator* WorldGenerator)
 	{
 		const auto Block = LoadedGameWorld->SavedGrid.Find(LoadedGameWorld->GridOrder[Index]);
 		check(Block);
-		LoadBlock(LoadedGameWorld->GridOrder[Index], *Block, WorldGenerator);
-		BlockToLoadIndex++;
+		if (Block)
+		{
+			LoadBlock(LoadedGameWorld->GridOrder[Index], *Block, WorldGenerator);
+		}
 	}
+	BlockToLoadIndex += BlocksPerFrame;
 
 	if (Index < LoadedGameWorld->GridOrder.Num() - 1) // Haven't loaded all the blocks, live it for the next frame
 	{
 		GetWorld()->GetTimerManager().SetTimerForNextTick([this, WorldGenerator]{ LoadPerTick(WorldGenerator); });
+	} else
+	{
+		check(LoadedGameWorld);
+		UE_LOG(LogSaveManager, Log, TEXT("Finished loading the world from the save"))
 	}
 }
 

@@ -228,7 +228,8 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 	USTRUCT()
 	struct FTransition
 	{
-		FActorWorldMetadata& Metadata;
+		FActorWorldMetadata& ActorMetadata;
+		FIntPoint OldBlockIndex;
 		UBlockOfActors& OldBlock;
 		UPROPERTY()
 		UBlockOfActors* NewBlock;
@@ -251,7 +252,7 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 					if (!ActorMetadata->Actor) //TODO: Remove this temporary solution
 					{
 						// If the metadata has invalid Actor pointer, just delete this record
-						const FTransition NewTransition{*ActorMetadata, *Block, nullptr};
+						const FTransition NewTransition{*ActorMetadata, Index, *Block, nullptr};
 						TransitionList.Add(Name, NewTransition);
 					}
 					else
@@ -261,7 +262,7 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 						{
 							if (const auto NewBlock = GridOfActors.Get(ActualBlockIndex))
 							{
-								const FTransition NewTransition{*ActorMetadata, *Block, NewBlock};
+								const FTransition NewTransition{*ActorMetadata, Index, *Block, NewBlock};
 								TransitionList.Add(Name, NewTransition);
 								ActorMetadata->GroundBlockIndex = ActualBlockIndex;
 							}
@@ -281,12 +282,12 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 	{
 		if (Transition.NewBlock)
 		{
-			Transition.NewBlock->DynamicActors.Add(Name, Transition.Metadata.Actor);
+			Transition.NewBlock->DynamicActors.Add(Name, Transition.ActorMetadata.Actor);
 
 			// Even though the dynamic object is still enabled, it might have moved to the disabled block,
 			// where all surrounding static objects are disabled.
 			// Check the environment for validity if you bind to the delegate!
-			Transition.Metadata.OnBlockChangedDelegate.Broadcast(Transition.Metadata.GroundBlockIndex);
+			Transition.ActorMetadata.OnBlockChangedDelegate.Broadcast(Transition.OldBlockIndex, Transition.ActorMetadata.GroundBlockIndex);
 		}
 	}
 }
@@ -411,42 +412,70 @@ void AMWorldGenerator::UpdateNavigationMesh()
 // x       x 
 // xx     xx 
 //  xxx xxx  
-//     x     
-void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& NewBlock)
+//     x
+
+void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex)
+{
+	if (bPendingTeleport)
+	{
+		//TODO: Handle teleport case
+	}
+
+	// If the next block is not adjacent (due to lag/low fps/very high player speed)
+	// we recreate the continuous path travelled and generate perimeter for each travelled block
+	auto OldBlockIndex = IN_OldBlockIndex;
+	while(OldBlockIndex != IN_NewBlockIndex)
+	{
+		OldBlockIndex.X += FMath::Sign(IN_NewBlockIndex.X - OldBlockIndex.X);
+		OldBlockIndex.Y += FMath::Sign(IN_NewBlockIndex.Y - OldBlockIndex.Y);
+		TravelledDequeue.Add(OldBlockIndex);
+	}
+
+	for (const auto& Block : TravelledDequeue)
+	{
+		GenerateNewPieceOfPerimeter(Block);
+	}
+	TravelledDequeue.Empty();
+
+	UpdateActiveZone();
+	UpdateNavigationMesh();
+}
+
+void AMWorldGenerator::GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock)
 {
 	auto pWorld = GetWorld();
 	if (!pWorld)
 		return;
 
-	UpdateActiveZone(); // heavy call, we put everything else to the next tick
+	//UpdateActiveZone(); // heavy call, we put everything else to the next tick
 
-	pWorld->GetTimerManager().SetTimerForNextTick([this, pWorld, NewBlock]
-	{
-		UpdateNavigationMesh(); // heavy call, we put everything else to the next tick
+	//pWorld->GetTimerManager().SetTimerForNextTick([this, pWorld, NewBlock]
+	//{
+	//UpdateNavigationMesh(); // heavy call, we put everything else to the next tick
 
-		pWorld->GetTimerManager().SetTimerForNextTick([this, pWorld, NewBlock]
-		{ // Generate the perimeter outside the active zone
-			auto BlocksInRadius = GetBlocksOnPerimeter(NewBlock.X, NewBlock.Y, ActiveZoneRadius + 1);
+	//pWorld->GetTimerManager().SetTimerForNextTick([this, pWorld, NewBlock]
+	//{ // Generate the perimeter outside the active zone
+	auto BlocksInRadius = GetBlocksOnPerimeter(CenterBlock.X, CenterBlock.Y, ActiveZoneRadius + 1);
 
-			SetBiomesForBlocks(NewBlock, BlocksInRadius);
+	SetBiomesForBlocks(CenterBlock, BlocksInRadius);
 
-			auto TopLeftScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopLeft);
-			auto TopRighScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopRight);
-			BlocksInRadius.Sort([this, &TopLeftScreenPointInWorld, &TopRighScreenPointInWorld](const FIntPoint& BlockA, const FIntPoint& BlockB)
-			{ // Sort blocks so that the closest to the screen corners would be the first
-				const auto LocationA = GetGroundBlockLocation(BlockA);
-				const auto LocationB = GetGroundBlockLocation(BlockB);
+	auto TopLeftScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopLeft);
+	auto TopRighScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopRight);
+	BlocksInRadius.Sort([this, &TopLeftScreenPointInWorld, &TopRighScreenPointInWorld](const FIntPoint& BlockA, const FIntPoint& BlockB)
+	{ // Sort blocks so that the closest to the screen corners would be the first
+		const auto LocationA = GetGroundBlockLocation(BlockA);
+		const auto LocationB = GetGroundBlockLocation(BlockB);
 
-				const auto MinDistanceToScreenEdgesA = FMath::Min(FVector::Distance(LocationA, TopLeftScreenPointInWorld), FVector::Distance(LocationA, TopRighScreenPointInWorld));
-				const auto MinDistanceToScreenEdgesB = FMath::Min(FVector::Distance(LocationB, TopLeftScreenPointInWorld), FVector::Distance(LocationB, TopRighScreenPointInWorld));
+		const auto MinDistanceToScreenEdgesA = FMath::Min(FVector::Distance(LocationA, TopLeftScreenPointInWorld), FVector::Distance(LocationA, TopRighScreenPointInWorld));
+		const auto MinDistanceToScreenEdgesB = FMath::Min(FVector::Distance(LocationB, TopLeftScreenPointInWorld), FVector::Distance(LocationB, TopRighScreenPointInWorld));
 
-				return MinDistanceToScreenEdgesA <= MinDistanceToScreenEdgesB;
-			});
-
-			// We'll spread heavy GenerateBlock calls over the next few ticks
-			OnTickGenerateBlocks(BlocksInRadius);
-		});
+		return MinDistanceToScreenEdgesA <= MinDistanceToScreenEdgesB;
 	});
+
+	// We'll spread heavy GenerateBlock calls over the next few ticks
+	OnTickGenerateBlocks(BlocksInRadius);
+	//});
+	//});
 }
 
 /** Function to calculate the angle between [0; 1] vector and the vector from O to P */
@@ -553,7 +582,7 @@ void AMWorldGenerator::OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate)
 		if (++Index >= BlocksPerFrame)
 		{
 			GetWorld()->GetTimerManager().SetTimerForNextTick([this, BlocksToGenerate]{ OnTickGenerateBlocks(BlocksToGenerate); });
-			break;
+			return;;
 		}
 	}
 }

@@ -17,6 +17,8 @@ struct FMActorSaveData;
 struct FMPickableActorSaveData;
 struct FMCharacterSaveData;
 
+DECLARE_LOG_CATEGORY_EXTERN(LogSaveManager, Log, All);
+
 UCLASS()
 class UMSaveManager : public UObject
 {
@@ -39,6 +41,7 @@ private:
 	FTimerHandle AutoSavesTimer;
 	FTimerHandle BlockLoadingTimer;
 
+	UPROPERTY()
 	USaveGameWorld* LoadedGameWorld;
 };
 

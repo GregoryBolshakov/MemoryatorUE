@@ -4,8 +4,8 @@
 #include "MWorldGeneratorTypes.generated.h"
 
 class AMGroundBlock;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBlockChanged, const FIntPoint&, NewBlock);
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBlockChanged, const FIntPoint&, OldBlock, const FIntPoint&, NewBlock);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*);
 
 UENUM(BlueprintType)
 enum class EBiome : uint8
@@ -97,8 +97,6 @@ struct FLRUCache
 	}
 
 	TArray<FIntPoint> GetCacheOrder() const { return CacheOrder; }
-
-	const TMap<FIntPoint, UBlockOfActors*>& GetMap() const { return DataMap; }
 
 private:
 	UPROPERTY()

@@ -137,7 +137,9 @@ private:
 	void UpdateNavigationMesh();
 
 	UFUNCTION()
-	void OnPlayerChangedBlock(const FIntPoint& NewBlock);
+	void OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex);
+
+	void GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock);
 
 	void SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIntPoint>& BlocksToGenerate);
 
@@ -165,6 +167,13 @@ private:
 	/** The number of blocks to be changed before changing the perimeter coloring */
 	UPROPERTY(EditDefaultsOnly, Category = MWorldGenerator, meta = (AllowPrivateAccess = "true"))
 	int BiomesPerimeterColoringRate = 10;
+
+	/** If player changes block and it is not adjacent (due to lag/low fps/very high player speed)
+	// we recreate the continuous path travelled to generate perimeter for each travelled block. Store those blocks here */
+	TArray<FIntPoint> TravelledDequeue;
+
+	/** Turns on after the player was teleported, is turned off by AMWorldGenerator::OnPlayerChangedBlock */
+	bool bPendingTeleport = false;
 
 private: // Saved to memory
 
