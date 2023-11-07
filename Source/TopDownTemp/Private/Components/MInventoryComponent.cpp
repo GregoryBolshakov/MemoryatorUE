@@ -24,12 +24,12 @@ void UMInventoryComponent::Initialize(int IN_SlotsNumber, const TArray<FItem>& S
 	}
 }
 
-TArray<FItem> UMInventoryComponent::GetItemCopies()
+TArray<FItem> UMInventoryComponent::GetItemCopies(bool bSkipEmpty)
 {
 	TArray<FItem> Result;
 	for (const auto& Slot : Slots)
 	{
-		if (Slot.Item.Quantity != 0)
+		if (!bSkipEmpty || (bSkipEmpty && Slot.Item.Quantity != 0))
 		{
 			Result.Add(Slot.Item);
 		}

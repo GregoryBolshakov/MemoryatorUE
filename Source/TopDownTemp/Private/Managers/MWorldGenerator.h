@@ -7,14 +7,16 @@
 #include "MWorldGeneratorTypes.h"
 #include "MWorldGenerator.generated.h"
 
+#define ECC_Pickable ECollisionChannel::ECC_GameTraceChannel2
+
 class AMPickableActor;
 class UMExperienceManager;
 class UMReputationManager;
+class UMDropManager;
+class UMSaveManager;
 class AMCommunicationManager;
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*)
 
 class UMBlockGenerator;
-class UMDropManager;
 class AMGroundBlock;
 class AMTree;
 class AMActor;
@@ -31,21 +33,24 @@ class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 
 public:
 
-	/** One-time generation. Performed at the game start to create the surrounding area */
-	void GenerateActiveZone();
+	/** Executed once on first run to create the surrounding area */
+	void InitNewWorld();
 
-	void GenerateBlock(const FIntPoint& BlockIndex, bool EraseDynamicObjects = false);
+	UBlockOfActors* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy = false);
+
+	UBlockOfActors* GenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects = true);
 
 	/** Turns on all actors in the active zone, turn off all others*/
 	void UpdateActiveZone();
 
 	template< class T >
-	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround = false, const FOnSpawnActorStarted& OnSpawnActorStarted = {})
+	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters(), bool bForceAboveGround = false, const FOnSpawnActorStarted& OnSpawnActorStarted = {})
 	{
 		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters, bForceAboveGround, OnSpawnActorStarted),ECastCheckedType::NullAllowed);
 	}
 
-	void EnrollActorToGrid(AActor* Actor, bool bMakeBlockConstant = false);
+	void EnrollActorToGrid(AActor* Actor);
+	void RemoveActorFromGrid(AActor* Actor);
 
 	TSubclassOf<AActor> GetClassToSpawn(FName Name); 
 
@@ -63,6 +68,8 @@ public:
 
 	UMDropManager* GetDropManager() const { return DropManager; }
 
+	UMSaveManager* GetSaveManager() const { return SaveManager; }
+
 	UFUNCTION(BlueprintCallable)
 	UMReputationManager* GetReputationManager() const { return ReputationManager; }
 
@@ -72,11 +79,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 	AMCommunicationManager* GetCommunicationManager() const { return CommunicationManager; }
 
-	const TMap<FIntPoint, UBlockOfActors*>& GetGridOfActors() { return GridOfActors; }
+	UMBlockGenerator* GetBlockGenerator() const { return BlockGenerator; }
 
-	FVector GetGroundBlockSize();
+	UBlockOfActors* GetBlock(FIntPoint Index) { return GridOfActors.Get(Index); }
 
-	FIntPoint GetGroundBlockIndex(FVector Position);
+	FVector GetGroundBlockSize() const;
+
+	FIntPoint GetGroundBlockIndex(FVector Position) const;
+
+	/** Is more reliable than manually using player via UGameplayStatics,
+	 * because player controller might be invalid during game shutdown */
+	FIntPoint GetPlayerGroundBlockIndex() const;
 
 	FVector GetGroundBlockLocation(FIntPoint BlockIndex);
 
@@ -96,6 +109,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
 	TSubclassOf<UMExperienceManager> ExperienceManagerBPClass;
 
+	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
+	TSubclassOf<UMSaveManager> SaveManagerBPClass;
+
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<AMCommunicationManager> CommunicationManagerBPClass;
 
@@ -114,14 +130,16 @@ private:
 
 	virtual void Tick(float DeltaSeconds) override;
 
-	/** Matches all enabled dynamic actors with the blocks they are on*/
+	/** Matches all enabled dynamic actors with the blocks they are on. Triggers all OnBlockChangedDelegates*/
 	void CheckDynamicActorsBlocks();
 
 	/** Moves the navigation mesh to the player's position */
 	void UpdateNavigationMesh();
 
 	UFUNCTION()
-	void OnPlayerChangedBlock(const FIntPoint& NewBlock);
+	void OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex);
+
+	void GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock);
 
 	void SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIntPoint>& BlocksToGenerate);
 
@@ -150,22 +168,35 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = MWorldGenerator, meta = (AllowPrivateAccess = "true"))
 	int BiomesPerimeterColoringRate = 10;
 
+	/** If player changes block and it is not adjacent (due to lag/low fps/very high player speed)
+	// we recreate the continuous path travelled to generate perimeter for each travelled block. Store those blocks here */
+	TArray<FIntPoint> TravelledDequeue;
+
+	/** Turns on after the player was teleported, is turned off by AMWorldGenerator::OnPlayerChangedBlock */
+	bool bPendingTeleport = false;
+
+private: // Saved to memory
+
 	/** The number of blocks player passed since the last biomes perimeter coloring */
 	int BlocksPassedSinceLastPerimeterColoring;
 
 	UPROPERTY()
-	TMap<FIntPoint, UBlockOfActors*> GridOfActors;
+	FLRUCache GridOfActors;
 
+private:
+
+	/** Maps all the actors in the world with their names.
+	 * Once a world is loaded, ActorsMetadata is not immediately available. It loads in parallel */
 	UPROPERTY()
 	TMap<FName, FActorWorldMetadata> ActorsMetadata;
 
+	UPROPERTY()
 	TMap<FIntPoint, bool> ActiveBlocksMap;
 
-	// TODO: Use FTimerHandle
-	float DynamicActorsCheckInterval;
-	float DynamicActorsCheckTimer;
+	UPROPERTY()
+	TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;
 
-	static TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;
+private: // Managers
 
 	UPROPERTY()
 	UMDropManager* DropManager;
@@ -176,6 +207,10 @@ private:
 	UPROPERTY()
 	UMExperienceManager* ExperienceManager;
 
+	UPROPERTY()
+	UMSaveManager* SaveManager;
+
+	//TODO: Fix needed: items disappear when game crashes/closes during a trade after items were moved to the widget
 	UPROPERTY()
 	AMCommunicationManager* CommunicationManager;
 

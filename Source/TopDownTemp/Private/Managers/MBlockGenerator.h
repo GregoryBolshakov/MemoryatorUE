@@ -2,13 +2,12 @@
 
 #pragma once
 #include "CoreMinimal.h"
-#include "MWorldGeneratorTypes.h"
-
 #include "MBlockGenerator.generated.h"
 
 class AMWorldGenerator;
 class AMGroundBlock;
 class AMActor;
+enum class EBiome : uint8;
 
 /** Describes all the data can be configured for a one kind of objects in this block (trees/flowers/mushrooms/etc.) */
 USTRUCT(BlueprintType)
@@ -50,7 +49,7 @@ class TOPDOWNTEMP_API UMBlockGenerator : public UObject
 
 public:
 
-	void Generate(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName = {});
+	void SpawnActors(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName = {});
 
 protected:
 

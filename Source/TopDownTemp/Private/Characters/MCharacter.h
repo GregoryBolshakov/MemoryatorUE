@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -17,6 +15,12 @@ class AMCharacter : public ACharacter
 
 public:
 
+	/** Use AMWorldGenerator::RemoveFromGrid instead */
+	//bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = true ) = delete;
+
+	// Temp workaraund
+	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = true);
+
 	float GetRadius() const;
 
 	bool GetIsFighting() const { return IsFighting; }
@@ -26,6 +30,8 @@ public:
 	float GetFightRangePlusMyRadius() const { return FightRange + GetRadius(); }
 
 	float GetForgetEnemyRange() const { return ForgetEnemyRange; }
+
+	float GetHealth() const { return Health; }
 
 	float GetRetreatRange() const { return RetreatRange; }
 

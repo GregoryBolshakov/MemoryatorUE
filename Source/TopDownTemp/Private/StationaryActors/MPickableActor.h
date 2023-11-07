@@ -5,7 +5,7 @@
 #include "Components/MInventoryComponent.h"
 #include "MPickableActor.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPickedUpCompletely, TSubclassOf<AMPickableActor>, Class)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPickedUpCompletely, TSubclassOf<AMPickableActor>, Class);
 
 class UMDropManager;
 //~=============================================================================
@@ -33,6 +33,7 @@ protected:
 
 	virtual void PostInitializeComponents() override;
 
+	//TODO: Consider making player in charge of tracking overlaps, it improves performance, but limits possible player character switches
 	virtual void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
@@ -47,4 +48,3 @@ protected:
 	UPROPERTY()
 	UMDropManager* pDropManager;
 };
-

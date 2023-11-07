@@ -6,21 +6,40 @@
 #include "Managers/MWorldGeneratorTypes.h"
 #include "MActor.generated.h"
 
+/** Stationary actor that may be flat, face camera and cast artificial shadows */
 UCLASS()
 class TOPDOWNTEMP_API AMActor : public AActor
 {
 	GENERATED_UCLASS_BODY()
 
-public:
+public: // Have effect only when called under FOnSpawnActorStarted
 
-	void SetBiomeForRandomization(EBiome Biome) { BiomeForRandomization = Biome; }
+	UFUNCTION(BlueprintCallable)
+	void SetAppearanceID(int IN_AppearanceID) { AppearanceID = IN_AppearanceID; }
+	void MakeRandom() { IsRandomizedAppearance = true; }
+
+public:
+	/** Use AMWorldGenerator::RemoveFromGrid instead */
+	//bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = true ) = delete;
+
+	// Temp workaraund
+	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = true);
+
+	int GetAppearanceID() const { return AppearanceID; }
+	bool GetIsRandomizedAppearance() const { return IsRandomizedAppearance; }
 
 protected:
 
 	virtual void PostInitializeComponents() override;
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void Randomize(EBiome Biome);
+	void RandomizeAppearanceID();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ApplyAppearanceID();
+
+	UFUNCTION(BlueprintCallable)
+	EBiome GetMyBiome();
 
 	UPROPERTY()
 	USceneComponent* PointComponent;
@@ -32,5 +51,8 @@ protected:
 	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;
 
 	/** Objects like trees/plants/mushrooms/stones/etc. may have different appearances. If true, the type will be picked randomly */
-	TOptional<EBiome> BiomeForRandomization;
+	bool IsRandomizedAppearance = false;
+
+	UPROPERTY(BlueprintReadOnly)
+	int AppearanceID = 0;
 };

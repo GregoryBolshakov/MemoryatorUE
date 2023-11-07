@@ -15,6 +15,7 @@ class TOPDOWNTEMP_API UMGameInstance : public UGameInstance
 
 public:
 
+	UFUNCTION(BlueprintCallable)
 	UNakamaManager* GetNakamaManager();
 
 	//TODO: Put these to the game mode

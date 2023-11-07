@@ -5,7 +5,7 @@
 #include "StationaryActors/MGroundBlock.h"
 #include "StationaryActors/MActor.h"
 
-void UMBlockGenerator::Generate(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName)
+void UMBlockGenerator::SpawnActors(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName)
 {
 	if (!IsValid(pWorldGenerator) || !GroundBlockBPClass)
 	{
@@ -16,7 +16,7 @@ void UMBlockGenerator::Generate(const FIntPoint BlockIndex, AMWorldGenerator* pW
 	const FVector BlockSize = pWorldGenerator->GetGroundBlockSize();
 	const FVector BlockCenter = pWorldGenerator->GetGroundBlockLocation(BlockIndex) + BlockSize / 2.f;
 
-	const auto BlockOfActors = *pWorldGenerator->GetGridOfActors().Find(BlockIndex);
+	const auto BlockOfActors = pWorldGenerator->GetBlock(BlockIndex);
 	// Spawn the ground block
 	FActorSpawnParameters BlockSpawnParameters;
 	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -31,7 +31,7 @@ void UMBlockGenerator::Generate(const FIntPoint BlockIndex, AMWorldGenerator* pW
 	{
 		if (const auto MActor = Cast<AMActor>(Actor))
 		{
-			MActor->SetBiomeForRandomization(Biome);
+			MActor->MakeRandom(); //TODO: Add an option to disable this in preset
 			return;
 		}
 		check(false);
@@ -48,7 +48,8 @@ void UMBlockGenerator::Generate(const FIntPoint BlockIndex, AMWorldGenerator* pW
 		{
 			for (int i = 0; i < ObjectsNumber; ++i)
 			{
-				const auto Tree = pWorldGenerator->SpawnActorInRadius<AMActor>(BPClass, BlockCenter, FRotator::ZeroRotator, {}, FMath::RandRange(0.f, static_cast<float>(BlockSize.X / 2.f)), 0.f, OnSpawnActorStarted);
+				pWorldGenerator->SpawnActorInRadius<AMActor>(BPClass, BlockCenter, FRotator::ZeroRotator, FActorSpawnParameters(), FMath::RandRange(0.f, static_cast<float>(BlockSize.X / 2.f)), 0.f, OnSpawnActorStarted);
+				//pWorldGenerator->SpawnActor<AMActor>(BPClass, BlockCenter, FRotator::ZeroRotator);
 			}
 		}
 	}

@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MDropActor.h"
 
 #include "Components/M2DRepresentationComponent.h"
@@ -41,24 +39,5 @@ void AMDropActor::InitialiseInventory(const TArray<FItem>& IN_Items)
 	else
 	{
 		check(false);
-	}
-
-	//TODO: Looks like hack. Get rid of this
-	if (const auto pWorld = GetWorld(); pDropManager)
-	{
-		if (const auto pPlayerPawn = UGameplayStatics::GetPlayerPawn(pWorld, 0))
-		{
-			if (const auto Capsule = Cast<UCapsuleComponent>(GetDefaultSubobjectByName(TEXT("CollectScopeCapsule"))))
-			{
-				auto Location2D = GetActorLocation();
-				Location2D.Z = 0.f;
-				auto PlayerLocation2D = pPlayerPawn->GetActorLocation();
-				PlayerLocation2D.Z = 0.f;
-				if (FVector::Distance(Location2D, PlayerLocation2D) < Capsule->GetScaledCapsuleRadius())
-				{
-					NotifyActorBeginOverlap(pPlayerPawn);
-				}
-			}
-		}
 	}
 }

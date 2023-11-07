@@ -1,31 +1,61 @@
 #include "MExperienceManager.h"
-#include "StationaryActors/MPickableActor.h"
 
-void UMExperienceManager::Initialize()
+#include "Framework/MGameInstance.h"
+#include "StationaryActors/MPickableActor.h"
+#include "NakamaManager/Private/NakamaManager.h"
+#include "NakamaManager/Private/UserManagerClient.h"
+
+FHero EmptyHero;
+FHero* GetHeroPtr(UWorld* World)
 {
-	// TODO: Make grpc calls to get the data for LevelsCost and ExperiencePerPickUp
+	if (IsValid(World))
+	{
+		if (const auto pGameInstance = World->GetGameInstance<UMGameInstance>())
+		{
+			if (const auto NakamaManager = pGameInstance->GetNakamaManager())
+			{
+				if (const auto UserManager = NakamaManager->UserManagerClient)
+				{
+					return &UserManager->Hero;
+				}
+			}
+		}
+	}
+	check(false);
+	return &EmptyHero;
+}
+
+int UMExperienceManager::GetLevel()
+{
+	return GetHeroPtr(GetWorld())->Level;
+}
+
+int UMExperienceManager::GetCurrentExperience()
+{
+	return GetHeroPtr(GetWorld())->Experience;
 }
 
 float UMExperienceManager::GetExperiencePercent()
 {
-	if (LevelsCost.Num() < Level)
+	if (LevelsCost.Num() < GetLevel())
 	{
 		check(false);
 		return 0.f;
 	}
 
-	return static_cast<float>(CurrentExperience) / LevelsCost[Level] * 100.f;
+	return static_cast<float>(GetCurrentExperience()) / LevelsCost[GetLevel()] * 100.f;
 }
 
 void UMExperienceManager::AddExperience(int Addition)
 {
 	const auto FinalAddition = Addition + Addition * ExperienceBoost;
-	CurrentExperience += FinalAddition;
+	auto HeroRef = GetHeroPtr(GetWorld());
+	HeroRef->Experience += FinalAddition;
 
-	while(CurrentExperience >= LevelsCost[Level])
+	while(GetCurrentExperience() >= LevelsCost[HeroRef->Level])
 	{
-		CurrentExperience -= LevelsCost[Level];
-		++Level;
+		HeroRef->Experience -= LevelsCost[HeroRef->Level];
+		HeroRef->Level++;
 	}
 
 	ExperienceAddedDelegate.Broadcast(FinalAddition);

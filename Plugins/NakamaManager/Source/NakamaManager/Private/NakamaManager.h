@@ -4,15 +4,12 @@
 #include "Logging/LogMacros.h"
 //#if WITH_NAKAMA
 #include "NakamaError.h"
-#include "NakamaNotification.h"
 #include "NakamaParty.h"
 #include "NakamaRPC.h"
-#include "NakamaRtError.h"
-#include "NakamaStorageObject.h"
-#include "NakamaUnreal.h"
 //#endif
 #include "NakamaManager.generated.h"
 
+class UUserManagerClient;
 using namespace NAKAMA_NAMESPACE;
 
 #define USING_STEAM = 1
@@ -20,11 +17,11 @@ using namespace NAKAMA_NAMESPACE;
 class UNakamaClient;
 class UNakamaRealtimeClient;
 class UNakamaSession;
-class UNakamaShopManager;
+class UShopManagerClient;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogNakamaManager, Log, All);
 
-UENUM()
+UENUM(BlueprintType)
 enum class ENakamaInitialisationStatus : uint8
 {
 	Uninitialised,
@@ -36,82 +33,6 @@ enum class ENakamaInitialisationStatus : uint8
 	ErrorGetMaintenanceStatusFailed,
 	Initialised
 };
-
-USTRUCT()
-struct FNakamaLocationMetaData
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FString city;
-
-	UPROPERTY()
-	FString country;
-
-	UPROPERTY()
-	double latitude = 0;
-
-	UPROPERTY()
-	double longitude = 0;
-};
-
-USTRUCT()
-struct FNakamaUserMetaData
-{
-	GENERATED_BODY()
-
-	FNakamaUserMetaData()
-	    : location()
-	{
-	}
-	UPROPERTY()
-	FNakamaLocationMetaData location;
-};
-
-USTRUCT()
-struct FNakamaID
-{
-	GENERATED_BODY()
-
-	FNakamaID()
-	    : id()
-	    , nakamaId()
-	{
-	}
-
-	UPROPERTY()
-	FString id;
-	UPROPERTY()
-	FString nakamaId;
-};
-
-USTRUCT() struct FNakamaRPCErrorCode
-{
-	GENERATED_BODY()
-
-	FNakamaRPCErrorCode()
-	    : leaderboardShortCode()
-	{
-	}
-
-	UPROPERTY()
-	FString leaderboardShortCode;
-};
-
-USTRUCT()
-struct FNakamaRPCErrorResponse
-{
-	GENERATED_BODY()
-
-	FNakamaRPCErrorResponse()
-	    : error()
-	{
-	}
-
-	UPROPERTY()
-	FNakamaRPCErrorCode error;
-};
-
 USTRUCT()
 struct FNakamaPayloadWithJson
 {
@@ -126,218 +47,11 @@ struct FNakamaPayloadWithJson
 	FString JSONObject;
 };
 
-USTRUCT()
-struct FLeaderboardEntriesJson
-{
-	GENERATED_BODY()
-
-	FLeaderboardEntriesJson()
-	    : leaderboards()
-	    , player()
-	    , social(false)
-	    , inverseSocial(false)
-	{
-	}
-
-	UPROPERTY()
-	TArray<FString> leaderboards;
-	UPROPERTY()
-	FString player;
-	UPROPERTY()
-	bool social;
-	UPROPERTY()
-	bool inverseSocial;
-};
-
-USTRUCT()
-struct FCurrencies
-{
-	GENERATED_BODY()
-
-	FCurrencies()
-	    : VC(0)
-	    , XP(0)
-	{
-	}
-
-	UPROPERTY()
-	int32 VC;
-	UPROPERTY()
-	int32 XP;
-};
-
-USTRUCT()
-struct FExternalIds
-{
-	GENERATED_BODY()
-
-	FExternalIds()
-	    : ST()
-	{
-	}
-
-	UPROPERTY()
-	FName ST;
-};
-
-USTRUCT()
-struct FLocation
-{
-	GENERATED_BODY()
-
-	FLocation()
-	    : city()
-	    , country()
-	{
-	}
-
-	UPROPERTY()
-	FString city;
-	UPROPERTY()
-	FString country;
-};
-
-USTRUCT()
-struct FScriptData
-{
-	GENERATED_BODY()
-
-	FScriptData()
-	    : level(0)
-	{
-	}
-
-	UPROPERTY()
-	int32 level;
-};
-
-USTRUCT()
-struct FAccountDetailJson
-{
-	GENERATED_BODY()
-
-	FAccountDetailJson()
-	    : achievements()
-	    , currencies()
-	    , displayName()
-	    , userId()
-	    , externalIds()
-	    , location()
-	    , scriptData()
-	{
-	}
-
-	UPROPERTY()
-	TArray<FName> achievements;
-	UPROPERTY()
-	FCurrencies currencies;
-	UPROPERTY()
-	FString displayName;
-	UPROPERTY()
-	FName userId;
-	UPROPERTY()
-	FExternalIds externalIds;
-	UPROPERTY()
-	FLocation location;
-	UPROPERTY()
-	FScriptData scriptData;
-
-	//FAccountDetails ToAccountDetails() const;
-};
-
-USTRUCT()
-struct FLeaderboardRankDetailsJson
-{
-	GENERATED_BODY()
-
-	FLeaderboardRankDetailsJson()
-	    : globalCount(0)
-	    , globalFrom(0)
-	    , globalFromPercent(0)
-	    , globalTo(0)
-	    , globalToPercent(0)
-	    , socialCount(0)
-	    , socialFrom(0)
-	    , socialFromPercent(0)
-	    , socialTo(0)
-	    , socialToPercent(0)
-	    //, topNPassed()
-	{
-	}
-
-	UPROPERTY()
-	int32 globalCount;
-	UPROPERTY()
-	int32 globalFrom;
-	UPROPERTY()
-	int32 globalFromPercent;
-	UPROPERTY()
-	int32 globalTo;
-	UPROPERTY()
-	int32 globalToPercent;
-
-	UPROPERTY()
-	int32 socialCount;
-	UPROPERTY()
-	int32 socialFrom;
-	UPROPERTY()
-	int32 socialFromPercent;
-	UPROPERTY()
-	int32 socialTo;
-	UPROPERTY()
-	int32 socialToPercent;
-
-	//UPROPERTY()
-	//TArray<FLeaderboardEntryJson> topNPassed;
-
-	//FLeaderboardRankDetails ToLeaderboardRankDetails() const;
-};
-
-USTRUCT()
-struct FLeaderboardNotification
-{
-	GENERATED_BODY()
-
-	FLeaderboardNotification()
-	    //: leaderboardData()
-	    : leaderboardName()
-	    , leaderboardShortCode()
-	    , messageId()
-	    , notification(false)
-	    , rankDetails()
-	    , subtitle()
-	    , summary()
-	    , title()
-	{
-	}
-
-	//UPROPERTY()
-	//FLeaderboardEntryJson leaderboardData;
-	UPROPERTY()
-	FString leaderboardName;
-	UPROPERTY()
-	FString leaderboardShortCode;
-	UPROPERTY()
-	FString messageId;
-	UPROPERTY()
-	bool notification;
-	UPROPERTY()
-	FLeaderboardRankDetailsJson rankDetails;
-	UPROPERTY()
-	FString subtitle;
-	UPROPERTY()
-	FString summary;
-	UPROPERTY()
-	FString title;
-};
-
 UENUM(BlueprintType)
 enum class EAuthenticationMethod : uint8
 {
 	Server,
 	Steam,		//User SteamID and Steam auth token
-	Anonymous,	//A random new account
-	Custom		//Use  UserID (guid) and UserName
 	//Microsoft,
 	//Sony
 	//etc
@@ -349,10 +63,6 @@ UCLASS(BlueprintType, Config = NakamaManager) class NAKAMAMANAGER_API UNakamaMan
 
 public:
 	virtual void Initialise(bool IN_IsDedicatedServer);
-	bool IsInitialised() const;
-
-	UFUNCTION(BlueprintCallable)
-	bool IsAuthenticatedWithSteam() const;
 
 	UFUNCTION(BlueprintCallable)
 	bool UsingPreviewServer() const { return bUsePreviewServer; }
@@ -365,18 +75,8 @@ public:
 
 	const FString& GetSteamID() const { return SteamID; }
 
-private:
-	// Authenticated data
-
-	void SetAuthenticatedUserDisplayName(const FString& IN_DisplayName);
-	void SetAuthenticatedUserCountry(const FString& IN_Country);
-	void SetAuthenticatedUserCity(const FString& IN_City);
-	virtual bool IsConnected() const;
-	virtual bool IsUsingPreviewServer() const;
-	const FName& GetAuthenticatedUserID() const;    // #todo: Rename/split in to cloud doc user id
-	const FString& GetAuthenticatedUserDisplayName() const;
-	const FString& GetAuthenticatedUserCountry() const;
-	const FString& GetAuthenticatedUserCity() const;
+	UFUNCTION(BlueprintCallable)
+	ENakamaInitialisationStatus GetInitialisationStatus() const { return InitialisationStatus; }
 
 private:
 	UPROPERTY()
@@ -426,9 +126,6 @@ private:
 	UPROPERTY(Config)
 	FString ServerUserPassword;
 
-	//UPROPERTY()
-	//FMaintenanceStatus CachedMaintenanceStatus;
-
 	// NAKAMA
 public:
 	UPROPERTY()
@@ -437,8 +134,11 @@ public:
 	UPROPERTY(VisibleAnywhere)
 	UNakamaRealtimeClient* NakamaRealtimeClient;
 
-	UPROPERTY()
-	UNakamaShopManager* NakamaShopManager;
+	UPROPERTY(BlueprintReadOnly)
+	UUserManagerClient* UserManagerClient;
+
+	UPROPERTY(BlueprintReadOnly)
+	UShopManagerClient* ShopManagerClient;
 
 	UPROPERTY()
 	UNakamaSession* UserSession;
@@ -447,34 +147,13 @@ public:
 	void OnAuthenticationSuccess(UNakamaSession* IN_LoginData);
 
 	UFUNCTION()
-	void OnAuthenticationError(const FNakamaError& IN_Error);
-
-	UFUNCTION()
 	void OnSteamAuthenticationError(const FNakamaError& IN_Error);
-
-	UFUNCTION()
-	void OnAccountUpdateSucceeded();
-
-	UFUNCTION()
-	void OnAccountUpdateFailed(const FNakamaError& IN_Error);
-
-	UFUNCTION()
-	void OnRealtimeClientConnectSuccess();
-
-	UFUNCTION()
-	void OnRealtimeClientConnectError();
-
-	//UFUNCTION()
-	//void OnReceivedNotification(const FNakamaNotificationList& NotificationList);
 
 	UFUNCTION()
 	void OnRPCSuccess(const FNakamaRPC& IN_RPC);
 
 	UFUNCTION()
 	void OnRPCError(const FNakamaError& IN_Error);
-
-	UFUNCTION()
-	void OnLogEventSuccess(const FNakamaRPC& IN_RPC);
 
 	// JSON
 public:
@@ -485,27 +164,8 @@ public:
 	static FString GetJsonStringFromRPC(const FNakamaRPC& IN_RPC);
 
 private:
-	// UFUNCTION()
-	// void OnNewHighScore(FGSNewHighScoreMessage IN_GSNewHighScoreMessage);
-
 	void AuthenticateUsingSteam();
-	void AuthenticateAnonymous();
-	void AuthenticateServer();
-	void AuthenticateCustom();
 	bool GetSteamData(FString& OUT_ID, FString& OUT_Token, FString& OUT_NickName) const;
-	//void GetMaintenanceStatus(const FOnGetMaintenanceStatusCompleteDelegate& IN_Callback);
-
-	/*UPROPERTY()
-	TArray<FAchievementEarned> AchievementsEarnedArray;
-
-	UPROPERTY()
-	TArray<FLeaderboardNewHighScore> LeaderboardNewHighScoresArray;
-
-	UPROPERTY()
-	TArray<FLeaderboardRankChanged> LeaderboardGlobalRankChanges;
-
-	UPROPERTY()
-	TArray<FLeaderboardRankChanged> LeaderboardSocialRankChanges;*/
 
 	UPROPERTY(Config)
 	FString PreviewServerKey;

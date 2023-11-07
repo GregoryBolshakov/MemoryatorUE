@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -13,6 +11,10 @@ class AMGameMode : public AGameModeBase
 
 public:
 	AMGameMode();
+
+	/** Temporarily switch to offline mode, continue the game and keep checking the connection */
+	UFUNCTION(BlueprintCallable)
+	void GoOffline();
 };
 
 

@@ -3,8 +3,6 @@
 #include "CoreMinimal.h"
 #include "M2DRepresentationComponent.generated.h"
 
-#define EEC_Pickable ECollisionChannel::ECC_GameTraceChannel2
-
 class UCapsuleComponent;
 class UM2DShadowControllerComponent;
 

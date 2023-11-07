@@ -15,7 +15,7 @@ void UMShopWidget::NativeConstruct()
 	{
 		if (const auto NakamaManager = GameInstance->GetNakamaManager())
 		{
-			CreateProductWidgets(NakamaManager->NakamaShopManager->GetBundles());
+			CreateProductWidgets(NakamaManager->ShopManagerClient->GetBundles());
 		}
 	}
 }

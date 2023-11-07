@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MDropManager.h"
 #include "UI/MPickUpBarWidget.h"
 #include "StationaryActors/MPickableActor.h"
@@ -9,7 +7,7 @@
 #include "Components/MInventoryComponent.h"
 #include "Framework/MGameInstance.h"
 #include "Kismet/GameplayStatics.h"
-#include "NakamaManager/Private/NakamaShopManager.h"
+#include "NakamaManager/Private/ShopManagerClient.h"
 
 UMDropManager::UMDropManager(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -19,7 +17,7 @@ UMDropManager::UMDropManager(const FObjectInitializer& ObjectInitializer) : Supe
 		{
 			if (const auto NakamaManager = GameInstance->GetNakamaManager())
 			{
-				NakamaManager->NakamaShopManager->OnBundleTxnFinalizedDelegate.BindUObject(this, &UMDropManager::GiveBundleToPlayer);
+				NakamaManager->ShopManagerClient->OnBundleTxnFinalizedDelegate.BindUObject(this, &UMDropManager::GiveBundleToPlayer);
 			}
 		}
 	}

@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "MPlayerController.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Runtime/Engine/Classes/Components/DecalComponent.h"
@@ -36,7 +34,6 @@ AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializ
 	ConsoleCommandsManager = CreateDefaultSubobject<UMConsoleCommandsManager>(TEXT("ConsoleCommandsManager"));
 }
 
-FTimerHandle tempTimer;
 void AMPlayerController::TimelineProgress(float Value)
 {
 	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()))
