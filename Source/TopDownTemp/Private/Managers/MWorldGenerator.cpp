@@ -90,10 +90,10 @@ void AMWorldGenerator::InitNewWorld()
 			GenerateBlock(BlockInRadius);
 		}
 
-		/*const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
+		const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
 		const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
 		VillageGenerator->Generate();
-		UpdateNavigationMesh();*/
+		UpdateNavigationMesh();
 
 		//EmptyBlock(PlayerBlockIndex, true);
 		//BlockGenerator->SpawnActors(PlayerBlockIndex, this, EBiome::DarkWoods, "PoppyBLock");

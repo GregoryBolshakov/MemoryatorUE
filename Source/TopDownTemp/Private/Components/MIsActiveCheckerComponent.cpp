@@ -46,16 +46,7 @@ void UMIsActiveCheckerComponent::DisableOwner(bool bForce)
 		Component->PrimaryComponentTick.bCanEverTick = false;
 		Component->PrimaryComponentTick.UnRegisterTickFunction();
 
-		// Disable collision checks for any primitive. They are executed regardless of the tick state!
-		if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Component))
-		{
-			ComponentData.CollisionType = PrimitiveComponent->GetCollisionEnabled();
-			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-			ComponentData.bCanCastShadows = PrimitiveComponent->CastShadow;
-			PrimitiveComponent->CastShadow = false;
-			//TODO: Maybe we need to SetGenerateOverlapEvents(false) too?
-		}
+		//TODO: Check if we need to SetGenerateOverlapEvents(false)
 
 		DisabledComponentsData.Add(ComponentData);
 	}
@@ -108,13 +99,6 @@ void UMIsActiveCheckerComponent::EnableOwner(bool bForce)
 			}
 
 			Data.Component->PrimaryComponentTick.SetTickFunctionEnable(true);
-		}
-
-		if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Data.Component))
-		{
-			PrimitiveComponent->SetCollisionEnabled(Data.CollisionType.Get(ECollisionEnabled::NoCollision));
-
-			PrimitiveComponent->CastShadow = Data.bCanCastShadows;
 		}
 	}
 	DisabledComponentsData.Empty();

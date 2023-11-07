@@ -18,7 +18,8 @@ public:
 	/** Use AMWorldGenerator::RemoveFromGrid instead */
 	//bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = true ) = delete;
 
-	// Temp workaraund
+	/** Never destroy objects within the grid using AActor::Destroy. Identical naming is used to minimize calls to the wrong Destroy().
+	 *  But we are still not immune from incorrect calls if the pointer to a MActor or MCharacter is of type AActor */
 	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = true);
 
 	float GetRadius() const;

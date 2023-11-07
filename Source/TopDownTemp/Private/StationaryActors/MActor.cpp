@@ -66,6 +66,8 @@ EBiome AMActor::GetMyBiome()
 			}
 		}
 	}
+#ifndef WITH_EDITOR
 	check(false);
+#endif
 	return EBiome::DarkWoods;
 }

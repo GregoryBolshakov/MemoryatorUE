@@ -5,9 +5,10 @@
 #include "Controllers/MVillagerMobController.h"
 #include "MWorldGenerator.h"
 #include "MWorldManager.h"
-#include "Components/BoxComponent.h"
-#include "Components/ShapeComponent.h"
 #include "Math/UnrealMathUtility.h"
+#include "../StationaryActors/MActor.h"
+
+DEFINE_LOG_CATEGORY(LogVillageGenerator);
 
 AMVillageGenerator::AMVillageGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -31,7 +32,9 @@ void AMVillageGenerator::Generate()
 			pWorldGenerator = pWorldManager->GetWorldGenerator();
 		}
 	}
-	if (!pWorldGenerator || ToSpawnBuildingMetadataMap.IsEmpty() || !ToSpawnBuildingMetadataMap.Find("MainBuilding"))
+	const auto GapMetadata = ToSpawnBuildingMetadataMap.Find("Gap");
+
+	if (!pWorldGenerator || ToSpawnBuildingMetadataMap.IsEmpty() || !ToSpawnBuildingMetadataMap.Find("MainBuilding") || !GapMetadata)
 	{
 		check(false);
 		return;
@@ -97,24 +100,37 @@ void AMVillageGenerator::Generate()
 		}
 		else
 		{
-			// Legacy implementation: If there is no such, then we stop and don't build the rest.
-			//break;
+			// Previous implementation was such: If cannot place an actor, then stop and don't build the rest.
 
-			// TODO: Ensure this doesn't cause endless loop  
+			TestingBuildingActor->Destroy();
+			//One of possible solutions to develop generation. It hasn't been proved yet and the binary search isn't suitable for it.
+			// The idea is to keep increasing the radius of generation each time we couldn't fit an actor.
+			// Obviously, the order of the actors is important, because trying to place a big one will result in an increase
+			// in the generation radius, although there may still be unplaced small ones that could fit.
+			// But the village should have a chaotic structure, so for now this is acceptable.
+			DistanceFromCenter += AMWorldGenerator::GetDefaultBounds(GapMetadata->ToSpawnClass, GetWorld()).SphereRadius;
+			// TODO: Ensure this doesn't cause endless loop
 		}
 	}
 
 	// Remove all spawned Gap actors
-	if (const auto GapMetadata = ToSpawnBuildingMetadataMap.Find("Gap"))
+	TArray<FName> KeysToRemove;
+	for (auto It = BuildingMap.CreateIterator(); It; ++It)
 	{
-		for (auto It = BuildingMap.CreateIterator(); It; ++It)
+		if (It.Value()->GetClass() == GapMetadata->ToSpawnClass)
 		{
-			if (It.Value()->GetClass() == GapMetadata->ToSpawnClass.Get())
-			{
-				It.Value()->Destroy();
-				It.RemoveCurrent();
-			}
+			KeysToRemove.Add(It->Key);
 		}
+	}
+	for (const auto& Key : KeysToRemove)
+	{
+		if (const auto MActor = Cast<AMActor>(BuildingMap[Key]))
+		{
+			MActor->Destroy();
+			BuildingMap.Remove(Key);
+		}
+		else
+			check(false);
 	}
 }
 
@@ -136,18 +152,6 @@ bool AMVillageGenerator::TryToPlaceBuilding(AActor& BuildingActor, int& Building
 
 		OnBuildingPlaced(BuildingActor, BuildingMetadata);
 		return true;
-	}
-
-	BuildingActor.Destroy();
-	//One of possible solutions to develop generation. It hasn't been proved yet and the binary search isn't suitable for it. 
-	if (const auto GapMetadata = ToSpawnBuildingMetadataMap.Find("Gap"))
-	{
-		const auto BoxExtent = AMWorldGenerator::GetDefaultBounds(GapMetadata->ToSpawnClass, GetWorld()).BoxExtent;
-		DistanceFromCenter += FMath::Max3(BoxExtent.X, BoxExtent.Y, BoxExtent.Z) / 2.f;
-	}
-	else
-	{
-		check(false);
 	}
 	return false;
 }
@@ -265,7 +269,7 @@ TOptional<FVector> AMVillageGenerator::FindLocationForBuilding(const AActor& Bui
 				{
 					break;
 				}
-				//check(false);
+				UE_LOG(LogVillageGenerator, Log, TEXT("Couldn't fit an actor on the circle, increase the radius"));
 				break;
 			}
 		}

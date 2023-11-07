@@ -15,10 +15,6 @@ public:
 	UActorComponent* Component;
 
 	bool bCanEverTick = false;
-
-	TOptional<ECollisionEnabled::Type> CollisionType;
-
-	bool bCanCastShadows = false;
 };
 
 UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent, IgnoreCategoryKeywordsInSubclasses, ShortTooltip="A component that tuns on/off entie object. For example when the object was culled"))

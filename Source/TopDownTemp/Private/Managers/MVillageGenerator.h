@@ -4,6 +4,8 @@
 
 #include "MVillageGenerator.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogVillageGenerator, Log, All);
+
 /** Describes all the data can be configured for one particular kind of villagers */
 USTRUCT(BlueprintType)
 struct FToSpawnVillagerMetadata
