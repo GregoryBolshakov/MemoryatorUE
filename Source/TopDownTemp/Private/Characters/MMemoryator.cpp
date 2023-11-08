@@ -1,8 +1,6 @@
 #include "MMemoryator.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
-#include "Components/DecalComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
@@ -10,7 +8,6 @@
 #include "Controllers/MInterfaceMobController.h"
 #include "Components/MInventoryComponent.h"
 #include "Controllers/MPlayerController.h"
-#include "PaperSpriteComponent.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
 
@@ -33,15 +30,8 @@ AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
 	TopDownCameraComponent->FieldOfView = 60.f;
 
 	// Create a decal in the world to show the cursor's location
-	CursorToWorld = CreateDefaultSubobject<UDecalComponent>("CursorToWorld");
+	CursorToWorld = CreateDefaultSubobject<USceneComponent>("CursorToWorld");
 	CursorToWorld->SetupAttachment(RootComponent);
-	static ConstructorHelpers::FObjectFinder<UMaterial> DecalMaterialAsset(TEXT("Material'/Game/Memoryator/Materials/M_Cursor_Decal.M_Cursor_Decal'"));
-	if (DecalMaterialAsset.Succeeded())
-	{
-		CursorToWorld->SetDecalMaterial(DecalMaterialAsset.Object);
-	}
-	CursorToWorld->DecalSize = FVector(16.0f, 32.0f, 32.0f);
-	CursorToWorld->SetRelativeRotation(FRotator(90.0f, 0.0f, 0.0f).Quaternion());
 }
 
 void AMMemoryator::AddMovementInput(FVector WorldDirection, float ScaleValue, bool bForce)
