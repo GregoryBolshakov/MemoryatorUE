@@ -83,20 +83,20 @@ void AMWorldGenerator::InitNewWorld()
 			{
 				BlockOfActors = GridOfActors.Add(BlockInRadius, NewObject<UBlockOfActors>(this));
 			}
-			BlockOfActors->Biome = EBiome::DarkWoods;
+			BlockOfActors->Biome = EBiome::BirchGrove;
 		}
 		for (const auto BlockInRadius : BlocksInRadius)
 		{
 			GenerateBlock(BlockInRadius);
 		}
 
-		const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
+		/*const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
 		const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
 		VillageGenerator->Generate();
-		UpdateNavigationMesh();
+		UpdateNavigationMesh();*/
 
 		//EmptyBlock(PlayerBlockIndex, true);
-		//BlockGenerator->SpawnActors(PlayerBlockIndex, this, EBiome::DarkWoods, "PoppyBLock");
+		//BlockGenerator->SpawnActors(PlayerBlockIndex, this, EBiome::BirchGrove, "TestBlock");
 	}
 }
 
@@ -188,7 +188,7 @@ void AMWorldGenerator::BeginPlay()
 	// We want to set the biome coloring since the first block change
 	BlocksPassedSinceLastPerimeterColoring = BiomesPerimeterColoringRate;
 
-	if (!SaveManager->AsyncLoadFromMemory(this))
+	//if (!SaveManager->AsyncLoadFromMemory(this))
 	{
 		InitNewWorld();
 	}
@@ -807,7 +807,7 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor)
 	// If was spawned on a disabled block, disable the actor (unless the actor has to be always enabled)
 	if (const auto IsActiveCheckerComponent = Cast<UMIsActiveCheckerComponent>(Actor->GetComponentByClass(UMIsActiveCheckerComponent::StaticClass())))
 	{
-		if (IsActiveCheckerComponent->GetAlwaysEnabled())
+		if (IsActiveCheckerComponent->GetAlwaysEnabled() || IsActiveCheckerComponent->GetPreserveBlockConstancy())
 		{
 			BlockOfActors->ConstantActorsCount++; //TODO: Disable constancy when the object no longer on the block
 		}
@@ -958,7 +958,7 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 					for (UActorComponent* Component : Actor->GetComponents())
 					{
 						if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component); PrimitiveComponent &&
-							PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds")) //TODO: Come up with getting collision enabled state of not fully initialized component
+							PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds") || Cast<UStaticMeshComponent>(Component) != nullptr) //TODO: Come up with getting collision enabled state of not fully initialized component
 						{
 							FTransform ComponentTransform = PrimitiveComponent->GetComponentTransform();
 							FBoxSphereBounds ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);
