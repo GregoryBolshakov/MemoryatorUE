@@ -29,6 +29,12 @@ public:
 	int GetAppearanceID() const { return AppearanceID; }
 	bool GetIsRandomizedAppearance() const { return IsRandomizedAppearance; }
 
+	UFUNCTION()
+	const TArray<UMaterialInstanceDynamic*>& GetDynamicMaterials() const
+	{
+		return DynamicMaterials;
+	}
+
 protected:
 
 	virtual void PostInitializeComponents() override;
@@ -38,6 +44,9 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ApplyAppearanceID();
+
+	/** Each material is replaced by its dynamic version in order to be modified at runtime as needed */
+	void CreateDynamicMaterials();
 
 	UFUNCTION(BlueprintCallable)
 	EBiome GetMyBiome();
@@ -56,4 +65,8 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly)
 	int AppearanceID = 0;
+
+	//TODO: Somehow systematize the materials. E.g. add the ability to filter by mesh and parts
+	UPROPERTY()
+	TArray<UMaterialInstanceDynamic*> DynamicMaterials;
 };

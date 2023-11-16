@@ -1,6 +1,5 @@
 #include "MPlayerController.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
-#include "Runtime/Engine/Classes/Components/DecalComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Components/MAttackPuddleComponent.h"
 #include "Managers/MCommunicationManager.h"
@@ -8,13 +7,17 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "Managers/MConsoleCommandsManager.h"
 #include "MInterfaceMobController.h"
+#include "Camera/CameraComponent.h"
 #include "Characters/MMob.h"
 #include "Managers/MWorldManager.h"
 #include "Managers/MWorldGenerator.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/DamageEvents.h"
+#include "StationaryActors/MActor.h"
 
 AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializer) :
 	Super(ObjectInitializer),
@@ -54,7 +57,9 @@ void AMPlayerController::TimelineProgress(float Value)
 		{
 			// Set velocity to the distance we should have passed since the last frame and force movement component to consume the velocity
 			MovementComponent->UpdateComponentVelocity();
-			MovementComponent->MoveUpdatedComponent((Value - LastDashProgressValue) * DashLength * MyCharacter->GetLastNonZeroVelocity().GetSafeNormal(), MyCharacter->GetActorRotation(), true);
+			MovementComponent->MoveUpdatedComponent(
+				(Value - LastDashProgressValue) * DashLength * MyCharacter->GetLastNonZeroVelocity().GetSafeNormal(),
+				MyCharacter->GetActorRotation(), true);
 
 			// Update last frame info
 			TimeSinceLastDashUpdate = FDateTime::UtcNow();
@@ -74,12 +79,23 @@ void AMPlayerController::BeginPlay()
 		DashVelocityTimeline.AddInterpFloat(DashVelocityCurve, TimelineProgress);
 		DashVelocityTimeline.SetLooping(false);
 	}
+
+	if (IsValid(GetPawn()))
+	{
+		ActiveSpringArm = Cast<
+			USpringArmComponent>(GetPawn()->GetComponentByClass(USpringArmComponent::StaticClass()));
+		ActiveCamera = Cast<UCameraComponent>(GetPawn()->GetComponentByClass(UCameraComponent::StaticClass()));
+		ActiveCapsuleComponent = Cast<UCapsuleComponent>(
+			GetPawn()->GetComponentByClass(UCapsuleComponent::StaticClass()));
+	}
 }
 
 bool AMPlayerController::IsMovingByAI() const
 {
 	if (!IsValid(PathFollowingComponent))
+	{
 		return false;
+	}
 
 	return PathFollowingComponent->GetStatus() != EPathFollowingStatus::Idle;
 }
@@ -87,12 +103,15 @@ bool AMPlayerController::IsMovingByAI() const
 void AMPlayerController::StopAIMovement()
 {
 	if (!IsValid(PathFollowingComponent))
+	{
 		return;
+	}
 
 	PathFollowingComponent->AbortMove(*this, FPathFollowingResultFlags::OwnerFinished);
 }
 
 FTimerHandle RunningTimerHandle;
+
 void AMPlayerController::StartSprintTimer()
 {
 	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()))
@@ -201,8 +220,8 @@ void AMPlayerController::SetupInputComponent()
 	InputComponent->BindAction("LeftMouseClick", IE_Released, this, &AMPlayerController::OnLeftMouseClick);
 
 	// support touch devices 
-	InputComponent->BindTouch(EInputEvent::IE_Pressed, this, &AMPlayerController::MoveToTouchLocation);
-	InputComponent->BindTouch(EInputEvent::IE_Repeat, this, &AMPlayerController::MoveToTouchLocation);
+	InputComponent->BindTouch(IE_Pressed, this, &AMPlayerController::MoveToTouchLocation);
+	InputComponent->BindTouch(IE_Repeat, this, &AMPlayerController::MoveToTouchLocation);
 
 	InputComponent->BindAxis("MoveForward", this, &AMPlayerController::MoveForward);
 	InputComponent->BindAxis("MoveRight", this, &AMPlayerController::MoveRight);
@@ -250,7 +269,9 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 {
 	const auto PuddleComponent = MyCharacter.GetAttackPuddleComponent();
 	if (!PuddleComponent)
+	{
 		return;
+	}
 
 	if (MyCharacter.GetIsDashing()) // check for any action that shouldn't rotate character towards enemy
 	{
@@ -280,8 +301,10 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 		const auto EnemyLocation = EnemyActor->GetTransform().GetLocation();
 		const auto DistanceToActor = FVector::Distance(CharacterLocation, EnemyLocation);
 		// Fix our character's gaze on the enemy if it is the closest one and 
-		if (DistanceToActor + EnemyRadius <= MyCharacter.GetFightRangePlusMyRadius() * 3.5f && // Actor is within sight range TODO: put the " * 2.5f" to the properties
-			(!ClosestEnemy || DistanceToActor < FVector::Distance(CharacterLocation, ClosestEnemy->GetActorLocation()))) // It is either the only one in sight or the closest
+		if (DistanceToActor + EnemyRadius <= MyCharacter.GetFightRangePlusMyRadius() * 3.5f &&
+			// Actor is within sight range TODO: put the " * 2.5f" to the properties
+			(!ClosestEnemy || DistanceToActor < FVector::Distance(CharacterLocation, ClosestEnemy->GetActorLocation())))
+		// It is either the only one in sight or the closest
 		{
 			ClosestEnemy = EnemyActor;
 			ClosestEnemyRadius = EnemyRadius;
@@ -294,7 +317,8 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 		MyCharacter.SetForcedGazeVector(VectorToEnemy);
 		PuddleComponent->SetHiddenInGame(false);
 
-		if (VectorToEnemy.Size2D() <= MyCharacter.GetFightRangePlusMyRadius() + ClosestEnemyRadius && !MyCharacter.GetIsFighting())
+		if (VectorToEnemy.Size2D() <= MyCharacter.GetFightRangePlusMyRadius() + ClosestEnemyRadius && !MyCharacter.
+			GetIsFighting())
 		{
 			MyCharacter.SetIsFighting(true);
 		}
@@ -314,21 +338,30 @@ void AMPlayerController::OnHit()
 {
 	const auto MyCharacter = Cast<AMCharacter>(GetCharacter());
 	if (!MyCharacter)
+	{
 		return;
+	}
 
 	if (const auto AttackPuddleComponent = MyCharacter->GetAttackPuddleComponent())
 	{
 		TArray<AActor*> OutActors;
-		auto test0 = UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn);
-		UKismetSystemLibrary::BoxOverlapActors(GetWorld(), AttackPuddleComponent->GetComponentLocation(), AttackPuddleComponent->Bounds.BoxExtent, {UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)}, AMCharacter::StaticClass(), {MyCharacter}, OutActors);
+		auto test0 = UEngineTypes::ConvertToObjectType(ECC_Pawn);
+		UKismetSystemLibrary::BoxOverlapActors(GetWorld(), AttackPuddleComponent->GetComponentLocation(),
+		                                       AttackPuddleComponent->Bounds.BoxExtent, {
+			                                       UEngineTypes::ConvertToObjectType(
+				                                       ECC_Pawn)
+		                                       }, AMCharacter::StaticClass(), {MyCharacter}, OutActors);
 		for (const auto Actor : OutActors)
 		{
 			if (!Actor)
+			{
 				continue;
+			}
 
 			if (const auto CapsuleComponent = Cast<UCapsuleComponent>(Actor->GetRootComponent()))
 			{
-				if (AttackPuddleComponent->IsCircleWithin(Actor->GetActorLocation(), CapsuleComponent->GetScaledCapsuleRadius()))
+				if (AttackPuddleComponent->IsCircleWithin(Actor->GetActorLocation(),
+				                                          CapsuleComponent->GetScaledCapsuleRadius()))
 				{
 					Actor->TakeDamage(MyCharacter->GetStrength(), {}, this, MyCharacter);
 				}
@@ -434,7 +467,7 @@ void AMPlayerController::SetNewMoveDestination(const FVector DestLocation)
 	APawn* const MyPawn = GetPawn();
 	if (MyPawn)
 	{
-		float const Distance = FVector::Dist(DestLocation, MyPawn->GetActorLocation());
+		const float Distance = FVector::Dist(DestLocation, MyPawn->GetActorLocation());
 
 		// We need to issue move command only if far enough in order for walk animation to play correctly
 		if ((Distance > 120.0f))
@@ -477,8 +510,8 @@ void AMPlayerController::OnToggleFightPressed()
 void AMPlayerController::OnLeftMouseClick()
 {
 	FHitResult HitResult;
-	auto test0 = UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn);
-	if (GetHitResultUnderCursorForObjects({UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)}, true, HitResult))
+	auto test0 = UEngineTypes::ConvertToObjectType(ECC_Pawn);
+	if (GetHitResultUnderCursorForObjects({UEngineTypes::ConvertToObjectType(ECC_Pawn)}, true, HitResult))
 	{
 		AMMob* ClickedMob = Cast<AMMob>(HitResult.GetActor());
 		if (ClickedMob)
@@ -525,4 +558,163 @@ bool AMPlayerController::ProcessConsoleExec(const TCHAR* Cmd, FOutputDevice& Ar,
 	}
 
 	return bHandled;
+}
+
+void AMPlayerController::SyncOccludedActors()
+{
+	if (!ShouldCheckCameraOcclusion())
+	{
+		return;
+	}
+
+	FVector Start = ActiveCamera->GetComponentLocation();
+	FVector End = GetPawn()->GetActorLocation();
+
+	TArray<TEnumAsByte<EObjectTypeQuery>> CollisionObjectTypes;
+	CollisionObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+
+	TArray<AActor*> ActorsToIgnore; // TODO: Add configuration to ignore actor types
+	TArray<FHitResult> OutHits;
+
+	auto ShouldDebug = DebugLineTraces ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None;
+
+	// Adjust the End so we don't occlude objects further the character
+	End += (Start - End).GetSafeNormal() * ActiveCapsuleComponent->GetScaledCapsuleRadius() * (CapsulePercentageForTrace - 1.f);
+
+	bool bGotHits = UKismetSystemLibrary::CapsuleTraceMultiForObjects(
+		GetWorld(), Start, End, ActiveCapsuleComponent->GetScaledCapsuleRadius() * CapsulePercentageForTrace,
+		ActiveCapsuleComponent->GetScaledCapsuleHalfHeight() * CapsulePercentageForTrace, CollisionObjectTypes, true,
+		ActorsToIgnore,
+		ShouldDebug,
+		OutHits, true);
+
+	if (bGotHits)
+	{
+		// The list of actors hit by the line trace, that means that they are occluded from view
+		TSet<const AActor*> ActorsJustOccluded;
+
+		// Hide actors that are occluded by the camera
+		for (FHitResult Hit : OutHits)
+		{
+			if (const AMActor* HitMActor = Cast<AMActor>(Hit.GetActor()))
+			{
+				HideOccludedActor(HitMActor);
+				ActorsJustOccluded.Add(HitMActor);
+			}
+		}
+
+		// Show actors that are currently hidden but that are not occluded by the camera anymore 
+		for (auto& Elem : OccludedActors)
+		{
+			if (!ActorsJustOccluded.Contains(Elem.Value->MActor) && Elem.Value->IsOccluded)
+			{
+				ShowOccludedActor(Elem.Value);
+			}
+		}
+	}
+}
+
+void AMPlayerController::UpdateOpacity(UCameraOccludedActor* OccludedActor)
+{
+	if (!IsValid(OccludedActor->MActor)) // Valid check
+	{
+		OccludedActors.Remove(FName(OccludedActor->Name));
+		GetWorld()->GetTimerManager().ClearTimer(OccludedActor->OpacityTimerHandle);
+		return;
+	}
+
+	OccludedActor->TransitionRemainTime -= GetWorld()->GetTimeSeconds() - OccludedActor->LastUpdateTime;
+	OccludedActor->LastUpdateTime = GetWorld()->GetTimeSeconds();
+
+	bool bAtLeastOneParamHasOpacity = false; // If object doesn't support opacity, remove its handler
+	// Calculate New Opacity
+	for (const auto DynamicMaterial : OccludedActor->MActor->GetDynamicMaterials())
+	{
+		if (DynamicMaterial)
+		{
+			float CurrentOpacity;
+			const auto bParamExist = DynamicMaterial->GetScalarParameterValue(FName("OccludedOpacity"), CurrentOpacity);
+			if (!bParamExist)
+				continue;
+
+			bAtLeastOneParamHasOpacity = true;
+			const float InitialOpacity = OccludedActor->TargetOpacity == 1.f ? OccludedOpacity : 1.f;
+			const float NewOpacity = FMath::Lerp(InitialOpacity, OccludedActor->TargetOpacity, FMath::Max(0.f, 1.f - OccludedActor->TransitionRemainTime / OpacityTransitionDuration));
+
+			DynamicMaterial->SetScalarParameterValue("OccludedOpacity", NewOpacity);
+
+			// Finished transition
+			if (OccludedActor->TransitionRemainTime <= 0.f)
+			{
+				OccludedActor->TransitionRemainTime = 0.f;
+				GetWorld()->GetTimerManager().ClearTimer(OccludedActor->OpacityTimerHandle);
+			}
+		}
+	}
+
+	if (!bAtLeastOneParamHasOpacity)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(OccludedActor->OpacityTimerHandle);
+	}
+}
+
+void AMPlayerController::HideOccludedActor(const AMActor* MActor)
+{
+	const auto FindResult = OccludedActors.Find(FName(MActor->GetName()));
+	if (FindResult && *FindResult && (*FindResult)->MActor)
+	{
+		if (!(*FindResult)->IsOccluded)
+		{
+			(*FindResult)->IsOccluded = true;
+			OnHideOccludedActor((*FindResult));
+		}
+	}
+	else
+	{
+		UCameraOccludedActor* OccludedActor = NewObject<UCameraOccludedActor>(this);
+		OccludedActor->Name = FName(MActor->GetName());
+		OccludedActor->MActor = MActor;
+		OccludedActor->IsOccluded = true;
+		OccludedActors.Add(FName(MActor->GetName()), OccludedActor);
+		OnHideOccludedActor(OccludedActor);
+	}
+}
+
+void AMPlayerController::ShowOccludedActor(UCameraOccludedActor* OccludedActor)
+{
+	if (!IsValid(OccludedActor->MActor))
+	{
+		OccludedActors.Remove(FName(OccludedActor->Name)); //TODO: THIS IS DANGEROUS, REMOVING WHILE ITERATING, FIX THAT
+		return;
+	}
+
+	if (OccludedActor->IsOccluded)
+	{
+		OccludedActor->IsOccluded = false;
+		OnShowOccludedActor(OccludedActor);
+	}
+}
+
+void AMPlayerController::OnShowOccludedActor(UCameraOccludedActor* OccludedActor)
+{
+	OccludedActor->TargetOpacity = 1.f;
+	OccludedActor->LastUpdateTime = GetWorld()->GetTimeSeconds();
+	OccludedActor->TransitionRemainTime = OpacityTransitionDuration - OccludedActor->TransitionRemainTime;
+
+	GetWorld()->GetTimerManager().ClearTimer(OccludedActor->OpacityTimerHandle);
+	GetWorld()->GetTimerManager().SetTimer(OccludedActor->OpacityTimerHandle, [this, OccludedActor]() {
+		UpdateOpacity(OccludedActor);
+	}, 0.02f, true);
+}
+
+void AMPlayerController::OnHideOccludedActor(UCameraOccludedActor* OccludedActor)
+{
+	OccludedActor->TargetOpacity = OccludedOpacity;
+	OccludedActor->LastUpdateTime = GetWorld()->GetTimeSeconds();
+	OccludedActor->TransitionRemainTime = OpacityTransitionDuration - OccludedActor->TransitionRemainTime;
+
+	GetWorld()->GetTimerManager().ClearTimer(OccludedActor->OpacityTimerHandle);
+	GetWorld()->GetTimerManager().SetTimer(OccludedActor->OpacityTimerHandle, [this, OccludedActor]() {
+		UpdateOpacity(OccludedActor);
+	}, 0.02f, true);
 }

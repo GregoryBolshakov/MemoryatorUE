@@ -47,6 +47,24 @@ void AMActor::PostInitializeComponents()
 	ApplyAppearanceID();
 
 	RepresentationComponent->PostInitChildren();
+
+	CreateDynamicMaterials();
+}
+
+void AMActor::CreateDynamicMaterials()
+{
+	TArray<UStaticMeshComponent*> StaticMeshComps;
+	GetComponents<UStaticMeshComponent>(StaticMeshComps);
+	for (const auto StaticMeshComp : StaticMeshComps)
+	{
+		const auto Materials = StaticMeshComp->GetMaterials();
+		for (int i = 0; i < Materials.Num(); ++i)
+		{
+			const auto DynamicMaterial = UMaterialInstanceDynamic::Create(Materials[i], this);
+			StaticMeshComp->SetMaterial(i, DynamicMaterial);
+			DynamicMaterials.Add(DynamicMaterial);
+		}
+	}
 }
 
 EBiome AMActor::GetMyBiome()
