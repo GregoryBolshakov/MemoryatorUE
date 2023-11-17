@@ -29,8 +29,8 @@ public:
 	int GetAppearanceID() const { return AppearanceID; }
 	bool GetIsRandomizedAppearance() const { return IsRandomizedAppearance; }
 
-	UFUNCTION()
-	const TArray<UMaterialInstanceDynamic*>& GetDynamicMaterials() const
+	UFUNCTION(BlueprintCallable)
+	const TMap<UStaticMeshComponent*, UMaterialInstanceDynamic*>& GetDynamicMaterials() const
 	{
 		return DynamicMaterials;
 	}
@@ -66,7 +66,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	int AppearanceID = 0;
 
-	//TODO: Somehow systematize the materials. E.g. add the ability to filter by mesh and parts
 	UPROPERTY()
-	TArray<UMaterialInstanceDynamic*> DynamicMaterials;
+	TMap<UStaticMeshComponent*, UMaterialInstanceDynamic*> DynamicMaterials;
 };

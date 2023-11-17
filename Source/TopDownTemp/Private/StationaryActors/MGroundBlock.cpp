@@ -9,20 +9,20 @@
 
 AMGroundBlock::AMGroundBlock(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	GroundSpriteComponent = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("GroundSprite"));
-	GroundSpriteComponent->SetupAttachment(RootComponent);
+	GroundMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundMesh"));
+	GroundMeshComponent->SetupAttachment(RootComponent);
 
-	GroundTransitionSpriteLeft = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("GroundTransitionSpriteLeft"));
-	GroundTransitionSpriteLeft->SetupAttachment(GroundSpriteComponent);
+	GroundTransitionMeshLeft = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundTransitionMeshLeft"));
+	GroundTransitionMeshLeft->SetupAttachment(GroundMeshComponent);
 
-	GroundTransitionSpriteRight = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("GroundTransitionSpriteRight"));
-	GroundTransitionSpriteRight->SetupAttachment(GroundSpriteComponent);
+	GroundTransitionMeshRight = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundTransitionMeshRight"));
+	GroundTransitionMeshRight->SetupAttachment(GroundMeshComponent);
 
-	GroundTransitionSpriteTop = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("GroundTransitionSpriteTop"));
-	GroundTransitionSpriteTop->SetupAttachment(GroundSpriteComponent);
+	GroundTransitionMeshTop = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundTransitionMeshTop"));
+	GroundTransitionMeshTop->SetupAttachment(GroundMeshComponent);
 
-	GroundTransitionSpriteBottom = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("GroundTransitionSpriteBottom"));
-	GroundTransitionSpriteBottom->SetupAttachment(GroundSpriteComponent);
+	GroundTransitionMeshBottom = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundTransitionMeshBottom"));
+	GroundTransitionMeshBottom->SetupAttachment(GroundMeshComponent);
 }
 
 void AMGroundBlock::UpdateBiome(EBiome IN_Biome)
@@ -67,23 +67,23 @@ void AMGroundBlock::UpdateTransition(FIntPoint Offset, EBiome AdjacentBiome)
 	}
 }
 
-UPaperSpriteComponent* AMGroundBlock::GetTransitionByOffset(FIntPoint Offset) const
+UStaticMeshComponent* AMGroundBlock::GetTransitionByOffset(FIntPoint Offset) const
 {
 	if (Offset == FIntPoint(-1, 0))
 	{
-		return GroundTransitionSpriteLeft;
+		return GroundTransitionMeshLeft;
 	}
 	if (Offset == FIntPoint(1, 0))
 	{
-		return GroundTransitionSpriteRight;
+		return GroundTransitionMeshRight;
 	}
 	if (Offset == FIntPoint(0, -1))
 	{
-		return GroundTransitionSpriteTop;
+		return GroundTransitionMeshTop;
 	}
 	if (Offset == FIntPoint(0, 1))
 	{
-		return GroundTransitionSpriteBottom;
+		return GroundTransitionMeshBottom;
 	}
 	check(false);
 	return nullptr;

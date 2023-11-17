@@ -636,7 +636,7 @@ void AMPlayerController::UpdateOpacity(UCameraOccludedActor* OccludedActor)
 
 	bool bAtLeastOneParamHasOpacity = false; // If object doesn't support opacity, remove its handler
 	// Calculate New Opacity
-	for (const auto DynamicMaterial : OccludedActor->MActor->GetDynamicMaterials())
+	for (const auto& [StaticMesh, DynamicMaterial] : OccludedActor->MActor->GetDynamicMaterials())
 	{
 		if (DynamicMaterial)
 		{

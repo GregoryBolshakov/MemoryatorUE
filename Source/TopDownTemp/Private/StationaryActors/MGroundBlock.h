@@ -31,16 +31,16 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnBiomeUpdated();
 
-	UPaperSpriteComponent* GetTransitionByOffset(FIntPoint Offset) const;
+	UStaticMeshComponent* GetTransitionByOffset(FIntPoint Offset) const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	UPaperSpriteComponent* GroundSpriteComponent;
+	UStaticMeshComponent* GroundMeshComponent;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	UPaperSpriteComponent* GroundTransitionSpriteLeft;
+	UStaticMeshComponent* GroundTransitionMeshLeft;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	UPaperSpriteComponent* GroundTransitionSpriteRight;
+	UStaticMeshComponent* GroundTransitionMeshRight;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	UPaperSpriteComponent* GroundTransitionSpriteTop;
+	UStaticMeshComponent* GroundTransitionMeshTop;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	UPaperSpriteComponent* GroundTransitionSpriteBottom;
+	UStaticMeshComponent* GroundTransitionMeshBottom;
 };

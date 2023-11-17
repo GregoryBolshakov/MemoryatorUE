@@ -958,7 +958,8 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 					for (UActorComponent* Component : Actor->GetComponents())
 					{
 						if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component); PrimitiveComponent &&
-							PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds") || Cast<UStaticMeshComponent>(Component) != nullptr) //TODO: Come up with getting collision enabled state of not fully initialized component
+							PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds") ||
+							(Cast<UStaticMeshComponent>(Component) != nullptr && !PrimitiveComponent->ComponentHasTag("IgnoreDefaultBounds")))
 						{
 							FTransform ComponentTransform = PrimitiveComponent->GetComponentTransform();
 							FBoxSphereBounds ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);

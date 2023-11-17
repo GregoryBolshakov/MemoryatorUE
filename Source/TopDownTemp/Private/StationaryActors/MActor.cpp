@@ -62,7 +62,7 @@ void AMActor::CreateDynamicMaterials()
 		{
 			const auto DynamicMaterial = UMaterialInstanceDynamic::Create(Materials[i], this);
 			StaticMeshComp->SetMaterial(i, DynamicMaterial);
-			DynamicMaterials.Add(DynamicMaterial);
+			DynamicMaterials.Add(StaticMeshComp, DynamicMaterial);
 		}
 	}
 }
