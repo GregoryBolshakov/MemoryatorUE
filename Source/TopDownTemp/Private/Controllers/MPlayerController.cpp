@@ -603,16 +603,22 @@ void AMPlayerController::SyncOccludedActors()
 			}
 		}
 
+		TArray<FName> RemoveKeyList;
 		// Show actors that are currently hidden but that are not occluded by the camera anymore 
-		for (auto& Elem : OccludedActors)
+		for (auto& [Name, OccludedActor] : OccludedActors)
 		{
-			if (!ActorsJustOccluded.Contains(Elem.Value->MActor) && Elem.Value->IsOccluded)
+			if (!ActorsJustOccluded.Contains(OccludedActor->MActor))
 			{
-				ShowOccludedActor(Elem.Value);
+				ShowOccludedActor(OccludedActor);
+				RemoveKeyList.Add(Name);
 			}
 		}
+
+		for (const auto Name : RemoveKeyList)
+			OccludedActors.Remove(Name);
 	}
 }
+
 
 void AMPlayerController::UpdateOpacity(UCameraOccludedActor* OccludedActor)
 {
@@ -661,20 +667,11 @@ void AMPlayerController::UpdateOpacity(UCameraOccludedActor* OccludedActor)
 void AMPlayerController::HideOccludedActor(const AMActor* MActor)
 {
 	const auto FindResult = OccludedActors.Find(FName(MActor->GetName()));
-	if (FindResult && *FindResult && (*FindResult)->MActor)
-	{
-		if (!(*FindResult)->IsOccluded)
-		{
-			(*FindResult)->IsOccluded = true;
-			OnHideOccludedActor((*FindResult));
-		}
-	}
-	else
+	if (!FindResult || !*FindResult || !(*FindResult)->MActor)
 	{
 		UCameraOccludedActor* OccludedActor = NewObject<UCameraOccludedActor>(this);
 		OccludedActor->Name = FName(MActor->GetName());
 		OccludedActor->MActor = MActor;
-		OccludedActor->IsOccluded = true;
 		OccludedActors.Add(FName(MActor->GetName()), OccludedActor);
 		OnHideOccludedActor(OccludedActor);
 	}
@@ -682,17 +679,12 @@ void AMPlayerController::HideOccludedActor(const AMActor* MActor)
 
 void AMPlayerController::ShowOccludedActor(UCameraOccludedActor* OccludedActor)
 {
-	if (!IsValid(OccludedActor->MActor))
+	if (!OccludedActor->MActor)
 	{
-		OccludedActors.Remove(FName(OccludedActor->Name)); //TODO: THIS IS DANGEROUS, REMOVING WHILE ITERATING, FIX THAT
 		return;
 	}
 
-	if (OccludedActor->IsOccluded)
-	{
-		OccludedActor->IsOccluded = false;
-		OnShowOccludedActor(OccludedActor);
-	}
+	OnShowOccludedActor(OccludedActor);
 }
 
 void AMPlayerController::OnShowOccludedActor(UCameraOccludedActor* OccludedActor)

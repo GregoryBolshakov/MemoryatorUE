@@ -35,9 +35,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	const AMActor* MActor = nullptr;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	bool IsOccluded; //TODO: Remove this param, just delete the whole record when stop being occluded
 };
 
 UCLASS()
