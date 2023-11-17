@@ -622,6 +622,8 @@ void AMPlayerController::SyncOccludedActors()
 
 void AMPlayerController::UpdateOpacity(UCameraOccludedActor* OccludedActor)
 {
+	if (!IsValid(OccludedActor))
+		return;
 	if (!IsValid(OccludedActor->MActor)) // Valid check
 	{
 		OccludedActors.Remove(FName(OccludedActor->Name));
