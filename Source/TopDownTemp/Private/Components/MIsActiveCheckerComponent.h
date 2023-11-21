@@ -5,6 +5,9 @@
 #include "Engine/EngineTypes.h"
 #include "MIsActiveCheckerComponent.generated.h"
 
+DECLARE_DELEGATE(FOnDisabled);
+DECLARE_DELEGATE(FOnEnabled);
+
 USTRUCT()
 struct FDisabledComponentInfo
 {
@@ -36,6 +39,9 @@ public:
 
 	//** Likely to be removed as it is not needed. It finds a UPrimitiveComponent tagged with IsActiveChecker and set it up. Should be called in owner's PostInitializeComponents */
 	virtual void SetUpCollisionPrimitive();
+
+	FOnDisabled OnDisabledDelegate;
+	FOnEnabled OnEnabledDelegate;
 
 protected:
 	//* Determines the bounds of the object. If it doesnt overlap the World active zone, the object is disabled */

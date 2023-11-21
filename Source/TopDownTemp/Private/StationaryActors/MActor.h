@@ -51,6 +51,12 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	EBiome GetMyBiome();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnEnabled();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDisabled();
+
 	UPROPERTY()
 	USceneComponent* PointComponent;
 

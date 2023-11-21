@@ -17,6 +17,8 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	RepresentationComponent->SetupAttachment(RootComponent);
 
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
+	IsActiveCheckerComponent->OnDisabledDelegate.BindUObject(this, &AMActor::OnDisabled);
+	IsActiveCheckerComponent->OnEnabledDelegate.BindUObject(this, &AMActor::OnEnabled);
 }
 
 bool AMActor::Destroy(bool bNetForce, bool bShouldModifyLevel)

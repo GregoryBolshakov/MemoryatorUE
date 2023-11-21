@@ -91,6 +91,12 @@ protected:
 
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnEnabled();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDisabled();
+
 	/** Representation (collection of sprites) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
 	class UM2DRepresentationComponent* RepresentationComponent;
