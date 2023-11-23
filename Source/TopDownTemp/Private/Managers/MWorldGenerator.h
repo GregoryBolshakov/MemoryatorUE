@@ -81,7 +81,7 @@ public:
 
 	UMBlockGenerator* GetBlockGenerator() const { return BlockGenerator; }
 
-	UBlockOfActors* GetBlock(FIntPoint Index) { return GridOfActors.Get(Index); }
+	UBlockOfActors* FindOrAddBlock(FIntPoint Index);
 
 	FVector GetGroundBlockSize() const;
 

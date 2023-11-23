@@ -68,6 +68,8 @@ void AMWorldGenerator::InitNewWorld()
 	else
 		check(false);
 
+	UpdateActiveZone(); // temp solution to avoid disabling all subsequently generated actors due to empty ActiveBlocksMap
+
 	const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
 
 	if (GridOfActors.Num() == 1 || ActorsMetadata.Num() == 1) // Empty world check
@@ -95,8 +97,10 @@ void AMWorldGenerator::InitNewWorld()
 		VillageGenerator->Generate();
 		UpdateNavigationMesh();*/
 
-		//EmptyBlock(PlayerBlockIndex, true);
-		//BlockGenerator->SpawnActors(PlayerBlockIndex, this, EBiome::BirchGrove, "TestBlock");
+		EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y - 6}, true);
+		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y - 6}, this, EBiome::BirchGrove, "TestBlock");
+		EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y + 6}, true);
+		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y + 6}, this, EBiome::BirchGrove, "TestBlock");
 	}
 }
 
@@ -595,6 +599,16 @@ FIntPoint AMWorldGenerator::GetPlayerGroundBlockIndex() const
 	}
 	check(false);
 	return {};
+}
+
+UBlockOfActors* AMWorldGenerator::FindOrAddBlock(FIntPoint Index)
+{
+	auto* BlockOfActors = GridOfActors.Get(Index);
+	if (!BlockOfActors)
+	{
+		return GridOfActors.Add(Index, NewObject<UBlockOfActors>(this));
+	}
+	return BlockOfActors;
 }
 
 FVector AMWorldGenerator::GetGroundBlockSize() const

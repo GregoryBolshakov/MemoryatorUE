@@ -4,10 +4,6 @@
 
 UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, bIsOwnerActive(true)
-	, bIsOwnerDisabledByForce(false)
-	, CollisionPrimitive(nullptr)
-	, bAlwaysEnabled(false)
 {
 }
 

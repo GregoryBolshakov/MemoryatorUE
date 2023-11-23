@@ -79,7 +79,7 @@ EBiome AMActor::GetMyBiome()
 			{
 				const FIntPoint MyIndex = pWorldGenerator->GetGroundBlockIndex(GetActorLocation());
 
-				if (const auto MyBlockInGrid = pWorldGenerator->GetBlock(MyIndex))
+				if (const auto MyBlockInGrid = pWorldGenerator->FindOrAddBlock(MyIndex))
 				{
 					return MyBlockInGrid->Biome;
 				}

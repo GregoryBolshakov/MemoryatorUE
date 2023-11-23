@@ -26,6 +26,7 @@ public class TopDownTemp : ModuleRules
 				"Paper2D",
 				"Steamworks",
 				"UMG",
+				"Foliage",
 			});
 		PrivateDependencyModuleNames.AddRange(new string[] { "GoogleTest", "CADKernel" });
 	}

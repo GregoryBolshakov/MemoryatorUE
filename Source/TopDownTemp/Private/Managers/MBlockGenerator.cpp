@@ -16,7 +16,7 @@ void UMBlockGenerator::SpawnActors(const FIntPoint BlockIndex, AMWorldGenerator*
 	const FVector BlockSize = pWorldGenerator->GetGroundBlockSize();
 	const FVector BlockCenter = pWorldGenerator->GetGroundBlockLocation(BlockIndex) + BlockSize / 2.f;
 
-	const auto BlockOfActors = pWorldGenerator->GetBlock(BlockIndex);
+	const auto BlockOfActors = pWorldGenerator->FindOrAddBlock(BlockIndex);
 	// Spawn the ground block
 	FActorSpawnParameters BlockSpawnParameters;
 	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
