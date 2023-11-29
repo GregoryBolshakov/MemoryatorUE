@@ -571,7 +571,7 @@ void AMPlayerController::SyncOccludedActors()
 	FVector End = GetPawn()->GetActorLocation();
 
 	TArray<TEnumAsByte<EObjectTypeQuery>> CollisionObjectTypes;
-	CollisionObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
+	CollisionObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_OccludedTerrain));
 
 	TArray<AActor*> ActorsToIgnore; // TODO: Add configuration to ignore actor types
 	TArray<FHitResult> OutHits;
@@ -581,18 +581,15 @@ void AMPlayerController::SyncOccludedActors()
 	// Adjust the End so we don't occlude objects further the character
 	End += (Start - End).GetSafeNormal() * ActiveCapsuleComponent->GetScaledCapsuleRadius() * (CapsulePercentageForTrace - 1.f);
 
-	bool bGotHits = UKismetSystemLibrary::CapsuleTraceMultiForObjects(
-		GetWorld(), Start, End, ActiveCapsuleComponent->GetScaledCapsuleRadius() * CapsulePercentageForTrace,
-		ActiveCapsuleComponent->GetScaledCapsuleHalfHeight() * CapsulePercentageForTrace, CollisionObjectTypes, true,
-		ActorsToIgnore,
-		ShouldDebug,
-		OutHits, true);
+	bool bGotHits = UKismetSystemLibrary::CapsuleTraceMulti(
+	GetWorld(), Start, End, ActiveCapsuleComponent->GetScaledCapsuleRadius() * CapsulePercentageForTrace,
+	ActiveCapsuleComponent->GetScaledCapsuleHalfHeight() * CapsulePercentageForTrace, UEngineTypes::ConvertToTraceType(ECC_OccludedTerrain), 
+	true, ActorsToIgnore, ShouldDebug, OutHits, true);
 
+	// The list of actors hit by the line trace, that means that they are occluded from view
+	TSet<const AActor*> ActorsJustOccluded;
 	if (bGotHits)
 	{
-		// The list of actors hit by the line trace, that means that they are occluded from view
-		TSet<const AActor*> ActorsJustOccluded;
-
 		// Hide actors that are occluded by the camera
 		for (FHitResult Hit : OutHits)
 		{
@@ -602,21 +599,23 @@ void AMPlayerController::SyncOccludedActors()
 				ActorsJustOccluded.Add(HitMActor);
 			}
 		}
-
-		TArray<FName> RemoveKeyList;
-		// Show actors that are currently hidden but that are not occluded by the camera anymore 
-		for (auto& [Name, OccludedActor] : OccludedActors)
-		{
-			if (!ActorsJustOccluded.Contains(OccludedActor->MActor))
-			{
-				ShowOccludedActor(OccludedActor);
-				RemoveKeyList.Add(Name);
-			}
-		}
-
-		for (const auto Name : RemoveKeyList)
-			OccludedActors.Remove(Name);
 	}
+	TArray<FName> RemoveKeyList;
+	// Show actors that are currently hidden but that are not occluded by the camera anymore
+	for (auto& [Name, OccludedActor] : OccludedActors)
+	{
+		if (!ActorsJustOccluded.Contains(OccludedActor->MActor) && OccludedActor->TargetOpacity != 1.f)
+		{
+			ShowOccludedActor(OccludedActor);
+		}
+		if (OccludedActor->PendingKill) // Separate condition, because it can be removed only after the transition finishes
+		{
+			RemoveKeyList.Add(Name);
+		}
+	}
+
+	for (const auto Name : RemoveKeyList)
+		OccludedActors.Remove(Name);
 }
 
 
@@ -636,26 +635,34 @@ void AMPlayerController::UpdateOpacity(UCameraOccludedActor* OccludedActor)
 
 	bool bAtLeastOneParamHasOpacity = false; // If object doesn't support opacity, remove its handler
 	// Calculate New Opacity
-	for (const auto& [StaticMesh, DynamicMaterial] : OccludedActor->MActor->GetDynamicMaterials())
+	for (const auto& [StaticMesh, DynamicMaterialArrayWrapper] : OccludedActor->MActor->GetDynamicMaterials())
 	{
-		if (DynamicMaterial)
+		for (const auto DynamicMaterial : DynamicMaterialArrayWrapper.ArrayMaterialInstanceDynamic)
 		{
-			float CurrentOpacity;
-			const auto bParamExist = DynamicMaterial->GetScalarParameterValue(FName("OccludedOpacity"), CurrentOpacity);
-			if (!bParamExist)
-				continue;
-
-			bAtLeastOneParamHasOpacity = true;
-			const float InitialOpacity = OccludedActor->TargetOpacity == 1.f ? OccludedOpacity : 1.f;
-			const float NewOpacity = FMath::Lerp(InitialOpacity, OccludedActor->TargetOpacity, FMath::Max(0.f, 1.f - OccludedActor->TransitionRemainTime / OpacityTransitionDuration));
-
-			DynamicMaterial->SetScalarParameterValue("OccludedOpacity", NewOpacity);
-
-			// Finished transition
-			if (OccludedActor->TransitionRemainTime <= 0.f)
+			if (DynamicMaterial)
 			{
-				OccludedActor->TransitionRemainTime = 0.f;
-				GetWorld()->GetTimerManager().ClearTimer(OccludedActor->OpacityTimerHandle);
+				float CurrentOpacity;
+				const auto bParamExist = DynamicMaterial->GetScalarParameterValue(FName("OccludedOpacity"), CurrentOpacity);
+				if (!bParamExist)
+					continue;
+
+				bAtLeastOneParamHasOpacity = true;
+				const float InitialOpacity = OccludedActor->TargetOpacity == 1.f ? OccludedOpacity : 1.f;
+				const float NewOpacity = FMath::Lerp(InitialOpacity, OccludedActor->TargetOpacity, FMath::Max(0.f, 1.f - OccludedActor->TransitionRemainTime / OpacityTransitionDuration));
+
+				DynamicMaterial->SetScalarParameterValue("OccludedOpacity", NewOpacity);
+
+				// Finished transition
+				if (OccludedActor->TransitionRemainTime <= 0.f)
+				{
+					OccludedActor->TransitionRemainTime = 0.f;
+					GetWorld()->GetTimerManager().ClearTimer(OccludedActor->OpacityTimerHandle);
+
+					if (OccludedActor->TargetOpacity == 1.f)
+					{
+						OccludedActor->PendingKill = true; // Finished show transition. Finally can be removed.
+					}
+				}
 			}
 		}
 	}
@@ -668,14 +675,21 @@ void AMPlayerController::UpdateOpacity(UCameraOccludedActor* OccludedActor)
 
 void AMPlayerController::HideOccludedActor(const AMActor* MActor)
 {
-	const auto FindResult = OccludedActors.Find(FName(MActor->GetName()));
-	if (!FindResult || !*FindResult || !(*FindResult)->MActor)
+	const auto FoundResult = OccludedActors.Find(FName(MActor->GetName()));
+	if (!FoundResult || !*FoundResult || !(*FoundResult)->MActor) // the ordinary case. Just marked to be hidden, initiate the transition 
 	{
 		UCameraOccludedActor* OccludedActor = NewObject<UCameraOccludedActor>(this);
 		OccludedActor->Name = FName(MActor->GetName());
 		OccludedActor->MActor = MActor;
 		OccludedActors.Add(FName(MActor->GetName()), OccludedActor);
 		OnHideOccludedActor(OccludedActor);
+	}
+	else
+	{
+		if ((*FoundResult)->TargetOpacity != OccludedOpacity) // Hide only if has been appearing to switch the transition
+		{
+			OnHideOccludedActor(*FoundResult);
+		}
 	}
 }
 

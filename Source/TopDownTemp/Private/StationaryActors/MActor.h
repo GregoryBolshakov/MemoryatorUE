@@ -6,6 +6,17 @@
 #include "Managers/MWorldGeneratorTypes.h"
 #include "MActor.generated.h"
 
+USTRUCT(BlueprintType)
+struct FArrayMaterialInstanceDynamicWrapper
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<UMaterialInstanceDynamic*> ArrayMaterialInstanceDynamic;
+
+	void Add(UMaterialInstanceDynamic* Item) { ArrayMaterialInstanceDynamic.Add(Item); }
+};
+
 /** Stationary actor that may be flat, face camera and cast artificial shadows */
 UCLASS()
 class TOPDOWNTEMP_API AMActor : public AActor
@@ -30,7 +41,7 @@ public:
 	bool GetIsRandomizedAppearance() const { return IsRandomizedAppearance; }
 
 	UFUNCTION(BlueprintCallable)
-	const TMap<UStaticMeshComponent*, UMaterialInstanceDynamic*>& GetDynamicMaterials() const
+	const TMap<UStaticMeshComponent*, FArrayMaterialInstanceDynamicWrapper>& GetDynamicMaterials() const
 	{
 		return DynamicMaterials;
 	}
@@ -73,5 +84,5 @@ protected:
 	int AppearanceID = 0;
 
 	UPROPERTY()
-	TMap<UStaticMeshComponent*, UMaterialInstanceDynamic*> DynamicMaterials;
+	TMap<UStaticMeshComponent*, FArrayMaterialInstanceDynamicWrapper> DynamicMaterials;
 };

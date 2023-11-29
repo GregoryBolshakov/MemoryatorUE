@@ -35,6 +35,8 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	const AMActor* MActor = nullptr;
+
+	bool PendingKill = false;
 };
 
 UCLASS()

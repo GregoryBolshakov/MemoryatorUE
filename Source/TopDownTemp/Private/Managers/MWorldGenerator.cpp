@@ -97,10 +97,8 @@ void AMWorldGenerator::InitNewWorld()
 		VillageGenerator->Generate();
 		UpdateNavigationMesh();*/
 
-		EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y - 6}, true);
-		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y - 6}, this, EBiome::BirchGrove, "TestBlock");
-		EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y + 6}, true);
-		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y + 6}, this, EBiome::BirchGrove, "TestBlock");
+		/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
+		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
 	}
 }
 
@@ -967,17 +965,21 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 				SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 				if (const auto Actor = pWorld->SpawnActor(IN_ActorClass, nullptr, nullptr, SpawnParameters))
 				{
+					Actor->SetActorEnableCollision(false);
+
 					// Calculate the Actor bounds by accumulating the bounds of its components
 					FBox ActorBox(EForceInit::ForceInitToZero);
 					for (UActorComponent* Component : Actor->GetComponents())
 					{
-						if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component); PrimitiveComponent &&
-							PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds") ||
-							(Cast<UStaticMeshComponent>(Component) != nullptr && !PrimitiveComponent->ComponentHasTag("IgnoreDefaultBounds")))
+						if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component))
 						{
-							FTransform ComponentTransform = PrimitiveComponent->GetComponentTransform();
-							FBoxSphereBounds ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);
-							ActorBox += ComponentBounds.GetBox();
+							if (PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds") ||
+							(Cast<UStaticMeshComponent>(Component) != nullptr && !PrimitiveComponent->ComponentHasTag("IgnoreDefaultBounds")))
+							{
+								FTransform ComponentTransform = PrimitiveComponent->GetComponentTransform();
+								FBoxSphereBounds ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);
+								ActorBox += ComponentBounds.GetBox();
+							}
 						}
 					}
 

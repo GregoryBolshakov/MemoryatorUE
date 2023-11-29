@@ -8,6 +8,7 @@
 #include "MWorldGenerator.generated.h"
 
 #define ECC_Pickable ECollisionChannel::ECC_GameTraceChannel2
+#define ECC_OccludedTerrain ECollisionChannel::ECC_GameTraceChannel3
 
 class AMPickableActor;
 class UMExperienceManager;

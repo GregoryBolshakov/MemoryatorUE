@@ -59,12 +59,13 @@ void AMActor::CreateDynamicMaterials()
 	GetComponents<UStaticMeshComponent>(StaticMeshComps);
 	for (const auto StaticMeshComp : StaticMeshComps)
 	{
+		auto& RecordPerMesh = DynamicMaterials.FindOrAdd(StaticMeshComp);
 		const auto Materials = StaticMeshComp->GetMaterials();
 		for (int i = 0; i < Materials.Num(); ++i)
 		{
 			const auto DynamicMaterial = UMaterialInstanceDynamic::Create(Materials[i], this);
 			StaticMeshComp->SetMaterial(i, DynamicMaterial);
-			DynamicMaterials.Add(StaticMeshComp, DynamicMaterial);
+			RecordPerMesh.Add(DynamicMaterial);
 		}
 	}
 }
