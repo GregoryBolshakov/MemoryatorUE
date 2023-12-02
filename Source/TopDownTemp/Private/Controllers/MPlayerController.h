@@ -28,9 +28,13 @@ class UCameraOccludedActor : public UObject
 public:
 	FName Name;
 
-	float TargetOpacity;
+	float InitialOpacity = 1.f;
+	float TargetOpacity = 1.f;
+	float CurrentOpacity = 1.f;
 	float TransitionRemainTime = 0.f;
+	float TransitionDuration = 1.f;
 	float LastUpdateTime = 0.f;
+	float Distance = 0;
 	FTimerHandle OpacityTimerHandle;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -106,11 +110,13 @@ protected:
 // Occlusion
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Camera Occlusion|Occlusion")
-	float OccludedOpacity = 0.35f;
+	float DefaultOccludedOpacity = 0.5f;
+
+	float OcclusionCheckDistance = 0.f;
 
 	/** Duration of complete transition from opaque to transparent and vice versa. In seconds */
 	UPROPERTY(EditDefaultsOnly, Category="Camera Occlusion|Occlusion")
-	float OpacityTransitionDuration = 1.f;
+	float DefaultOpacityTransitionDuration = 1.f;
 
 	/** Autonomously updates opacity smoothly for the rest of duration */
 	void UpdateOpacity(UCameraOccludedActor* OccludedActor);
@@ -142,7 +148,7 @@ private:
 	UPROPERTY()
 	TMap<FName, UCameraOccludedActor*> OccludedActors;
 
-	void HideOccludedActor(const AMActor* MActor);
+	void HideOccludedActor(const AMActor* MActor, float Distance);
 	void OnHideOccludedActor(UCameraOccludedActor* OccludedActor);
 	void ShowOccludedActor(UCameraOccludedActor* OccludedActor);
 	void OnShowOccludedActor(UCameraOccludedActor* OccludedActor);

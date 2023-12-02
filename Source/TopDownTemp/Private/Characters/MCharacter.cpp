@@ -220,3 +220,11 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 	}
 	return Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 }
+
+void AMCharacter::OnEnabled_Implementation()
+{
+}
+
+void AMCharacter::OnDisabled_Implementation()
+{
+}

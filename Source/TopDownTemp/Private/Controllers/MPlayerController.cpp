@@ -569,6 +569,7 @@ void AMPlayerController::SyncOccludedActors()
 
 	FVector Start = ActiveCamera->GetComponentLocation();
 	FVector End = GetPawn()->GetActorLocation();
+	OcclusionCheckDistance = FVector::Distance(Start, End);
 
 	TArray<TEnumAsByte<EObjectTypeQuery>> CollisionObjectTypes;
 	CollisionObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_OccludedTerrain));
@@ -581,21 +582,21 @@ void AMPlayerController::SyncOccludedActors()
 	// Adjust the End so we don't occlude objects further the character
 	End += (Start - End).GetSafeNormal() * ActiveCapsuleComponent->GetScaledCapsuleRadius() * (CapsulePercentageForTrace - 1.f);
 
-	bool bGotHits = UKismetSystemLibrary::CapsuleTraceMulti(
+	UKismetSystemLibrary::CapsuleTraceMulti(
 	GetWorld(), Start, End, ActiveCapsuleComponent->GetScaledCapsuleRadius() * CapsulePercentageForTrace,
 	ActiveCapsuleComponent->GetScaledCapsuleHalfHeight() * CapsulePercentageForTrace, UEngineTypes::ConvertToTraceType(ECC_OccludedTerrain), 
 	true, ActorsToIgnore, ShouldDebug, OutHits, true);
 
 	// The list of actors hit by the line trace, that means that they are occluded from view
 	TSet<const AActor*> ActorsJustOccluded;
-	if (bGotHits)
+	if (!OutHits.IsEmpty())
 	{
 		// Hide actors that are occluded by the camera
 		for (FHitResult Hit : OutHits)
 		{
 			if (const AMActor* HitMActor = Cast<AMActor>(Hit.GetActor()))
 			{
-				HideOccludedActor(HitMActor);
+				HideOccludedActor(HitMActor, Hit.Distance);
 				ActorsJustOccluded.Add(HitMActor);
 			}
 		}
@@ -645,10 +646,10 @@ void AMPlayerController::UpdateOpacity(UCameraOccludedActor* OccludedActor)
 				const auto bParamExist = DynamicMaterial->GetScalarParameterValue(FName("OccludedOpacity"), CurrentOpacity);
 				if (!bParamExist)
 					continue;
+				OccludedActor->CurrentOpacity = CurrentOpacity;
 
 				bAtLeastOneParamHasOpacity = true;
-				const float InitialOpacity = OccludedActor->TargetOpacity == 1.f ? OccludedOpacity : 1.f;
-				const float NewOpacity = FMath::Lerp(InitialOpacity, OccludedActor->TargetOpacity, FMath::Max(0.f, 1.f - OccludedActor->TransitionRemainTime / OpacityTransitionDuration));
+				const float NewOpacity = FMath::Lerp(OccludedActor->InitialOpacity, OccludedActor->TargetOpacity, FMath::Max(0.f, 1.f - OccludedActor->TransitionRemainTime / DefaultOpacityTransitionDuration));
 
 				DynamicMaterial->SetScalarParameterValue("OccludedOpacity", NewOpacity);
 
@@ -673,7 +674,7 @@ void AMPlayerController::UpdateOpacity(UCameraOccludedActor* OccludedActor)
 	}
 }
 
-void AMPlayerController::HideOccludedActor(const AMActor* MActor)
+void AMPlayerController::HideOccludedActor(const AMActor* MActor, float Distance)
 {
 	const auto FoundResult = OccludedActors.Find(FName(MActor->GetName()));
 	if (!FoundResult || !*FoundResult || !(*FoundResult)->MActor) // the ordinary case. Just marked to be hidden, initiate the transition 
@@ -681,12 +682,13 @@ void AMPlayerController::HideOccludedActor(const AMActor* MActor)
 		UCameraOccludedActor* OccludedActor = NewObject<UCameraOccludedActor>(this);
 		OccludedActor->Name = FName(MActor->GetName());
 		OccludedActor->MActor = MActor;
+		OccludedActor->Distance = Distance;
 		OccludedActors.Add(FName(MActor->GetName()), OccludedActor);
 		OnHideOccludedActor(OccludedActor);
 	}
 	else
 	{
-		if ((*FoundResult)->TargetOpacity != OccludedOpacity) // Hide only if has been appearing to switch the transition
+		if ((*FoundResult)->TargetOpacity != DefaultOccludedOpacity) // Hide only if has been appearing to switch the transition
 		{
 			OnHideOccludedActor(*FoundResult);
 		}
@@ -705,9 +707,10 @@ void AMPlayerController::ShowOccludedActor(UCameraOccludedActor* OccludedActor)
 
 void AMPlayerController::OnShowOccludedActor(UCameraOccludedActor* OccludedActor)
 {
+	OccludedActor->InitialOpacity = OccludedActor->CurrentOpacity;
 	OccludedActor->TargetOpacity = 1.f;
 	OccludedActor->LastUpdateTime = GetWorld()->GetTimeSeconds();
-	OccludedActor->TransitionRemainTime = OpacityTransitionDuration - OccludedActor->TransitionRemainTime;
+	OccludedActor->TransitionRemainTime = DefaultOpacityTransitionDuration - OccludedActor->TransitionRemainTime;
 
 	GetWorld()->GetTimerManager().ClearTimer(OccludedActor->OpacityTimerHandle);
 	GetWorld()->GetTimerManager().SetTimer(OccludedActor->OpacityTimerHandle, [this, OccludedActor]() {
@@ -717,9 +720,11 @@ void AMPlayerController::OnShowOccludedActor(UCameraOccludedActor* OccludedActor
 
 void AMPlayerController::OnHideOccludedActor(UCameraOccludedActor* OccludedActor)
 {
-	OccludedActor->TargetOpacity = OccludedOpacity;
+	OccludedActor->InitialOpacity = OccludedActor->CurrentOpacity;
+	OccludedActor->TargetOpacity = DefaultOccludedOpacity;
 	OccludedActor->LastUpdateTime = GetWorld()->GetTimeSeconds();
-	OccludedActor->TransitionRemainTime = OpacityTransitionDuration - OccludedActor->TransitionRemainTime;
+	OccludedActor->TransitionRemainTime = DefaultOpacityTransitionDuration - OccludedActor->TransitionRemainTime;
+	OccludedActor->TransitionRemainTime *= OccludedActor->Distance / OcclusionCheckDistance; // The closer to camera, the faster transition should be
 
 	GetWorld()->GetTimerManager().ClearTimer(OccludedActor->OpacityTimerHandle);
 	GetWorld()->GetTimerManager().SetTimer(OccludedActor->OpacityTimerHandle, [this, OccludedActor]() {
