@@ -646,10 +646,11 @@ void AMPlayerController::UpdateOpacity(UCameraOccludedActor* OccludedActor)
 				const auto bParamExist = DynamicMaterial->GetScalarParameterValue(FName("OccludedOpacity"), CurrentOpacity);
 				if (!bParamExist)
 					continue;
-				OccludedActor->CurrentOpacity = CurrentOpacity;
 
 				bAtLeastOneParamHasOpacity = true;
-				const float NewOpacity = FMath::Lerp(OccludedActor->InitialOpacity, OccludedActor->TargetOpacity, FMath::Max(0.f, 1.f - OccludedActor->TransitionRemainTime / DefaultOpacityTransitionDuration));
+
+				const auto InitialOpacity = OccludedActor->TargetOpacity == 1.f ? DefaultOccludedOpacity : 1.f;
+				const float NewOpacity = FMath::Lerp(InitialOpacity, OccludedActor->TargetOpacity, FMath::Max(0.f, 1.f - OccludedActor->TransitionRemainTime / DefaultOpacityTransitionDuration));
 
 				DynamicMaterial->SetScalarParameterValue("OccludedOpacity", NewOpacity);
 
@@ -707,7 +708,6 @@ void AMPlayerController::ShowOccludedActor(UCameraOccludedActor* OccludedActor)
 
 void AMPlayerController::OnShowOccludedActor(UCameraOccludedActor* OccludedActor)
 {
-	OccludedActor->InitialOpacity = OccludedActor->CurrentOpacity;
 	OccludedActor->TargetOpacity = 1.f;
 	OccludedActor->LastUpdateTime = GetWorld()->GetTimeSeconds();
 	OccludedActor->TransitionRemainTime = DefaultOpacityTransitionDuration - OccludedActor->TransitionRemainTime;
@@ -720,11 +720,9 @@ void AMPlayerController::OnShowOccludedActor(UCameraOccludedActor* OccludedActor
 
 void AMPlayerController::OnHideOccludedActor(UCameraOccludedActor* OccludedActor)
 {
-	OccludedActor->InitialOpacity = OccludedActor->CurrentOpacity;
 	OccludedActor->TargetOpacity = DefaultOccludedOpacity;
 	OccludedActor->LastUpdateTime = GetWorld()->GetTimeSeconds();
 	OccludedActor->TransitionRemainTime = DefaultOpacityTransitionDuration - OccludedActor->TransitionRemainTime;
-	OccludedActor->TransitionRemainTime *= OccludedActor->Distance / OcclusionCheckDistance; // The closer to camera, the faster transition should be
 
 	GetWorld()->GetTimerManager().ClearTimer(OccludedActor->OpacityTimerHandle);
 	GetWorld()->GetTimerManager().SetTimer(OccludedActor->OpacityTimerHandle, [this, OccludedActor]() {

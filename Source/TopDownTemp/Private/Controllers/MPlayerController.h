@@ -28,11 +28,8 @@ class UCameraOccludedActor : public UObject
 public:
 	FName Name;
 
-	float InitialOpacity = 1.f;
 	float TargetOpacity = 1.f;
-	float CurrentOpacity = 1.f;
 	float TransitionRemainTime = 0.f;
-	float TransitionDuration = 1.f;
 	float LastUpdateTime = 0.f;
 	float Distance = 0;
 	FTimerHandle OpacityTimerHandle;
@@ -110,7 +107,7 @@ protected:
 // Occlusion
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Camera Occlusion|Occlusion")
-	float DefaultOccludedOpacity = 0.5f;
+	float DefaultOccludedOpacity = 0.3f;
 
 	float OcclusionCheckDistance = 0.f;
 
