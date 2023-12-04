@@ -85,7 +85,7 @@ void AMWorldGenerator::InitNewWorld()
 			{
 				BlockOfActors = GridOfActors.Add(BlockInRadius, NewObject<UBlockOfActors>(this));
 			}
-			BlockOfActors->Biome = EBiome::BirchGrove;
+			BlockOfActors->Biome = BiomeForInitialGeneration;
 		}
 		for (const auto BlockInRadius : BlocksInRadius)
 		{

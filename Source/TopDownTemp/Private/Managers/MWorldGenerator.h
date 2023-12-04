@@ -165,6 +165,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SubclassessToSpawn, meta = (AllowPrivateAccess = "true"))
 	TMap<FName, TSubclassOf<UObject>> ToSpawnComplexStructureClasses;
 
+	UPROPERTY(EditDefaultsOnly, Category = MWorldGenerator)
+	EBiome BiomeForInitialGeneration;
+
 	/** The number of blocks to be changed before changing the perimeter coloring */
 	UPROPERTY(EditDefaultsOnly, Category = MWorldGenerator, meta = (AllowPrivateAccess = "true"))
 	int BiomesPerimeterColoringRate = 10;
