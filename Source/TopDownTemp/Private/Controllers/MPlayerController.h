@@ -107,13 +107,11 @@ protected:
 // Occlusion
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Camera Occlusion|Occlusion")
-	float DefaultOccludedOpacity = 0.3f;
-
-	float OcclusionCheckDistance = 0.f;
+	float OccludedOpacity = 0.5f;
 
 	/** Duration of complete transition from opaque to transparent and vice versa. In seconds */
 	UPROPERTY(EditDefaultsOnly, Category="Camera Occlusion|Occlusion")
-	float DefaultOpacityTransitionDuration = 1.f;
+	float OpacityTransitionDuration = 0.7f;
 
 	/** Autonomously updates opacity smoothly for the rest of duration */
 	void UpdateOpacity(UCameraOccludedActor* OccludedActor);
@@ -124,7 +122,7 @@ protected:
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera Occlusion|Occlusion",
 		meta=(ClampMin="0.1", ClampMax="10.0"))
-	float CapsulePercentageForTrace = 5.0f;
+	float CapsulePercentageForTrace = 10.0f;
 
 	UPROPERTY(BlueprintReadWrite, Category="Camera Occlusion|Components")
 	class USpringArmComponent* ActiveSpringArm;

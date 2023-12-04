@@ -85,7 +85,7 @@ void AMWorldGenerator::InitNewWorld()
 			{
 				BlockOfActors = GridOfActors.Add(BlockInRadius, NewObject<UBlockOfActors>(this));
 			}
-			BlockOfActors->Biome = EBiome::DarkWoods;
+			BlockOfActors->Biome = EBiome::BirchGrove;
 		}
 		for (const auto BlockInRadius : BlocksInRadius)
 		{
@@ -97,8 +97,8 @@ void AMWorldGenerator::InitNewWorld()
 		VillageGenerator->Generate();
 		UpdateNavigationMesh();*/
 
-		EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
-		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");
+		/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
+		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
 	}
 }
 
