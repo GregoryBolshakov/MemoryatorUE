@@ -449,14 +449,6 @@ void AMWorldGenerator::GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock)
 	if (!pWorld)
 		return;
 
-	//UpdateActiveZone(); // heavy call, we put everything else to the next tick
-
-	//pWorld->GetTimerManager().SetTimerForNextTick([this, pWorld, NewBlock]
-	//{
-	//UpdateNavigationMesh(); // heavy call, we put everything else to the next tick
-
-	//pWorld->GetTimerManager().SetTimerForNextTick([this, pWorld, NewBlock]
-	//{ // Generate the perimeter outside the active zone
 	auto BlocksInRadius = GetBlocksOnPerimeter(CenterBlock.X, CenterBlock.Y, ActiveZoneRadius + 1);
 
 	SetBiomesForBlocks(CenterBlock, BlocksInRadius);
@@ -476,8 +468,6 @@ void AMWorldGenerator::GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock)
 
 	// We'll spread heavy GenerateBlock calls over the next few ticks
 	OnTickGenerateBlocks(BlocksInRadius);
-	//});
-	//});
 }
 
 /** Function to calculate the angle between [0; 1] vector and the vector from O to P */
@@ -521,28 +511,6 @@ void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIn
 			LastDelimiterBlock += BlocksToGenerate.Num() / BiomesNumberInCurrentColoring;
 		}
 		Delimiters.Add({BlocksToGenerate.Num() - 1, static_cast<EBiome>(BiomesNumberInCurrentColoring - 1)});
-
-		// Old implementation. Deprecated due to a lot of random. However is very customizable.
-		/*if (BiomesNumberInCurrentColoring == 1)
-		{
-			Delimiters = { { BlocksToGenerate.Num() - 1, static_cast<EBiome>(FMath::RandRange(0, StaticEnum<EBiome>()->NumEnums() - 1)) } };
-		}
-		else
-		{
-			for (int i = 0; i < BiomesNumberInCurrentColoring - 1; ++i)
-			{
-				const int PreviousPosition = i > 0 ? Delimiters[i-1].BlockPosition : 0;
-				Delimiters.Add({
-					FMath::RandRange(PreviousPosition + 1, BlocksToGenerate.Num() - (BiomesNumberInCurrentColoring - i)), // random block index (including space for the rest biomes)
-					static_cast<EBiome>(FMath::RandRange(0, StaticEnum<EBiome>()->NumEnums() - 1)) // random biome
-				});
-			}
-
-			Delimiters.Add({
-				BlocksToGenerate.Num() - 1, // the last sub-array ends on the last block
-				static_cast<EBiome>(FMath::RandRange(0, StaticEnum<EBiome>()->NumEnums() - 1)) // random biome
-			});
-		}*/
 	}
 
 	if (!Delimiters.IsEmpty())
