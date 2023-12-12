@@ -8,7 +8,7 @@ class AMCharacter;
 class AMPickableActor;
 class AMWorldGenerator;
 class USaveGameWorld;
-class UBlockOfActors;
+class UBlockMetadata;
 struct FLRUCache;
 struct FBlockSaveData;
 struct FActorWorldMetadata;

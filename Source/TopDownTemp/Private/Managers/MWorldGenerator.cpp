@@ -83,7 +83,7 @@ void AMWorldGenerator::InitNewWorld()
 			auto* BlockOfActors = GridOfActors.Get(BlockInRadius);
 			if (!BlockOfActors)
 			{
-				BlockOfActors = GridOfActors.Add(BlockInRadius, NewObject<UBlockOfActors>(this));
+				BlockOfActors = GridOfActors.Add(BlockInRadius, NewObject<UBlockMetadata>(this));
 			}
 			BlockOfActors->Biome = BiomeForInitialGeneration;
 		}
@@ -102,7 +102,7 @@ void AMWorldGenerator::InitNewWorld()
 	}
 }
 
-UBlockOfActors* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy)
+UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy)
 {
 	const auto pWorld = GetWorld();
 	if (!pWorld)
@@ -112,7 +112,7 @@ UBlockOfActors* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 	auto* BlockOfActors = GridOfActors.Get(BlockIndex);
 	if (!BlockOfActors)
 	{
-		BlockOfActors = GridOfActors.Add(BlockIndex, NewObject<UBlockOfActors>(this));
+		BlockOfActors = GridOfActors.Add(BlockIndex, NewObject<UBlockMetadata>(this));
 	}
 
 	if (BlockOfActors->ConstantActorsCount > 0 && !IgnoreConstancy)
@@ -143,7 +143,7 @@ UBlockOfActors* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 	return BlockOfActors;
 }
 
-UBlockOfActors* AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects)
+UBlockMetadata* AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects)
 {
 	const auto Block = EmptyBlock(BlockIndex, KeepDynamicObjects);
 	BlockGenerator->SpawnActors(BlockIndex, this, Block->Biome);
@@ -232,9 +232,9 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 	{
 		FActorWorldMetadata& ActorMetadata;
 		FIntPoint OldBlockIndex;
-		UBlockOfActors& OldBlock;
+		UBlockMetadata& OldBlock;
 		UPROPERTY()
-		UBlockOfActors* NewBlock;
+		UBlockMetadata* NewBlock;
 	};
 	TMap<FName, FTransition> TransitionList;
 
@@ -528,7 +528,7 @@ void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIn
 			auto* BlockOfActors = GridOfActors.Get(Block);
 			if (!BlockOfActors)
 			{
-				BlockOfActors = GridOfActors.Add(Block, NewObject<UBlockOfActors>(this));
+				BlockOfActors = GridOfActors.Add(Block, NewObject<UBlockMetadata>(this));
 			}
 
 			if (BlockOfActors->ConstantActorsCount <= 0) // We keep the biome as well as all other objects
@@ -567,12 +567,12 @@ FIntPoint AMWorldGenerator::GetPlayerGroundBlockIndex() const
 	return {};
 }
 
-UBlockOfActors* AMWorldGenerator::FindOrAddBlock(FIntPoint Index)
+UBlockMetadata* AMWorldGenerator::FindOrAddBlock(FIntPoint Index)
 {
 	auto* BlockOfActors = GridOfActors.Get(Index);
 	if (!BlockOfActors)
 	{
-		return GridOfActors.Add(Index, NewObject<UBlockOfActors>(this));
+		return GridOfActors.Add(Index, NewObject<UBlockMetadata>(this));
 	}
 	return BlockOfActors;
 }
@@ -773,7 +773,7 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor)
 	auto BlockOfActors = GridOfActors.Get(GroundBlockIndex);
 	if (!BlockOfActors)
 	{
-		BlockOfActors = GridOfActors.Add(GroundBlockIndex, NewObject<UBlockOfActors>(this));
+		BlockOfActors = GridOfActors.Add(GroundBlockIndex, NewObject<UBlockMetadata>(this));
 	}
 
 	// Determine whether the object is static or movable
@@ -925,7 +925,7 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 
 				if (!pWorldGenerator->GridOfActors.Get(FIntPoint::ZeroValue))
 				{
-					auto Block = pWorldGenerator->GridOfActors.Add(FIntPoint::ZeroValue, NewObject<UBlockOfActors>(pWorldGenerator));
+					auto Block = pWorldGenerator->GridOfActors.Add(FIntPoint::ZeroValue, NewObject<UBlockMetadata>(pWorldGenerator));
 				}
 
 				FActorSpawnParameters SpawnParameters;

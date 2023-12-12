@@ -24,9 +24,9 @@ struct FBiomeDelimiter
 	EBiome Biome;
 };
 
-/** Class for storing actors within one block of the frid */
+/** Class for storing the data of one block of the grid needed for world generation */
 UCLASS()
-class UBlockOfActors : public UObject
+class UBlockMetadata : public UObject
 {
 	GENERATED_BODY()
 public:
@@ -55,7 +55,7 @@ struct FLRUCache
 {
 	GENERATED_BODY()
 
-	UBlockOfActors* Get(const FIntPoint& Key)
+	UBlockMetadata* Get(const FIntPoint& Key)
 	{
 		if (DataMap.Contains(Key))
 		{
@@ -67,7 +67,7 @@ struct FLRUCache
 		return nullptr;
 	}
 
-	UBlockOfActors* Add(const FIntPoint& Key, UBlockOfActors* Value)
+	UBlockMetadata* Add(const FIntPoint& Key, UBlockMetadata* Value)
 	{
 		// If already in cache, we'll be updating the order next
 		if (!DataMap.Contains(Key))
@@ -100,7 +100,7 @@ struct FLRUCache
 
 private:
 	UPROPERTY()
-	TMap<FIntPoint, UBlockOfActors*> DataMap;
+	TMap<FIntPoint, UBlockMetadata*> DataMap;
 
 	TArray<FIntPoint> CacheOrder;
 	int32 Capacity = 1e7;

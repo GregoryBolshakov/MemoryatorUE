@@ -37,9 +37,9 @@ public:
 	/** Executed once on first run to create the surrounding area */
 	void InitNewWorld();
 
-	UBlockOfActors* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy = false);
+	UBlockMetadata* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy = false);
 
-	UBlockOfActors* GenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects = true);
+	UBlockMetadata* GenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects = true);
 
 	/** Turns on all actors in the active zone, turn off all others*/
 	void UpdateActiveZone();
@@ -82,7 +82,7 @@ public:
 
 	UMBlockGenerator* GetBlockGenerator() const { return BlockGenerator; }
 
-	UBlockOfActors* FindOrAddBlock(FIntPoint Index);
+	UBlockMetadata* FindOrAddBlock(FIntPoint Index);
 
 	FVector GetGroundBlockSize() const;
 
@@ -93,6 +93,14 @@ public:
 	FIntPoint GetPlayerGroundBlockIndex() const;
 
 	FVector GetGroundBlockLocation(FIntPoint BlockIndex);
+
+	/** Lists all the blocks lying on the perimeter of the circle with the given coordinates and radius */ //TODO: Use Bresenham's Circle Algorithm for better performance
+	static TSet<FIntPoint> GetBlocksOnPerimeter(int BlockX, int BlockY, int RadiusInBlocks);
+
+	/** Lists all the blocks lying within the circle with the given coordinates and radius */
+	TSet<FIntPoint> GetBlocksInRadius(int BlockX, int BlockY, int RadiusInBlocks) const;
+
+	int GetActiveZoneRadius() const { return ActiveZoneRadius; }
 
 protected:
 
@@ -148,12 +156,6 @@ private:
 	void OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate);
 
 	static FVector RaycastScreenPoint(const UObject* pWorldContextObject, const EScreenPoint ScreenPoint);
-
-	/** Lists all the blocks lying on the perimeter of the circle with the given coordinates and radius */ //TODO: Use Bresenham's Circle Algorithm for better performance
-	static TSet<FIntPoint> GetBlocksOnPerimeter(int BlockX, int BlockY, int RadiusInBlocks);
-
-	/** Lists all the blocks lying within the circle with the given coordinates and radius */
-	TSet<FIntPoint> GetBlocksInRadius(int BlockX, int BlockY, int RadiusInBlocks) const;
 
 	/** The radius of the visible area (in blocks) */
 	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess=true))
