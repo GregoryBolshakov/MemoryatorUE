@@ -11,7 +11,7 @@ class TOPDOWNTEMP_API UMRoadManager : public UObject
 	GENERATED_BODY()
 
 public:
-	void GenerateNewPieceForRoads(const TSet<FIntPoint>& BlocksOnPerimeter, const AMWorldGenerator* WorldGenerator); 
+	void GenerateNewPieceForRoads(const TSet<FIntPoint>& BlocksOnPerimeter, AMWorldGenerator* WorldGenerator); 
 private:
 	
 };

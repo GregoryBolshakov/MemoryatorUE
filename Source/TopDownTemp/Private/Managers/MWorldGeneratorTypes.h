@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "MWorldGeneratorTypes.generated.h"
 
+class AMRoadSplineActor;
+class ASplineMeshActor;
 class AMGroundBlock;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBlockChanged, const FIntPoint&, OldBlock, const FIntPoint&, NewBlock);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*);
@@ -24,7 +26,7 @@ struct FBiomeDelimiter
 	EBiome Biome;
 };
 
-/** Class for storing the data of one block of the grid needed for world generation */
+/** Class for storing the data needed for world generation per grid block */
 UCLASS()
 class UBlockMetadata : public UObject
 {
@@ -45,9 +47,12 @@ public:
 	UPROPERTY()
 	EBiome Biome;
 
-	//TODO: Come up how not to store it here. Temp workaround for ground block transitions
+	/** Explicitly exposed to avoid frequent lookup in StaticActors */
 	UPROPERTY()
 	AMGroundBlock* pGroundBlock = nullptr;
+
+	UPROPERTY()
+	AMRoadSplineActor* RoadSpline;
 };
 
 USTRUCT()

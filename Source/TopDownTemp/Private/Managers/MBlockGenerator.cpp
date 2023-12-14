@@ -16,14 +16,14 @@ void UMBlockGenerator::SpawnActors(const FIntPoint BlockIndex, AMWorldGenerator*
 	const FVector BlockSize = pWorldGenerator->GetGroundBlockSize();
 	const FVector BlockCenter = pWorldGenerator->GetGroundBlockLocation(BlockIndex) + BlockSize / 2.f;
 
-	const auto BlockOfActors = pWorldGenerator->FindOrAddBlock(BlockIndex);
+	const auto BlockMetadata = pWorldGenerator->FindOrAddBlock(BlockIndex);
 	// Spawn the ground block
 	FActorSpawnParameters BlockSpawnParameters;
 	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters))
 	{
 		GroundBlock->UpdateBiome(Biome);
-		BlockOfActors->pGroundBlock = GroundBlock; // temporary stuff, will be gone when get rid of UBlockOfActors::pGroundBlock
+		BlockMetadata->pGroundBlock = GroundBlock; // temporary stuff, will be gone when get rid of UBlockMetadata::pGroundBlock
 	}
 
 	FOnSpawnActorStarted OnSpawnActorStarted;

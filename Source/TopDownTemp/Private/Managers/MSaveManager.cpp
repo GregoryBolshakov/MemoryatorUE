@@ -43,7 +43,7 @@ void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator
 	// Iterate the LRU cache, saving blocks in descending priority order in case the process suddenly aborts
 	for (const auto BlockIndex : GridOfActors.GetCacheOrder())
 	{
-		if (const auto pBlockOfActors = GridOfActors.Get(BlockIndex))
+		if (const auto BlockMetadata = GridOfActors.Get(BlockIndex))
 		{
 			FBlockSaveData* SavedBlock = SavedBlock = SaveGameWorld->SavedGrid.Find(BlockIndex);;
 			if (!SavedBlock)
@@ -51,13 +51,13 @@ void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator
 				SavedBlock = &SaveGameWorld->SavedGrid.Add(BlockIndex, {});
 			}
 
-			SavedBlock->Biome = pBlockOfActors->Biome;
+			SavedBlock->Biome = BlockMetadata->Biome;
 			// Empty in case they've been there since last load
 			SavedBlock->SavedMActors.Empty();
 			SavedBlock->SavedMPickableActors.Empty();
 			SavedBlock->SavedMCharacters.Empty();
 
-			for (const auto& [Name, pActor] : pBlockOfActors->StaticActors)
+			for (const auto& [Name, pActor] : BlockMetadata->StaticActors)
 			{
 				if (!IsValid(pActor))
 					continue;
@@ -93,7 +93,7 @@ void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator
 					}
 				}
 			}
-			for (const auto& [Name, pActor] : pBlockOfActors->DynamicActors)
+			for (const auto& [Name, pActor] : BlockMetadata->DynamicActors)
 			{
 				if (!IsValid(pActor))
 					continue;
@@ -170,8 +170,8 @@ void UMSaveManager::LoadPerTick(AMWorldGenerator* WorldGenerator)
 
 void UMSaveManager::LoadBlock(const FIntPoint& BlockIndex, const FBlockSaveData& BlockSD, AMWorldGenerator* WorldGenerator)
 {
-	const auto BlockOfActors = WorldGenerator->EmptyBlock(BlockIndex, false, true);
-	BlockOfActors->Biome = BlockSD.Biome;
+	const auto BlockMetadata = WorldGenerator->EmptyBlock(BlockIndex, false, true);
+	BlockMetadata->Biome = BlockSD.Biome;
 
 	for (const auto& MActorSD : BlockSD.SavedMActors)
 	{
@@ -179,12 +179,12 @@ void UMSaveManager::LoadBlock(const FIntPoint& BlockIndex, const FBlockSaveData&
 	}
 
 	// Process ground block biome
-	for (const auto [Name, StaticActor] : BlockOfActors->StaticActors)
+	for (const auto [Name, StaticActor] : BlockMetadata->StaticActors)
 	{
 		if (const auto GroundBlock = Cast<AMGroundBlock>(StaticActor))
 		{
-			BlockOfActors->pGroundBlock = GroundBlock;
-			BlockOfActors->pGroundBlock->UpdateBiome(BlockSD.Biome);
+			BlockMetadata->pGroundBlock = GroundBlock;
+			BlockMetadata->pGroundBlock->UpdateBiome(BlockSD.Biome);
 			break;
 		}
 	}

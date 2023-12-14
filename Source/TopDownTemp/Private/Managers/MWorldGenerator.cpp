@@ -11,6 +11,7 @@
 #include "MDropManager.h"
 #include "MReputationManager.h"
 #include "MExperienceManager.h"
+#include "MRoadManager.h"
 #include "Components/MIsActiveCheckerComponent.h"
 #include "MVillageGenerator.h"
 #include "NavigationSystem.h"
@@ -21,6 +22,10 @@
 #include "StationaryActors/MPickableActor.h"
 #include "MSaveManager.h"
 #include "MWorldManager.h"
+#include "Components/SplineComponent.h"
+#include "Components/SplineMeshComponent.h"
+#include "Engine/SplineMeshActor.h"
+#include "StationaryActors/MRoadSplineActor.h"
 
 AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -28,6 +33,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	, DropManager(nullptr)
 	, ReputationManager(nullptr)
 	, ExperienceManager(nullptr)
+	, RoadManager(nullptr)
 	, SaveManager(nullptr)
 	, CommunicationManager(nullptr)
 	, BlockGenerator(nullptr)
@@ -80,12 +86,12 @@ void AMWorldGenerator::InitNewWorld()
 		const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
 		for (const auto BlockInRadius : BlocksInRadius)
 		{ // Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
-			auto* BlockOfActors = GridOfActors.Get(BlockInRadius);
-			if (!BlockOfActors)
+			auto* BlockMetadata = GridOfActors.Get(BlockInRadius);
+			if (!BlockMetadata)
 			{
-				BlockOfActors = GridOfActors.Add(BlockInRadius, NewObject<UBlockMetadata>(this));
+				BlockMetadata = GridOfActors.Add(BlockInRadius, NewObject<UBlockMetadata>(this));
 			}
-			BlockOfActors->Biome = BiomeForInitialGeneration;
+			BlockMetadata->Biome = BiomeForInitialGeneration;
 		}
 		for (const auto BlockInRadius : BlocksInRadius)
 		{
@@ -99,6 +105,16 @@ void AMWorldGenerator::InitNewWorld()
 
 		/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
 		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
+
+		const auto Block1 = FindOrAddBlock({0, 0});
+		Block1->RoadSpline = GetWorld()->SpawnActor<AMRoadSplineActor>(*ToSpawnActorClasses.Find("RoadSpline"), {200.f, 200.f, 0.f}, FRotator::ZeroRotator, {});
+		Block1->RoadSpline->GetSplineComponent()->ClearSplinePoints();
+		Block1->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex({600.f, 200.f, 0.f}, 0, ESplineCoordinateSpace::World);
+
+		const auto Block2 = FindOrAddBlock({1, 0});
+		Block2->RoadSpline = Block1->RoadSpline;
+		Block2->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex({1000.f, 200.f, 0.f}, 1, ESplineCoordinateSpace::World);
+		Block1->RoadSpline->GetSplineComponent()->UpdateSpline();
 	}
 }
 
@@ -109,38 +125,38 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 		return nullptr;
 
 	// Get the block from grid or add if doesn't exist
-	auto* BlockOfActors = GridOfActors.Get(BlockIndex);
-	if (!BlockOfActors)
+	auto* BlockMetadata = GridOfActors.Get(BlockIndex);
+	if (!BlockMetadata)
 	{
-		BlockOfActors = GridOfActors.Add(BlockIndex, NewObject<UBlockMetadata>(this));
+		BlockMetadata = GridOfActors.Add(BlockIndex, NewObject<UBlockMetadata>(this));
 	}
 
-	if (BlockOfActors->ConstantActorsCount > 0 && !IgnoreConstancy)
-		return BlockOfActors;
+	if (BlockMetadata->ConstantActorsCount > 0 && !IgnoreConstancy)
+		return BlockMetadata;
 
 	// Empty the block if already spawned
-	for (auto It = BlockOfActors->StaticActors.CreateIterator(); It; ++It)
+	for (auto It = BlockMetadata->StaticActors.CreateIterator(); It; ++It)
 	{
 		if (It->Value)
 		{
-			RemoveActorFromGrid(It->Value);
+			RemoveActorFromGrid(It->Value); //TODO: Remake this. Removal during iteration
 		}
 	}
-	check(BlockOfActors->StaticActors.IsEmpty());
+	check(BlockMetadata->StaticActors.IsEmpty());
 
 	if (!KeepDynamicObjects)
 	{
-		for (auto It = BlockOfActors->DynamicActors.CreateIterator(); It; ++It)
+		for (auto It = BlockMetadata->DynamicActors.CreateIterator(); It; ++It)
 		{
 			if (It->Value)
 			{
-				RemoveActorFromGrid(It->Value);
+				RemoveActorFromGrid(It->Value); //TODO: Remake this. Removal during iteration
 			}
 		}
-		check(BlockOfActors->DynamicActors.IsEmpty());
+		check(BlockMetadata->DynamicActors.IsEmpty());
 	}
 
-	return BlockOfActors;
+	return BlockMetadata;
 }
 
 UBlockMetadata* AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects)
@@ -182,6 +198,9 @@ void AMWorldGenerator::BeginPlay()
 	// Spawn the Communication Manager
 	CommunicationManager = CommunicationManagerBPClass ? GetWorld()->SpawnActor<AMCommunicationManager>(CommunicationManagerBPClass) : nullptr;
 	check(CommunicationManager);
+
+	RoadManager = NewObject<UMRoadManager>(GetOuter(), UMRoadManager::StaticClass(), TEXT("RoadManager"));
+	check(RoadManager);
 
 	// Create the Block Generator
 	BlockGenerator = BlockGeneratorBPClass ? NewObject<UMBlockGenerator>(GetOuter(), BlockGeneratorBPClass, TEXT("BlockGenerator")) : nullptr;
@@ -428,9 +447,19 @@ void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, c
 	auto OldBlockIndex = IN_OldBlockIndex;
 	while(OldBlockIndex != IN_NewBlockIndex)
 	{
-		OldBlockIndex.X += FMath::Sign(IN_NewBlockIndex.X - OldBlockIndex.X);
-		OldBlockIndex.Y += FMath::Sign(IN_NewBlockIndex.Y - OldBlockIndex.Y);
-		TravelledDequeue.Add(OldBlockIndex);
+		// Do increments separately for X and Y to prevent corner cutting. It is crucial for perimeter generation to avoid skipping tiles
+		const auto XIncrement = FMath::Sign(IN_NewBlockIndex.X - OldBlockIndex.X);
+		if (XIncrement != 0)
+		{
+			OldBlockIndex.X += XIncrement;
+			TravelledDequeue.Add(OldBlockIndex);
+		}
+		const auto YIncrement = FMath::Sign(IN_NewBlockIndex.Y - OldBlockIndex.Y);
+		if (YIncrement != 0)
+		{
+			OldBlockIndex.Y += YIncrement;
+			TravelledDequeue.Add(OldBlockIndex);
+		}
 	}
 
 	for (const auto& Block : TravelledDequeue)
@@ -449,13 +478,14 @@ void AMWorldGenerator::GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock)
 	if (!pWorld)
 		return;
 
-	auto BlocksInRadius = GetBlocksOnPerimeter(CenterBlock.X, CenterBlock.Y, ActiveZoneRadius + 1);
+	auto BlocksOnPerimeter = GetBlocksOnPerimeter(CenterBlock.X, CenterBlock.Y, ActiveZoneRadius + 1);
 
-	SetBiomesForBlocks(CenterBlock, BlocksInRadius);
+	SetBiomesForBlocks(CenterBlock, BlocksOnPerimeter);
+	RoadManager->GenerateNewPieceForRoads(BlocksOnPerimeter, this);
 
 	auto TopLeftScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopLeft);
 	auto TopRighScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopRight);
-	BlocksInRadius.Sort([this, &TopLeftScreenPointInWorld, &TopRighScreenPointInWorld](const FIntPoint& BlockA, const FIntPoint& BlockB)
+	BlocksOnPerimeter.Sort([this, &TopLeftScreenPointInWorld, &TopRighScreenPointInWorld](const FIntPoint& BlockA, const FIntPoint& BlockB)
 	{ // Sort blocks so that the closest to the screen corners would be the first
 		const auto LocationA = GetGroundBlockLocation(BlockA);
 		const auto LocationB = GetGroundBlockLocation(BlockB);
@@ -467,7 +497,7 @@ void AMWorldGenerator::GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock)
 	});
 
 	// We'll spread heavy GenerateBlock calls over the next few ticks
-	OnTickGenerateBlocks(BlocksInRadius);
+	OnTickGenerateBlocks(BlocksOnPerimeter);
 }
 
 /** Function to calculate the angle between [0; 1] vector and the vector from O to P */
@@ -525,15 +555,15 @@ void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIn
 				++DelimiterIndex;
 			}
 
-			auto* BlockOfActors = GridOfActors.Get(Block);
-			if (!BlockOfActors)
+			auto* BlockMetadata = GridOfActors.Get(Block);
+			if (!BlockMetadata)
 			{
-				BlockOfActors = GridOfActors.Add(Block, NewObject<UBlockMetadata>(this));
+				BlockMetadata = GridOfActors.Add(Block, NewObject<UBlockMetadata>(this));
 			}
 
-			if (BlockOfActors->ConstantActorsCount <= 0) // We keep the biome as well as all other objects
+			if (BlockMetadata->ConstantActorsCount <= 0) // We keep the biome as well as all other objects
 			{
-				BlockOfActors->Biome = Delimiters[DelimiterIndex].Biome;
+				BlockMetadata->Biome = Delimiters[DelimiterIndex].Biome;
 			}
 			++BlockIndex;
 		}
@@ -569,12 +599,12 @@ FIntPoint AMWorldGenerator::GetPlayerGroundBlockIndex() const
 
 UBlockMetadata* AMWorldGenerator::FindOrAddBlock(FIntPoint Index)
 {
-	auto* BlockOfActors = GridOfActors.Get(Index);
-	if (!BlockOfActors)
+	auto* BlockMetadata = GridOfActors.Get(Index);
+	if (!BlockMetadata)
 	{
 		return GridOfActors.Add(Index, NewObject<UBlockMetadata>(this));
 	}
-	return BlockOfActors;
+	return BlockMetadata;
 }
 
 FVector AMWorldGenerator::GetGroundBlockSize() const
@@ -651,13 +681,13 @@ TSet<FIntPoint> AMWorldGenerator::GetBlocksOnPerimeter(int BlockX, int BlockY, i
 {
 	TSet<FIntPoint> Blocks;
 
-	for (float X = BlockX - RadiusInBlocks; X <= BlockX + RadiusInBlocks; ++X)
+	for (int X = BlockX - RadiusInBlocks; X <= BlockX + RadiusInBlocks; ++X)
 	{
-		for (float Y = BlockY - RadiusInBlocks; Y <= BlockY + RadiusInBlocks; ++Y)
+		for (int Y = BlockY - RadiusInBlocks; Y <= BlockY + RadiusInBlocks; ++Y)
 		{
 			const auto Distance = sqrt(pow(X - BlockX, 2) + pow(Y - BlockY, 2));
 			if (Distance <= static_cast<float>(RadiusInBlocks) && Distance >= static_cast<float>(RadiusInBlocks - 1)) {
-				Blocks.Add({ static_cast<int>(X), static_cast<int>(Y) });
+				Blocks.Add({ X, Y });
 			}
 		}
 	}
@@ -669,12 +699,12 @@ TSet<FIntPoint> AMWorldGenerator::GetBlocksInRadius(int BlockX, int BlockY, int 
 {
 	TSet<FIntPoint> Blocks;
 
-	for (float X = BlockX - RadiusInBlocks; X <= BlockX + RadiusInBlocks; ++X)
+	for (int X = BlockX - RadiusInBlocks; X <= BlockX + RadiusInBlocks; ++X)
 	{
-		for (float Y = BlockY - RadiusInBlocks; Y <= BlockY + RadiusInBlocks; ++Y)
+		for (int Y = BlockY - RadiusInBlocks; Y <= BlockY + RadiusInBlocks; ++Y)
 		{
 			if (sqrt(pow(X - BlockX, 2) + pow(Y - BlockY, 2)) <= static_cast<float>(RadiusInBlocks)) {
-				Blocks.Add({ static_cast<int>(X), static_cast<int>(Y) });
+				Blocks.Add({ X, Y });
 			}
 		}
 	}
@@ -688,6 +718,21 @@ void AMWorldGenerator::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	CheckDynamicActorsBlocks();
+
+	//TEMP
+	const auto World = GetWorld();
+	if (!IsValid(World)) return;
+	const auto Player = UGameplayStatics::GetPlayerPawn(World, 0);
+	if (!IsValid(Player)) return;
+
+	const auto PlayerLocation = Player->GetTransform().GetLocation();
+	const auto PlayerBlock = GetGroundBlockIndex(PlayerLocation);
+	const auto Blocks = GetBlocksOnPerimeter(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius + 1);
+	const auto BlockSize = GetGroundBlockSize();
+	for (const auto Block : Blocks)
+	{
+		DrawDebugBox(GetWorld(), {Block.X * BlockSize.X + 200.f, Block.Y * BlockSize.Y + 200.f, 10.f}, FVector(100.f, 100.f, 100.f), FColor::Blue, true);
+	}
 }
 
 AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation,
@@ -770,15 +815,15 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor)
 	const auto GroundBlockIndex = GetGroundBlockIndex(Actor->GetActorLocation());
 
 	// If there's an empty block, add it to the map
-	auto BlockOfActors = GridOfActors.Get(GroundBlockIndex);
-	if (!BlockOfActors)
+	auto BlockMetadata = GridOfActors.Get(GroundBlockIndex);
+	if (!BlockMetadata)
 	{
-		BlockOfActors = GridOfActors.Add(GroundBlockIndex, NewObject<UBlockMetadata>(this));
+		BlockMetadata = GridOfActors.Add(GroundBlockIndex, NewObject<UBlockMetadata>(this));
 	}
 
 	// Determine whether the object is static or movable
 	bool bDynamic = Actor->GetClass()->IsChildOf<APawn>();
-	auto& ListToAdd = bDynamic ? BlockOfActors->DynamicActors : BlockOfActors->StaticActors;
+	auto& ListToAdd = bDynamic ? BlockMetadata->DynamicActors : BlockMetadata->StaticActors;
 
 	// We also store the mapping between the Name and metadata (actor's GroundBlock index, etc.)
 	const FActorWorldMetadata Metadata{ListToAdd.Add(FName(Actor->GetName()), Actor), GroundBlockIndex};
@@ -789,7 +834,7 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor)
 	{
 		if (IsActiveCheckerComponent->GetAlwaysEnabled() || IsActiveCheckerComponent->GetPreserveBlockConstancy())
 		{
-			BlockOfActors->ConstantActorsCount++; //TODO: Disable constancy when the object no longer on the block
+			BlockMetadata->ConstantActorsCount++; //TODO: Disable constancy when the object no longer on the block
 		}
 		else
 		{
@@ -811,23 +856,23 @@ void AMWorldGenerator::RemoveActorFromGrid(AActor* Actor)
 		return;
 	}
 	const auto BlockIndex = GetGroundBlockIndex(Actor->GetActorLocation());
-	if (const auto BlockOfActors = GridOfActors.Get(BlockIndex))
+	if (const auto BlockMetadata = GridOfActors.Get(BlockIndex))
 	{
 		if (const auto ActiveCheckerComp = Cast<UMIsActiveCheckerComponent>(Actor->GetComponentByClass(UMIsActiveCheckerComponent::StaticClass())))
 		{
 			if (ActiveCheckerComp->GetAlwaysEnabled())
 			{
-				BlockOfActors->ConstantActorsCount--;
+				BlockMetadata->ConstantActorsCount--;
 			}
 		}
 		const auto ActorName = FName(Actor->GetName());
 		if (Actor->GetClass()->IsChildOf(APawn::StaticClass()))
 		{
-			BlockOfActors->DynamicActors.Remove(ActorName);
+			BlockMetadata->DynamicActors.Remove(ActorName);
 		}
 		else
 		{
-			BlockOfActors->StaticActors.Remove(ActorName);
+			BlockMetadata->StaticActors.Remove(ActorName);
 		}
 
 		ActorsMetadata.Remove(ActorName);

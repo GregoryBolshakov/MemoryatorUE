@@ -10,6 +10,7 @@
 #define ECC_Pickable ECollisionChannel::ECC_GameTraceChannel2
 #define ECC_OccludedTerrain ECollisionChannel::ECC_GameTraceChannel3
 
+class UMRoadManager;
 class AMPickableActor;
 class UMExperienceManager;
 class UMReputationManager;
@@ -219,6 +220,9 @@ private: // Managers
 	//TODO: Fix needed: items disappear when game crashes/closes during a trade after items were moved to the widget
 	UPROPERTY()
 	AMCommunicationManager* CommunicationManager;
+
+	UPROPERTY()
+	UMRoadManager* RoadManager;
 
 	UPROPERTY()
 	UMBlockGenerator* BlockGenerator;
