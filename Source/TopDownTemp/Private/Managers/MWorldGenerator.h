@@ -99,7 +99,7 @@ public:
 	static TSet<FIntPoint> GetBlocksOnPerimeter(int BlockX, int BlockY, int RadiusInBlocks);
 
 	/** Lists all the blocks lying within the circle with the given coordinates and radius */
-	TSet<FIntPoint> GetBlocksInRadius(int BlockX, int BlockY, int RadiusInBlocks) const;
+	static TSet<FIntPoint> GetBlocksInRadius(int BlockX, int BlockY, int RadiusInBlocks);
 
 	int GetActiveZoneRadius() const { return ActiveZoneRadius; }
 

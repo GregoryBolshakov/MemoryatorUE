@@ -106,12 +106,12 @@ void AMWorldGenerator::InitNewWorld()
 		/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
 		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
 
-		const auto Block1 = FindOrAddBlock({0, 0});
+		const auto Block1 = FindOrAddBlock({1, 0});
 		Block1->RoadSpline = GetWorld()->SpawnActor<AMRoadSplineActor>(*ToSpawnActorClasses.Find("RoadSpline"), {200.f, 200.f, 0.f}, FRotator::ZeroRotator, {});
 		Block1->RoadSpline->GetSplineComponent()->ClearSplinePoints();
 		Block1->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex({600.f, 200.f, 0.f}, 0, ESplineCoordinateSpace::World);
 
-		const auto Block2 = FindOrAddBlock({1, 0});
+		const auto Block2 = FindOrAddBlock({2, 0});
 		Block2->RoadSpline = Block1->RoadSpline;
 		Block2->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex({1000.f, 200.f, 0.f}, 1, ESplineCoordinateSpace::World);
 		Block1->RoadSpline->GetSplineComponent()->UpdateSpline();
@@ -677,39 +677,79 @@ FVector AMWorldGenerator::RaycastScreenPoint(const UObject* pWorldContextObject,
 	return FVector::ZeroVector;
 }
 
-TSet<FIntPoint> AMWorldGenerator::GetBlocksOnPerimeter(int BlockX, int BlockY, int RadiusInBlocks)
-{
-	TSet<FIntPoint> Blocks;
+bool IsOnPerimeter(int x, int y, int centerX, int centerY, int radius) {
+	// Calculate the distance of the square's center from the circle's center
+	float dist = std::sqrt(std::pow(x + 0.5 - centerX, 2) + std::pow(y + 0.5 - centerY, 2));
 
-	for (int X = BlockX - RadiusInBlocks; X <= BlockX + RadiusInBlocks; ++X)
-	{
-		for (int Y = BlockY - RadiusInBlocks; Y <= BlockY + RadiusInBlocks; ++Y)
-		{
-			const auto Distance = sqrt(pow(X - BlockX, 2) + pow(Y - BlockY, 2));
-			if (Distance <= static_cast<float>(RadiusInBlocks) && Distance >= static_cast<float>(RadiusInBlocks - 1)) {
-				Blocks.Add({ X, Y });
-			}
-		}
-	}
-
-	return Blocks;
+	// Check if the square's center is within the circle defined by the radius
+	// but not in a smaller circle to exclude corners
+	return dist < radius && dist > radius - std::sqrt(2);
 }
 
-TSet<FIntPoint> AMWorldGenerator::GetBlocksInRadius(int BlockX, int BlockY, int RadiusInBlocks) const
-{
-	TSet<FIntPoint> Blocks;
+TSet<FIntPoint> AMWorldGenerator::GetBlocksOnPerimeter(int CenterX, int CenterY, int Radius)
+{ // Bresenham's algorithm
+	TSet<FIntPoint>perimeterPoints;
+	int x = Radius;
+	int y = 0;
+	int err = 0;
 
-	for (int X = BlockX - RadiusInBlocks; X <= BlockX + RadiusInBlocks; ++X)
-	{
-		for (int Y = BlockY - RadiusInBlocks; Y <= BlockY + RadiusInBlocks; ++Y)
-		{
-			if (sqrt(pow(X - BlockX, 2) + pow(Y - BlockY, 2)) <= static_cast<float>(RadiusInBlocks)) {
-				Blocks.Add({ X, Y });
-			}
+	while (x >= y) {
+		// Top-right quadrant
+		perimeterPoints.Add({CenterX + x, CenterY + y});
+		perimeterPoints.Add({CenterX + y, CenterY + x});
+
+		// Top-left quadrant
+		perimeterPoints.Add({CenterX - y, CenterY + x});
+		perimeterPoints.Add({CenterX - x, CenterY + y});
+
+		// Bottom-left quadrant
+		perimeterPoints.Add({CenterX - x, CenterY - y});
+		perimeterPoints.Add({CenterX - y, CenterY - x});
+
+		// Bottom-right quadrant
+		perimeterPoints.Add({CenterX + y, CenterY - x});
+		perimeterPoints.Add({CenterX + x, CenterY - y});
+
+		y += 1;
+		err += 1 + 2 * y;
+		if (2 * (err - x) + 1 > 0) {
+			x -= 1;
+			err += 1 - 2 * x;
 		}
 	}
 
-	return Blocks;
+	return perimeterPoints;
+}
+
+TSet<FIntPoint> AMWorldGenerator::GetBlocksInRadius(int CenterX, int CenterY, int Radius)
+{
+	Radius += 1;
+	TSet<FIntPoint> InternalSquares;
+	// Define the size of the grid
+	int GridSize = 2 * Radius + 1;
+	std::vector<std::vector<bool>> Grid(GridSize, std::vector<bool>(GridSize, false));
+
+	// Mark the perimeter squares
+	TSet<FIntPoint> PerimeterSquares = GetBlocksOnPerimeter(CenterX, CenterY, Radius);
+	for (const auto& Square : PerimeterSquares) {
+		Grid[Square.X - (CenterX - Radius)][Square.Y - (CenterY - Radius)] = true;
+	}
+
+	// Helper function for flood fill
+	std::function<void(int, int)> Fill = [&](int x, int y) {
+		if (x < 0 || x >= GridSize || y < 0 || y >= GridSize || Grid[x][y]) return;
+		Grid[x][y] = true;
+		InternalSquares.Add({x + (CenterX - Radius), y + (CenterY - Radius)});
+		Fill(x + 1, y);
+		Fill(x - 1, y);
+		Fill(x, y + 1);
+		Fill(x, y - 1);
+	};
+
+	// Start flood fill from the center
+	Fill(Radius, Radius);
+
+	return InternalSquares;
 }
 
 // Tick interval is set in the blueprint
@@ -718,21 +758,6 @@ void AMWorldGenerator::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	CheckDynamicActorsBlocks();
-
-	//TEMP
-	const auto World = GetWorld();
-	if (!IsValid(World)) return;
-	const auto Player = UGameplayStatics::GetPlayerPawn(World, 0);
-	if (!IsValid(Player)) return;
-
-	const auto PlayerLocation = Player->GetTransform().GetLocation();
-	const auto PlayerBlock = GetGroundBlockIndex(PlayerLocation);
-	const auto Blocks = GetBlocksOnPerimeter(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius + 1);
-	const auto BlockSize = GetGroundBlockSize();
-	for (const auto Block : Blocks)
-	{
-		DrawDebugBox(GetWorld(), {Block.X * BlockSize.X + 200.f, Block.Y * BlockSize.Y + 200.f, 10.f}, FVector(100.f, 100.f, 100.f), FColor::Blue, true);
-	}
 }
 
 AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation,
