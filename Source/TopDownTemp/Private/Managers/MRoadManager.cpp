@@ -40,7 +40,7 @@ void UMRoadManager::GenerateNewPieceForRoads(const TSet<FIntPoint>& BlocksOnPeri
 						if (XOffset == 0 && YOffset == 0) // Skip the block itself
 							continue;
 						const auto IteratedBlock = FIntPoint(PerimeterBlockIndex.X + XOffset, PerimeterBlockIndex.Y + YOffset);
-						if (!BlocksInRadius.Contains(IteratedBlock)) // Skip already generated blocks
+						if (!BlocksInRadius.Contains(IteratedBlock) && !BlocksOnPerimeter.Contains(IteratedBlock)) // Skip already generated blocks
 						{
 							if (WorldGenerator->FindOrAddBlock(IteratedBlock)->RoadSpline)
 							{
@@ -57,8 +57,9 @@ void UMRoadManager::GenerateNewPieceForRoads(const TSet<FIntPoint>& BlocksOnPeri
 				{ // Add point to the spline from the closest end. Copy RoadSpline pointer to the block metadata
 					WorldGenerator->FindOrAddBlock(BlockForExtentionIndex)->RoadSpline = BlockMetadata->RoadSpline;
 					const auto IndexSplinePointToAdd = WorldGenerator->GetGroundBlockIndex(FirstSplinePoint) == PerimeterBlockIndex ? 0 : PointsNumber;
-					const auto BlockPosition = WorldGenerator->GetGroundBlockLocation(BlockForExtentionIndex);
-					BlockMetadata->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex(BlockPosition, IndexSplinePointToAdd,ESplineCoordinateSpace::World);
+					const auto BlockPosition = WorldGenerator->GetGroundBlockLocation(BlockForExtentionIndex) + WorldGenerator->GetGroundBlockSize() / 2.f;
+					BlockMetadata->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex(BlockPosition, IndexSplinePointToAdd, ESplineCoordinateSpace::World);
+					BlockMetadata->RoadSpline->GetSplineComponent()->UpdateSpline();
 				}
 			}
 		}
