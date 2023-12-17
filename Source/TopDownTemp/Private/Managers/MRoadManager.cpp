@@ -56,10 +56,13 @@ void UMRoadManager::GenerateNewPieceForRoads(const TSet<FIntPoint>& BlocksOnPeri
 				if (bCanBeExtended)
 				{ // Add point to the spline from the closest end. Copy RoadSpline pointer to the block metadata
 					WorldGenerator->FindOrAddBlock(BlockForExtentionIndex)->RoadSpline = BlockMetadata->RoadSpline;
-					const auto IndexSplinePointToAdd = WorldGenerator->GetGroundBlockIndex(FirstSplinePoint) == PerimeterBlockIndex ? 0 : PointsNumber;
-					const auto BlockPosition = WorldGenerator->GetGroundBlockLocation(BlockForExtentionIndex) + WorldGenerator->GetGroundBlockSize() / 2.f;
-					BlockMetadata->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex(BlockPosition, IndexSplinePointToAdd, ESplineCoordinateSpace::World);
-					BlockMetadata->RoadSpline->GetSplineComponent()->UpdateSpline();
+					const auto NewIndex = WorldGenerator->GetGroundBlockIndex(FirstSplinePoint) == PerimeterBlockIndex ? 0 : PointsNumber;
+					const auto BlockSize = WorldGenerator->GetGroundBlockSize();
+					auto NewPosition = WorldGenerator->GetGroundBlockLocation(BlockForExtentionIndex) + BlockSize / 2.f;
+					auto test = FMath::RandRange(-0.5f, 0.5f); //temp
+					NewPosition.X += FMath::RandRange(-0.5f, 0.5f) * BlockSize.X; // Random offset
+					NewPosition.Y += FMath::RandRange(-0.5f, 0.5f) * BlockSize.Y; // Random offset
+					BlockMetadata->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex(NewPosition, NewIndex, ESplineCoordinateSpace::World, true);
 				}
 			}
 		}
