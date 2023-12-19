@@ -66,6 +66,8 @@ void AMWorldGenerator::InitNewWorld()
 	else
 		check(false);
 
+	RoadManager->ConnectTwoChunks({-1000, -1000}, {1000, 1000});
+
 	UpdateActiveZone(); // temp solution to avoid disabling all subsequently generated actors due to empty ActiveBlocksMap
 
 	const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
@@ -97,16 +99,6 @@ void AMWorldGenerator::InitNewWorld()
 
 		/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
 		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
-
-		const auto Block1 = FindOrAddBlock({4, 0});
-		Block1->RoadSpline = GetWorld()->SpawnActor<AMRoadSplineActor>(*ToSpawnActorClasses.Find("RoadSpline"), FVector(1800.f, 200.f, 1.f), FRotator::ZeroRotator, {});
-		Block1->RoadSpline->GetSplineComponent()->ClearSplinePoints();
-		Block1->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex({1800.f, 200.f, 0.f}, 0, ESplineCoordinateSpace::World, true);
-
-		const auto Block2 = FindOrAddBlock({5, 0});
-		Block2->RoadSpline = Block1->RoadSpline;
-		Block2->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex({2200.f, 200.f, 0.f}, 1, ESplineCoordinateSpace::World, true);
-		Block1->RoadSpline->GetSplineComponent()->UpdateSpline();
 	}
 }
 

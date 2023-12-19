@@ -6,23 +6,69 @@
 
 void UMRoadManager::ConnectTwoChunks(const FIntPoint& ChunkA, const FIntPoint& ChunkB)
 {
-	const int MinX = FMath::Min(ChunkA.X, ChunkB.X);
-	const int MaxX = FMath::Min(ChunkA.Y, ChunkB.Y);
-	const int MinY = FMath::Min(ChunkA.X, ChunkB.X);
-	const int MaxY = FMath::Max(ChunkA.Y, ChunkB.Y);
-
-	int i = MinX, j = MinY;
-	while (i != MaxX || j != MaxY)
+	if (ChunkA == ChunkB)
 	{
-		int prev_i = i, prev_j = j;
-		i = i < MaxX ? i + 1 : i;
-		j = j < MaxY ? j + 1 : j;
-		const auto RoadSplineActorPtr = Roads.Find({{prev_i, prev_j}, {i, j}});
-		if (!RoadSplineActorPtr)
-		{
-			GetWorld()->SpawnActor<AMRoadSplineActor>(pWorldGenerator->GetActorClassToSpawn("RoadSpline"), FVector(600.f, 200.f, 1.f), FRotator::ZeroRotator, {});
-		}
+		check(false);
+		return;
 	}
+	/*const int MinX = FMath::Min(ChunkA.X, ChunkB.X);
+	const int MaxX = FMath::Max(ChunkA.X, ChunkB.X);
+	const int MinY = FMath::Min(ChunkA.Y, ChunkB.Y);
+	const int MaxY = FMath::Max(ChunkA.Y, ChunkB.Y);*/
+
+	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
+
+	bool toggle = true; // This flag will help in alternating between increments of i and j
+
+	int i = ChunkA.X, j = ChunkA.Y, i_inc = FMath::Sign(ChunkB.X - ChunkA.X), j_inc = FMath::Sign(ChunkB.Y - ChunkA.Y);
+	do {
+		int prev_i = i, prev_j = j;
+		// If either coordinate is one step away from its maximum, move straight along the other axis
+		if (i == ChunkB.X || j == ChunkB.Y) {
+			i = (i != ChunkB.X) ? i + i_inc : i;
+			j = (j != ChunkB.Y) ? j + j_inc : j;
+		} else {
+			// Alternate between incrementing i and j
+			if (toggle && i != ChunkB.X) {
+				i += i_inc;
+			} else if (!toggle && j != ChunkB.Y) {
+				j += j_inc;
+			}
+			//TODO: Add some randomness
+			toggle = !toggle; // Flip the toggle for the next iteration
+		}
+
+		// Find or spawn a Road Spline and populate points towards the adjacent chunk
+		auto RoadSplineActor = Roads.FindOrAdd({{prev_i, prev_j}, {i, j}});
+		if (!RoadSplineActor)
+		{
+			const auto StartBlock = GetBlockIndexByChunk({prev_i, prev_j});
+			const auto FinishBlock = GetBlockIndexByChunk({i, j});
+			int x_inc = FMath::Sign(FinishBlock.X - StartBlock.X), y_inc = FMath::Sign(FinishBlock.Y - StartBlock.Y);
+
+			RoadSplineActor = GetWorld()->SpawnActor<AMRoadSplineActor>(
+				pWorldGenerator->GetActorClassToSpawn("RoadSpline"),
+				FVector((StartBlock.X + 0.5f) * BlockSize.X, (StartBlock.Y + 0.5f) * BlockSize.Y, 1.f), // + 0.5f to put in the center of the block
+				FRotator::ZeroRotator,
+				{}
+			);
+			RoadSplineActor->GetSplineComponent()->RemoveSplinePoint(1, true);
+
+			int x = StartBlock.X, y = StartBlock.Y;
+			do
+			{
+				x = x == FinishBlock.X ? x : x + x_inc;
+				y = y == FinishBlock.Y ? y : y + y_inc;
+				FVector NewPosition{(x + 0.5f) * BlockSize.X, (y + 0.5f) * BlockSize.Y, 1.f}; // + 0.5f to put in the center of the block
+				if (x != FinishBlock.X || y != FinishBlock.Y)
+				{
+					NewPosition.X += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.X; // Random offset
+					NewPosition.Y += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.Y; // Random offset
+				}
+				RoadSplineActor->GetSplineComponent()->AddSplinePoint(NewPosition, ESplineCoordinateSpace::World, true);
+			} while (x != FinishBlock.X || y != FinishBlock.Y);
+		}
+	} while (i != ChunkB.X || j != ChunkB.Y);
 }
 
 void UMRoadManager::GenerateNewPieceForRoads(const TSet<FIntPoint>& BlocksOnPerimeter)
@@ -80,9 +126,8 @@ void UMRoadManager::GenerateNewPieceForRoads(const TSet<FIntPoint>& BlocksOnPeri
 					const auto NewIndex = pWorldGenerator->GetGroundBlockIndex(FirstSplinePoint) == PerimeterBlockIndex ? 0 : PointsNumber;
 					const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
 					auto NewPosition = pWorldGenerator->GetGroundBlockLocation(BlockForExtensionIndex) + BlockSize / 2.f;
-					auto test = FMath::RandRange(-0.5f, 0.5f); //temp
-					NewPosition.X += FMath::RandRange(-0.5f, 0.5f) * BlockSize.X; // Random offset
-					NewPosition.Y += FMath::RandRange(-0.5f, 0.5f) * BlockSize.Y; // Random offset
+					NewPosition.X += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.X; // Random offset
+					NewPosition.Y += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.Y; // Random offset
 					BlockMetadata->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex(NewPosition, NewIndex, ESplineCoordinateSpace::World, true);
 				}
 			}

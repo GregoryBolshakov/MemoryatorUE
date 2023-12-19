@@ -53,10 +53,16 @@ public:
 
 	FIntPoint GetChunkIndexByLocation(const FVector& Location) const;
 
+	FIntPoint GetBlockIndexByChunk(const FIntPoint& ChunkIndex) const { return ChunkIndex * ChunkSize; }
+
 protected:
 	/** Chunk is a rectangle (commonly square) area consisting of adjacent ground blocks. Serves only geometry purposes. Roads go along chunk edges */
-	UPROPERTY(EditDefaultsOnly, Category="MRoadManager|Configuration", meta=(ClampMin="2"))
-	FIntPoint ChunkSize;
+	UPROPERTY(EditDefaultsOnly, Category="MRoadManager|Configuration")
+	FIntPoint ChunkSize = {8, 8};
+
+	/** How curve roads get */
+	UPROPERTY(EditDefaultsOnly, Category="MRoadManager|Configuration", meta=(ClampMin="0.1", ClampMax="0.5"))
+	float CurveFactor = 0.35f;
 
 private:
 	/** It maps pairs of blocks and corresponding spline actors (roads) between them */
