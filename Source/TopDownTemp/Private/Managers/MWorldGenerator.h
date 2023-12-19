@@ -103,6 +103,8 @@ public:
 
 	int GetActiveZoneRadius() const { return ActiveZoneRadius; }
 
+	TSubclassOf<AActor> GetActorClassToSpawn(FName Name);
+
 protected:
 
 #if WITH_EDITOR
@@ -160,7 +162,7 @@ private:
 
 	/** The radius of the visible area (in blocks) */
 	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess=true))
-	int ActiveZoneRadius;
+	int ActiveZoneRadius = 0;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SubclassessToSpawn, meta = (DisplayThumbnail, AllowPrivateAccess = true))
 	TMap<FName, TSubclassOf<AActor>> ToSpawnActorClasses;
@@ -206,24 +208,24 @@ private:
 private: // Managers
 
 	UPROPERTY()
-	UMDropManager* DropManager;
+	UMDropManager* DropManager = nullptr;
 
 	UPROPERTY()
-	UMReputationManager* ReputationManager;
+	UMReputationManager* ReputationManager = nullptr;
 
 	UPROPERTY()
-	UMExperienceManager* ExperienceManager;
+	UMExperienceManager* ExperienceManager = nullptr;
 
 	UPROPERTY()
-	UMSaveManager* SaveManager;
+	UMSaveManager* SaveManager = nullptr;
 
 	//TODO: Fix needed: items disappear when game crashes/closes during a trade after items were moved to the widget
 	UPROPERTY()
-	AMCommunicationManager* CommunicationManager;
+	AMCommunicationManager* CommunicationManager = nullptr;
 
 	UPROPERTY()
-	UMRoadManager* RoadManager;
+	UMRoadManager* RoadManager = nullptr;
 
 	UPROPERTY()
-	UMBlockGenerator* BlockGenerator;
+	UMBlockGenerator* BlockGenerator = nullptr;
 };

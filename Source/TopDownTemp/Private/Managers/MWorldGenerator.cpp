@@ -29,14 +29,6 @@
 
 AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, ActiveZoneRadius(0)
-	, DropManager(nullptr)
-	, ReputationManager(nullptr)
-	, ExperienceManager(nullptr)
-	, RoadManager(nullptr)
-	, SaveManager(nullptr)
-	, CommunicationManager(nullptr)
-	, BlockGenerator(nullptr)
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
@@ -106,14 +98,14 @@ void AMWorldGenerator::InitNewWorld()
 		/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
 		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
 
-		const auto Block1 = FindOrAddBlock({1, 0});
-		Block1->RoadSpline = GetWorld()->SpawnActor<AMRoadSplineActor>(*ToSpawnActorClasses.Find("RoadSpline"), {200.f, 200.f, 0.f}, FRotator::ZeroRotator, {});
+		const auto Block1 = FindOrAddBlock({4, 0});
+		Block1->RoadSpline = GetWorld()->SpawnActor<AMRoadSplineActor>(*ToSpawnActorClasses.Find("RoadSpline"), FVector(1800.f, 200.f, 1.f), FRotator::ZeroRotator, {});
 		Block1->RoadSpline->GetSplineComponent()->ClearSplinePoints();
-		Block1->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex({600.f, 200.f, 0.f}, 0, ESplineCoordinateSpace::World);
+		Block1->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex({1800.f, 200.f, 0.f}, 0, ESplineCoordinateSpace::World, true);
 
-		const auto Block2 = FindOrAddBlock({2, 0});
+		const auto Block2 = FindOrAddBlock({5, 0});
 		Block2->RoadSpline = Block1->RoadSpline;
-		Block2->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex({1000.f, 200.f, 0.f}, 1, ESplineCoordinateSpace::World);
+		Block2->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex({2200.f, 200.f, 0.f}, 1, ESplineCoordinateSpace::World, true);
 		Block1->RoadSpline->GetSplineComponent()->UpdateSpline();
 	}
 }
@@ -200,6 +192,7 @@ void AMWorldGenerator::BeginPlay()
 	check(CommunicationManager);
 
 	RoadManager = NewObject<UMRoadManager>(GetOuter(), UMRoadManager::StaticClass(), TEXT("RoadManager"));
+	RoadManager->Initialize(this);
 	check(RoadManager);
 
 	// Create the Block Generator
@@ -481,7 +474,7 @@ void AMWorldGenerator::GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock)
 	auto BlocksOnPerimeter = GetBlocksOnPerimeter(CenterBlock.X, CenterBlock.Y, ActiveZoneRadius + 1);
 
 	SetBiomesForBlocks(CenterBlock, BlocksOnPerimeter);
-	RoadManager->GenerateNewPieceForRoads(BlocksOnPerimeter, this);
+	RoadManager->GenerateNewPieceForRoads(BlocksOnPerimeter);
 
 	auto TopLeftScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopLeft);
 	auto TopRighScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopRight);
@@ -750,6 +743,14 @@ TSet<FIntPoint> AMWorldGenerator::GetBlocksInRadius(int CenterX, int CenterY, in
 	Fill(Radius, Radius);
 
 	return InternalSquares;
+}
+
+TSubclassOf<AActor> AMWorldGenerator::GetActorClassToSpawn(FName Name)
+{
+	const auto Result = ToSpawnActorClasses.Find(Name);
+	if (Result)
+		return *Result;
+	return nullptr;
 }
 
 // Tick interval is set in the blueprint
