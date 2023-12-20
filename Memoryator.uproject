@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.2",
+	"EngineAssociation": "5.3",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -44,17 +44,11 @@
 			"Enabled": true
 		},
 		{
-			"Name": "PivotTool",
-			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/a220ab040cb844beb355b0f159eabefa"
-		},
-		{
-			"Name": "rdMeshTools",
-			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/201587b9d55f448888df7823d187a3c2"
-		},
-		{
 			"Name": "PCG",
+			"Enabled": true
+		},
+		{
+			"Name": "XRBase",
 			"Enabled": true
 		}
 	]
