@@ -4,6 +4,7 @@
 #include "Managers/MWorldGenerator.h"
 #include "Managers/MWorldManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "Navigation/PathFollowingComponent.h"
 
 AMMobControllerBase::AMMobControllerBase(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {

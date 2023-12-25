@@ -10,6 +10,7 @@
 #include "Managers/MWorldGenerator.h"
 #include "NavigationSystem.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/DamageEvents.h"
 
 AMMobController::AMMobController(const FObjectInitializer& ObjectInitializer) :
 	  Super(ObjectInitializer)
@@ -277,7 +278,7 @@ void AMMobController::OnHit()
 		{
 			if (AttackPuddleComponent->IsCircleWithin(Actor->GetActorLocation(), CapsuleComponent->GetScaledCapsuleRadius()))
 			{
-				Actor->TakeDamage(MyCharacter->GetStrength(), {}, this, MyCharacter);
+				Actor->TakeDamage(MyCharacter->GetStrength(), FDamageEvent(), this, MyCharacter);
 			}
 		}
 	}

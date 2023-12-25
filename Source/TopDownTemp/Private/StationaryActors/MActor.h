@@ -27,7 +27,6 @@ public: // Have effect only when called under FOnSpawnActorStarted
 
 	UFUNCTION(BlueprintCallable)
 	void SetAppearanceID(int IN_AppearanceID) { AppearanceID = IN_AppearanceID; }
-	void MakeRandom() { IsRandomizedAppearance = true; }
 
 public:
 	/** Use AMWorldGenerator::RemoveFromGrid instead */
@@ -78,6 +77,7 @@ protected:
 	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;
 
 	/** Objects like trees/plants/mushrooms/stones/etc. may have different appearances. If true, the type will be picked randomly */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	bool IsRandomizedAppearance = false;
 
 	UPROPERTY(BlueprintReadOnly)

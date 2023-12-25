@@ -66,7 +66,7 @@ void AMWorldGenerator::InitNewWorld()
 	else
 		check(false);
 
-	RoadManager->ConnectTwoChunks({-1000, -1000}, {1000, 1000});
+	RoadManager->ConnectTwoChunks({-5, -5}, {5, 5});
 
 	UpdateActiveZone(); // temp solution to avoid disabling all subsequently generated actors due to empty ActiveBlocksMap
 

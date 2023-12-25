@@ -28,6 +28,6 @@ public class TopDownTemp : ModuleRules
 				"UMG",
 				"XRBase",
 			});
-		PrivateDependencyModuleNames.AddRange(new string[] { "GoogleTest", "CADKernel", "XRBase" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "GoogleTest", "CADKernel", "XRBase", "PCG" });
 	}
 }

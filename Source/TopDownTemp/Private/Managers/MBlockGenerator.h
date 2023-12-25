@@ -36,7 +36,7 @@ struct FPreset
 	TSet<EBiome> SupportedBiomes;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig)
-	TMap<TSubclassOf<AActor>, FObjectConfig> ObjectsConfig;
+	TMap<FName, FObjectConfig> ObjectsConfig;
 };
 
 /**
@@ -50,6 +50,8 @@ class TOPDOWNTEMP_API UMBlockGenerator : public UObject
 public:
 
 	void SpawnActors(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName = {});
+
+	void SetVariablesByPreset(AActor* Actor, const FName PresetName, EBiome Biome);
 
 protected:
 

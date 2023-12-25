@@ -108,7 +108,7 @@ FString UNakamaManager::GetJsonStringFromRPC(const FNakamaRPC& IN_RPC)
 	FNakamaPayloadWithJson Json;
 	bool bSuccess = FJsonObjectConverter::JsonObjectStringToUStruct(IN_RPC.Payload, &Json, 0, 0);
 	return bSuccess ? Json.JSONObject : TEXT("");
-	return "";
+	//return "";
 }
 
 UNakamaManager::UNakamaManager(const FObjectInitializer& ObjectInitializer)

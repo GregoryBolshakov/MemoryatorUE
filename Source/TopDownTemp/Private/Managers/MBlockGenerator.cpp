@@ -20,39 +20,51 @@ void UMBlockGenerator::SpawnActors(const FIntPoint BlockIndex, AMWorldGenerator*
 	// Spawn the ground block
 	FActorSpawnParameters BlockSpawnParameters;
 	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters))
+
+	FOnSpawnActorStarted OnSpawnActorStarted;
+	OnSpawnActorStarted.AddLambda([this, PresetName, Biome](AActor* Actor)
+	{
+		SetVariablesByPreset(Actor, PresetName, Biome);
+	});
+
+	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters, false, OnSpawnActorStarted))
 	{
 		GroundBlock->UpdateBiome(Biome);
 		BlockMetadata->pGroundBlock = GroundBlock; // temporary stuff, will be gone when get rid of UBlockMetadata::pGroundBlock
 	}
+}
 
-	FOnSpawnActorStarted OnSpawnActorStarted;
-	OnSpawnActorStarted.AddLambda([this, Biome](AActor* Actor)
+void UMBlockGenerator::SetVariablesByPreset(AActor* Actor, const FName PresetName, EBiome Biome)
+{
+	if (const auto GroundBlock = Cast<AMGroundBlock>(Actor))
 	{
-		if (const auto MActor = Cast<AMActor>(Actor))
-		{
-			MActor->MakeRandom(); //TODO: Add an option to disable this in preset
-			return;
-		}
-		check(false);
-	});
+		FPreset Preset;
+		const auto pPreset = PresetMap.Find(PresetName);
+		Preset = pPreset ? *pPreset : GetRandomPreset(Biome);
 
-	FPreset Preset;
-	const auto pPreset = PresetMap.Find(PresetName);
-	Preset = pPreset ? *pPreset : GetRandomPreset(Biome);
-
-	for (const auto& [BPClass, Config] : Preset.ObjectsConfig)
-	{
-		const auto ObjectsNumber = FMath::RandRange(Config.MinNumberOfInstances, Config.MaxNumberOfInstances);
-		if (BPClass)
+		for (auto& [Name, Config] : Preset.ObjectsConfig)
 		{
-			for (int i = 0; i < ObjectsNumber; ++i)
+			const auto ObjectsNumber = FMath::RandRange(Config.MinNumberOfInstances, Config.MaxNumberOfInstances);
+
+			if (Name == FName("Tree"))
 			{
-				pWorldGenerator->SpawnActorInRadius<AMActor>(BPClass, BlockCenter, FRotator::ZeroRotator, FActorSpawnParameters(), FMath::RandRange(0.f, static_cast<float>(BlockSize.X / 2.f)), 0.f, OnSpawnActorStarted);
-				//pWorldGenerator->SpawnActor<AMActor>(BPClass, BlockCenter, FRotator::ZeroRotator);
+				GroundBlock->TreesCount = ObjectsNumber;
+				continue;
+			}
+			if (Name == FName("Bush"))
+			{
+				GroundBlock->BushesCount = ObjectsNumber;
+				continue;
+			}
+			if (Name == FName("Stone"))
+			{
+				GroundBlock->StonesCount = ObjectsNumber;
+				continue;
 			}
 		}
+		return;
 	}
+	check(false);
 }
 
 FPreset GetRandomPresetWithHighestRarity(const TArray<FPreset>& SufficientRarityPresets)

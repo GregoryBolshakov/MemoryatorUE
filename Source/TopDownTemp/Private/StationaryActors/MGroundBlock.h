@@ -26,6 +26,15 @@ public:
 	/** Function updates the transition if needed. Called by an adjacent block that just received its biome. */
 	void UpdateTransition(FIntPoint Offset, EBiome AdjacentBiome);
 
+public: // PCG
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int TreesCount = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int BushesCount = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int StonesCount = 0;
+
 protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
