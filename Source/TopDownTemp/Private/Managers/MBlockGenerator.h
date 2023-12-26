@@ -51,6 +51,7 @@ public:
 
 	void SpawnActors(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName = {});
 
+	/** Set blueprint variables that will be used in the PCG graph */
 	void SetVariablesByPreset(AActor* Actor, const FName PresetName, EBiome Biome);
 
 protected:

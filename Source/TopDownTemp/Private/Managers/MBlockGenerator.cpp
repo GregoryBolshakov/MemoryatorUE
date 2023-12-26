@@ -38,6 +38,8 @@ void UMBlockGenerator::SetVariablesByPreset(AActor* Actor, const FName PresetNam
 {
 	if (const auto GroundBlock = Cast<AMGroundBlock>(Actor))
 	{
+		GroundBlock->PCG_Biome = Biome;
+
 		FPreset Preset;
 		const auto pPreset = PresetMap.Find(PresetName);
 		Preset = pPreset ? *pPreset : GetRandomPreset(Biome);
@@ -48,17 +50,17 @@ void UMBlockGenerator::SetVariablesByPreset(AActor* Actor, const FName PresetNam
 
 			if (Name == FName("Tree"))
 			{
-				GroundBlock->TreesCount = ObjectsNumber;
+				GroundBlock->PCG_TreesCount = ObjectsNumber;
 				continue;
 			}
 			if (Name == FName("Bush"))
 			{
-				GroundBlock->BushesCount = ObjectsNumber;
+				GroundBlock->PCG_BushesCount = ObjectsNumber;
 				continue;
 			}
 			if (Name == FName("Stone"))
 			{
-				GroundBlock->StonesCount = ObjectsNumber;
+				GroundBlock->PCG_StonesCount = ObjectsNumber;
 				continue;
 			}
 		}
