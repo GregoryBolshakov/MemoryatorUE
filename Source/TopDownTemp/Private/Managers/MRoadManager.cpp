@@ -11,10 +11,6 @@ void UMRoadManager::ConnectTwoChunks(const FIntPoint& ChunkA, const FIntPoint& C
 		check(false);
 		return;
 	}
-	/*const int MinX = FMath::Min(ChunkA.X, ChunkB.X);
-	const int MaxX = FMath::Max(ChunkA.X, ChunkB.X);
-	const int MinY = FMath::Min(ChunkA.Y, ChunkB.Y);
-	const int MaxY = FMath::Max(ChunkA.Y, ChunkB.Y);*/
 
 	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
 
@@ -23,19 +19,17 @@ void UMRoadManager::ConnectTwoChunks(const FIntPoint& ChunkA, const FIntPoint& C
 	int i = ChunkA.X, j = ChunkA.Y, i_inc = FMath::Sign(ChunkB.X - ChunkA.X), j_inc = FMath::Sign(ChunkB.Y - ChunkA.Y);
 	do {
 		int prev_i = i, prev_j = j;
-		// If either coordinate is one step away from its maximum, move straight along the other axis
-		if (i == ChunkB.X || j == ChunkB.Y) {
-			i = (i != ChunkB.X) ? i + i_inc : i;
-			j = (j != ChunkB.Y) ? j + j_inc : j;
-		} else {
-			// Alternate between incrementing i and j
-			if (toggle && i != ChunkB.X) {
-				i += i_inc;
-			} else if (!toggle && j != ChunkB.Y) {
+
+		if (i != ChunkB.X)
+		{
+			i += i_inc;
+		}
+		else
+		{
+			if (j != ChunkB.Y)
+			{
 				j += j_inc;
 			}
-			//TODO: Add some randomness
-			toggle = !toggle; // Flip the toggle for the next iteration
 		}
 
 		// Find or spawn a Road Spline and populate points towards the adjacent chunk
