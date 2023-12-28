@@ -33,7 +33,8 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
 }
-
+//temp
+FTimerHandle tempTimer;
 void AMWorldGenerator::InitNewWorld()
 {
 	//TODO: Erase the old code. Now we consider this function to be called ONLY in the new empty world.
@@ -70,36 +71,51 @@ void AMWorldGenerator::InitNewWorld()
 
 	UpdateActiveZone(); // temp solution to avoid disabling all subsequently generated actors due to empty ActiveBlocksMap
 
-	const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
-
-	if (GridOfActors.Num() == 1 || ActorsMetadata.Num() == 1) // Empty world check
-	{
-		check(GridOfActors.Num() == 1 && ActorsMetadata.Num() == 1); // Error occured while loading save
-
-		// We add 1 to the radius on purpose. Generated area always has to be further then visible
-		const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
-		for (const auto BlockInRadius : BlocksInRadius)
-		{ // Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
-			auto* BlockMetadata = GridOfActors.Get(BlockInRadius);
-			if (!BlockMetadata)
-			{
-				BlockMetadata = GridOfActors.Add(BlockInRadius, NewObject<UBlockMetadata>(this));
-			}
-			BlockMetadata->Biome = BiomeForInitialGeneration;
-		}
-		for (const auto BlockInRadius : BlocksInRadius)
+	pWorld->GetTimerManager().SetTimer(tempTimer, [this, pWorld, pPlayer]()
 		{
-			GenerateBlock(BlockInRadius);
-		}
+			const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
 
-		/*const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
-		const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
-		VillageGenerator->Generate();
-		UpdateNavigationMesh();*/
+			if (GridOfActors.Num() == 1 || ActorsMetadata.Num() == 1) // Empty world check
+				{
+					check(GridOfActors.Num() == 1 && ActorsMetadata.Num() == 1); // Error occured while loading save
 
-		/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
-		BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
-	}
+					// We add 1 to the radius on purpose. Generated area always has to be further then visible
+					const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
+					for (const auto BlockInRadius : BlocksInRadius)
+					{ // Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
+						auto* BlockMetadata = GridOfActors.Get(BlockInRadius);
+						if (!BlockMetadata)
+						{
+							BlockMetadata = GridOfActors.Add(BlockInRadius, NewObject<UBlockMetadata>(this));
+						}
+						BlockMetadata->Biome = BiomeForInitialGeneration;
+					}
+					for (const auto BlockInRadius : BlocksInRadius)
+					{
+						GenerateBlock(BlockInRadius);
+					}
+
+					/*const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
+					const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
+					VillageGenerator->Generate();
+					UpdateNavigationMesh();*/
+
+					/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
+					BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
+				}
+
+			// temp spawn house in ISM rock
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
+			const auto TestingBuildingActor = pWorld->SpawnActor<AActor>(GetClassToSpawn("TestHouse"), {500.f, 180.f, 0.f}, FRotator::ZeroRotator, {});
+			//const bool IsEncroaching = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {500.f, 0.f, 0.f}, {});
+			//const bool IsEncroaching2 = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {500.f, 0.f, 790.f}, {});
+			//const bool IsEncroaching3 = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {500.f, 0.f, 800.f}, {});
+			const bool IsEncroaching = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {0.f, 50.f, 0.f}, {});
+			const bool IsEncroaching2 = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {500.f, 180.f, 0.f}, {});
+			const bool IsEncroaching3 = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {0.f, -130.f, 0.f}, {});
+			auto test = 1;
+		}, 0.1f, false);
 }
 
 UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy)
@@ -316,8 +332,7 @@ void AMWorldGenerator::UpdateActiveZone()
 	{
 		ActiveBlocksMap_New.Add(Block, true);
 		ActiveBlocksMap.Remove(Block);
-		if (const auto GridBlock = GridOfActors.Get(Block);
-			GridBlock && !GridBlock->StaticActors.IsEmpty())
+		if (const auto GridBlock = GridOfActors.Get(Block))
 		{
 			// Enable all the static Actors in the block
 			for (const auto& [Index, Data] : GridBlock->StaticActors)
