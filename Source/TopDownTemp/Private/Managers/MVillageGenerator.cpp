@@ -250,7 +250,7 @@ TOptional<FVector> AMVillageGenerator::FindLocationForBuilding(const AActor& Bui
 		const auto Mid = (BottomPointAngle + TopPointAngle) / 2.f;
 
 		const auto Location = GetPointOnCircle(CenterPosition, DistanceFromCenter, Mid);
-		const bool bIsEncroaching = GetWorld()->EncroachingBlockingGeometry(&BuildingActor, Location, {});
+		const bool bIsEncroaching = GetWorld()->EncroachingBlockingGeometry(&BuildingActor, Location, FRotator::ZeroRotator);
 		if (!bIsEncroaching)
 		{
 			BottomPointAngle = Mid;

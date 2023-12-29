@@ -34,7 +34,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	PrimaryActorTick.bCanEverTick = true;
 }
 //temp
-FTimerHandle tempTimer;
+FTimerHandle tempTimer, tempTimer2;
 void AMWorldGenerator::InitNewWorld()
 {
 	//TODO: Erase the old code. Now we consider this function to be called ONLY in the new empty world.
@@ -95,27 +95,19 @@ void AMWorldGenerator::InitNewWorld()
 						GenerateBlock(BlockInRadius);
 					}
 
-					/*const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
-					const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
-					VillageGenerator->Generate();
-					UpdateNavigationMesh();*/
-
-					/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
-					BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
+					pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()
+					{
+						const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
+						const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
+						VillageGenerator->Generate();
+						UpdateNavigationMesh();
+					}, 0.3f, false);
 				}
+		}
+	, 0.3f, false);
 
-			// temp spawn house in ISM rock
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
-			const auto TestingBuildingActor = pWorld->SpawnActor<AActor>(GetClassToSpawn("TestHouse"), {500.f, 180.f, 0.f}, FRotator::ZeroRotator, {});
-			//const bool IsEncroaching = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {500.f, 0.f, 0.f}, {});
-			//const bool IsEncroaching2 = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {500.f, 0.f, 790.f}, {});
-			//const bool IsEncroaching3 = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {500.f, 0.f, 800.f}, {});
-			const bool IsEncroaching = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {0.f, 50.f, 0.f}, {});
-			const bool IsEncroaching2 = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {500.f, 180.f, 0.f}, {});
-			const bool IsEncroaching3 = pWorld->EncroachingBlockingGeometry(TestingBuildingActor, {0.f, -130.f, 0.f}, {});
-			auto test = 1;
-		}, 0.1f, false);
+	/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
+	BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
 }
 
 UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy)
