@@ -2,10 +2,11 @@
 This is an indie open-world RPG game developed by my sister and me.
 It's created using Unreal Engine 5. 
   
-  
-The world is endless and auto-generated. It has 3 different biomes. Most of its objects are 2D but pretend to be 3D. You can also see their shadows don't rotate while the objects face the rotating camera.
 
-![Memoryator Preview  NetMode_ Standalone  (64-bit_SM5) 2023-05-15 20-03-04 (2)](https://github.com/GregoryBolshakov/GameSources/assets/19948668/86c42d7e-64ae-4306-9f62-c7e750d0c2d5)
+The world is endless and auto-generated. It has 3 different biomes. Most of its objects are 2D but pretend to be 3D. You can also see their shadows don't rotate while the objects face the rotating camera.  
+![Untitled video - Made with Clipchamp (1)](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/be1c17e4-b6e3-4b71-bce2-5030f47b3b94)
+![BiomesGeneration](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/877e6992-0e83-46fc-aa02-de3fa8636ea7)
+
 
 The game has mechanics for fighting, crafting and researching, as well as capturing animals. There is some variety of creatures (both peaceful
 and hostile), soon there will be more videos with their interaction.
