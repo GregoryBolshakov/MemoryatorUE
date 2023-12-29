@@ -101,10 +101,10 @@ void AMWorldGenerator::InitNewWorld()
 						const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
 						VillageGenerator->Generate();
 						UpdateNavigationMesh();
-					}, 0.6f, false);
+					}, 0.2f, false);
 				}
 		}
-	, 0.6f, false);
+	, 0.2f, false);
 
 	/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
 	BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/

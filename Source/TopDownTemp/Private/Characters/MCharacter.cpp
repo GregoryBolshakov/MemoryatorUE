@@ -210,7 +210,7 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 			{
 				if (!GetClass()->IsChildOf(AMMemoryator::StaticClass())) // Temporary check
 				{
-					//Destroy(); TODO: Fix this
+					Destroy();
 					return 0.f;
 				}
 			}
