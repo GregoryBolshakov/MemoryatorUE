@@ -2,7 +2,7 @@ This is an indie open-world RPG game developed by my sister and me.
 It's created using Unreal Engine 5. 
   
 
-The world is endless and auto-generated. It has 3 different biomes. HISMs are created by the PCG plugin. The game has a system of roads and settlements.
+The world is endless and auto-generated. It has 3 different biomes. I instantiate most HISMs via a PCG graph. The game has a system of roads and settlements.
 
 ![Untitled video - Made with Clipchamp (1)](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/be1c17e4-b6e3-4b71-bce2-5030f47b3b94)
 ![BiomesGeneration](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/877e6992-0e83-46fc-aa02-de3fa8636ea7)
