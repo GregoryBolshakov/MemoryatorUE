@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "MBlockGenerator.generated.h"
 
+struct FPCGVariables;
 class AMWorldGenerator;
 class AMGroundBlock;
 class AMActor;
@@ -49,10 +50,12 @@ class TOPDOWNTEMP_API UMBlockGenerator : public UObject
 
 public:
 
-	void SpawnActors(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName = {});
+	void SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName = {});
 
-	/** Set blueprint variables that will be used in the PCG graph */
-	void SetVariablesByPreset(AActor* Actor, const FName PresetName, EBiome Biome);
+	void SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, const FPCGVariables& PCGVariables);
+
+	/** Calculate values for PCG based on the Preset */
+	void SetPCGVariablesByPreset(AMGroundBlock* BlockActor, const FName PresetName, EBiome Biome);
 
 protected:
 

@@ -51,7 +51,7 @@ void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator
 				SavedBlock = &SaveGameWorld->SavedGrid.Add(BlockIndex, {});
 			}
 
-			SavedBlock->Biome = BlockMetadata->Biome;
+			SavedBlock->PCGVariables = BlockMetadata->pGroundBlock->PCGVariables;
 			// Empty in case they've been there since last load
 			SavedBlock->SavedMActors.Empty();
 			SavedBlock->SavedMPickableActors.Empty();
@@ -59,7 +59,7 @@ void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator
 
 			for (const auto& [Name, pActor] : BlockMetadata->StaticActors)
 			{
-				if (!IsValid(pActor))
+				if (!IsValid(pActor) || Cast<AMGroundBlock>(pActor)) // Don't save ground blocks as we recreate them manually
 					continue;
 
 				// Start from the base and compose structs upwards
@@ -126,23 +126,16 @@ void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator
 	}
 }
 
-int BlockToLoadIndex = 0;
-bool UMSaveManager::LoadFromMemory(AMWorldGenerator* WorldGenerator)
+bool UMSaveManager::LoadFromMemory()
 {
-	//TODO: Consider explicit destroying GridOfActors if loading in the middle of the game
-
 	LoadedGameWorld = Cast<USaveGameWorld>(UGameplayStatics::LoadGameFromSlot(USaveGameWorld::SlotName, 0));
-
-	if (!LoadedGameWorld || !WorldGenerator)
+	if (!LoadedGameWorld)
 		return false;
-
-	BlockToLoadIndex = 0;
-	LoadPerTick(WorldGenerator);
 
 	return true;
 }
 
-//TODO: Ensure priority of loaded blocks over generated in AMWorldGenerator::OnTickGenerateBlocks
+/*//TODO: Ensure priority of loaded blocks over generated in AMWorldGenerator::OnTickGenerateBlocks
 void UMSaveManager::LoadPerTick(AMWorldGenerator* WorldGenerator)
 {
 	constexpr int BlocksPerFrame = 4;
@@ -166,27 +159,18 @@ void UMSaveManager::LoadPerTick(AMWorldGenerator* WorldGenerator)
 		check(LoadedGameWorld);
 		UE_LOG(LogSaveManager, Log, TEXT("Finished loading the world from the save"))
 	}
-}
+}*/
 
 void UMSaveManager::LoadBlock(const FIntPoint& BlockIndex, const FBlockSaveData& BlockSD, AMWorldGenerator* WorldGenerator)
 {
+	//TODO: For static terrain generation we're relying on PCG determinism for now, but be careful
 	const auto BlockMetadata = WorldGenerator->EmptyBlock(BlockIndex, false, true);
-	BlockMetadata->Biome = BlockSD.Biome;
+	BlockMetadata->Biome = BlockSD.PCGVariables.Biome;
+	WorldGenerator->GetBlockGenerator()->SpawnActorsSpecifically(BlockIndex, WorldGenerator, BlockSD.PCGVariables);
 
 	for (const auto& MActorSD : BlockSD.SavedMActors)
 	{
 		LoadMActor(MActorSD, WorldGenerator);
-	}
-
-	// Process ground block biome
-	for (const auto [Name, StaticActor] : BlockMetadata->StaticActors)
-	{
-		if (const auto GroundBlock = Cast<AMGroundBlock>(StaticActor))
-		{
-			BlockMetadata->pGroundBlock = GroundBlock;
-			BlockMetadata->pGroundBlock->UpdateBiome(BlockSD.Biome);
-			break;
-		}
 	}
 
 	for (const auto& MPickableActorDS : BlockSD.SavedMPickableActors)

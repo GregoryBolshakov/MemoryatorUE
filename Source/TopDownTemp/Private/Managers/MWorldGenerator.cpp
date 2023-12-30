@@ -154,7 +154,7 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 UBlockMetadata* AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects)
 {
 	const auto Block = EmptyBlock(BlockIndex, KeepDynamicObjects);
-	BlockGenerator->SpawnActors(BlockIndex, this, Block->Biome);
+	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, Block->Biome);
 	return Block;
 }
 

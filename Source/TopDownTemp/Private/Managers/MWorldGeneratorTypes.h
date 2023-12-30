@@ -130,3 +130,17 @@ enum class EScreenPoint
 	TopLeft = 0,
 	TopRight
 };
+
+USTRUCT(BlueprintType)
+struct FPCGVariables
+{
+	GENERATED_BODY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	EBiome Biome;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int TreesCount = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int BushesCount = 0;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	int StonesCount = 0;
+};

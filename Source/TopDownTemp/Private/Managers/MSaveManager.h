@@ -27,10 +27,8 @@ class UMSaveManager : public UObject
 public:
 
 	void SetUpAutoSaves(FLRUCache& GridOfActors, const AMWorldGenerator* WorldGenerator);
-	//TODO: We should split save into several files. Each will be responsible for a large chunk of the world, e.g. 100000 by 100000
-	//TODO: I.e. to store TMap<FIntPoint, USaveGameWorld*> LoadedWorldRegions
 	void SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator* WorldGenerator);
-	bool LoadFromMemory(AMWorldGenerator* WorldGenerator);
+	bool LoadFromMemory();
 
 private:
 
@@ -43,6 +41,11 @@ private:
 	FTimerHandle AutoSavesTimer;
 	FTimerHandle BlockLoadingTimer;
 
+	//TODO: To support truly endless worlds we should split save into several files.
+	//TODO: Each will be responsible for a large chunk/region of the world, e.g. 1000 by 1000 blocks
+	//TODO: I.e. we're gonna store saved regions in TMap<FIntPoint, USaveGameWorld*> LoadedWorldRegions
+	//TODO: When player enters a region, mark it as dirty
+	//TODO: When Saving, iterate all dirty/marked regions, save them and reset their dirty/marked state
 	UPROPERTY()
 	USaveGameWorld* LoadedGameWorld;
 };

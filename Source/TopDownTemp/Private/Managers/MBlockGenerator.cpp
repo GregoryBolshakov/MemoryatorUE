@@ -5,7 +5,7 @@
 #include "StationaryActors/MGroundBlock.h"
 #include "StationaryActors/MActor.h"
 
-void UMBlockGenerator::SpawnActors(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName)
+void UMBlockGenerator::SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName)
 {
 	if (!IsValid(pWorldGenerator) || !GroundBlockBPClass)
 	{
@@ -13,32 +13,57 @@ void UMBlockGenerator::SpawnActors(const FIntPoint BlockIndex, AMWorldGenerator*
 		return;
 	}
 
-	const FVector BlockSize = pWorldGenerator->GetGroundBlockSize();
-	const FVector BlockCenter = pWorldGenerator->GetGroundBlockLocation(BlockIndex) + BlockSize / 2.f;
-
-	const auto BlockMetadata = pWorldGenerator->FindOrAddBlock(BlockIndex);
-	// Spawn the ground block
 	FActorSpawnParameters BlockSpawnParameters;
 	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	FOnSpawnActorStarted OnSpawnActorStarted;
 	OnSpawnActorStarted.AddLambda([this, PresetName, Biome](AActor* Actor)
 	{
-		SetVariablesByPreset(Actor, PresetName, Biome);
+		SetPCGVariablesByPreset(Cast<AMGroundBlock>(Actor), PresetName, Biome);
 	});
 
 	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters, false, OnSpawnActorStarted))
 	{
 		GroundBlock->UpdateBiome(Biome);
-		BlockMetadata->pGroundBlock = GroundBlock; // temporary stuff, will be gone when get rid of UBlockMetadata::pGroundBlock
+		const auto BlockMetadata = pWorldGenerator->FindOrAddBlock(BlockIndex);
+		BlockMetadata->pGroundBlock = GroundBlock;
 	}
 }
 
-void UMBlockGenerator::SetVariablesByPreset(AActor* Actor, const FName PresetName, EBiome Biome)
+void UMBlockGenerator::SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator,
+	const FPCGVariables& PCGVariables)
 {
-	if (const auto GroundBlock = Cast<AMGroundBlock>(Actor))
+	if (!IsValid(pWorldGenerator) || !GroundBlockBPClass)
 	{
-		GroundBlock->PCG_Biome = Biome;
+		check(false);
+		return;
+	}
+
+	FActorSpawnParameters BlockSpawnParameters;
+	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	FOnSpawnActorStarted OnSpawnActorStarted;
+	OnSpawnActorStarted.AddLambda([this, PCGVariables](AActor* Actor)
+	{
+		if (const auto BlockActor = Cast<AMGroundBlock>(Actor))
+		{
+			BlockActor->PCGVariables = PCGVariables;
+		}
+	});
+
+	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters, false, OnSpawnActorStarted))
+	{
+		GroundBlock->UpdateBiome(PCGVariables.Biome);
+		const auto BlockMetadata = pWorldGenerator->FindOrAddBlock(BlockIndex);
+		BlockMetadata->pGroundBlock = GroundBlock;
+	}
+}
+
+void UMBlockGenerator::SetPCGVariablesByPreset(AMGroundBlock* BlockActor, const FName PresetName, EBiome Biome)
+{
+	if (BlockActor) 
+	{
+		BlockActor->PCGVariables.Biome = Biome;
 
 		FPreset Preset;
 		const auto pPreset = PresetMap.Find(PresetName);
@@ -50,17 +75,17 @@ void UMBlockGenerator::SetVariablesByPreset(AActor* Actor, const FName PresetNam
 
 			if (Name == FName("Tree"))
 			{
-				GroundBlock->PCG_TreesCount = ObjectsNumber;
+				BlockActor->PCGVariables.TreesCount = ObjectsNumber;
 				continue;
 			}
 			if (Name == FName("Bush"))
 			{
-				GroundBlock->PCG_BushesCount = ObjectsNumber;
+				BlockActor->PCGVariables.BushesCount = ObjectsNumber;
 				continue;
 			}
 			if (Name == FName("Stone"))
 			{
-				GroundBlock->PCG_StonesCount = ObjectsNumber;
+				BlockActor->PCGVariables.StonesCount = ObjectsNumber;
 				continue;
 			}
 		}

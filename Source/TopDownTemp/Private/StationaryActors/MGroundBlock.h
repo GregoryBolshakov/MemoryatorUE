@@ -27,15 +27,18 @@ public:
 	void UpdateTransition(FIntPoint Offset, EBiome AdjacentBiome);
 
 public: // PCG
-	// Hopefully PCG plugin will get more flexible way to forward values from the owner to the graph
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FPCGVariables PCGVariables = {};
+
+	// Hopefully PCG plugin will get more flexible way to forward values from the owner to the graph
+	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EBiome PCG_Biome;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int PCG_TreesCount = 0;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	int PCG_BushesCount = 0;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int PCG_StonesCount = 0;
+	int PCG_StonesCount = 0;*/
 
 protected:
 

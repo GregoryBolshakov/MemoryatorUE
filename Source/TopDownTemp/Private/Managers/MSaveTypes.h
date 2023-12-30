@@ -72,7 +72,7 @@ struct FBlockSaveData
 	GENERATED_BODY()
 
 	UPROPERTY()
-	EBiome Biome;
+	FPCGVariables PCGVariables;
 
 	UPROPERTY()
 	TArray<FMActorSaveData> SavedMActors;
