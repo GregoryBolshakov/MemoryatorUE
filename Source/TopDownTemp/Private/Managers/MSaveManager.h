@@ -27,8 +27,10 @@ class UMSaveManager : public UObject
 public:
 
 	void SetUpAutoSaves(FLRUCache& GridOfActors, const AMWorldGenerator* WorldGenerator);
+	//TODO: We should split save into several files. Each will be responsible for a large chunk of the world, e.g. 100000 by 100000
+	//TODO: I.e. to store TMap<FIntPoint, USaveGameWorld*> LoadedWorldRegions
 	void SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator* WorldGenerator);
-	bool AsyncLoadFromMemory(AMWorldGenerator* WorldGenerator);
+	bool LoadFromMemory(AMWorldGenerator* WorldGenerator);
 
 private:
 

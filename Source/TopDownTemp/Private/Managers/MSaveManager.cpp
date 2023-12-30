@@ -127,7 +127,7 @@ void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator
 }
 
 int BlockToLoadIndex = 0;
-bool UMSaveManager::AsyncLoadFromMemory(AMWorldGenerator* WorldGenerator)
+bool UMSaveManager::LoadFromMemory(AMWorldGenerator* WorldGenerator)
 {
 	//TODO: Consider explicit destroying GridOfActors if loading in the middle of the game
 
