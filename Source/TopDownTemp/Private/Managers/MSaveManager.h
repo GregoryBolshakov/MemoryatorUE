@@ -26,8 +26,8 @@ class UMSaveManager : public UObject
 
 public:
 
-	void SetUpAutoSaves(FLRUCache& GridOfActors, const AMWorldGenerator* WorldGenerator);
-	void SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator* WorldGenerator);
+	void SetUpAutoSaves(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, const AMWorldGenerator* WorldGenerator);
+	void SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, const AMWorldGenerator* WorldGenerator);
 	bool LoadFromMemory();
 
 private:

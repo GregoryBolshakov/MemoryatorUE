@@ -11,7 +11,7 @@
 
 DEFINE_LOG_CATEGORY(LogSaveManager);
 
-void UMSaveManager::SetUpAutoSaves(FLRUCache& GridOfActors, const AMWorldGenerator* WorldGenerator)
+void UMSaveManager::SetUpAutoSaves(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, const AMWorldGenerator* WorldGenerator)
 {
 	const auto World = GetWorld();
 	if (!IsValid(World))
@@ -23,27 +23,16 @@ void UMSaveManager::SetUpAutoSaves(FLRUCache& GridOfActors, const AMWorldGenerat
 	}, 5.f, true);
 }
 
-void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator* WorldGenerator)
+void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, const AMWorldGenerator* WorldGenerator)
 {
 	const auto SaveGameWorld = LoadedGameWorld ? LoadedGameWorld : Cast<USaveGameWorld>(UGameplayStatics::CreateSaveGameObject(USaveGameWorld::StaticClass()));
 	if (!SaveGameWorld || !WorldGenerator)
 		return;
 
-	// Access player's block to raise their block on top of the priority queue
-	GridOfActors.Get(WorldGenerator->GetPlayerGroundBlockIndex());
-
-	// Get the block indexes existing in the real world and prepend them to the saved cache order.
-	// (Saved cache order is very likely to be much bigger than the real world's one)
-	TSet<FIntPoint> CacheOrderSet(GridOfActors.GetCacheOrder());
-	SaveGameWorld->GridOrder.RemoveAll([&](const FIntPoint& Point) {
-		return CacheOrderSet.Contains(Point);
-	});
-	SaveGameWorld->GridOrder.Insert(GridOfActors.GetCacheOrder(), 0);
-
-	// Iterate the LRU cache, saving blocks in descending priority order in case the process suddenly aborts
-	for (const auto BlockIndex : GridOfActors.GetCacheOrder())
+	// Iterate the world grid saving blocks 
+	for (const auto& [BlockIndex, BlockMetadata] : GridOfActors)
 	{
-		if (const auto BlockMetadata = GridOfActors.Get(BlockIndex))
+		if (BlockMetadata && BlockMetadata->pGroundBlock) // We don't consider blocks without actors to be generated, even if they are marked with some biome
 		{
 			FBlockSaveData* SavedBlock = SavedBlock = SaveGameWorld->SavedGrid.Find(BlockIndex);;
 			if (!SavedBlock)
@@ -117,7 +106,6 @@ void UMSaveManager::SaveToMemory(FLRUCache& GridOfActors, const AMWorldGenerator
 			}
 		}
 	}
-	ensure(SaveGameWorld->SavedGrid.Num() == SaveGameWorld->GridOrder.Num());
 
 	check(SaveGameWorld);
 	if (SaveGameWorld)

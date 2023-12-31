@@ -190,7 +190,7 @@ private: // Saved to memory
 	int BlocksPassedSinceLastPerimeterColoring;
 
 	UPROPERTY()
-	FLRUCache GridOfActors;
+	TMap<FIntPoint, UBlockMetadata*> GridOfActors;
 
 private:
 

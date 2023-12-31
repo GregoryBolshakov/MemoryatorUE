@@ -65,7 +65,7 @@ struct FLRUCache
 		if (DataMap.Contains(Key))
 		{
 			// Move accessed key to front
-			CacheOrder.RemoveSingleSwap(Key);
+			CacheOrder.RemoveSingleSwap(Key); // This makes the concept not pure
 			CacheOrder.Insert(Key, 0);
 			return DataMap[Key];
 		}

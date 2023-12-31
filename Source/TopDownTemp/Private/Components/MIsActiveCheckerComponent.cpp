@@ -50,7 +50,7 @@ void UMIsActiveCheckerComponent::DisableOwner(bool bForce)
 	bIsOwnerActive = false;
 	//TODO: Disable actor's controller if present
 
-	OnDisabledDelegate.Execute();
+	OnDisabledDelegate.ExecuteIfBound();
 }
 
 void UMIsActiveCheckerComponent::EnableOwner(bool bForce)
@@ -104,7 +104,7 @@ void UMIsActiveCheckerComponent::EnableOwner(bool bForce)
 	bIsOwnerActive = true;
 	//TODO: Enable actor's controller if present
 
-	OnEnabledDelegate.Execute();
+	OnEnabledDelegate.ExecuteIfBound();
 }
 
 void UMIsActiveCheckerComponent::SetUpCollisionPrimitive()

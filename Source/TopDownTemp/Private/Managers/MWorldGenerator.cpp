@@ -75,36 +75,27 @@ void AMWorldGenerator::InitNewWorld()
 		{
 			const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
 
-			if (GridOfActors.Num() == 1 || ActorsMetadata.Num() == 1) // Empty world check
-				{
-					check(GridOfActors.Num() == 1 && ActorsMetadata.Num() == 1); // Error occured while loading save
+			// We add 1 to the radius on purpose. Generated area always has to be further then visible
+			const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
+			for (const auto BlockInRadius : BlocksInRadius)
+			{ // Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
+				const auto BlockMetadata = FindOrAddBlock(BlockInRadius);
+				BlockMetadata->Biome = BiomeForInitialGeneration;
+			}
+			for (const auto BlockInRadius : BlocksInRadius)
+			{
+				GenerateBlock(BlockInRadius);
+			}
 
-					// We add 1 to the radius on purpose. Generated area always has to be further then visible
-					const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
-					for (const auto BlockInRadius : BlocksInRadius)
-					{ // Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
-						auto* BlockMetadata = GridOfActors.Get(BlockInRadius);
-						if (!BlockMetadata)
-						{
-							BlockMetadata = GridOfActors.Add(BlockInRadius, NewObject<UBlockMetadata>(this));
-						}
-						BlockMetadata->Biome = BiomeForInitialGeneration;
-					}
-					for (const auto BlockInRadius : BlocksInRadius)
-					{
-						GenerateBlock(BlockInRadius);
-					}
-
-					pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()
-					{
-						const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
-						const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
-						VillageGenerator->Generate();
-						UpdateNavigationMesh();
-					}, 0.2f, false);
-				}
+			pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()
+			{
+				const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
+				const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
+				VillageGenerator->Generate();
+				UpdateNavigationMesh();
+			}, 0.3f, false);
 		}
-	, 0.2f, false);
+	, 0.3f, false);
 
 	/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
 	BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
@@ -117,11 +108,7 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 		return nullptr;
 
 	// Get the block from grid or add if doesn't exist
-	auto* BlockMetadata = GridOfActors.Get(BlockIndex);
-	if (!BlockMetadata)
-	{
-		BlockMetadata = GridOfActors.Add(BlockIndex, NewObject<UBlockMetadata>(this));
-	}
+	const auto BlockMetadata = FindOrAddBlock(BlockIndex);
 
 	if (BlockMetadata->ConstantActorsCount > 0 && !IgnoreConstancy)
 		return BlockMetadata;
@@ -257,29 +244,27 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 			check(false)
 			continue;
 		}
-		if (const auto Block = GridOfActors.Get(Index); Block && !Block->DynamicActors.IsEmpty())
+		const auto Block = FindOrAddBlock(Index);
+		for (const auto& [Name, Data] : Block->DynamicActors)
 		{
-			for (const auto& [Name, Data] : Block->DynamicActors)
+			if (const auto ActorMetadata = ActorsMetadata.Find(Name))
 			{
-				if (const auto ActorMetadata = ActorsMetadata.Find(Name))
+				if (!ActorMetadata->Actor) //TODO: Remove this temporary solution
 				{
-					if (!ActorMetadata->Actor) //TODO: Remove this temporary solution
+					// If the metadata has invalid Actor pointer, just delete this record
+					const FTransition NewTransition{*ActorMetadata, Index, *Block, nullptr};
+					TransitionList.Add(Name, NewTransition);
+				}
+				else
+				{
+					if (const auto ActualBlockIndex = GetGroundBlockIndex(Data->GetTransform().GetLocation());
+						ActorMetadata->GroundBlockIndex != ActualBlockIndex)
 					{
-						// If the metadata has invalid Actor pointer, just delete this record
-						const FTransition NewTransition{*ActorMetadata, Index, *Block, nullptr};
-						TransitionList.Add(Name, NewTransition);
-					}
-					else
-					{
-						if (const auto ActualBlockIndex = GetGroundBlockIndex(Data->GetTransform().GetLocation());
-							ActorMetadata->GroundBlockIndex != ActualBlockIndex)
+						const auto NewBlock = FindOrAddBlock(ActualBlockIndex);
 						{
-							if (const auto NewBlock = GridOfActors.Get(ActualBlockIndex))
-							{
-								const FTransition NewTransition{*ActorMetadata, Index, *Block, NewBlock};
-								TransitionList.Add(Name, NewTransition);
-								ActorMetadata->GroundBlockIndex = ActualBlockIndex;
-							}
+							const FTransition NewTransition{*ActorMetadata, Index, *Block, NewBlock};
+							TransitionList.Add(Name, NewTransition);
+							ActorMetadata->GroundBlockIndex = ActualBlockIndex;
 						}
 					}
 				}
@@ -320,37 +305,40 @@ void AMWorldGenerator::UpdateActiveZone()
 	TMap<FIntPoint, bool> ActiveBlocksMap_New;
 
 	//TODO: Consider spreading the block logic over multiple ticks as done in OnTickGenerateBlocks()
-	for (const auto Block : GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius)) // you can add +1 to the ActiveZoneRadius if you need to see how the perimeter is generated in PIE
+	for (const auto BlockInd : GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius)) // you can add +1 to the ActiveZoneRadius if you need to see how the perimeter is generated in PIE
 	{
-		ActiveBlocksMap_New.Add(Block, true);
-		ActiveBlocksMap.Remove(Block);
-		if (const auto GridBlock = GridOfActors.Get(Block))
+		ActiveBlocksMap_New.Add(BlockInd, true);
+		ActiveBlocksMap.Remove(BlockInd);
+		auto* GridBlock = FindOrAddBlock(BlockInd);
+		if (!GridBlock)
 		{
-			// Enable all the static Actors in the block
-			for (const auto& [Index, Data] : GridBlock->StaticActors)
-			{
-				if (!Data)
-				{ //TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
-					check(false);
-					continue;
-				}
-				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-				{
-					IsActiveCheckerComponent->EnableOwner();
-				}
+			GridBlock = NewObject<UBlockMetadata>(this);
+		}
+
+		// Enable all the static Actors in the block
+		for (const auto& [Index, Data] : GridBlock->StaticActors)
+		{
+			if (!Data)
+			{ //TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
+				check(false);
+				continue;
 			}
-			// Enable all dynamic Actors in the block
-			for (const auto& [Index, Data] : GridBlock->DynamicActors)
+			if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 			{
-				if (!Data)
-				{
-					check(false);
-					continue;
-				}
-				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-				{
-					IsActiveCheckerComponent->EnableOwner();
-				}
+				IsActiveCheckerComponent->EnableOwner();
+			}
+		}
+		// Enable all dynamic Actors in the block
+		for (const auto& [Index, Data] : GridBlock->DynamicActors)
+		{
+			if (!Data)
+			{
+				check(false);
+				continue;
+			}
+			if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+			{
+				IsActiveCheckerComponent->EnableOwner();
 			}
 		}
 	}
@@ -358,30 +346,33 @@ void AMWorldGenerator::UpdateActiveZone()
 	// Disable/Remove all the rest of objects that were in PlayerActiveZone in the previous check but no longer there.
 	for (const auto& [BlockIndex, IsActive] : ActiveBlocksMap)
 	{
-		if (const auto GridBlock = GridOfActors.Get(BlockIndex))
+		if (const auto pGridBlock = GridOfActors.Find(BlockIndex))
 		{
-			for (const auto& [Index, Data] : GridBlock->StaticActors)
+			if (const auto GridBlock = *pGridBlock)
 			{
-				if (!Data)
-				{ //TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
-					check(false);
-					continue;
-				}
-				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+				for (const auto& [Index, Data] : GridBlock->StaticActors)
 				{
-					IsActiveCheckerComponent->DisableOwner();
+					if (!Data)
+					{ //TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
+						check(false);
+						continue;
+					}
+					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+					{
+						IsActiveCheckerComponent->DisableOwner();
+					}
 				}
-			}
-			for (const auto& [Index, Data] : GridBlock->DynamicActors)
-			{
-				if (!Data)
+				for (const auto& [Index, Data] : GridBlock->DynamicActors)
 				{
-					check(false);
-					continue;
-				}
-				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-				{
-					IsActiveCheckerComponent->DisableOwner();
+					if (!Data)
+					{
+						check(false);
+						continue;
+					}
+					if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+					{
+						IsActiveCheckerComponent->DisableOwner();
+					}
 				}
 			}
 		}
@@ -547,11 +538,7 @@ void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIn
 				++DelimiterIndex;
 			}
 
-			auto* BlockMetadata = GridOfActors.Get(Block);
-			if (!BlockMetadata)
-			{
-				BlockMetadata = GridOfActors.Add(Block, NewObject<UBlockMetadata>(this));
-			}
+			const auto BlockMetadata = FindOrAddBlock(Block);
 
 			if (BlockMetadata->ConstantActorsCount <= 0) // We keep the biome as well as all other objects
 			{
@@ -591,10 +578,11 @@ FIntPoint AMWorldGenerator::GetPlayerGroundBlockIndex() const
 
 UBlockMetadata* AMWorldGenerator::FindOrAddBlock(FIntPoint Index)
 {
-	auto* BlockMetadata = GridOfActors.Get(Index);
+	auto& BlockMetadata = GridOfActors.FindOrAdd(Index);
 	if (!BlockMetadata)
 	{
-		return GridOfActors.Add(Index, NewObject<UBlockMetadata>(this));
+		BlockMetadata = NewObject<UBlockMetadata>(this);
+		return BlockMetadata;
 	}
 	return BlockMetadata;
 }
@@ -840,11 +828,7 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor)
 	const auto GroundBlockIndex = GetGroundBlockIndex(Actor->GetActorLocation());
 
 	// If there's an empty block, add it to the map
-	auto BlockMetadata = GridOfActors.Get(GroundBlockIndex);
-	if (!BlockMetadata)
-	{
-		BlockMetadata = GridOfActors.Add(GroundBlockIndex, NewObject<UBlockMetadata>(this));
-	}
+	const auto BlockMetadata = FindOrAddBlock(GroundBlockIndex);
 
 	// Determine whether the object is static or movable
 	bool bDynamic = Actor->GetClass()->IsChildOf<APawn>();
@@ -881,29 +865,34 @@ void AMWorldGenerator::RemoveActorFromGrid(AActor* Actor)
 		return;
 	}
 	const auto BlockIndex = GetGroundBlockIndex(Actor->GetActorLocation());
-	if (const auto BlockMetadata = GridOfActors.Get(BlockIndex))
+	if (const auto pBlockMetadata = GridOfActors.Find(BlockIndex))
 	{
-		if (const auto ActiveCheckerComp = Cast<UMIsActiveCheckerComponent>(Actor->GetComponentByClass(UMIsActiveCheckerComponent::StaticClass())))
+		if (const auto BlockMetadata = *pBlockMetadata)
 		{
-			if (ActiveCheckerComp->GetAlwaysEnabled())
+			if (const auto ActiveCheckerComp = Cast<UMIsActiveCheckerComponent>(Actor->GetComponentByClass(UMIsActiveCheckerComponent::StaticClass())))
 			{
-				BlockMetadata->ConstantActorsCount--;
+				if (ActiveCheckerComp->GetAlwaysEnabled())
+				{
+					BlockMetadata->ConstantActorsCount--;
+				}
 			}
-		}
-		const auto ActorName = FName(Actor->GetName());
-		if (Actor->GetClass()->IsChildOf(APawn::StaticClass()))
-		{
-			BlockMetadata->DynamicActors.Remove(ActorName);
-		}
-		else
-		{
-			BlockMetadata->StaticActors.Remove(ActorName);
-		}
+			const auto ActorName = FName(Actor->GetName());
+			if (Actor->GetClass()->IsChildOf(APawn::StaticClass()))
+			{
+				BlockMetadata->DynamicActors.Remove(ActorName);
+			}
+			else
+			{
+				BlockMetadata->StaticActors.Remove(ActorName);
+			}
 
-		ActorsMetadata.Remove(ActorName);
+			ActorsMetadata.Remove(ActorName);
+		}
+		else check(false);
 
 		Actor->Destroy();
 	}
+	else check(false);
 }
 
 TSubclassOf<AActor> AMWorldGenerator::GetClassToSpawn(FName Name)
@@ -926,16 +915,19 @@ TMap<FName, AActor*> AMWorldGenerator::GetActorsInRect(FVector UpperLeft, FVecto
 	{
 		for (auto Y = StartBlock.Y; Y <= FinishBlock.Y; ++Y)
 		{
-			if (const auto Block = GridOfActors.Get({X, Y}))
+			if (const auto pBlock = GridOfActors.Find({X, Y}))
 			{
-				if (const auto& Actors = bDynamic ? Block->DynamicActors : Block->StaticActors;
-					!Actors.IsEmpty())
+				if (const auto Block = *pBlock)
 				{
-					for (const auto& [Name, Actor] : Actors)
+					if (const auto& Actors = bDynamic ? Block->DynamicActors : Block->StaticActors;
+						!Actors.IsEmpty())
 					{
-						if (const auto Metadata = ActorsMetadata.Find(Name); Actor)
+						for (const auto& [Name, Actor] : Actors)
 						{
-							Result.Add(Name, Metadata->Actor);
+							if (const auto Metadata = ActorsMetadata.Find(Name); Actor)
+							{
+								Result.Add(Name, Metadata->Actor);
+							}
 						}
 					}
 				}
@@ -954,17 +946,20 @@ void AMWorldGenerator::CleanArea(const FVector& Location, float Radius)
 	{
 		for (auto Y = StartBlock.Y; Y <= FinishBlock.Y; ++Y)
 		{
-			if (const auto Block = GridOfActors.Get({X, Y}))
+			if (const auto pBlock = GridOfActors.Find({X, Y}))
 			{
-				//TEMP SOLUTION
-				for (auto It = Block->StaticActors.CreateIterator(); It; ++It)
+				if (const auto Block = *pBlock)
 				{
-					if (Cast<AMGroundBlock>(It.Value()))
+					//TEMP SOLUTION
+					for (auto It = Block->StaticActors.CreateIterator(); It; ++It)
 					{
-						continue;
+						if (Cast<AMGroundBlock>(It.Value()))
+						{
+							continue;
+						}
+						It->Value->Destroy();
+						It.RemoveCurrent();
 					}
-					It->Value->Destroy();
-					It.RemoveCurrent();
 				}
 			}
 		}
@@ -993,10 +988,7 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 					return ActorBounds;
 				}
 
-				if (!pWorldGenerator->GridOfActors.Get(FIntPoint::ZeroValue))
-				{
-					auto Block = pWorldGenerator->GridOfActors.Add(FIntPoint::ZeroValue, NewObject<UBlockMetadata>(pWorldGenerator));
-				}
+				const auto _ = pWorldGenerator->FindOrAddBlock(FIntPoint::ZeroValue);
 
 				FActorSpawnParameters SpawnParameters;
 				SpawnParameters.Name = FName("TestBounds_" + IN_ActorClass->GetName());

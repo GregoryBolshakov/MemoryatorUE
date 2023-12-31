@@ -101,10 +101,6 @@ public:
 	UPROPERTY()
 	TMap<FIntPoint, FBlockSaveData> SavedGrid;
 
-	/** Order for blocks to be generated */
-	UPROPERTY()
-	TArray<FIntPoint> GridOrder;
-
 	// We don't save ActorsMetadata for 2 reasons:
 	// 1. Too large data. Very long read/write
 	// 2. It is possible to recreate it reading SavedGrid data

@@ -96,13 +96,16 @@ void AMVillageGenerator::Generate()
 		// We try to find a location to fit the building
 		if (TryToPlaceBuilding(*TestingBuildingActor, BuildingIndex, DistanceFromCenter, BuildingClassName, *BuildingMetadata))
 		{
-			pWorldGenerator->EnrollActorToGrid(TestingBuildingActor);
+			if (BuildingMetadata->ToSpawnClass != GapMetadata->ToSpawnClass) // They are supposed to be deleted
+			{
+				pWorldGenerator->EnrollActorToGrid(TestingBuildingActor);
+			}
 		}
 		else
 		{
 			// Previous implementation was such: If cannot place an actor, then stop and don't build the rest.
 
-			TestingBuildingActor->Destroy();
+			TestingBuildingActor->Destroy();  // Used AActor's version and it's OK, because Gaps were spawned not as a part of the Grid System
 			//One of possible solutions to develop generation. It hasn't been proved yet and the binary search isn't suitable for it.
 			// The idea is to keep increasing the radius of generation each time we couldn't fit an actor.
 			// Obviously, the order of the actors is important, because trying to place a big one will result in an increase
@@ -126,7 +129,7 @@ void AMVillageGenerator::Generate()
 	{
 		if (const auto MActor = Cast<AMActor>(BuildingMap[Key]))
 		{
-			MActor->Destroy();
+			MActor->AActor::Destroy(); // Intentionally use AActor's version because Gaps were spawned not as a part of the Grid System
 			BuildingMap.Remove(Key);
 		}
 		else
