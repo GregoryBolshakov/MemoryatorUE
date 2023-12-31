@@ -32,6 +32,7 @@ public:
 	bool TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* WorldGenerator);
 	void RemoveBlock(const FIntPoint& Index) const;
 	TArray<FIntPoint> GetPlayerTraveledPath() const;
+	bool IsLoaded() const { return LoadedGameWorld != nullptr; }
 
 private:
 

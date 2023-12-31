@@ -152,6 +152,7 @@ void UMSaveManager::LoadPerTick(AMWorldGenerator* WorldGenerator)
 
 bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* WorldGenerator)
 {
+	//TODO: MUST TODO! Support dependencies between actors: e.g. villager and his home. Come up with architecture when accumulate more examples
 	if (!LoadedGameWorld)
 		return false;
 	const auto BlockMetadata = WorldGenerator->EmptyBlock(BlockIndex, true, true);

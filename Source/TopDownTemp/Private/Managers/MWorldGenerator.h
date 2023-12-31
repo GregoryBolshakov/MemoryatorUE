@@ -35,8 +35,8 @@ class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 
 public:
 
-	/** Executed once on first run to create the surrounding area */
-	void InitNewWorld();
+	/** Loads or generates the blocks within Active Zone radius */
+	void InitSurroundingArea(); //TODO: Maybe rename to LoadOrGenerateArea and adapt for teleport usage as well
 
 	UBlockMetadata* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy = false);
 

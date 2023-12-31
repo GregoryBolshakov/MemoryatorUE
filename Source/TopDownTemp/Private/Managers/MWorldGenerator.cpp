@@ -36,7 +36,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 }
 //temp
 FTimerHandle tempTimer, tempTimer2;
-void AMWorldGenerator::InitNewWorld()
+void AMWorldGenerator::InitSurroundingArea()
 {
 	//TODO: Erase the old code. Now we consider this function to be called ONLY in the new empty world.
 	auto* pWorld = GetWorld();
@@ -93,13 +93,16 @@ void AMWorldGenerator::InitNewWorld()
 				LoadOrGenerateBlock(BlockInRadius);
 			}
 
-			/*pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()
+			if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
 			{
-				const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
-				const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
-				VillageGenerator->Generate();
-				UpdateNavigationMesh();
-			}, 0.3f, false);*/
+				pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()
+				{
+					const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
+					const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
+					VillageGenerator->Generate();
+					UpdateNavigationMesh();
+				}, 0.3f, false);
+			}
 		}
 	, 0.3f, false);
 
@@ -201,11 +204,8 @@ void AMWorldGenerator::BeginPlay()
 	BlocksPassedSinceLastPerimeterColoring = BiomesPerimeterColoringRate;
 
 	SaveManager->LoadFromMemory();
-	//if (!SaveManager->AsyncLoadFromMemory(this))
-	{
-		InitNewWorld();
-	}
-	UpdateActiveZone();
+
+	InitSurroundingArea();
 
 	// Bind to the player-moves-to-another-block event 
 	if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
