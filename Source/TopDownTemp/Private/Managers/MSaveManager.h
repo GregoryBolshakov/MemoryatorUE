@@ -26,14 +26,16 @@ class UMSaveManager : public UObject
 
 public:
 
-	void SetUpAutoSaves(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, const AMWorldGenerator* WorldGenerator);
-	void SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, const AMWorldGenerator* WorldGenerator);
+	void SetUpAutoSaves(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, AMWorldGenerator* WorldGenerator);
+	void SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, AMWorldGenerator* WorldGenerator);
 	bool LoadFromMemory();
+	bool TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* WorldGenerator);
+	void RemoveBlock(const FIntPoint& Index) const;
+	TArray<FIntPoint> GetPlayerTraveledPath() const;
 
 private:
 
-	void LoadPerTick(AMWorldGenerator* WorldGenerator);
-	void LoadBlock(const FIntPoint& BlockIndex, const FBlockSaveData& BlockSD, AMWorldGenerator* WorldGenerator);
+	//void LoadPerTick(AMWorldGenerator* WorldGenerator);
 	AMActor* LoadMActor(const FMActorSaveData& MActorSD, AMWorldGenerator* WorldGenerator);
 	AMPickableActor* LoadMPickableActor(const FMPickableActorSaveData& MPickableActorSD, AMWorldGenerator* WorldGenerator);
 	AMCharacter* LoadMCharacter(const FMCharacterSaveData& MCharacterSD, AMWorldGenerator* WorldGenerator);

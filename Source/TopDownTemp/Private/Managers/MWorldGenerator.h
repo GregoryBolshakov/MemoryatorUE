@@ -40,7 +40,8 @@ public:
 
 	UBlockMetadata* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy = false);
 
-	UBlockMetadata* GenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects = true);
+	/** First try to look at save, generate new if not found */
+	void LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature = true);
 
 	/** Turns on all actors in the active zone, turn off all others*/
 	void UpdateActiveZone();
@@ -53,6 +54,9 @@ public:
 
 	void EnrollActorToGrid(AActor* Actor);
 	void RemoveActorFromGrid(AActor* Actor);
+
+	/** Matches all enabled dynamic actors with the blocks they are on. Triggers all OnBlockChangedDelegates*/
+	void CheckDynamicActorsBlocks();
 
 	TSubclassOf<AActor> GetClassToSpawn(FName Name); 
 
@@ -141,9 +145,6 @@ private:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual void Tick(float DeltaSeconds) override;
-
-	/** Matches all enabled dynamic actors with the blocks they are on. Triggers all OnBlockChangedDelegates*/
-	void CheckDynamicActorsBlocks();
 
 	/** Moves the navigation mesh to the player's position */
 	void UpdateNavigationMesh();

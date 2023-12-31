@@ -21,6 +21,7 @@
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "StationaryActors/MPickableActor.h"
 #include "MSaveManager.h"
+#include "MSaveTypes.h"
 #include "MWorldManager.h"
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
@@ -42,19 +43,28 @@ void AMWorldGenerator::InitNewWorld()
 	if (!pWorld)
 		return;
 
-	// Spawn player and add it to the Grid
+	if (const auto PlayerTravelledPath = SaveManager->GetPlayerTraveledPath(); !PlayerTravelledPath.IsEmpty())
+	{// Load the last block player travelled, i.e. the block with the player
+		SaveManager->TryLoadBlock(PlayerTravelledPath.Last(), this);
+	}
 	APawn* pPlayer = nullptr;
 	if (const auto pPlayerMetadata = ActorsMetadata.Find("Player"))
 	{
 		pPlayer = Cast<APawn>(pPlayerMetadata->Actor);
 	}
-	else
+	else // The player wasn't loaded, spawn a new one
 	{
 		if (const auto PlayerClass = ToSpawnActorClasses.Find("Player"))
 		{
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Name = "Player";
 			pPlayer = SpawnActor<AMCharacter>(*PlayerClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams, true);
+
+			// Possess the player by controller
+			if (const auto pPlayerController = UGameplayStatics::GetPlayerController(pWorld, 0))
+				pPlayerController->Possess(pPlayer);
+			else
+				check(false);
 		}
 	}
 	if (!IsValid(pPlayer))
@@ -62,10 +72,6 @@ void AMWorldGenerator::InitNewWorld()
 		check(false);
 		return;
 	}
-	if (const auto pPlayerController = UGameplayStatics::GetPlayerController(pWorld, 0))
-		pPlayerController->Possess(pPlayer);
-	else
-		check(false);
 
 	RoadManager->ConnectTwoChunks({-5, 0}, {5, 5});
 
@@ -84,16 +90,16 @@ void AMWorldGenerator::InitNewWorld()
 			}
 			for (const auto BlockInRadius : BlocksInRadius)
 			{
-				GenerateBlock(BlockInRadius);
+				LoadOrGenerateBlock(BlockInRadius);
 			}
 
-			pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()
+			/*pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()
 			{
 				const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
 				const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
 				VillageGenerator->Generate();
 				UpdateNavigationMesh();
-			}, 0.3f, false);
+			}, 0.3f, false);*/
 		}
 	, 0.3f, false);
 
@@ -138,11 +144,16 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 	return BlockMetadata;
 }
 
-UBlockMetadata* AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects)
+void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature)
 {
-	const auto Block = EmptyBlock(BlockIndex, KeepDynamicObjects);
+	// First try to load the block
+	if (SaveManager->TryLoadBlock(BlockIndex, this))
+	{
+		return;
+	}
+	// Couldn't load, generate it from scratch
+	const auto Block = EmptyBlock(BlockIndex, true);
 	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, Block->Biome);
-	return Block;
 }
 
 void AMWorldGenerator::BeginPlay()
@@ -189,6 +200,7 @@ void AMWorldGenerator::BeginPlay()
 	// We want to set the biome coloring since the first block change
 	BlocksPassedSinceLastPerimeterColoring = BiomesPerimeterColoringRate;
 
+	SaveManager->LoadFromMemory();
 	//if (!SaveManager->AsyncLoadFromMemory(this))
 	{
 		InitNewWorld();
@@ -555,7 +567,8 @@ void AMWorldGenerator::OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate)
 	int Index = 0;
 	for (auto It = BlocksToGenerate.CreateIterator(); It; ++It)
 	{
-		GenerateBlock(*It);
+		SaveManager->RemoveBlock(*It); // Overwrite the block. Its previously saved data is no longer needed
+		LoadOrGenerateBlock(*It);
 		It.RemoveCurrent();
 
 		if (++Index >= BlocksPerFrame)

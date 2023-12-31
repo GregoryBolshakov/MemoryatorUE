@@ -9,11 +9,11 @@ AMGameMode::AMGameMode()
 	PlayerControllerClass = AMPlayerController::StaticClass();
 
 	// set default pawn class to our Blueprinted character
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/Memoryator/Blueprints/BP_Memoryator"));
-	if (PlayerPawnBPClass.Class != nullptr)
-	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
-	}
+	//static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/Memoryator/Blueprints/BP_Memoryator"));
+	//if (PlayerPawnBPClass.Class != nullptr)
+	//{
+	//	DefaultPawnClass = PlayerPawnBPClass.Class;
+	//}
 }
 
 void AMGameMode::GoOffline()

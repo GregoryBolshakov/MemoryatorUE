@@ -11,7 +11,7 @@
 
 DEFINE_LOG_CATEGORY(LogSaveManager);
 
-void UMSaveManager::SetUpAutoSaves(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, const AMWorldGenerator* WorldGenerator)
+void UMSaveManager::SetUpAutoSaves(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, AMWorldGenerator* WorldGenerator)
 {
 	const auto World = GetWorld();
 	if (!IsValid(World))
@@ -23,28 +23,29 @@ void UMSaveManager::SetUpAutoSaves(TMap<FIntPoint, UBlockMetadata*>& GridOfActor
 	}, 5.f, true);
 }
 
-void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, const AMWorldGenerator* WorldGenerator)
+void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, AMWorldGenerator* WorldGenerator)
 {
 	const auto SaveGameWorld = LoadedGameWorld ? LoadedGameWorld : Cast<USaveGameWorld>(UGameplayStatics::CreateSaveGameObject(USaveGameWorld::StaticClass()));
 	if (!SaveGameWorld || !WorldGenerator)
 		return;
 
-	// Iterate the world grid saving blocks 
+	WorldGenerator->CheckDynamicActorsBlocks();
+
+	SaveGameWorld->PlayerTraveledPath = { WorldGenerator->GetPlayerGroundBlockIndex() }; // TODO: Save the whole path
+
+	// Iterate the world grid saving blocks
+	//TODO: Mark visited(or modified) blocks as dirty and then iterate only marked
 	for (const auto& [BlockIndex, BlockMetadata] : GridOfActors)
 	{
 		if (BlockMetadata && BlockMetadata->pGroundBlock) // We don't consider blocks without actors to be generated, even if they are marked with some biome
 		{
-			FBlockSaveData* SavedBlock = SavedBlock = SaveGameWorld->SavedGrid.Find(BlockIndex);;
-			if (!SavedBlock)
-			{
-				SavedBlock = &SaveGameWorld->SavedGrid.Add(BlockIndex, {});
-			}
+			auto& SavedBlock = SaveGameWorld->SavedGrid.FindOrAdd(BlockIndex);
 
-			SavedBlock->PCGVariables = BlockMetadata->pGroundBlock->PCGVariables;
+			SavedBlock.PCGVariables = BlockMetadata->pGroundBlock->PCGVariables;
 			// Empty in case they've been there since last load
-			SavedBlock->SavedMActors.Empty();
-			SavedBlock->SavedMPickableActors.Empty();
-			SavedBlock->SavedMCharacters.Empty();
+			SavedBlock.SavedMActors.Empty();
+			SavedBlock.SavedMPickableActors.Empty();
+			SavedBlock.SavedMCharacters.Empty();
 
 			for (const auto& [Name, pActor] : BlockMetadata->StaticActors)
 			{
@@ -73,12 +74,12 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 								MActorSD,
 								InventoryComponent->GetItemCopies(false)
 							};
-							SavedBlock->SavedMPickableActors.Add(MPickableActorSD);
+							SavedBlock.SavedMPickableActors.Add(MPickableActorSD);
 						}
 					}
 					else
 					{
-						SavedBlock->SavedMActors.Add(MActorSD);
+						SavedBlock.SavedMActors.Add(MActorSD);
 					}
 				}
 			}
@@ -101,7 +102,7 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 						pMCharacter->GetSpeciesName(),
 						pMCharacter->GetHealth()
 					};
-					SavedBlock->SavedMCharacters.Add(MCharacterSD);
+					SavedBlock.SavedMCharacters.Add(MCharacterSD);
 				}
 			}
 		}
@@ -149,27 +150,52 @@ void UMSaveManager::LoadPerTick(AMWorldGenerator* WorldGenerator)
 	}
 }*/
 
-void UMSaveManager::LoadBlock(const FIntPoint& BlockIndex, const FBlockSaveData& BlockSD, AMWorldGenerator* WorldGenerator)
+bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* WorldGenerator)
 {
-	//TODO: For static terrain generation we're relying on PCG determinism for now, but be careful
-	const auto BlockMetadata = WorldGenerator->EmptyBlock(BlockIndex, false, true);
-	BlockMetadata->Biome = BlockSD.PCGVariables.Biome;
-	WorldGenerator->GetBlockGenerator()->SpawnActorsSpecifically(BlockIndex, WorldGenerator, BlockSD.PCGVariables);
+	if (!LoadedGameWorld)
+		return false;
+	const auto BlockMetadata = WorldGenerator->EmptyBlock(BlockIndex, true, true);
+	const auto BlockSD = LoadedGameWorld->SavedGrid.Find(BlockIndex);
+	if (!BlockSD)
+		return false;
+	BlockMetadata->Biome = BlockSD->PCGVariables.Biome;
+	//TODO: For static terrain generation we're relying on PCG determinism, be careful
+	WorldGenerator->GetBlockGenerator()->SpawnActorsSpecifically(BlockIndex, WorldGenerator, BlockSD->PCGVariables);
 
-	for (const auto& MActorSD : BlockSD.SavedMActors)
+	for (const auto& MActorSD : BlockSD->SavedMActors)
 	{
 		LoadMActor(MActorSD, WorldGenerator);
 	}
 
-	for (const auto& MPickableActorDS : BlockSD.SavedMPickableActors)
+	for (const auto& MPickableActorDS : BlockSD->SavedMPickableActors)
 	{
 		LoadMPickableActor(MPickableActorDS, WorldGenerator);
 	}
 
-	for (const auto& MCharacterDS : BlockSD.SavedMCharacters)
+	for (const auto& MCharacterDS : BlockSD->SavedMCharacters)
 	{
 		LoadMCharacter(MCharacterDS, WorldGenerator);
 	}
+
+	RemoveBlock(BlockIndex); // The block is loaded, it's save is unnecessary
+	return true;
+}
+
+void UMSaveManager::RemoveBlock(const FIntPoint& Index) const
+{
+	if (LoadedGameWorld)
+	{
+		LoadedGameWorld->SavedGrid.Remove(Index);
+	}
+}
+
+TArray<FIntPoint> UMSaveManager::GetPlayerTraveledPath() const
+{
+	if (LoadedGameWorld)
+	{
+		return LoadedGameWorld->PlayerTraveledPath;
+	}
+	return {};
 }
 
 AMActor* UMSaveManager::LoadMActor(const FMActorSaveData& MActorSD, AMWorldGenerator* WorldGenerator)
@@ -224,13 +250,14 @@ AMCharacter* UMSaveManager::LoadMCharacter(const FMCharacterSaveData& MCharacter
 	//TODO: Understand why passing a non-zero rotation causes issues with components bounds (box extent) (e.g. AttackPuddleComponent) 
 	if (const auto SpawnedCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, /*ActorSD.Rotation*/ FRotator::ZeroRotator, Params, true))
 	{
-		// If it was the player, make it possessed by the player controller
+		// If it is the player, make it possessed by the player controller
 		if (Params.Name == FName("Player"))
 		{
 			if (const auto pPlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0))
 			{
 				pPlayerController->Possess(SpawnedCharacter);
 			}
+			else check(false);
 		}
 
 		return SpawnedCharacter;
