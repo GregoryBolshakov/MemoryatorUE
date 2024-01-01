@@ -7,6 +7,7 @@ class AMRoadSplineActor;
 class ASplineMeshActor;
 class AMGroundBlock;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBlockChanged, const FIntPoint&, OldBlock, const FIntPoint&, NewBlock);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnChunkChanged, const FIntPoint&, OldChunk, const FIntPoint&, NewChunk);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*);
 
 UENUM(BlueprintType)
@@ -122,7 +123,11 @@ public:
 
 	FIntPoint GroundBlockIndex;
 
+	FIntPoint ChunkIndex;
+
 	FOnBlockChanged OnBlockChangedDelegate;
+
+	FOnChunkChanged OnChunkChangedDelegate;
 };
 
 enum class EScreenPoint

@@ -73,7 +73,8 @@ void AMWorldGenerator::InitSurroundingArea()
 		return;
 	}
 
-	RoadManager->ConnectTwoChunks({-5, 0}, {5, 5});
+	const auto PlayerChunk = RoadManager->GetChunkIndexByLocation(pPlayer->GetTransform().GetLocation());
+	RoadManager->ConnectChunksWithinRegion(RoadManager->GetRegionIndexByChunk(PlayerChunk));
 
 	UpdateActiveZone(); // temp solution to avoid disabling all subsequently generated actors due to empty ActiveBlocksMap
 
@@ -214,6 +215,7 @@ void AMWorldGenerator::BeginPlay()
 		if (const auto PlayerMetadata = ActorsMetadata.Find(FName(pPlayer->GetName())))
 		{
 			PlayerMetadata->OnBlockChangedDelegate.AddDynamic(this, &AMWorldGenerator::OnPlayerChangedBlock);
+			PlayerMetadata->OnChunkChangedDelegate.AddDynamic(RoadManager, &UMRoadManager::OnPlayerChangedChunk);
 		}
 	}
 
@@ -299,6 +301,14 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 			// where all surrounding static objects are disabled.
 			// Check the environment for validity if you bind to the delegate!
 			Transition.ActorMetadata.OnBlockChangedDelegate.Broadcast(Transition.OldBlockIndex, Transition.ActorMetadata.GroundBlockIndex);
+
+			//Chunk transition check
+			const auto OldChunk = RoadManager->GetChunkIndexByBlock(Transition.OldBlockIndex);
+			const auto ActualChunk = RoadManager->GetChunkIndexByBlock(Transition.ActorMetadata.GroundBlockIndex);
+			if (OldChunk != ActualChunk)
+			{
+				Transition.ActorMetadata.OnChunkChangedDelegate.Broadcast(OldChunk, ActualChunk);
+			}
 		}
 	}
 }
@@ -476,7 +486,6 @@ void AMWorldGenerator::GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock)
 	auto BlocksOnPerimeter = GetBlocksOnPerimeter(CenterBlock.X, CenterBlock.Y, ActiveZoneRadius + 1);
 
 	SetBiomesForBlocks(CenterBlock, BlocksOnPerimeter);
-	RoadManager->GenerateNewPieceForRoads(BlocksOnPerimeter);
 
 	auto TopLeftScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopLeft);
 	auto TopRighScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopRight);

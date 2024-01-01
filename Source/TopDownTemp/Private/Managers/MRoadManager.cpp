@@ -1,5 +1,6 @@
 #include "MRoadManager.h"
 #include "MWorldGenerator.h"
+#include "Algo/RandomShuffle.h"
 #include "Components/SplineComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "StationaryActors/MRoadSplineActor.h"
@@ -13,8 +14,6 @@ void UMRoadManager::ConnectTwoChunks(const FIntPoint& ChunkA, const FIntPoint& C
 	}
 
 	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
-
-	bool toggle = true; // This flag will help in alternating between increments of i and j
 
 	int i = ChunkA.X, j = ChunkA.Y, i_inc = FMath::Sign(ChunkB.X - ChunkA.X), j_inc = FMath::Sign(ChunkB.Y - ChunkA.Y);
 	do {
@@ -33,7 +32,7 @@ void UMRoadManager::ConnectTwoChunks(const FIntPoint& ChunkA, const FIntPoint& C
 		}
 
 		// Find or spawn a Road Spline and populate points towards the adjacent chunk
-		auto RoadSplineActor = Roads.FindOrAdd({{prev_i, prev_j}, {i, j}});
+		auto& RoadSplineActor = Roads.FindOrAdd({{prev_i, prev_j}, {i, j}});
 		if (!RoadSplineActor)
 		{
 			const auto StartBlock = GetBlockIndexByChunk({prev_i, prev_j});
@@ -65,75 +64,77 @@ void UMRoadManager::ConnectTwoChunks(const FIntPoint& ChunkA, const FIntPoint& C
 	} while (i != ChunkB.X || j != ChunkB.Y);
 }
 
-void UMRoadManager::GenerateNewPieceForRoads(const TSet<FIntPoint>& BlocksOnPerimeter)
+void UMRoadManager::ConnectChunksWithinRegion(/*const FIntPoint& Center (OLD)*/ const FIntPoint& RegionIndex)
 {
-	const auto World = GetWorld();
-	if (!IsValid(World)) return;
-	const auto Player = UGameplayStatics::GetPlayerPawn(World, 0);
-	if (!IsValid(Player)) return;
+	const auto BottomLeftChunk = GetChunkIndexByRegion(RegionIndex);
 
-	const auto PlayerLocation = Player->GetTransform().GetLocation();
-	const auto PlayerBlock = pWorldGenerator->GetGroundBlockIndex(PlayerLocation);
-
-	const auto BlocksInRadius = pWorldGenerator->GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, pWorldGenerator->GetActiveZoneRadius());
-
-	// Iterate all blocks on the perimeter to extend already existing roads, or to lay new
-	for (const auto& PerimeterBlockIndex : BlocksOnPerimeter)
+	// We will split all the chunks into pairs, and then we will connect some pairs and some not
+	TArray<FIntPoint> ChunkIndexes;
+	for (int i = BottomLeftChunk.X; i < BottomLeftChunk.X + RegionSize.X; ++i)
 	{
-		const auto BlockMetadata = pWorldGenerator->FindOrAddBlock(PerimeterBlockIndex);
-		if (BlockMetadata->RoadSpline) // (Common case) The road section has already been laid here, try to extend it towards an adjacent block
+		for (int j = BottomLeftChunk.Y; j < BottomLeftChunk.Y + RegionSize.Y; ++j)
 		{
-			const auto* SplineComponent = BlockMetadata->RoadSpline->GetSplineComponent();
-			const auto PointsNumber = SplineComponent->GetNumberOfSplinePoints();
-			const auto FirstSplinePoint = SplineComponent->GetLocationAtSplinePoint(0, ESplineCoordinateSpace::World);
-			const auto LastSplinePoint = SplineComponent->GetLocationAtSplinePoint(PointsNumber - 1, ESplineCoordinateSpace::World);
-
-			bool bCanBeExtended = true;
-			FIntPoint BlockForExtensionIndex{};
-			// Determine whether the road can be extended from this block
-			if (pWorldGenerator->GetGroundBlockIndex(FirstSplinePoint) == PerimeterBlockIndex || // Can continue road only from the ends
-				pWorldGenerator->GetGroundBlockIndex(LastSplinePoint) == PerimeterBlockIndex)
+			ChunkIndexes.Add({i, j});
+		}
+	}
+	Algo::RandomShuffle(ChunkIndexes);
+	// Split the array into pairs and connect some of them depending on ConnectionChance
+	for (int i = 0; i < ChunkIndexes.Num() - 1; ++i)
+	{
+		auto& ChunkA = GridOfChunks.FindOrAdd(ChunkIndexes[i]);
+		auto& ChunkB = GridOfChunks.FindOrAdd(ChunkIndexes[i+1]);
+		if (!ChunkA.bProcessed || !ChunkB.bProcessed)
+		{
+			if (FMath::RandRange(0.f, 1.f) < ConnectionChance)
 			{
-				for (int XOffset = -1; XOffset <= 1; ++XOffset) // Iterate all neighbours (including diagonals)
-				{
-					for (int YOffset = -1; YOffset <= 1; ++YOffset)
-					{
-						if (XOffset == 0 && YOffset == 0) // Skip the block itself
-							continue;
-						const auto IteratedBlock = FIntPoint(PerimeterBlockIndex.X + XOffset, PerimeterBlockIndex.Y + YOffset);
-						if (!BlocksInRadius.Contains(IteratedBlock) && !BlocksOnPerimeter.Contains(IteratedBlock)) // Skip already generated blocks
-						{
-							if (pWorldGenerator->FindOrAddBlock(IteratedBlock)->RoadSpline)
-							{
-								bCanBeExtended = false;
-							}
-							else
-							{
-								BlockForExtensionIndex = IteratedBlock;
-							}
-						}
-					}
-				}
-				if (bCanBeExtended)
-				{ // Add point to the spline from the closest end. Copy RoadSpline pointer to the block metadata
-					pWorldGenerator->FindOrAddBlock(BlockForExtensionIndex)->RoadSpline = BlockMetadata->RoadSpline;
-					const auto NewIndex = pWorldGenerator->GetGroundBlockIndex(FirstSplinePoint) == PerimeterBlockIndex ? 0 : PointsNumber;
-					const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
-					auto NewPosition = pWorldGenerator->GetGroundBlockLocation(BlockForExtensionIndex) + BlockSize / 2.f;
-					NewPosition.X += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.X; // Random offset
-					NewPosition.Y += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.Y; // Random offset
-					BlockMetadata->RoadSpline->GetSplineComponent()->AddSplinePointAtIndex(NewPosition, NewIndex, ESplineCoordinateSpace::World, true);
-				}
+				ConnectTwoChunks(ChunkIndexes[i], ChunkIndexes[i+1]);
 			}
 		}
-		
+		ChunkA.bProcessed = true;
+		ChunkB.bProcessed = true;
 	}
 }
 
 FIntPoint UMRoadManager::GetChunkIndexByLocation(const FVector& Location) const
 {
-	// Intentionally cast divisible to float to result in floating number. Then floor it down.
 	const auto BlockIndex = pWorldGenerator->GetGroundBlockIndex(Location);
+	return GetChunkIndexByBlock(BlockIndex);
+}
+
+FIntPoint UMRoadManager::GetChunkIndexByBlock(const FIntPoint& BlockIndex) const
+{
 	return FIntPoint(FMath::FloorToInt(static_cast<float>(BlockIndex.X) / ChunkSize.X),
 					FMath::FloorToInt(static_cast<float>(BlockIndex.Y) / ChunkSize.Y));
+}
+
+FIntPoint UMRoadManager::GetRegionIndexByChunk(const FIntPoint& ChunkIndex) const
+{
+	return FIntPoint(FMath::FloorToInt(static_cast<float>(ChunkIndex.X) / ChunkSize.X),
+					FMath::FloorToInt(static_cast<float>(ChunkIndex.Y) / ChunkSize.Y));
+}
+
+void UMRoadManager::OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk)
+{
+	// When we approach the edge of the current region, we process the neighboring region
+	if (NewChunk.X % RegionSize.X == RegionSize.X - 1)
+	{
+		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X + 1, NewChunk.Y}));
+		return;
+	}
+	if (NewChunk.X % RegionSize.X == 0)
+	{
+		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X - 1, NewChunk.Y}));
+		return;
+	}
+	if (NewChunk.Y % RegionSize.Y == RegionSize.Y - 1)
+	{
+		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X, NewChunk.Y + 1}));
+		return;
+	}
+	if (NewChunk.Y % RegionSize.Y == 0)
+	{
+		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X, NewChunk.Y - 1}));
+		return;
+	}
+	// We ignore diagonal cases as we process blocks with a stepped pattern (don't cut corners)
 }
