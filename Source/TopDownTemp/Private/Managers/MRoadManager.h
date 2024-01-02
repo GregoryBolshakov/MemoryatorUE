@@ -103,9 +103,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="MRoadManager|Configuration", meta=(ClampMin="0.1", ClampMax="0.5"))
 	float CurveFactor = 0.35f;
 
-	/** It maps pairs of chunks and corresponding spline actors (roads) between them */
+	/** It maps pairs of CHUNKS and corresponding spline actors (roads) between them
+	 *  Run only along chunk edges, usually large are part of long paths
+	 */
 	UPROPERTY()
 	TMap<FUnorderedConnection, AMRoadSplineActor*> Roads;
+
+	/** It maps pairs of BLOCKS and corresponding spline actors (roads) between them
+	 *  Lie between blocks, can have any shape, usually small and should be within one or two chunks.
+	 *  It's impossible to track intersections between two trails.
+	 */
+	UPROPERTY()
+	TMap<FUnorderedConnection, AMRoadSplineActor*> Trails;
 
 private:
 	UPROPERTY()
