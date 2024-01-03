@@ -76,6 +76,9 @@ void AMWorldGenerator::InitSurroundingArea()
 	const auto PlayerChunk = RoadManager->GetChunkIndexByLocation(pPlayer->GetTransform().GetLocation());
 	RoadManager->ConnectChunksWithinRegion(RoadManager->GetRegionIndexByChunk(PlayerChunk));
 
+	//temp
+	RoadManager->ConnectTwoChunks(PlayerChunk, {PlayerChunk.X, PlayerChunk.Y + 1});
+
 	UpdateActiveZone(); // temp solution to avoid disabling all subsequently generated actors due to empty ActiveBlocksMap
 
 	pWorld->GetTimerManager().SetTimer(tempTimer, [this, pWorld, pPlayer]()
@@ -94,7 +97,7 @@ void AMWorldGenerator::InitSurroundingArea()
 				LoadOrGenerateBlock(BlockInRadius);
 			}
 
-			if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
+			/*if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
 			{
 				pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()
 				{
@@ -103,7 +106,7 @@ void AMWorldGenerator::InitSurroundingArea()
 					VillageGenerator->Generate();
 					UpdateNavigationMesh();
 				}, 0.3f, false);
-			}
+			}*/
 		}
 	, 0.3f, false);
 

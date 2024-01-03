@@ -66,6 +66,7 @@ void UMRoadManager::ConnectTwoChunks(const FIntPoint& ChunkA, const FIntPoint& C
 
 void UMRoadManager::ConnectChunksWithinRegion(/*const FIntPoint& Center (OLD)*/ const FIntPoint& RegionIndex)
 {
+	GridOfRegions.FindOrAdd(RegionIndex).bProcessed = true;
 	const auto BottomLeftChunk = GetChunkIndexByRegion(RegionIndex);
 
 	// We will split all the chunks into pairs, and then we will connect some pairs and some not
@@ -116,22 +117,22 @@ FIntPoint UMRoadManager::GetRegionIndexByChunk(const FIntPoint& ChunkIndex) cons
 void UMRoadManager::OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk)
 {
 	// When we approach the edge of the current region, we process the neighboring region
-	if (NewChunk.X % RegionSize.X == RegionSize.X - 1)
+	if (NewChunk.X % RegionSize.X == RegionSize.X - 1 && !GridOfRegions.FindOrAdd({NewChunk.X + 1, NewChunk.Y}).bProcessed)
 	{
 		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X + 1, NewChunk.Y}));
 		return;
 	}
-	if (NewChunk.X % RegionSize.X == 0)
+	if (NewChunk.X % RegionSize.X == 0 && !GridOfRegions.FindOrAdd({NewChunk.X - 1, NewChunk.Y}).bProcessed)
 	{
 		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X - 1, NewChunk.Y}));
 		return;
 	}
-	if (NewChunk.Y % RegionSize.Y == RegionSize.Y - 1)
+	if (NewChunk.Y % RegionSize.Y == RegionSize.Y - 1 && !GridOfRegions.FindOrAdd({NewChunk.X, NewChunk.Y + 1}).bProcessed)
 	{
 		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X, NewChunk.Y + 1}));
 		return;
 	}
-	if (NewChunk.Y % RegionSize.Y == 0)
+	if (NewChunk.Y % RegionSize.Y == 0 && !GridOfRegions.FindOrAdd({NewChunk.X, NewChunk.Y - 1}).bProcessed)
 	{
 		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X, NewChunk.Y - 1}));
 		return;
