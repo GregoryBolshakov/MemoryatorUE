@@ -73,11 +73,25 @@ void UMRoadManager::ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& B
 		return;
 	}
 
+	// Check if there's no other kind of road between the blocks
+	for (const ERoadType OtherRoadType : TEnumRange<ERoadType>())
+	{
+		if (OtherRoadType != RoadType)
+		{
+			auto& OtherRoadContainer = GetRoadContainer(OtherRoadType);
+			if (OtherRoadContainer.Contains({BlockA, BlockB}))
+			{
+				check(false);
+				return;
+			}
+		}
+	}
+
 	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
 
-	auto& RoadMap = RoadType == ERoadType::MainRoad ? MainRoads : Trails;
 	// Find or spawn a Road Spline and populate points towards the adjacent chunk
-	auto& RoadSplineActor = RoadMap.FindOrAdd({BlockA, BlockB});
+	auto& RoadContainer = GetRoadContainer(RoadType);
+	auto& RoadSplineActor = RoadContainer.FindOrAdd({BlockA, BlockB});
 	if (!RoadSplineActor)
 	{
 		int x_inc = FMath::Sign(BlockB.X - BlockA.X), y_inc = FMath::Sign(BlockB.Y - BlockA.Y);
@@ -192,6 +206,19 @@ void UMRoadManager::ConnectChunksWithinRegion(const FIntPoint& RegionIndex)
 		ChunkA.bProcessed = true;
 		ChunkB.bProcessed = true;
 	}
+}
+
+TMap<FUnorderedConnection, AMRoadSplineActor*>& UMRoadManager::GetRoadContainer(ERoadType RoadType)
+{
+	switch (RoadType)
+	{
+	case ERoadType::MainRoad:
+		return MainRoads;
+	case ERoadType::Trail:
+		return Trails;
+	}
+	check(false);
+	return MainRoads;
 }
 
 FIntPoint UMRoadManager::GetChunkIndexByLocation(const FVector& Location) const

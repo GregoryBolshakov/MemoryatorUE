@@ -206,7 +206,7 @@ void AMWorldGenerator::BeginPlay()
 	// We want to set the biome coloring since the first block change
 	BlocksPassedSinceLastPerimeterColoring = BiomesPerimeterColoringRate;
 
-	SaveManager->LoadFromMemory();
+	//SaveManager->LoadFromMemory();
 
 	InitSurroundingArea();
 
