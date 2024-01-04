@@ -42,6 +42,9 @@ void UMRoadManager::ConnectTwoChunks(FIntPoint ChunkA, FIntPoint ChunkB, const E
 	ConnectTwoBlocks(GetBlockIndexByChunk(ChunkA), GetChunkCenterBlock(OriginalChunkA), ERoadType::Trail);
 	ConnectTwoBlocks(GetBlockIndexByChunk(ChunkB), GetChunkCenterBlock(OriginalChunkB), ERoadType::Trail);
 
+	if (ChunkA == ChunkB)
+		return;
+
 	int i = ChunkA.X, j = ChunkA.Y;
 	do {
 		int prev_i = i, prev_j = j;
@@ -58,43 +61,7 @@ void UMRoadManager::ConnectTwoChunks(FIntPoint ChunkA, FIntPoint ChunkB, const E
 			}
 		}
 
-		// Find or spawn a Road Spline and populate points towards the adjacent chunk
-		auto& RoadSplineActor = MainRoads.FindOrAdd({{prev_i, prev_j}, {i, j}});
-		if (!RoadSplineActor)
-		{
-			const auto StartBlock = GetBlockIndexByChunk({prev_i, prev_j});
-			const auto FinishBlock = GetBlockIndexByChunk({i, j});
-			int x_inc = FMath::Sign(FinishBlock.X - StartBlock.X), y_inc = FMath::Sign(FinishBlock.Y - StartBlock.Y);
-
-			const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
-			RoadSplineActor = GetWorld()->SpawnActor<AMRoadSplineActor>(
-				pWorldGenerator->GetActorClassToSpawn("RoadSpline"),
-				FVector((StartBlock.X + 0.5f) * BlockSize.X, (StartBlock.Y + 0.5f) * BlockSize.Y, 1.f), // + 0.5f to put in the center of the block
-				FRotator::ZeroRotator,
-				{}
-			);
-			if (!RoadSplineActor)
-			{
-				check(false);
-				return;
-			}
-			RoadSplineActor->Tags.Add(GetRoadPCGTag(RoadType));
-			RoadSplineActor->GetSplineComponent()->RemoveSplinePoint(1, true);
-
-			int x = StartBlock.X, y = StartBlock.Y;
-			do
-			{
-				x = x == FinishBlock.X ? x : x + x_inc;
-				y = y == FinishBlock.Y ? y : y + y_inc;
-				FVector NewPosition{(x + 0.5f) * BlockSize.X, (y + 0.5f) * BlockSize.Y, 1.f}; // + 0.5f to put in the center of the block
-				if (x != FinishBlock.X || y != FinishBlock.Y)
-				{
-					NewPosition.X += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.X; // Random offset
-					NewPosition.Y += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.Y; // Random offset
-				}
-				RoadSplineActor->GetSplineComponent()->AddSplinePoint(NewPosition, ESplineCoordinateSpace::World, true);
-			} while (x != FinishBlock.X || y != FinishBlock.Y);
-		}
+		ConnectTwoBlocks(GetBlockIndexByChunk({prev_i, prev_j}), GetBlockIndexByChunk({i, j}), ERoadType::MainRoad);
 	} while (i != ChunkB.X || j != ChunkB.Y);
 }
 
@@ -108,8 +75,9 @@ void UMRoadManager::ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& B
 
 	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
 
+	auto& RoadMap = RoadType == ERoadType::MainRoad ? MainRoads : Trails;
 	// Find or spawn a Road Spline and populate points towards the adjacent chunk
-	auto& RoadSplineActor = Trails.FindOrAdd({BlockA, BlockB});
+	auto& RoadSplineActor = RoadMap.FindOrAdd({BlockA, BlockB});
 	if (!RoadSplineActor)
 	{
 		int x_inc = FMath::Sign(BlockB.X - BlockA.X), y_inc = FMath::Sign(BlockB.Y - BlockA.Y);

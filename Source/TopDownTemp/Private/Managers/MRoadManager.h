@@ -29,6 +29,15 @@ namespace FUnorderedConnectionHash
 	}
 }
 
+FORCEINLINE uint32 GetTypeHash(const FUnorderedConnection& Connection)
+{
+	uint32 HashA = GetTypeHash(Connection.A);
+	uint32 HashB = GetTypeHash(Connection.B);
+
+	// Combine hashes in a way that is order-independent
+	return FUnorderedConnectionHash::HashCombine(FMath::Min(HashA, HashB), FMath::Max(HashA, HashB));
+}
+
 UENUM()
 enum class ERoadType : uint8
 {
@@ -49,15 +58,6 @@ struct FRegionMetadata
 	GENERATED_BODY()
 	bool bProcessed = false;
 };
-
-FORCEINLINE uint32 GetTypeHash(const FUnorderedConnection& Connection)
-{
-	uint32 HashA = GetTypeHash(Connection.A);
-	uint32 HashB = GetTypeHash(Connection.B);
-
-	// Combine hashes in a way that is order-independent
-	return FUnorderedConnectionHash::HashCombine(FMath::Min(HashA, HashB), FMath::Max(HashA, HashB));
-}
 
 UCLASS(Blueprintable)
 class TOPDOWNTEMP_API UMRoadManager : public UObject
