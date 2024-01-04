@@ -5,46 +5,80 @@
 #include "Kismet/GameplayStatics.h"
 #include "StationaryActors/MRoadSplineActor.h"
 
-void UMRoadManager::ConnectTwoChunks(const FIntPoint& ChunkA, const FIntPoint& ChunkB)
+void UMRoadManager::ConnectTwoChunks(FIntPoint ChunkA, FIntPoint ChunkB, const ERoadType RoadType)
 {
+	FIntPoint OriginalChunkA = ChunkA;
+	FIntPoint OriginalChunkB = ChunkB;
+
 	if (ChunkA == ChunkB)
 	{
 		check(false);
 		return;
 	}
 
-	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
+	// Chunk origin point is bottom left by default. In order to reach other 3 edges of chunk we need to select the proper adjacent chunk
+	const int SignX = FMath::Sign(ChunkB.X - ChunkA.X), SignY = FMath::Sign(ChunkB.Y - ChunkA.Y);
+	if (ChunkA.X < ChunkB.X && ChunkA.Y < ChunkB.Y)
+	{
+		ChunkA += FIntPoint(1, 1);
+	}
+	else if (ChunkA.X < ChunkB.X && ChunkA.Y >= ChunkB.Y)
+	{
+		ChunkA += FIntPoint(1, 0);
+		ChunkB +=FIntPoint(0, -SignY);
+	}
+	else if (ChunkA.X >= ChunkB.X && ChunkA.Y < ChunkB.Y)
+	{
+		ChunkA += FIntPoint(0, 1);
+		ChunkB += FIntPoint(-SignX, 0);
+	}
+	else
+	{
+		Swap(ChunkA, ChunkB);
+		ConnectTwoChunks(ChunkA, ChunkB, RoadType);
+		return;
+	}
 
-	int i = ChunkA.X, j = ChunkA.Y, i_inc = FMath::Sign(ChunkB.X - ChunkA.X), j_inc = FMath::Sign(ChunkB.Y - ChunkA.Y);
+	ConnectTwoBlocks(GetBlockIndexByChunk(ChunkA), GetChunkCenterBlock(OriginalChunkA), ERoadType::Trail);
+	ConnectTwoBlocks(GetBlockIndexByChunk(ChunkB), GetChunkCenterBlock(OriginalChunkB), ERoadType::Trail);
+
+	int i = ChunkA.X, j = ChunkA.Y;
 	do {
 		int prev_i = i, prev_j = j;
 
 		if (i != ChunkB.X)
 		{
-			i += i_inc;
+			i += SignX;
 		}
 		else
 		{
 			if (j != ChunkB.Y)
 			{
-				j += j_inc;
+				j += SignY;
 			}
 		}
 
 		// Find or spawn a Road Spline and populate points towards the adjacent chunk
-		auto& RoadSplineActor = Roads.FindOrAdd({{prev_i, prev_j}, {i, j}});
+		auto& RoadSplineActor = MainRoads.FindOrAdd({{prev_i, prev_j}, {i, j}});
 		if (!RoadSplineActor)
 		{
 			const auto StartBlock = GetBlockIndexByChunk({prev_i, prev_j});
 			const auto FinishBlock = GetBlockIndexByChunk({i, j});
 			int x_inc = FMath::Sign(FinishBlock.X - StartBlock.X), y_inc = FMath::Sign(FinishBlock.Y - StartBlock.Y);
 
+			const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
 			RoadSplineActor = GetWorld()->SpawnActor<AMRoadSplineActor>(
 				pWorldGenerator->GetActorClassToSpawn("RoadSpline"),
 				FVector((StartBlock.X + 0.5f) * BlockSize.X, (StartBlock.Y + 0.5f) * BlockSize.Y, 1.f), // + 0.5f to put in the center of the block
 				FRotator::ZeroRotator,
 				{}
 			);
+			if (!RoadSplineActor)
+			{
+				check(false);
+				return;
+			}
+			RoadSplineActor->Tags.Add(GetRoadPCGTag(RoadType));
 			RoadSplineActor->GetSplineComponent()->RemoveSplinePoint(1, true);
 
 			int x = StartBlock.X, y = StartBlock.Y;
@@ -64,7 +98,103 @@ void UMRoadManager::ConnectTwoChunks(const FIntPoint& ChunkA, const FIntPoint& C
 	} while (i != ChunkB.X || j != ChunkB.Y);
 }
 
-void UMRoadManager::ConnectChunksWithinRegion(/*const FIntPoint& Center (OLD)*/ const FIntPoint& RegionIndex)
+void UMRoadManager::ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& BlockB, const ERoadType RoadType)
+{
+	if (BlockA == BlockB)
+	{
+		check(false);
+		return;
+	}
+
+	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
+
+	// Find or spawn a Road Spline and populate points towards the adjacent chunk
+	auto& RoadSplineActor = Trails.FindOrAdd({BlockA, BlockB});
+	if (!RoadSplineActor)
+	{
+		int x_inc = FMath::Sign(BlockB.X - BlockA.X), y_inc = FMath::Sign(BlockB.Y - BlockA.Y);
+
+		RoadSplineActor = GetWorld()->SpawnActor<AMRoadSplineActor>(
+			pWorldGenerator->GetActorClassToSpawn("RoadSpline"),
+			FVector((BlockA.X + 0.5f) * BlockSize.X, (BlockA.Y + 0.5f) * BlockSize.Y, 1.f), // + 0.5f to put in the center of the block
+			FRotator::ZeroRotator,
+			{}
+		);
+		if (!RoadSplineActor)
+		{
+			check(false);
+			return;
+		}
+		RoadSplineActor->Tags.Add(GetRoadPCGTag(RoadType));
+		RoadSplineActor->GetSplineComponent()->RemoveSplinePoint(1, true);
+
+		int x = BlockA.X, y = BlockA.Y;
+		do
+		{
+			x = x == BlockB.X ? x : x + x_inc;
+			y = y == BlockB.Y ? y : y + y_inc;
+			FVector NewPosition{(x + 0.5f) * BlockSize.X, (y + 0.5f) * BlockSize.Y, 1.f}; // + 0.5f to put in the center of the block
+			if (x != BlockB.X || y != BlockB.Y)
+			{
+				NewPosition.X += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.X; // Random offset
+				NewPosition.Y += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.Y; // Random offset
+			}
+			RoadSplineActor->GetSplineComponent()->AddSplinePoint(NewPosition, ESplineCoordinateSpace::World, true);
+		} while (x != BlockB.X || y != BlockB.Y);
+	}
+}
+
+void UMRoadManager::ProcessAdjacentRegions(const FIntPoint& CurrentChunk)
+{
+	const auto CurrentRegion = GetRegionIndexByChunk(CurrentChunk);
+
+	// Self check for reliability
+	ProcessRegionIfUnprocessed({CurrentRegion.X, CurrentRegion.Y});
+
+	// When we approach the edge of the current region, we process the neighboring region
+	if ((CurrentChunk.X + 1) % RegionSize.X == 0) // Right Edge
+	{
+		ProcessRegionIfUnprocessed({CurrentRegion.X + 1, CurrentRegion.Y});
+		if ((CurrentChunk.Y + 1) % RegionSize.Y == 0) // Top-Right Diagonal Edge
+		{
+			ProcessRegionIfUnprocessed({CurrentRegion.X + 1, CurrentRegion.Y + 1});
+		}
+		if (CurrentChunk.Y % RegionSize.Y == 0) // Bottom-Right Diagonal Edge
+		{
+			ProcessRegionIfUnprocessed({CurrentRegion.X + 1, CurrentRegion.Y - 1});
+		}
+	}
+	if (CurrentChunk.X % RegionSize.X == 0) // Left Edge
+	{
+		ProcessRegionIfUnprocessed({CurrentRegion.X - 1, CurrentRegion.Y});
+		if ((CurrentChunk.Y + 1) % RegionSize.Y == 0) // Top-Left Diagonal Edge
+		{
+			ProcessRegionIfUnprocessed({CurrentRegion.X - 1, CurrentRegion.Y + 1});
+		}
+		if (CurrentChunk.Y % RegionSize.Y == 0) // Bottom-Left Diagonal Edge
+		{
+			ProcessRegionIfUnprocessed({CurrentRegion.X - 1, CurrentRegion.Y - 1});
+		}
+	}
+	if ((CurrentChunk.Y + 1) % RegionSize.Y == 0) // Top Edge
+	{
+		ProcessRegionIfUnprocessed({CurrentRegion.X, CurrentRegion.Y + 1});
+	}
+	if (CurrentChunk.Y % RegionSize.Y == 0) // Bottom Edge
+	{
+		ProcessRegionIfUnprocessed({CurrentRegion.X, CurrentRegion.Y - 1});
+	}
+}
+
+void UMRoadManager::ProcessRegionIfUnprocessed(const FIntPoint& Region)
+{
+	if (!GridOfRegions.FindOrAdd(Region).bProcessed)
+	{
+		ConnectChunksWithinRegion(Region);
+	}
+}
+
+void UMRoadManager::ConnectChunksWithinRegion(const FIntPoint& RegionIndex)
 {
 	GridOfRegions.FindOrAdd(RegionIndex).bProcessed = true;
 	const auto BottomLeftChunk = GetChunkIndexByRegion(RegionIndex);
@@ -108,34 +238,31 @@ FIntPoint UMRoadManager::GetChunkIndexByBlock(const FIntPoint& BlockIndex) const
 					FMath::FloorToInt(static_cast<float>(BlockIndex.Y) / ChunkSize.Y));
 }
 
+FIntPoint UMRoadManager::GetChunkCenterBlock(const FIntPoint& ChunkIndex) const
+{
+	const auto BottomLeftBlock = GetBlockIndexByChunk(ChunkIndex);
+	return { BottomLeftBlock.X + FMath::CeilToInt(ChunkSize.X / 2.f) - 1, BottomLeftBlock.Y + FMath::CeilToInt(ChunkSize.Y / 2.f) - 1};
+}
+
 FIntPoint UMRoadManager::GetRegionIndexByChunk(const FIntPoint& ChunkIndex) const
 {
-	return FIntPoint(FMath::FloorToInt(static_cast<float>(ChunkIndex.X) / ChunkSize.X),
-					FMath::FloorToInt(static_cast<float>(ChunkIndex.Y) / ChunkSize.Y));
+	return FIntPoint(FMath::FloorToInt(static_cast<float>(ChunkIndex.X) / RegionSize.X),
+					FMath::FloorToInt(static_cast<float>(ChunkIndex.Y) / RegionSize.Y));
 }
 
 void UMRoadManager::OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk)
 {
-	// When we approach the edge of the current region, we process the neighboring region
-	if (NewChunk.X % RegionSize.X == RegionSize.X - 1 && !GridOfRegions.FindOrAdd({NewChunk.X + 1, NewChunk.Y}).bProcessed)
+	ProcessAdjacentRegions(NewChunk);
+}
+
+FName UMRoadManager::GetRoadPCGTag(ERoadType RoadType) const
+{
+	switch (RoadType)
 	{
-		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X + 1, NewChunk.Y}));
-		return;
+	case ERoadType::MainRoad:
+		return "PCG_MainRoad";
+	case ERoadType::Trail:
+		return "PCG_Trail";
 	}
-	if (NewChunk.X % RegionSize.X == 0 && !GridOfRegions.FindOrAdd({NewChunk.X - 1, NewChunk.Y}).bProcessed)
-	{
-		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X - 1, NewChunk.Y}));
-		return;
-	}
-	if (NewChunk.Y % RegionSize.Y == RegionSize.Y - 1 && !GridOfRegions.FindOrAdd({NewChunk.X, NewChunk.Y + 1}).bProcessed)
-	{
-		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X, NewChunk.Y + 1}));
-		return;
-	}
-	if (NewChunk.Y % RegionSize.Y == 0 && !GridOfRegions.FindOrAdd({NewChunk.X, NewChunk.Y - 1}).bProcessed)
-	{
-		ConnectChunksWithinRegion(GetRegionIndexByChunk({NewChunk.X, NewChunk.Y - 1}));
-		return;
-	}
-	// We ignore diagonal cases as we process blocks with a stepped pattern (don't cut corners)
+	return "";
 }

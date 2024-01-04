@@ -29,6 +29,13 @@ namespace FUnorderedConnectionHash
 	}
 }
 
+UENUM()
+enum class ERoadType : uint8
+{
+	MainRoad = 0,
+	Trail
+};
+
 USTRUCT()
 struct FChunkMetadata
 {
@@ -60,16 +67,23 @@ class TOPDOWNTEMP_API UMRoadManager : public UObject
 public:
 	void Initialize(AMWorldGenerator* IN_WorldGenerator) { pWorldGenerator = IN_WorldGenerator; }
 
-	void ConnectTwoChunks(const FIntPoint& ChunkA, const FIntPoint& ChunkB);
+	void ConnectTwoChunks(FIntPoint ChunkA, FIntPoint ChunkB, const ERoadType RoadType = ERoadType::MainRoad);
 
-	UFUNCTION()
-	void ConnectChunksWithinRegion(/*const FIntPoint& Center (OLD)*/ const FIntPoint& RegionIndex);
+	void ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& BlockB, const ERoadType RoadType = ERoadType::Trail);
+
+	/** If current chunk is near the edge of the current region, generate the roads for adjacent one(s) */
+	void ProcessAdjacentRegions(const FIntPoint& CurrentChunk);
+
+	void ProcessRegionIfUnprocessed(const FIntPoint& CurrentChunk);
 
 	FIntPoint GetChunkIndexByLocation(const FVector& Location) const;
 
 	FIntPoint GetChunkIndexByBlock(const FIntPoint& BlockIndex) const;
 
 	FIntPoint GetBlockIndexByChunk(const FIntPoint& ChunkIndex) const { return ChunkIndex * ChunkSize; }
+
+	/** Returns the index of the block closest to the center of this chunk (rounded down) */
+	FIntPoint GetChunkCenterBlock(const FIntPoint& ChunkIndex) const;
 
 	FIntPoint GetRegionIndexByChunk(const FIntPoint& ChunkIndex) const;
 
@@ -78,7 +92,14 @@ public:
 	UFUNCTION()
 	void OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk);
 
+	/** The tag PCG uses to differ the road types */
+	FName GetRoadPCGTag(ERoadType RoadType) const;
+
 protected:
+
+	UFUNCTION()
+	void ConnectChunksWithinRegion(const FIntPoint& RegionIndex);
+
 	/** Chunk is a rectangle (commonly square) area consisting of adjacent ground blocks. Serves only geometry purposes. Roads go along chunk edges */
 	UPROPERTY(EditDefaultsOnly, Category="MRoadManager|Configuration")
 	FIntPoint ChunkSize = {8, 8};
@@ -107,9 +128,9 @@ protected:
 	 *  Run only along chunk edges, usually large are part of long paths
 	 */
 	UPROPERTY()
-	TMap<FUnorderedConnection, AMRoadSplineActor*> Roads;
+	TMap<FUnorderedConnection, AMRoadSplineActor*> MainRoads;
 
-	/** It maps pairs of BLOCKS and corresponding spline actors (roads) between them
+	/** It maps pairs of BLOCKS and corresponding spline actors (trails) between them
 	 *  Lie between blocks, can have any shape, usually small and should be within one or two chunks.
 	 *  It's impossible to track intersections between two trails.
 	 */

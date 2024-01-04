@@ -74,10 +74,9 @@ void AMWorldGenerator::InitSurroundingArea()
 	}
 
 	const auto PlayerChunk = RoadManager->GetChunkIndexByLocation(pPlayer->GetTransform().GetLocation());
-	RoadManager->ConnectChunksWithinRegion(RoadManager->GetRegionIndexByChunk(PlayerChunk));
-
+	RoadManager->ProcessAdjacentRegions(PlayerChunk);
 	//temp
-	RoadManager->ConnectTwoChunks(PlayerChunk, {PlayerChunk.X, PlayerChunk.Y + 1});
+	//RoadManager->ConnectTwoChunks(PlayerChunk, {PlayerChunk.X + 1, PlayerChunk.Y-1});
 
 	UpdateActiveZone(); // temp solution to avoid disabling all subsequently generated actors due to empty ActiveBlocksMap
 
