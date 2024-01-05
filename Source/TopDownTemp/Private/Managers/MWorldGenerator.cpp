@@ -563,7 +563,8 @@ void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIn
 
 			const auto BlockMetadata = FindOrAddBlock(Block);
 
-			if (BlockMetadata->ConstantActorsCount <= 0) // We keep the biome as well as all other objects
+			// So far, biome constancy doesn't look very good
+			//if (BlockMetadata->ConstantActorsCount <= 0) // We keep the biome as well as all other objects
 			{
 				BlockMetadata->Biome = Delimiters[DelimiterIndex].Biome;
 			}
