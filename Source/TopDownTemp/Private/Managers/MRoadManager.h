@@ -48,19 +48,32 @@ enum class ERoadType : uint8
 ENUM_RANGE_BY_COUNT(ERoadType, ERoadType::Count);
 
 USTRUCT()
-struct FChunkMetadata
+struct FChunkMetadata // TODO: Consider converting to a class
 {
 	GENERATED_BODY()
-	bool bProcessed = false;
+	/** The chunk was already either connected to another chunk, or decided to be ignored.
+	* Either way it won't be able to pair with such another chunk. */
+	bool bConnectedOrIgnored = false;
+
+	/** If the Generate() was called on the OutpostGenerator */
+	bool bGenerated = false; //TODO: Move this to the OutpostGenerator actor
+
+	/** Currently we support only up to one Outpost, e.g. a village/camp/site per chunk */
+	UPROPERTY()
+	AActor* OutpostGenerator; //TODO: Make a special class for Outpost generators.
 };
 
 USTRUCT()
 struct FRegionMetadata
 {
 	GENERATED_BODY()
+	/** If the chunks within were divided into pairs and roads were spawned. */
 	bool bProcessed = false;
 };
 
+/** Class responsible for road generation within Regions, their Chunks and their blocks.\n\n
+ *  Handles spawn of Outposts such as villages/camps/sites.\n\n
+ *  Responsible for in-game navigation, direction signs, etc. */
 UCLASS(Blueprintable)
 class TOPDOWNTEMP_API UMRoadManager : public UObject
 {
@@ -99,13 +112,21 @@ public:
 
 protected:
 
-	UFUNCTION()
+	/** If adjacent chunks have outpost generators, call their Generate() to spawn their actors */
+	void ProcessAdjacentChunks(const FIntPoint& CurrentChunk);
+
 	void ConnectChunksWithinRegion(const FIntPoint& RegionIndex);
+
+	/** Spawns only the generator actor. The actual Generate() call will be triggered as soon as player enters the chunk or adjacent to it.\n
+	 * @param StructureClass Outpost generator class. If null, it will be selected randomly */
+	void SpawnOutpostGenerator(const FIntPoint& Chunk, TSubclassOf<AActor> StructureClass = nullptr);
 
 	UFUNCTION(BlueprintCallable)
 	TMap<FUnorderedConnection, AMRoadSplineActor*>& GetRoadContainer(ERoadType RoadType);
 
-	/** Chunk is a rectangle (commonly square) area consisting of adjacent ground blocks. Serves only geometry purposes. Roads go along chunk edges */
+	/** Chunk is a rectangle (commonly square) area consisting of adjacent ground blocks. Serves only geometry purposes.\n
+	 * Roads go along chunk edges.\n
+	 * Main requirement: shouldn't be smaller than the visible area (ActiveZoneRadius) */
 	UPROPERTY(EditDefaultsOnly, Category="MRoadManager|Configuration")
 	FIntPoint ChunkSize = {8, 8};
 
@@ -128,6 +149,9 @@ protected:
 	/** How curve roads get */
 	UPROPERTY(EditDefaultsOnly, Category="MRoadManager|Configuration", meta=(ClampMin="0.1", ClampMax="0.5"))
 	float CurveFactor = 0.35f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TMap<FName, TSubclassOf<AActor>> OutpostBPClasses;
 
 private:
 	/** It maps pairs of CHUNKS and corresponding spline actors (roads) between them.\n

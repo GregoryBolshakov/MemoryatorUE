@@ -126,6 +126,9 @@ protected:
 	TSubclassOf<UMExperienceManager> ExperienceManagerBPClass;
 
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
+	TSubclassOf<UMRoadManager> RoadManagerBPClass;
+
+	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
 	TSubclassOf<UMSaveManager> SaveManagerBPClass;
 
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
@@ -167,9 +170,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = SubclassessToSpawn, meta = (DisplayThumbnail, AllowPrivateAccess = true))
 	TMap<FName, TSubclassOf<AActor>> ToSpawnActorClasses;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = SubclassessToSpawn, meta = (AllowPrivateAccess = "true"))
-	TMap<FName, TSubclassOf<UObject>> ToSpawnComplexStructureClasses;
 
 	UPROPERTY(EditDefaultsOnly, Category = MWorldGenerator)
 	EBiome BiomeForInitialGeneration;

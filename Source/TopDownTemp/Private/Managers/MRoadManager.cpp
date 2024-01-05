@@ -126,6 +126,24 @@ void UMRoadManager::ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& B
 	}
 }
 
+void UMRoadManager::ProcessAdjacentChunks(const FIntPoint& CurrentChunk)
+{
+	for (int x = -1; x <= 1; ++x)
+	{
+		for (int y = -1; y <= 1; ++y)
+		{
+			//ProcessChunkIfUnprocessed({CurrentChunk.X + x, CurrentChunk.Y + y});
+			const FIntPoint ChunkToProcess = {CurrentChunk.X + x, CurrentChunk.Y + y};
+			auto& ChunkMetadata = GridOfChunks.FindOrAdd(ChunkToProcess);
+			if (ChunkMetadata.OutpostGenerator && !ChunkMetadata.bGenerated)
+			{
+				//ChunkMetadata.OutpostGenerator->Generate();
+				ChunkMetadata.bGenerated = true;
+			}
+		}
+	}
+}
+
 void UMRoadManager::ProcessAdjacentRegions(const FIntPoint& CurrentChunk)
 {
 	const auto CurrentRegion = GetRegionIndexByChunk(CurrentChunk);
@@ -166,6 +184,8 @@ void UMRoadManager::ProcessAdjacentRegions(const FIntPoint& CurrentChunk)
 	{
 		ProcessRegionIfUnprocessed({CurrentRegion.X, CurrentRegion.Y - 1});
 	}
+
+	ProcessAdjacentChunks(CurrentChunk);
 }
 
 void UMRoadManager::ProcessRegionIfUnprocessed(const FIntPoint& Region)
@@ -196,16 +216,46 @@ void UMRoadManager::ConnectChunksWithinRegion(const FIntPoint& RegionIndex)
 	{
 		auto& ChunkA = GridOfChunks.FindOrAdd(ChunkIndexes[i]);
 		auto& ChunkB = GridOfChunks.FindOrAdd(ChunkIndexes[i+1]);
-		if (!ChunkA.bProcessed || !ChunkB.bProcessed)
+		if (!ChunkA.bConnectedOrIgnored || !ChunkB.bConnectedOrIgnored)
 		{
 			if (FMath::RandRange(0.f, 1.f) < ConnectionChance)
 			{
+				SpawnOutpostGenerator(ChunkIndexes[i]);
+				SpawnOutpostGenerator(ChunkIndexes[i+1]);
 				ConnectTwoChunks(ChunkIndexes[i], ChunkIndexes[i+1]);
 			}
 		}
-		ChunkA.bProcessed = true;
-		ChunkB.bProcessed = true;
+		ChunkA.bConnectedOrIgnored = true;
+		ChunkB.bConnectedOrIgnored = true;
 	}
+}
+
+void UMRoadManager::SpawnOutpostGenerator(const FIntPoint& Chunk, TSubclassOf<AActor> StructureClass)
+{
+	auto& ChunkMetadata = GridOfChunks.FindOrAdd(Chunk);
+	if (ChunkMetadata.OutpostGenerator)
+	{
+		return; // Only one outpost per chunk
+	}
+	if (!StructureClass)
+	{
+		if (OutpostBPClasses.Num() > 0)
+		{
+			TArray<FName> Keys;
+			OutpostBPClasses.GetKeys(Keys);
+			const FName RandomKey = Keys[FMath::RandRange(0, Keys.Num() - 1)];
+			StructureClass = OutpostBPClasses[RandomKey];
+		}
+		else
+		{
+			check(false);
+			return;
+		}
+	}
+
+	const auto ChunkCenter = pWorldGenerator->GetGroundBlockLocation(GetChunkCenterBlock(Chunk)); //TODO: Fix that, currently it's not the precise center
+	const auto OutpostGenerator = GetWorld()->SpawnActor<AActor>(StructureClass, ChunkCenter, FRotator::ZeroRotator);
+	ChunkMetadata.OutpostGenerator = OutpostGenerator;
 }
 
 TMap<FUnorderedConnection, AMRoadSplineActor*>& UMRoadManager::GetRoadContainer(ERoadType RoadType)

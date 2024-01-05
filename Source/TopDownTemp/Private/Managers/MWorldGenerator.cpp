@@ -195,7 +195,7 @@ void AMWorldGenerator::BeginPlay()
 	CommunicationManager = CommunicationManagerBPClass ? GetWorld()->SpawnActor<AMCommunicationManager>(CommunicationManagerBPClass) : nullptr;
 	check(CommunicationManager);
 
-	RoadManager = NewObject<UMRoadManager>(GetOuter(), UMRoadManager::StaticClass(), TEXT("RoadManager"));
+	RoadManager = NewObject<UMRoadManager>(GetOuter(), RoadManagerBPClass, TEXT("RoadManager"));
 	RoadManager->Initialize(this);
 	check(RoadManager);
 
