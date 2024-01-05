@@ -13,7 +13,7 @@
 #include "MExperienceManager.h"
 #include "MRoadManager.h"
 #include "Components/MIsActiveCheckerComponent.h"
-#include "MVillageGenerator.h"
+#include "StationaryActors/OutpostGenerators/MVillageGenerator.h"
 #include "NavigationSystem.h"
 #include "Controllers/MPlayerController.h"
 #include "Kismet/GameplayStatics.h"
@@ -869,12 +869,9 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor)
 		{
 			BlockMetadata->ConstantActorsCount++; //TODO: Disable constancy when the object no longer on the block
 		}
-		else
+		if (!ActiveBlocksMap.Contains(GroundBlockIndex) && !IsActiveCheckerComponent->GetAlwaysEnabled())
 		{
-			if (!ActiveBlocksMap.Contains(GroundBlockIndex))
-			{
-				IsActiveCheckerComponent->DisableOwner();
-			}
+			IsActiveCheckerComponent->DisableOwner();
 		}
 	}
 }

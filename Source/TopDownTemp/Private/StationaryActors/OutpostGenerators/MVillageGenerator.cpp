@@ -3,10 +3,10 @@
 #include "MVillageGenerator.h"
 
 #include "Controllers/MVillagerMobController.h"
-#include "MWorldGenerator.h"
-#include "MWorldManager.h"
+#include "Managers/MWorldGenerator.h"
+#include "Managers/MWorldManager.h"
 #include "Math/UnrealMathUtility.h"
-#include "../StationaryActors/MActor.h"
+#include "StationaryActors/MActor.h"
 
 DEFINE_LOG_CATEGORY(LogVillageGenerator);
 
@@ -23,6 +23,8 @@ FVector GetPointOnCircle(const FVector& CircleCenter, float Radius, float Angle)
 
 void AMVillageGenerator::Generate()
 {
+	Super::Generate(); // Mark as generated before any error can occur
+
 	UWorld* pWorld = GetWorld();
 	AMWorldGenerator* pWorldGenerator = nullptr;
 	if (pWorld)

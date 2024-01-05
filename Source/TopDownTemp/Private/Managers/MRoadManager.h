@@ -6,6 +6,7 @@
 
 class AMRoadSplineActor;
 class AMWorldGenerator;
+class AMOutpostGenerator;
 
 USTRUCT(BlueprintType)
 struct FUnorderedConnection
@@ -55,12 +56,9 @@ struct FChunkMetadata // TODO: Consider converting to a class
 	* Either way it won't be able to pair with such another chunk. */
 	bool bConnectedOrIgnored = false;
 
-	/** If the Generate() was called on the OutpostGenerator */
-	bool bGenerated = false; //TODO: Move this to the OutpostGenerator actor
-
 	/** Currently we support only up to one Outpost, e.g. a village/camp/site per chunk */
 	UPROPERTY()
-	AActor* OutpostGenerator; //TODO: Make a special class for Outpost generators.
+	AMOutpostGenerator* OutpostGenerator; //TODO: Make a special class for Outpost generators.
 };
 
 USTRUCT()
@@ -118,8 +116,8 @@ protected:
 	void ConnectChunksWithinRegion(const FIntPoint& RegionIndex);
 
 	/** Spawns only the generator actor. The actual Generate() call will be triggered as soon as player enters the chunk or adjacent to it.\n
-	 * @param StructureClass Outpost generator class. If null, it will be selected randomly */
-	void SpawnOutpostGenerator(const FIntPoint& Chunk, TSubclassOf<AActor> StructureClass = nullptr);
+	 * @param Class Outpost generator class. If null, it will be selected randomly */
+	void SpawnOutpostGenerator(const FIntPoint& Chunk, TSubclassOf<AMOutpostGenerator> Class = nullptr);
 
 	UFUNCTION(BlueprintCallable)
 	TMap<FUnorderedConnection, AMRoadSplineActor*>& GetRoadContainer(ERoadType RoadType);

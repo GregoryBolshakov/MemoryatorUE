@@ -4,6 +4,7 @@
 #include "Components/SplineComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "StationaryActors/MRoadSplineActor.h"
+#include "StationaryActors/OutpostGenerators/MOutpostGenerator.h"
 
 void UMRoadManager::ConnectTwoChunks(FIntPoint ChunkA, FIntPoint ChunkB, const ERoadType RoadType)
 {
@@ -132,13 +133,11 @@ void UMRoadManager::ProcessAdjacentChunks(const FIntPoint& CurrentChunk)
 	{
 		for (int y = -1; y <= 1; ++y)
 		{
-			//ProcessChunkIfUnprocessed({CurrentChunk.X + x, CurrentChunk.Y + y});
 			const FIntPoint ChunkToProcess = {CurrentChunk.X + x, CurrentChunk.Y + y};
-			auto& ChunkMetadata = GridOfChunks.FindOrAdd(ChunkToProcess);
-			if (ChunkMetadata.OutpostGenerator && !ChunkMetadata.bGenerated)
+			const auto& ChunkMetadata = GridOfChunks.FindOrAdd(ChunkToProcess);
+			if (ChunkMetadata.OutpostGenerator && !ChunkMetadata.OutpostGenerator->IsGenerated())
 			{
-				//ChunkMetadata.OutpostGenerator->Generate();
-				ChunkMetadata.bGenerated = true;
+				ChunkMetadata.OutpostGenerator->Generate();
 			}
 		}
 	}
@@ -230,21 +229,21 @@ void UMRoadManager::ConnectChunksWithinRegion(const FIntPoint& RegionIndex)
 	}
 }
 
-void UMRoadManager::SpawnOutpostGenerator(const FIntPoint& Chunk, TSubclassOf<AActor> StructureClass)
+void UMRoadManager::SpawnOutpostGenerator(const FIntPoint& Chunk, TSubclassOf<AMOutpostGenerator> Class)
 {
 	auto& ChunkMetadata = GridOfChunks.FindOrAdd(Chunk);
 	if (ChunkMetadata.OutpostGenerator)
 	{
 		return; // Only one outpost per chunk
 	}
-	if (!StructureClass)
+	if (!Class)
 	{
 		if (OutpostBPClasses.Num() > 0)
 		{
 			TArray<FName> Keys;
 			OutpostBPClasses.GetKeys(Keys);
 			const FName RandomKey = Keys[FMath::RandRange(0, Keys.Num() - 1)];
-			StructureClass = OutpostBPClasses[RandomKey];
+			Class = OutpostBPClasses[RandomKey];
 		}
 		else
 		{
@@ -254,7 +253,7 @@ void UMRoadManager::SpawnOutpostGenerator(const FIntPoint& Chunk, TSubclassOf<AA
 	}
 
 	const auto ChunkCenter = pWorldGenerator->GetGroundBlockLocation(GetChunkCenterBlock(Chunk)); //TODO: Fix that, currently it's not the precise center
-	const auto OutpostGenerator = GetWorld()->SpawnActor<AActor>(StructureClass, ChunkCenter, FRotator::ZeroRotator);
+	const auto OutpostGenerator = GetWorld()->SpawnActor<AMOutpostGenerator>(Class, ChunkCenter, FRotator::ZeroRotator);
 	ChunkMetadata.OutpostGenerator = OutpostGenerator;
 }
 

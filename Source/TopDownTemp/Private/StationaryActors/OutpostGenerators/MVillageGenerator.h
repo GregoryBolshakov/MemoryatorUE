@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "MOutpostGenerator.h"
+
 #include "MVillageGenerator.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogVillageGenerator, Log, All);
@@ -43,13 +45,13 @@ struct FToSpawnBuildingMetadata
  * The class responsible for spawning buildings, determining their, types, quantity and other specifics.
  */
 UCLASS()
-class TOPDOWNTEMP_API AMVillageGenerator : public AActor
+class TOPDOWNTEMP_API AMVillageGenerator : public AMOutpostGenerator
 {
 	GENERATED_UCLASS_BODY()
 
 public:
 
-	void Generate();
+	virtual void Generate() override;
 
 protected:
 
