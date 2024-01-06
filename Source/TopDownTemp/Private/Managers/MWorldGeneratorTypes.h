@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "MWorldGeneratorTypes.generated.h"
 
+class UPCGGraph;
 class AMRoadSplineActor;
 class ASplineMeshActor;
 class AMGroundBlock;
@@ -53,7 +54,7 @@ public:
 	AMGroundBlock* pGroundBlock = nullptr;
 
 	UPROPERTY()
-	AMRoadSplineActor* RoadSpline;
+	UPCGGraph* PCGGraph = nullptr;
 };
 
 USTRUCT()

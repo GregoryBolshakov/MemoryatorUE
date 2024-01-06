@@ -35,9 +35,10 @@ class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 
 public:
 
-	/** Loads or generates the blocks within Active Zone radius */
+	/** Loads or generates the blocks within Active Zone radius. */
 	void InitSurroundingArea(); //TODO: Maybe rename to LoadOrGenerateArea and adapt for teleport usage as well
 
+	/** Deletes all static and optionally dynamic actors. If the BlockMetadata didn't exist, create it. */
 	UBlockMetadata* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy = false);
 
 	/** First try to look at save, generate new if not found */
@@ -62,7 +63,9 @@ public:
 
 	TMap<FName, AActor*> GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic);
 
-	void CleanArea(const FVector& Location, float Radius);
+	/** Deletes all static actors(trees, stones, etc.) including the ground block for each block within radius.\n
+	 * Keeps dynamic actors, ignores blocks constancy. If some block's BlockMetadata didn't exist, create it. */
+	void CleanArea(const FVector& Location, int RadiusInBlocks, UPCGGraph* OverridePCGGraph = nullptr);
 
 	static FBoxSphereBounds GetDefaultBounds(UClass* IN_ActorClass, UObject* WorldContextObject);
 

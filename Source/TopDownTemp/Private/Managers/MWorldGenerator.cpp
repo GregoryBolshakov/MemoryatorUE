@@ -159,7 +159,7 @@ void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRe
 	}
 	// Couldn't load, generate it from scratch
 	const auto Block = EmptyBlock(BlockIndex, true);
-	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, Block->Biome);
+	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, Block);
 }
 
 void AMWorldGenerator::BeginPlay()
@@ -607,6 +607,10 @@ UBlockMetadata* AMWorldGenerator::FindOrAddBlock(FIntPoint Index)
 	if (!BlockMetadata)
 	{
 		BlockMetadata = NewObject<UBlockMetadata>(this);
+
+		// Set default PCG graph
+		BlockMetadata->PCGGraph = BlockGenerator->GetDefaultGraph();
+
 		return BlockMetadata;
 	}
 	return BlockMetadata;
@@ -960,30 +964,15 @@ TMap<FName, AActor*> AMWorldGenerator::GetActorsInRect(FVector UpperLeft, FVecto
 	return Result;
 }
 
-void AMWorldGenerator::CleanArea(const FVector& Location, float Radius)
+void AMWorldGenerator::CleanArea(const FVector& Location, int RadiusInBlocks, UPCGGraph* OverridePCGGraph)
 {
-	const auto StartBlock = GetGroundBlockIndex(Location - FVector(Radius, Radius, 0.f));
-	const auto FinishBlock = GetGroundBlockIndex(Location + FVector(Radius, Radius, 0.f));
-	for (auto X = StartBlock.X; X <= FinishBlock.X; ++X)
+	const auto CenterBlock = GetGroundBlockIndex(Location);
+	for (const auto Block : GetBlocksInRadius(CenterBlock.X, CenterBlock.Y, RadiusInBlocks))
 	{
-		for (auto Y = StartBlock.Y; Y <= FinishBlock.Y; ++Y)
+		const auto BlockMetadata = EmptyBlock(Block, true, true);
+		if (OverridePCGGraph)
 		{
-			if (const auto pBlock = GridOfActors.Find({X, Y}))
-			{
-				if (const auto Block = *pBlock)
-				{
-					//TEMP SOLUTION
-					for (auto It = Block->StaticActors.CreateIterator(); It; ++It)
-					{
-						if (Cast<AMGroundBlock>(It.Value()))
-						{
-							continue;
-						}
-						It->Value->Destroy();
-						It.RemoveCurrent();
-					}
-				}
-			}
+			BlockMetadata->PCGGraph = OverridePCGGraph;
 		}
 	}
 }

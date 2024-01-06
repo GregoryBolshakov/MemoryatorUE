@@ -2,10 +2,12 @@
 
 #include "MBlockGenerator.h"
 #include "MWorldGenerator.h"
+#include "PCGComponent.h"
 #include "StationaryActors/MGroundBlock.h"
+#include "PCGGraph.h"
 #include "StationaryActors/MActor.h"
 
-void UMBlockGenerator::SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName)
+void UMBlockGenerator::SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, UBlockMetadata* BlockMetadata, const FName& PresetName)
 {
 	if (!IsValid(pWorldGenerator) || !GroundBlockBPClass)
 	{
@@ -16,23 +18,24 @@ void UMBlockGenerator::SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGe
 	FActorSpawnParameters BlockSpawnParameters;
 	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	FOnSpawnActorStarted OnSpawnActorStarted;
-	OnSpawnActorStarted.AddLambda([this, PresetName, Biome](AActor* Actor)
+	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters, false))
 	{
-		SetPCGVariablesByPreset(Cast<AMGroundBlock>(Actor), PresetName, Biome);
-	});
-
-	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters, false, OnSpawnActorStarted))
-	{
-		GroundBlock->UpdateBiome(Biome);
-		const auto BlockMetadata = pWorldGenerator->FindOrAddBlock(BlockIndex);
+		GroundBlock->UpdateBiome(BlockMetadata->Biome);
 		BlockMetadata->pGroundBlock = GroundBlock;
+		if (const auto PCGComponent = Cast<UPCGComponent>(GroundBlock->GetComponentByClass(UPCGComponent::StaticClass())))
+		{
+			PCGComponent->SetGraph(BlockMetadata->PCGGraph);
+			SetPCGVariablesByPreset(GroundBlock, PresetName, BlockMetadata->Biome);
+			PCGComponent->Generate();
+		}
 	}
 }
 
+//TODO: Try to get rid of this and have only one but flexible SpawnActors() function
 void UMBlockGenerator::SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator,
 	const FPCGVariables& PCGVariables)
 {
+	//TODO: Catch up with the SpawnActorsRandomly. haven't update for a long time
 	if (!IsValid(pWorldGenerator) || !GroundBlockBPClass)
 	{
 		check(false);
@@ -92,6 +95,20 @@ void UMBlockGenerator::SetPCGVariablesByPreset(AMGroundBlock* BlockActor, const 
 		return;
 	}
 	check(false);
+}
+
+UPCGGraph* UMBlockGenerator::GetDefaultGraph()
+{
+	const auto DefaultGraph = PCGGraphs.FindOrAdd("Default");
+	check(DefaultGraph);
+	return DefaultGraph;
+}
+
+UPCGGraph* UMBlockGenerator::GetGraph(FName Name)
+{
+	const auto DefaultGraph = PCGGraphs.FindOrAdd(Name);
+	check(DefaultGraph);
+	return DefaultGraph;
 }
 
 FPreset GetRandomPresetWithHighestRarity(const TArray<FPreset>& SufficientRarityPresets)

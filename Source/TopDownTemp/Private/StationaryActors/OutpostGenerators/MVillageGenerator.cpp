@@ -3,6 +3,7 @@
 #include "MVillageGenerator.h"
 
 #include "Controllers/MVillagerMobController.h"
+#include "Managers/MBlockGenerator.h"
 #include "Managers/MWorldGenerator.h"
 #include "Managers/MWorldManager.h"
 #include "Math/UnrealMathUtility.h"
@@ -45,8 +46,10 @@ void AMVillageGenerator::Generate()
 	const FVector CenterPosition = GetTransform().GetLocation();
 	const FVector TopPoint = GetPointOnCircle(CenterPosition, TownSquareRadius, 0.f);
 
+	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
+	const auto PCGGraphVillage = pWorldGenerator->GetBlockGenerator()->GetGraph("Village");
 	// Here we should clean all the blocks we are about to cover
-	pWorldGenerator->CleanArea(CenterPosition, TownSquareRadius); //TODO: Increase the area somehow! for now I don't know how to calculate it
+	pWorldGenerator->CleanArea(CenterPosition, FMath::CeilToInt(TownSquareRadius / FMath::Min(BlockSize.X, BlockSize.Y)), PCGGraphVillage); //TODO: Increase the area somehow! for now I don't know how to calculate it
 
 	float DistanceFromCenter = TownSquareRadius;
 

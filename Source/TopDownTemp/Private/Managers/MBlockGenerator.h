@@ -8,6 +8,8 @@ struct FPCGVariables;
 class AMWorldGenerator;
 class AMGroundBlock;
 class AMActor;
+class UPCGGraph;
+class UBlockMetadata;
 enum class EBiome : uint8;
 
 /** Describes all the data can be configured for a one kind of objects in this block (trees/flowers/mushrooms/etc.) */
@@ -23,7 +25,7 @@ struct FObjectConfig
 	int MaxNumberOfInstances;
 };
 
-/** Describes a combination of FObjectConfigs for all kind of objects */
+/** Describes a combination of FObjectConfigs for all kind of objects. */
 USTRUCT(BlueprintType)
 struct FPreset
 {
@@ -36,6 +38,8 @@ struct FPreset
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig)
 	TSet<EBiome> SupportedBiomes;
 
+	/** The name must be either from AMWorldGenerator::ToSpawnActorClasses or
+	 * be processed by SetPCGVariablesByPreset() to fill FPCGVariables */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig)
 	TMap<FName, FObjectConfig> ObjectsConfig;
 };
@@ -50,12 +54,16 @@ class TOPDOWNTEMP_API UMBlockGenerator : public UObject
 
 public:
 
-	void SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, EBiome Biome, const FName& PresetName = {});
+	void SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, UBlockMetadata* BlockMetadata, const FName& PresetName = {});
 
 	void SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, const FPCGVariables& PCGVariables);
 
 	/** Calculate values for PCG based on the Preset */
 	void SetPCGVariablesByPreset(AMGroundBlock* BlockActor, const FName PresetName, EBiome Biome);
+
+	UPCGGraph* GetDefaultGraph();
+
+	UPCGGraph* GetGraph(FName Name);
 
 protected:
 
@@ -65,6 +73,9 @@ protected:
 	//TODO: Support multiple presets
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig)
 	TMap<FName, FPreset> PresetMap;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=ContentConfig)
+	TMap<FName, UPCGGraph*> PCGGraphs;
 
 	UPROPERTY(Category = ContentConfig, EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<AMGroundBlock> GroundBlockBPClass;
