@@ -73,7 +73,7 @@ protected:
 	void OnDashPressed();
 
 	UPROPERTY(EditDefaultsOnly, Category="Dash")
-	float DashLength = 135.f;
+	float DashLength = 337.f;
 
 	FTimeline DashVelocityTimeline;
 
