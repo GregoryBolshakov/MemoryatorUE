@@ -96,6 +96,8 @@ void AMWorldGenerator::InitSurroundingArea()
 				LoadOrGenerateBlock(BlockInRadius);
 			}
 
+			//SpawnActor<AMVillageGenerator>(ToSpawnActorClasses.FindOrAdd("Villager"), {100.f, 100.f, 0.f}, FRotator::ZeroRotator);
+
 			/*if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
 			{
 				pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()

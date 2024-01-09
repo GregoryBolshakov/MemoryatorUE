@@ -81,8 +81,6 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Animation")
 	void UpdateAnimation();
 
-	virtual void PostInitializeComponents() override;
-
 protected:
 
 	void UpdateLastNonZeroDirection();
@@ -96,10 +94,6 @@ protected:
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnDisabled();
-
-	/** Representation (collection of sprites) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
-	class UM2DRepresentationComponent* RepresentationComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMInventoryComponent* InventoryComponent;

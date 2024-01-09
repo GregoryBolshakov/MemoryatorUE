@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MCharacter.h"
+#include "MCharacter2D.h"
 #include "MMob.generated.h"
 
 //~=============================================================================

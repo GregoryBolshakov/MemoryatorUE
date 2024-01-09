@@ -1,11 +1,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MCharacter.h"
+#include "MCharacter2D.h"
 #include "MMemoryator.generated.h"
 
 UCLASS(Blueprintable)
-class AMMemoryator : public AMCharacter
+class AMMemoryator : public AMCharacter2D
 {
 	GENERATED_UCLASS_BODY()
 

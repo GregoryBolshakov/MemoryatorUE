@@ -3,7 +3,7 @@
 #include "Components/M2DRepresentationComponent.h"
 #include "Components/MAttackPuddleComponent.h"
 #include "Characters/MMemoryator.h"
-#include "Characters/MMob.h"
+#include "Characters/MMob2D.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "Managers/MWorldManager.h"
@@ -73,7 +73,7 @@ void AMMobController::DoChaseBehavior(const UWorld& World, AMCharacter& MyCharac
 		VictimRadius = VictimCapsule->GetScaledCapsuleRadius();
 	}
 
-	const auto MyMob = Cast<AMMob>(&MyCharacter);
+	const auto MyMob = Cast<AMMob2D>(&MyCharacter);
 	const float PileInLength = MyMob ? MyMob->GetPileInLength() : 0.f;
 
 	// For reliability, update the move goal
@@ -157,7 +157,7 @@ void AMMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyChara
 		VictimRadius = VictimCapsule->GetScaledCapsuleRadius();
 	}
 
-	const auto MyMob = Cast<AMMob>(&MyCharacter);
+	const auto MyMob = Cast<AMMob2D>(&MyCharacter);
 	const float PileInLength = MyMob ? MyMob->GetPileInLength() : 0.f;
 
 	MoveToLocation(Victim->GetActorLocation(), MyCharacter.GetFightRangePlusMyRadius() + VictimRadius - PileInLength, false);

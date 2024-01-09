@@ -8,7 +8,7 @@
 #include "Managers/MConsoleCommandsManager.h"
 #include "MInterfaceMobController.h"
 #include "Camera/CameraComponent.h"
-#include "Characters/MMob.h"
+#include "Characters/MMob2D.h"
 #include "Managers/MWorldManager.h"
 #include "Managers/MWorldGenerator.h"
 #include "Components/CapsuleComponent.h"
@@ -513,7 +513,7 @@ void AMPlayerController::OnLeftMouseClick()
 	auto test0 = UEngineTypes::ConvertToObjectType(ECC_Pawn);
 	if (GetHitResultUnderCursorForObjects({UEngineTypes::ConvertToObjectType(ECC_Pawn)}, true, HitResult))
 	{
-		AMMob* ClickedMob = Cast<AMMob>(HitResult.GetActor());
+		AMMob2D* ClickedMob = Cast<AMMob2D>(HitResult.GetActor());
 		if (ClickedMob)
 		{
 			if (const auto WorldManager = GetWorld()->GetSubsystem<UMWorldManager>())

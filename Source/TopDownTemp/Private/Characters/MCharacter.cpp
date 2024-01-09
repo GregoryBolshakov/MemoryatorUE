@@ -17,13 +17,9 @@
 #include "Managers/MWorldManager.h"
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0")))
+	: Super(ObjectInitializer)
 	, Health(MaxHealth)
 {
-	// Collection of sprites or flipbooks representing the character. It's not the Root Component!
-	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("2DRepresentation"));
-	RepresentationComponent->SetupAttachment(RootComponent);
-
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("InventoryrComponent"));
 
 	CommunicationComponent = CreateDefaultSubobject<UMCommunicationComponent>(TEXT("CommunicationComponent"));
@@ -33,7 +29,8 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	IsActiveCheckerComponent->OnEnabledDelegate.BindUObject(this, &AMCharacter::OnEnabled);
 
 	BuffBarComponent = CreateDefaultSubobject<UMBuffBarComponent>(TEXT("BuffBar"));
-	BuffBarComponent->SetupAttachment(RepresentationComponent);
+	const auto MeshComponent = GetMesh();
+	BuffBarComponent->SetupAttachment(MeshComponent ? MeshComponent : RootComponent);
 	BuffBarComponent->SetWidgetClass(BuffBarWidgetBPClass);
 
 	AttackPuddleComponent = CreateDefaultSubobject<UMAttackPuddleComponent>(TEXT("AttackPuddle"));
@@ -105,29 +102,6 @@ float AMCharacter::GetRadius() const
 void AMCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
-
-	UpdateLastNonZeroDirection();
-
-	auto GazeDirection = ForcedGazeVector.IsZero() ? LastNonZeroVelocity : ForcedGazeVector;
-	GazeDirection.Z = 0;
-
-	if (abs(UM2DRepresentationBlueprintLibrary::GetDeflectionAngle(GazeDirection, GetVelocity())) > 90.f)
-	{
-		OnReverseMovementStartedDelegate.Broadcast();
-	}
-	else
-	{
-		OnReverseMovementStoppedDelegate.Broadcast();
-	}
-
-	RepresentationComponent->SetMeshByGazeAndVelocity(GazeDirection, GetVelocity());
-}
-
-void AMCharacter::PostInitializeComponents()
-{
-	Super::PostInitializeComponents();
-
-	RepresentationComponent->PostInitChildren();
 }
 
 void AMCharacter::UpdateLastNonZeroDirection()
@@ -200,7 +174,12 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 			const auto LaunchVelocity = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal() * 140.f; // TODO: add a UPROPERTY for the knock back length
 			LaunchCharacter(LaunchVelocity, false, false);
 
-			RepresentationComponent->SetColor(FLinearColor(1.f, 0.25f, 0.25f, 1.f));
+			const auto MeshComponent = GetMesh();
+			if (MeshComponent)
+			{
+				//TODO: Support color change
+				//Mesh->SetColor(FLinearColor(1.f, 0.25f, 0.25f, 1.f));
+			}
 
 			IsTakingDamage = true;
 			UpdateAnimation();
