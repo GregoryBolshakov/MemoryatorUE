@@ -28,9 +28,8 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	IsActiveCheckerComponent->OnDisabledDelegate.BindUObject(this, &AMCharacter::OnDisabled);
 	IsActiveCheckerComponent->OnEnabledDelegate.BindUObject(this, &AMCharacter::OnEnabled);
 
-	BuffBarComponent = CreateDefaultSubobject<UMBuffBarComponent>(TEXT("BuffBar"));
-	const auto MeshComponent = GetMesh();
-	BuffBarComponent->SetupAttachment(MeshComponent ? MeshComponent : RootComponent);
+	BuffBarComponent = CreateDefaultSubobject<UMBuffBarComponent>(TEXT("BuffBar_New"));
+	BuffBarComponent->SetupAttachment(RootComponent);
 	BuffBarComponent->SetWidgetClass(BuffBarWidgetBPClass);
 
 	AttackPuddleComponent = CreateDefaultSubobject<UMAttackPuddleComponent>(TEXT("AttackPuddle"));

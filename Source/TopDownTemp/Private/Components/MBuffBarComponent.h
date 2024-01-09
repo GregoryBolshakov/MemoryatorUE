@@ -41,8 +41,6 @@ public:
 
 	bool IsBuffSet(EBuffType Type);
 
-	void CreateWidget();
-
 	TMap<EBuffType, FOnBuffFinished> BuffDelegates;
 
 protected:

@@ -17,7 +17,7 @@ UMBuffBarComponent::UMBuffBarComponent()
 		}
 	}
 
-	SetDrawSize({100.f, 30.f});
+	SetDrawSize({66.f, 30.f});
 	SetTwoSided(false);
 	CastShadow = false;
 
@@ -89,7 +89,7 @@ void UMBuffBarComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	UpdateChildTransforms();
+	/*UpdateChildTransforms();
 	UpdateBounds();
 
 	if (const auto MyWidget = GetWidget())
@@ -106,7 +106,7 @@ void UMBuffBarComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		const auto TopCapsulePoint = OwnerCapsule->GetComponentLocation() + FVector(0.f, 0.f, OwnerCapsule->GetScaledCapsuleHalfHeight());
 		const auto NewLocation = TopCapsulePoint + FVector(0.f, 0.f, Bounds.BoxExtent.Z / 2.f);
 		SetWorldLocation(NewLocation);
-	}
+	}*/
 }
 
 void UMBuffBarComponent::BeginPlay()
