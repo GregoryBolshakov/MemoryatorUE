@@ -98,8 +98,9 @@ protected:
 	void OnDisabled();
 
 	/** Representation (collection of sprites) */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
-	class UM2DRepresentationComponent* RepresentationComponent;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UM2DRepresentationComponent* OptionalRepresentationComponent; //TODO: Remove this. Temp workaround for legacy 2D actors
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMInventoryComponent* InventoryComponent;

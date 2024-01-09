@@ -13,9 +13,6 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	PointComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootPoint"));
 	SetRootComponent(PointComponent);
 
-	RepresentationComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("Representation"));
-	RepresentationComponent->SetupAttachment(RootComponent);
-
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
 	IsActiveCheckerComponent->OnDisabledDelegate.BindUObject(this, &AMActor::OnDisabled);
 	IsActiveCheckerComponent->OnEnabledDelegate.BindUObject(this, &AMActor::OnEnabled);
@@ -48,7 +45,11 @@ void AMActor::PostInitializeComponents()
 
 	ApplyAppearanceID();
 
-	RepresentationComponent->PostInitChildren();
+	OptionalRepresentationComponent = Cast<UM2DRepresentationComponent>(GetComponentByClass(UM2DRepresentationComponent::StaticClass()));
+	if (OptionalRepresentationComponent)
+	{
+		OptionalRepresentationComponent->PostInitChildren();
+	}
 
 	CreateDynamicMaterials();
 }

@@ -37,7 +37,7 @@ void AMVillageGenerator::Generate()
 	}
 	const auto GapMetadata = ToSpawnBuildingMetadataMap.Find("Gap");
 
-	if (!pWorldGenerator || ToSpawnBuildingMetadataMap.IsEmpty() || !ToSpawnBuildingMetadataMap.Find("MainBuilding") || !GapMetadata)
+	if (!pWorldGenerator || ToSpawnBuildingMetadataMap.IsEmpty() || !ToSpawnBuildingMetadataMap.Find("Palace") || !GapMetadata)
 	{
 		check(false);
 		return;

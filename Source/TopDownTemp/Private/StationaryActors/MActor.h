@@ -70,8 +70,8 @@ protected:
 	UPROPERTY()
 	USceneComponent* PointComponent;
 
-	UPROPERTY(Category=Representation, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) 
-	class UM2DRepresentationComponent* RepresentationComponent;
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly) 
+	class UM2DRepresentationComponent* OptionalRepresentationComponent; //TODO: Remove this. Temp workaround for legacy 2D actors
 
 	UPROPERTY(Category=ActiveCheck, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;
