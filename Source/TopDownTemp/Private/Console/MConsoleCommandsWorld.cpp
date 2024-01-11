@@ -31,6 +31,13 @@ static TAutoConsoleVariable<FString> CVarToSpawnVillager(
 		ECVF_ReadOnly
 	);
 
+static TAutoConsoleVariable<FString> CVarToSpawnPeasant(
+		TEXT("r.Peasant"),
+		FString("Peasant"),
+		TEXT("Defines the TSubclassOf of the mob with given name"),
+		ECVF_ReadOnly
+	);
+
 UMConsoleCommandsWorld::UMConsoleCommandsWorld()
 {
 }

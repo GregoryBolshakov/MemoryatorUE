@@ -17,7 +17,7 @@
 #include "Managers/MWorldManager.h"
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
-	: Super(ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0")))
+	: Super(ObjectInitializer)
 	, Health(MaxHealth)
 {
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("InventoryrComponent"));
@@ -102,6 +102,7 @@ void AMCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	//TODO: Clean up the code below this. This is legacy logic related to M2DRepresentationComponent
 	UpdateLastNonZeroDirection();
 
 	auto GazeDirection = ForcedGazeVector.IsZero() ? LastNonZeroVelocity : ForcedGazeVector;

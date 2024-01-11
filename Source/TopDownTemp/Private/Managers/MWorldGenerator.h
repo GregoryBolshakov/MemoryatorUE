@@ -53,6 +53,7 @@ public:
 		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters, bForceAboveGround, OnSpawnActorStarted),ECastCheckedType::NullAllowed);
 	}
 
+	UFUNCTION(BlueprintCallable)
 	void EnrollActorToGrid(AActor* Actor);
 	void RemoveActorFromGrid(AActor* Actor);
 
