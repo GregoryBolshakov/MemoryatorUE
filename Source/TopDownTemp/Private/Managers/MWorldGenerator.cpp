@@ -96,16 +96,16 @@ void AMWorldGenerator::InitSurroundingArea()
 				LoadOrGenerateBlock(BlockInRadius);
 			}
 
-			/*if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
+			if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
 			{
 				pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()
 				{
-					const auto VillageClass = ToSpawnComplexStructureClasses.Find("Village")->Get();
+					const auto VillageClass = RoadManager->GetOutpostBPClasses().Find("Village")->Get();
 					const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
 					VillageGenerator->Generate();
 					UpdateNavigationMesh();
 				}, 0.3f, false);
-			}*/
+			}
 		}
 	, 0.3f, false);
 
@@ -152,12 +152,23 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 
 void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature)
 {
+	auto BlockMetadata = GridOfActors.FindOrAdd(BlockIndex);
 	// First try to load the block
-	if (SaveManager->TryLoadBlock(BlockIndex, this))
+	if (!bRegenerationFeature || BlockMetadata->ConstantActorsCount > 0) // Try to load only in regeneration feature isn't applicable
 	{
-		return;
+		if (SaveManager->TryLoadBlock(BlockIndex, this))
+		{
+			return;
+		}
 	}
 	// Couldn't load, generate it from scratch
+	BlockMetadata = EmptyBlock(BlockIndex, true);
+	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, BlockMetadata);
+}
+
+void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex)
+{
+	SaveManager->RemoveBlock(BlockIndex); // No longer need a save for this block
 	const auto Block = EmptyBlock(BlockIndex, true);
 	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, Block);
 }
@@ -974,6 +985,21 @@ void AMWorldGenerator::CleanArea(const FVector& Location, int RadiusInBlocks, UP
 		{
 			BlockMetadata->PCGGraph = OverridePCGGraph;
 		}
+	}
+}
+
+void AMWorldGenerator::RegenerateArea(const FVector& Location, int RadiusInBlocks, UPCGGraph* OverridePCGGraph)
+{
+	//TODO: Reuse CleanArea for this. Probably overload CleanArea() to take a TSet<FIntPoint>
+	const auto CenterBlock = GetGroundBlockIndex(Location);
+	for (const auto Block : GetBlocksInRadius(CenterBlock.X, CenterBlock.Y, RadiusInBlocks))
+	{
+		const auto BlockMetadata = EmptyBlock(Block, true, true);
+		if (OverridePCGGraph)
+		{
+			BlockMetadata->PCGGraph = OverridePCGGraph;
+		}
+		GenerateBlock(Block);
 	}
 }
 

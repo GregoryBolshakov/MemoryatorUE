@@ -49,7 +49,7 @@ void AMVillageGenerator::Generate()
 	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
 	const auto PCGGraphVillage = pWorldGenerator->GetBlockGenerator()->GetGraph("Village");
 	// Here we should clean all the blocks we are about to cover
-	pWorldGenerator->CleanArea(CenterPosition, FMath::CeilToInt(TownSquareRadius / FMath::Min(BlockSize.X, BlockSize.Y)), PCGGraphVillage); //TODO: Increase the area somehow! for now I don't know how to calculate it
+	pWorldGenerator->RegenerateArea(CenterPosition, FMath::CeilToInt(TownSquareRadius / FMath::Min(BlockSize.X, BlockSize.Y)), PCGGraphVillage); //TODO: Increase the area somehow! for now I don't know how to calculate it
 
 	float DistanceFromCenter = TownSquareRadius;
 

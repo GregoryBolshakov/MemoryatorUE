@@ -137,7 +137,7 @@ void UMRoadManager::ProcessAdjacentChunks(const FIntPoint& CurrentChunk)
 			const auto& ChunkMetadata = GridOfChunks.FindOrAdd(ChunkToProcess);
 			if (ChunkMetadata.OutpostGenerator && !ChunkMetadata.OutpostGenerator->IsGenerated())
 			{
-				ChunkMetadata.OutpostGenerator->Generate();
+				//ChunkMetadata.OutpostGenerator->Generate();
 			}
 		}
 	}

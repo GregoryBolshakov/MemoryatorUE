@@ -108,6 +108,8 @@ public:
 	/** The tag PCG uses to differ the road types */
 	FName GetRoadPCGTag(ERoadType RoadType) const;
 
+	const TMap<FName, TSubclassOf<AActor>>& GetOutpostBPClasses() const { return OutpostBPClasses; }
+
 protected:
 
 	/** If adjacent chunks have outpost generators, call their Generate() to spawn their actors */

@@ -43,6 +43,9 @@ public:
 
 	/** First try to look at save, generate new if not found */
 	void LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature = true);
+	
+	/** Generate a block */
+	void GenerateBlock(const FIntPoint& BlockIndex);
 
 	/** Turns on all actors in the active zone, turn off all others*/
 	void UpdateActiveZone();
@@ -67,6 +70,8 @@ public:
 	/** Deletes all static actors(trees, stones, etc.) including the ground block for each block within radius.\n
 	 * Keeps dynamic actors, ignores blocks constancy. If some block's BlockMetadata didn't exist, create it. */
 	void CleanArea(const FVector& Location, int RadiusInBlocks, UPCGGraph* OverridePCGGraph = nullptr);
+
+	void RegenerateArea(const FVector& Location, int RadiusInBlocks, UPCGGraph* OverridePCGGraph = nullptr);
 
 	static FBoxSphereBounds GetDefaultBounds(UClass* IN_ActorClass, UObject* WorldContextObject);
 
