@@ -64,6 +64,8 @@ public:
 
 	FName GetSpeciesName() const { return SpeciesName; }
 
+	virtual void InitialiseInventory(const TArray<struct FItem>& IN_Items);
+
 	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; UpdateAnimation(); }
 
 	UFUNCTION(BlueprintCallable)
@@ -90,6 +92,8 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+	void GenerateStartingInventory();
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnEnabled();

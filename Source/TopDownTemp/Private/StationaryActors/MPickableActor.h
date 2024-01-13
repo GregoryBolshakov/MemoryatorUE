@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "MActor.h"
-#include "Components/MInventoryComponent.h"
 #include "MPickableActor.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPickedUpCompletely, TSubclassOf<AMPickableActor>, Class);
@@ -20,8 +19,7 @@ class AMPickableActor : public AMActor
 
 public:
 
-	UFUNCTION(BlueprintCallable)
-	virtual void InitialiseInventory(const TArray<FItem>& IN_Items);
+	virtual void InitialiseInventory(const TArray<FItem>& IN_Items) override;
 
 	UFUNCTION()
 	void OnItemChanged(int NewItemID, int NewQuantity);
@@ -40,9 +38,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = AMPickableItem)
 	bool bDisappearIfEmptyInventory;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AMPickableItem, meta = (AllowPrivateAccess = "true"))
-	UMInventoryComponent* InventoryComponent;
 
 	/** A pointer for easier access of World Generator's Drop Manager */
 	UPROPERTY()

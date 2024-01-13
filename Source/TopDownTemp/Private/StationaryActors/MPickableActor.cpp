@@ -11,7 +11,6 @@
 
 AMPickableActor::AMPickableActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("Inventory"));
 }
 
 void AMPickableActor::PostInitializeComponents()
@@ -48,7 +47,7 @@ void AMPickableActor::PostInitializeComponents()
 FTimerHandle CollisionTimerHandle;
 void AMPickableActor::InitialiseInventory(const TArray<FItem>& IN_Items)
 {
-	InventoryComponent->Initialize(IN_Items.Num(), IN_Items);
+	Super::InitialiseInventory(IN_Items);
 
 	// NotifyActorBeginOverlap doesn't trigger when actor just spawned
 	GetWorld()->GetTimerManager().SetTimer(CollisionTimerHandle, [this]

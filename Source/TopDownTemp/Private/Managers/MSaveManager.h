@@ -14,7 +14,6 @@ struct FBlockSaveData;
 struct FActorWorldMetadata;
 struct FActorSaveData;
 struct FMActorSaveData;
-struct FMPickableActorSaveData;
 struct FMCharacterSaveData;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogSaveManager, Log, All);
@@ -30,15 +29,14 @@ public:
 	void SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, AMWorldGenerator* WorldGenerator);
 	bool LoadFromMemory();
 	bool TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* WorldGenerator);
+	const FBlockSaveData* GetBlockData(const FIntPoint& Index) const;
 	void RemoveBlock(const FIntPoint& Index) const;
 	TArray<FIntPoint> GetPlayerTraveledPath() const;
 	bool IsLoaded() const { return LoadedGameWorld != nullptr; }
 
 private:
 
-	//void LoadPerTick(AMWorldGenerator* WorldGenerator);
 	AMActor* LoadMActor(const FMActorSaveData& MActorSD, AMWorldGenerator* WorldGenerator);
-	AMPickableActor* LoadMPickableActor(const FMPickableActorSaveData& MPickableActorSD, AMWorldGenerator* WorldGenerator);
 	AMCharacter* LoadMCharacter(const FMCharacterSaveData& MCharacterSD, AMWorldGenerator* WorldGenerator);
 
 	FTimerHandle AutoSavesTimer;
@@ -49,7 +47,19 @@ private:
 	//TODO: I.e. we're gonna store saved regions in TMap<FIntPoint, USaveGameWorld*> LoadedWorldRegions
 	//TODO: When player enters a region, mark it as dirty
 	//TODO: When Saving, iterate all dirty/marked regions, save them and reset their dirty/marked state
+
+	//TODO: OR, just limit the world
 	UPROPERTY()
 	USaveGameWorld* LoadedGameWorld;
+
+	// Maps for quick access by name
+
+	/** It maps SavedUid with pointers to FMActorSaveData stored in all blocks in the LoadedGameWorld.\n\n NOT A UPROPERTY\n\n
+	 * May contain dangling pointers as blocks' save data might be removed, always validate results. */
+	TMap<int32, FMActorSaveData*> LoadedMActorMap;
+
+	/** It maps SavedUid with pointers to FMCharacterSaveData stored in all blocks in the LoadedGameWorld.\n NOT A UPROPERTY\n\n
+	 * May contain dangling pointers as blocks' save data might be removed, always validate results. */
+	TMap<int32, FMCharacterSaveData*> LoadedMCharacterMap;
 };
 

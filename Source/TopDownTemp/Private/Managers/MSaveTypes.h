@@ -20,8 +20,10 @@ struct FActorSaveData
 	UPROPERTY()
 	FRotator Rotation;
 
+	/** Saved actors might depend on other saved actors when loading. They use this ID. \n
+	 * Has no relation to the overall uniqueness of actors in the world */
 	UPROPERTY()
-	FString NameString;
+	int32 SavedUid;
 };
 
 USTRUCT()
@@ -37,15 +39,6 @@ struct FMActorSaveData
 
 	UPROPERTY()
 	bool IsRandomizedAppearance;
-};
-
-USTRUCT()
-struct FMPickableActorSaveData
-{
-	GENERATED_USTRUCT_BODY()
-
-	UPROPERTY()
-	FMActorSaveData MActorSaveData;
 
 	UPROPERTY()
 	TArray<FItem> InventoryContents;
@@ -64,6 +57,9 @@ struct FMCharacterSaveData
 
 	UPROPERTY()
 	float Health;
+
+	UPROPERTY()
+	TArray<FItem> InventoryContents;
 };
 
 USTRUCT()
@@ -75,13 +71,13 @@ struct FBlockSaveData
 	FPCGVariables PCGVariables;
 
 	UPROPERTY()
+	bool WasConstant = false;
+
+	UPROPERTY()
 	TArray<FMActorSaveData> SavedMActors;
 
 	UPROPERTY()
 	TArray<FMCharacterSaveData> SavedMCharacters;
-
-	UPROPERTY()
-	TArray<FMPickableActorSaveData> SavedMPickableActors;
 };
 
 UCLASS()

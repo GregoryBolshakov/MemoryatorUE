@@ -3,6 +3,7 @@
 #include "MActor.h"
 
 #include "Components/M2DRepresentationComponent.h"
+#include "Components/MInventoryComponent.h"
 #include "Components/MIsActiveCheckerComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Managers/MWorldGenerator.h"
@@ -16,6 +17,8 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
 	IsActiveCheckerComponent->OnDisabledDelegate.BindUObject(this, &AMActor::OnDisabled);
 	IsActiveCheckerComponent->OnEnabledDelegate.BindUObject(this, &AMActor::OnEnabled);
+
+	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("Inventory"));
 }
 
 bool AMActor::Destroy(bool bNetForce, bool bShouldModifyLevel)
@@ -32,6 +35,11 @@ bool AMActor::Destroy(bool bNetForce, bool bShouldModifyLevel)
 		}
 	}
 	return false;
+}
+
+void AMActor::InitialiseInventory(const TArray<FItem>& IN_Items)
+{
+	InventoryComponent->Initialize(IN_Items.Num(), IN_Items);
 }
 
 void AMActor::PostInitializeComponents()

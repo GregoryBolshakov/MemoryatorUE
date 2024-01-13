@@ -85,15 +85,18 @@ void AMWorldGenerator::InitSurroundingArea()
 			const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
 
 			// We add 1 to the radius on purpose. Generated area always has to be further then visible
-			const auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
+			auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
+			BlocksInRadius.Remove(PlayerBlockIndex); // Already loaded above
+
+			// Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
 			for (const auto BlockInRadius : BlocksInRadius)
-			{ // Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
+			{
 				const auto BlockMetadata = FindOrAddBlock(BlockInRadius);
 				BlockMetadata->Biome = BiomeForInitialGeneration;
 			}
 			for (const auto BlockInRadius : BlocksInRadius)
 			{
-				LoadOrGenerateBlock(BlockInRadius);
+				LoadOrGenerateBlock(BlockInRadius, false);
 			}
 
 			if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
@@ -152,17 +155,20 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 
 void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature)
 {
-	auto BlockMetadata = GridOfActors.FindOrAdd(BlockIndex);
 	// First try to load the block
-	if (!bRegenerationFeature || BlockMetadata->ConstantActorsCount > 0) // Try to load only in regeneration feature isn't applicable
+	if (const auto BlockSD = SaveManager->GetBlockData(BlockIndex))
 	{
-		if (SaveManager->TryLoadBlock(BlockIndex, this))
+		// Regeneration feature applies only if the block isn't constant. Otherwise it must be loaded if save is present
+		if (BlockSD->WasConstant || !bRegenerationFeature) //TODO: Implement this!!! Very important
 		{
-			return;
+			if (SaveManager->TryLoadBlock(BlockIndex, this))
+			{
+				return;
+			}
 		}
 	}
 	// Couldn't load, generate it from scratch
-	BlockMetadata = EmptyBlock(BlockIndex, true);
+	const auto BlockMetadata = EmptyBlock(BlockIndex, true);
 	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, BlockMetadata);
 }
 
@@ -217,7 +223,7 @@ void AMWorldGenerator::BeginPlay()
 	// We want to set the biome coloring since the first block change
 	BlocksPassedSinceLastPerimeterColoring = BiomesPerimeterColoringRate;
 
-	//SaveManager->LoadFromMemory();
+	SaveManager->LoadFromMemory();
 
 	InitSurroundingArea();
 
@@ -820,6 +826,7 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 	AActor* Actor;
 	if (OnSpawnActorStarted.IsBound())
 	{
+		//TODO: Figure out how to support SpawnParameters.Name
 		Actor = pWorld->SpawnActorDeferred<AActor>(
 			Class,
 			ActorTransform,
@@ -832,7 +839,10 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 		check(Actor);
 		if (Actor)
 		{
-			Actor->Rename(); // Guarantees unique name
+			if (!SpawnParameters.Name.IsNone())
+				Actor->Rename(*SpawnParameters.Name.ToString());
+			else
+				Actor->Rename(); // Guarantees unique name
 
 			OnSpawnActorStarted.Broadcast(Actor);
 

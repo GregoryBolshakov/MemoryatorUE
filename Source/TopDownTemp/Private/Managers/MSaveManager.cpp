@@ -4,6 +4,7 @@
 #include "MSaveTypes.h"
 #include "MWorldGenerator.h"
 #include "Characters/MCharacter.h"
+#include "Characters/MMemoryator.h"
 #include "Kismet/GameplayStatics.h"
 #include "StationaryActors/MActor.h"
 #include "StationaryActors/MPickableActor.h"
@@ -23,6 +24,7 @@ void UMSaveManager::SetUpAutoSaves(TMap<FIntPoint, UBlockMetadata*>& GridOfActor
 	}, 5.f, true);
 }
 
+static TAtomic<int32> NumberUniqueIndex(MAX_int32 - 1000); //TODO: Maybe reset between different launches in the editor
 void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors, AMWorldGenerator* WorldGenerator)
 {
 	const auto SaveGameWorld = LoadedGameWorld ? LoadedGameWorld : Cast<USaveGameWorld>(UGameplayStatics::CreateSaveGameObject(USaveGameWorld::StaticClass()));
@@ -42,9 +44,9 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 			auto& SavedBlock = SaveGameWorld->SavedGrid.FindOrAdd(BlockIndex);
 
 			SavedBlock.PCGVariables = BlockMetadata->pGroundBlock->PCGVariables;
+			SavedBlock.WasConstant = BlockMetadata->ConstantActorsCount > 0;
 			// Empty in case they've been there since last load
 			SavedBlock.SavedMActors.Empty();
-			SavedBlock.SavedMPickableActors.Empty();
 			SavedBlock.SavedMCharacters.Empty();
 
 			for (const auto& [Name, pActor] : BlockMetadata->StaticActors)
@@ -53,11 +55,11 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 					continue;
 
 				// Start from the base and compose structs upwards
-				FActorSaveData ActorSaveData{
+				FActorSaveData ActorSaveData = {
 					pActor->GetClass(),
 					pActor->GetActorLocation(),
 					pActor->GetActorRotation(),
-					Name.ToString()
+					--NumberUniqueIndex
 				};
 				if (const auto pMActor = Cast<AMActor>(pActor))
 				{
@@ -66,21 +68,13 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 						pMActor->GetAppearanceID(),
 						pMActor->GetIsRandomizedAppearance()
 					};
-					if (const auto pMPickableActor = Cast<AMPickableActor>(pActor))
+					// Save inventory if MActor has it
+					if (const auto InventoryComponent = Cast<UMInventoryComponent>(pMActor->GetComponentByClass(UMInventoryComponent::StaticClass())))
 					{
-						if (const auto InventoryComponent = Cast<UMInventoryComponent>(pMPickableActor->GetComponentByClass(UMInventoryComponent::StaticClass())))
-						{
-							FMPickableActorSaveData MPickableActorSD{
-								MActorSD,
-								InventoryComponent->GetItemCopies(false)
-							};
-							SavedBlock.SavedMPickableActors.Add(MPickableActorSD);
-						}
+						MActorSD.InventoryContents = InventoryComponent->GetItemCopies(false);
 					}
-					else
-					{
-						SavedBlock.SavedMActors.Add(MActorSD);
-					}
+
+					SavedBlock.SavedMActors.Add(MActorSD);
 				}
 			}
 			for (const auto& [Name, pActor] : BlockMetadata->DynamicActors)
@@ -89,11 +83,11 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 					continue;
 
 				// Start from the base and compose structs upwards
-				FActorSaveData ActorSaveData{
+				FActorSaveData ActorSaveData = {
 					pActor->GetClass(),
 					pActor->GetActorLocation(),
 					pActor->GetActorRotation(),
-					Name.ToString()
+					--NumberUniqueIndex
 				};
 				if (const auto pMCharacter = Cast<AMCharacter>(pActor))
 				{
@@ -102,6 +96,12 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 						pMCharacter->GetSpeciesName(),
 						pMCharacter->GetHealth()
 					};
+					// Save inventory if MCharacter has it
+					if (const auto InventoryComponent = Cast<UMInventoryComponent>(pMCharacter->GetComponentByClass(UMInventoryComponent::StaticClass())))
+					{
+						MCharacterSD.InventoryContents = InventoryComponent->GetItemCopies(false);
+					}
+
 					SavedBlock.SavedMCharacters.Add(MCharacterSD);
 				}
 			}
@@ -120,6 +120,18 @@ bool UMSaveManager::LoadFromMemory()
 	LoadedGameWorld = Cast<USaveGameWorld>(UGameplayStatics::LoadGameFromSlot(USaveGameWorld::SlotName, 0));
 	if (!LoadedGameWorld)
 		return false;
+
+	for (const auto& [Name, BlockSD] : LoadedGameWorld->SavedGrid)
+	{
+		for (auto& MActorSD : BlockSD.SavedMActors)
+		{
+			LoadedMActorMap.Add({MActorSD.ActorSaveData.SavedUid, const_cast<FMActorSaveData*>(&MActorSD)});
+		}
+		for (const auto& MCharcterSD : BlockSD.SavedMCharacters)
+		{
+			LoadedMCharacterMap.Add({MCharcterSD.ActorSaveData.SavedUid, const_cast<FMCharacterSaveData*>(&MCharcterSD)});
+		}
+	}
 
 	return true;
 }
@@ -168,11 +180,6 @@ bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* 
 		LoadMActor(MActorSD, WorldGenerator);
 	}
 
-	for (const auto& MPickableActorDS : BlockSD->SavedMPickableActors)
-	{
-		LoadMPickableActor(MPickableActorDS, WorldGenerator);
-	}
-
 	for (const auto& MCharacterDS : BlockSD->SavedMCharacters)
 	{
 		LoadMCharacter(MCharacterDS, WorldGenerator);
@@ -180,6 +187,15 @@ bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* 
 
 	RemoveBlock(BlockIndex); // The block is loaded, it's save is unnecessary
 	return true;
+}
+
+const FBlockSaveData* UMSaveManager::GetBlockData(const FIntPoint& Index) const
+{
+	if (LoadedGameWorld)
+	{
+		return LoadedGameWorld->SavedGrid.Find(Index);
+	}
+	return nullptr;
 }
 
 void UMSaveManager::RemoveBlock(const FIntPoint& Index) const
@@ -207,7 +223,6 @@ AMActor* UMSaveManager::LoadMActor(const FMActorSaveData& MActorSD, AMWorldGener
 	const auto& ActorSD = MActorSD.ActorSaveData;
 
 	FActorSpawnParameters Params;
-	Params.Name = FName(ActorSD.NameString);
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	FOnSpawnActorStarted OnSpawnActorStarted;
@@ -216,14 +231,17 @@ AMActor* UMSaveManager::LoadMActor(const FMActorSaveData& MActorSD, AMWorldGener
 		if (const auto MActor = Cast<AMActor>(Actor))
 		{
 			MActor->SetAppearanceID(MActorSD.AppearanceID);
+			MActor->InitialiseInventory(MActorSD.InventoryContents);
 			return;
 		}
 		check(false);
 	});
-	return WorldGenerator->SpawnActor<AMActor>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, false, OnSpawnActorStarted);
+	const auto MActor = WorldGenerator->SpawnActor<AMActor>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, false, OnSpawnActorStarted);
+
+	return MActor;
 }
 
-AMPickableActor* UMSaveManager::LoadMPickableActor(const FMPickableActorSaveData& MPickableActorSD,
+/*AMPickableActor* UMSaveManager::LoadMPickableActor(const FMPickableActorSaveData& MPickableActorSD,
 	AMWorldGenerator* WorldGenerator)
 {
 	if (!WorldGenerator)
@@ -235,7 +253,7 @@ AMPickableActor* UMSaveManager::LoadMPickableActor(const FMPickableActorSaveData
 		return MPickableActor;
 	}
 	return nullptr;
-}
+}*/
 
 AMCharacter* UMSaveManager::LoadMCharacter(const FMCharacterSaveData& MCharacterSD, AMWorldGenerator* WorldGenerator)
 {
@@ -244,15 +262,31 @@ AMCharacter* UMSaveManager::LoadMCharacter(const FMCharacterSaveData& MCharacter
 
 	const auto& ActorSD = MCharacterSD.ActorSaveData;
 	FActorSpawnParameters Params;
-	Params.Name = FName(ActorSD.NameString);
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
+	// Setup a callback to initialize inventory if it was saved
+	FOnSpawnActorStarted OnSpawnActorStarted;
+	if (!MCharacterSD.InventoryContents.IsEmpty())
+	{
+		OnSpawnActorStarted.AddLambda([InventorySlots = MCharacterSD.InventoryContents](AActor* Actor)
+		{
+			if (const auto MCharacter = Cast<AMCharacter>(Actor))
+			{
+				MCharacter->InitialiseInventory(InventorySlots);
+			}
+		});
+	}
+
+	if (ActorSD.FinalClass->IsChildOf(AMMemoryator::StaticClass()))
+	{
+		Params.Name = "Player";
+	}
+
 	// Spawn the character using saved data
-	//TODO: Understand why passing a non-zero rotation causes issues with components bounds (box extent) (e.g. AttackPuddleComponent) 
-	if (const auto SpawnedCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, /*ActorSD.Rotation*/ FRotator::ZeroRotator, Params, true))
+	if (const auto SpawnedCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, /*ActorSD.Rotation*/ FRotator::ZeroRotator, Params, true, OnSpawnActorStarted))
 	{
 		// If it is the player, make it possessed by the player controller
-		if (Params.Name == FName("Player"))
+		if (SpawnedCharacter->IsA<AMMemoryator>())
 		{
 			if (const auto pPlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0))
 			{

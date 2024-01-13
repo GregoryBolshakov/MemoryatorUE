@@ -20,6 +20,8 @@ void UMInventoryComponent::Initialize(int IN_SlotsNumber, const TArray<FItem>& S
 	Slots.AddDefaulted(IN_SlotsNumber);
 	for (const auto& Item : StartingItems)
 	{
+		if (Item.Quantity == 0)
+			continue;
 		StoreItem(Item);
 	}
 }

@@ -39,6 +39,8 @@ public:
 	int GetAppearanceID() const { return AppearanceID; }
 	bool GetIsRandomizedAppearance() const { return IsRandomizedAppearance; }
 
+	virtual void InitialiseInventory(const TArray<struct FItem>& IN_Items);
+
 	UFUNCTION(BlueprintCallable)
 	const TMap<UStaticMeshComponent*, FArrayMaterialInstanceDynamicWrapper>& GetDynamicMaterials() const
 	{
@@ -75,6 +77,9 @@ protected:
 
 	UPROPERTY(Category=ActiveCheck, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class UMInventoryComponent* InventoryComponent;
 
 	/** Objects like trees/plants/mushrooms/stones/etc. may have different appearances. If true, the type will be picked randomly */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

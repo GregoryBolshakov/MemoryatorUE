@@ -98,6 +98,11 @@ float AMCharacter::GetRadius() const
 	return 0.f;
 }
 
+void AMCharacter::InitialiseInventory(const TArray<FItem>& IN_Items)
+{
+	InventoryComponent->Initialize(IN_Items.Num(), IN_Items);
+}
+
 void AMCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -165,26 +170,9 @@ void AMCharacter::BeginPlay()
 			}
 		}
 
-		// Generate starting inventory
-		if (InventoryComponent)
+		if (InventoryComponent->GetSlots().IsEmpty())
 		{
-			if (const auto pCharacterSpeciesDataAsset = pGameInstance->CharacterSpeciesDataAsset)
-			{
-				if (const auto MyData = pCharacterSpeciesDataAsset->Data.Find(SpeciesName))
-				{
-					TArray<FItem> StartingInventory;
-					for (const auto [ItemID, ItemData] : MyData->StartingItemsData)
-					{
-						if (FMath::RandRange(0.f, 1.f) <= ItemData.Probability)
-						{
-							StartingInventory.Add({ItemID, FMath::RandRange(ItemData.MinMaxStartQuantity.X, ItemData.MinMaxStartQuantity.Y)});
-						}
-					}
-					InventoryComponent->Initialize(StartingInventory.Num(), StartingInventory);
-				}
-			}
-			InventoryComponent->SetFlagToAllSlots(FSlot::ESlotFlags::Secret);
-			InventoryComponent->SetFlagToAllSlots(FSlot::ESlotFlags::Locked);
+			GenerateStartingInventory();
 		}
 	}
 }
@@ -226,6 +214,31 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 		}
 	}
 	return Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+}
+
+void AMCharacter::GenerateStartingInventory()
+{
+	const auto pGameInstance = GetGameInstance<UMGameInstance>();
+	if (InventoryComponent)
+	{
+		if (const auto pCharacterSpeciesDataAsset = pGameInstance->CharacterSpeciesDataAsset)
+		{
+			if (const auto MyData = pCharacterSpeciesDataAsset->Data.Find(SpeciesName))
+			{
+				TArray<FItem> StartingInventory;
+				for (const auto [ItemID, ItemData] : MyData->StartingItemsData)
+				{
+					if (FMath::RandRange(0.f, 1.f) <= ItemData.Probability)
+					{
+						StartingInventory.Add({ItemID, FMath::RandRange(ItemData.MinMaxStartQuantity.X, ItemData.MinMaxStartQuantity.Y)});
+					}
+				}
+				InventoryComponent->Initialize(StartingInventory.Num(), StartingInventory);
+			}
+		}
+		InventoryComponent->SetFlagToAllSlots(FSlot::ESlotFlags::Secret);
+		InventoryComponent->SetFlagToAllSlots(FSlot::ESlotFlags::Locked);
+	}
 }
 
 void AMCharacter::OnEnabled_Implementation()
