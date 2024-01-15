@@ -8,6 +8,8 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogVillageGenerator, Log, All);
 
+class AMOutpostHouse;
+
 /** Describes all the data can be configured for one particular kind of villagers */
 USTRUCT(BlueprintType)
 struct FToSpawnVillagerMetadata
@@ -61,7 +63,7 @@ protected:
 
 	bool TryToPlaceBuilding(AActor& BuildingActor, int& BuildingIndex, float& DistanceFromCenter, FName BuildingClassName, const FToSpawnBuildingMetadata& BuildingMetadata);
 
-	void OnBuildingPlaced(AActor& BuildingActor, const FToSpawnBuildingMetadata& BuildingMetadata);
+	void PopulateResidentsInHouse(AMOutpostHouse* HouseActor, const FToSpawnBuildingMetadata* BuildingMetadata);
 
 	TOptional<FVector> FindLocationForBuilding(const AActor& BuildingActor, int BuildingIndex, float DistanceFromCenter) const;
 

@@ -8,6 +8,8 @@
 #include "Managers/MWorldManager.h"
 #include "Math/UnrealMathUtility.h"
 #include "StationaryActors/MActor.h"
+#include "StationaryActors/Outposts/MOutpostHouse.h"
+#include "Characters/MCharacter.h"
 
 DEFINE_LOG_CATEGORY(LogVillageGenerator);
 
@@ -104,6 +106,12 @@ void AMVillageGenerator::Generate()
 			if (BuildingMetadata->ToSpawnClass != GapMetadata->ToSpawnClass) // They are supposed to be deleted
 			{
 				pWorldGenerator->EnrollActorToGrid(TestingBuildingActor);
+				if (const auto OutpostHouse = Cast<AMOutpostHouse>(TestingBuildingActor))
+				{
+					OutpostHouse->SetOwnerOutpost(this);
+					Houses.Add(FName(OutpostHouse->GetName()), OutpostHouse);
+					PopulateResidentsInHouse(OutpostHouse, BuildingMetadata);
+				}
 			}
 		}
 		else
@@ -157,14 +165,12 @@ bool AMVillageGenerator::TryToPlaceBuilding(AActor& BuildingActor, int& Building
 				RequiredNumberOfInstances.Remove(BuildingClassName);
 			}
 		}
-
-		OnBuildingPlaced(BuildingActor, BuildingMetadata);
 		return true;
 	}
 	return false;
 }
 
-void AMVillageGenerator::OnBuildingPlaced(AActor& BuildingActor, const FToSpawnBuildingMetadata& BuildingMetadata)
+void AMVillageGenerator::PopulateResidentsInHouse(AMOutpostHouse* HouseActor, const FToSpawnBuildingMetadata* BuildingMetadata)
 {
 	UWorld* pWorld = GetWorld();
 	AMWorldGenerator* pWorldGenerator = nullptr;
@@ -179,28 +185,25 @@ void AMVillageGenerator::OnBuildingPlaced(AActor& BuildingActor, const FToSpawnB
 		return;
 
 	// Calculate the amount of villagers to be spawned and spawn them at the entry point of the building.
-	if (const auto EntryPointComponent = Cast<USceneComponent>(BuildingActor.GetDefaultSubobjectByName(TEXT("EntryPoint"))))
+	if (const auto EntryPointComponent = Cast<USceneComponent>(HouseActor->GetDefaultSubobjectByName(TEXT("EntryPoint"))))
 	{
 		const auto EntryPoint = EntryPointComponent->GetComponentTransform().GetLocation();
 
-		for (const auto& [VillagerClass, ToSpawnVillagerMetadata] : BuildingMetadata.ToSpawnVillagerMetadataMap)
+		for (const auto& [VillagerClass, ToSpawnVillagerMetadata] : BuildingMetadata->ToSpawnVillagerMetadataMap)
 		{
 			const int RequiredVillagersNumber = FMath::RandRange(ToSpawnVillagerMetadata.MinNumberOfInstances, ToSpawnVillagerMetadata.MaxNumberOfInstances);
 			for (int i = 0; i < RequiredVillagersNumber; ++i)
 			{
 				FActorSpawnParameters SpawnParameters;
 				SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-				const auto VillagerPawn = pWorldGenerator->SpawnActor<APawn>(VillagerClass.Get(), EntryPoint, FRotator::ZeroRotator, SpawnParameters, true);
+				const auto VillagerPawn = pWorldGenerator->SpawnActor<AMCharacter>(VillagerClass.Get(), EntryPoint, FRotator::ZeroRotator, SpawnParameters, true);
 				if (!VillagerPawn)
 				{
 					check(false);
 					continue;
 				}
 
-				if (const auto VillagerController = Cast<AMVillagerMobController>(VillagerPawn->Controller))
-				{
-					VillagerController->Initialize(BuildingActor, GetActorLocation(), TownSquareRadius);
-				}
+				HouseActor->MoveResidentIn(VillagerPawn);
 			}
 		}
 	}

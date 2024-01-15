@@ -1,4 +1,4 @@
-#include "MMobController.h"
+#include "MHostileMobController.h"
 
 #include "Components/M2DRepresentationComponent.h"
 #include "Components/MAttackPuddleComponent.h"
@@ -12,13 +12,13 @@
 #include "Components/CapsuleComponent.h"
 #include "Engine/DamageEvents.h"
 
-AMMobController::AMMobController(const FObjectInitializer& ObjectInitializer) :
+AMHostileMobController::AMHostileMobController(const FObjectInitializer& ObjectInitializer) :
 	  Super(ObjectInitializer)
 	, Victim(nullptr)
 {
 }
 
-void AMMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
+void AMHostileMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	const auto pWorldGenerator = World.GetSubsystem<UMWorldManager>()->GetWorldGenerator();
 	if (!pWorldGenerator)
@@ -51,7 +51,7 @@ void AMMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharact
 	}
 }
 
-void AMMobController::DoChaseBehavior(const UWorld& World, AMCharacter& MyCharacter)
+void AMHostileMobController::DoChaseBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	if (!Victim)
 	{
@@ -82,7 +82,7 @@ void AMMobController::DoChaseBehavior(const UWorld& World, AMCharacter& MyCharac
 	//TODO: Add a logic to do during chase (shouts, effects, etc.)
 }
 
-void AMMobController::DoFightBehavior(const UWorld& World, AMCharacter& MyCharacter)
+void AMHostileMobController::DoFightBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	if (!Victim)
 	{
@@ -98,7 +98,7 @@ void AMMobController::DoFightBehavior(const UWorld& World, AMCharacter& MyCharac
 	//TODO: Add a logic to do during fight (shouts, effects, etc.)
 }
 
-void AMMobController::DoRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter)
+void AMHostileMobController::DoRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	if (!Victim)
 	{
@@ -115,7 +115,7 @@ void AMMobController::DoRetreatBehavior(const UWorld& World, AMCharacter& MyChar
 	}
 }
 
-void AMMobController::SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter)
+void AMHostileMobController::SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter)
 {
 	MyCharacter->SetIsFighting(false);
 	MyCharacter->SetIsMoving(false);
@@ -128,7 +128,7 @@ void AMMobController::SetIdleBehavior(const UWorld* World, AMCharacter* MyCharac
 	OnBehaviorChanged(*MyCharacter);
 }
 
-void AMMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyCharacter)
+void AMHostileMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	MyCharacter.SetIsFighting(false);
 	MyCharacter.SetIsMoving(true);
@@ -165,7 +165,7 @@ void AMMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyChara
 	OnBehaviorChanged(MyCharacter);
 }
 
-void AMMobController::SetFightBehavior(const UWorld& World, AMCharacter& MyCharacter)
+void AMHostileMobController::SetFightBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	if (!Victim)
 	{
@@ -186,7 +186,7 @@ void AMMobController::SetFightBehavior(const UWorld& World, AMCharacter& MyChara
 	MyCharacter.SetForcedGazeVector(GazeVector);
 }
 
-void AMMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter)
+void AMHostileMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	MyCharacter.SetIsFighting(false);
 	MyCharacter.SetIsMoving(true);
@@ -228,12 +228,12 @@ void AMMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCha
 	OnBehaviorChanged(MyCharacter);
 }
 
-void AMMobController::OnBehaviorChanged(AMCharacter& MyCharacter)
+void AMHostileMobController::OnBehaviorChanged(AMCharacter& MyCharacter)
 {
 	MyCharacter.UpdateAnimation();
 }
 
-void AMMobController::OnFightAnimationEnd()
+void AMHostileMobController::OnFightAnimationEnd()
 {
 	const auto MyCharacter = Cast<AMCharacter>(GetPawn());
 	if (!MyCharacter)
@@ -252,7 +252,7 @@ void AMMobController::OnFightAnimationEnd()
 	}
 }
 
-void AMMobController::OnHit()
+void AMHostileMobController::OnHit()
 {
 	const auto MyCharacter = Cast<AMCharacter>(GetCharacter());
 	if (!MyCharacter)

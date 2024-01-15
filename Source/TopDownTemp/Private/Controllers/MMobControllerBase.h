@@ -7,6 +7,7 @@
 
 class UWorld;
 class AMCharacter;
+class AMOutpostHouse;
 
 //TODO: Consider adding FAIRequestID RequestID, const FPathFollowingResult& Result parameters
 DECLARE_DELEGATE(FOnMoveCompleted);
@@ -19,6 +20,11 @@ UCLASS()
 class TOPDOWNTEMP_API AMMobControllerBase : public AAIController, public IMInterfaceMobController
 {
 	GENERATED_UCLASS_BODY()
+
+public:
+	void OnMovedIn(AMOutpostHouse* NewHouse) { House = NewHouse; }
+
+	void OnMovedOut() { House = nullptr; }
 
 protected:
 
@@ -40,8 +46,10 @@ protected:
 
 	FOnMoveCompleted OnMoveCompletedDelegate;
 
-private:
+	UPROPERTY()
+	AMOutpostHouse* House;
 
+private:
 	virtual void Tick(float DeltaSeconds) override;
 
 };

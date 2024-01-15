@@ -1,27 +1,28 @@
 #pragma once
 
 #include "MMobControllerBase.h"
-#include "MMobController.generated.h"
+#include "MHostileMobController.generated.h"
 
+class AMOutpostHouse;
 class AMCharacter;
 
 //~=============================================================================
 /**
- * Manages an NPC's behavior in the game. 
+ * Manages a hostile NPC's behavior in the game. Should be refactored in the future, currently needed for prototyping
  */
 UCLASS(Blueprintable)
-class TOPDOWNTEMP_API AMMobController : public AMMobControllerBase
+class TOPDOWNTEMP_API AMHostileMobController : public AMMobControllerBase
 {
 	GENERATED_UCLASS_BODY()
 
 public:
-
 	virtual void OnFightAnimationEnd() override;
 
 	virtual void OnHit() override;
 
-private:
+	AMOutpostHouse* GetHouse() const { return House; }
 
+private:
 	virtual void DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
 	virtual void DoChaseBehavior(const UWorld& World, AMCharacter& MyCharacter) override;

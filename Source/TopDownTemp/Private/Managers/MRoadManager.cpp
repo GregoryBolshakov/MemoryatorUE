@@ -4,7 +4,7 @@
 #include "Components/SplineComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "StationaryActors/MRoadSplineActor.h"
-#include "StationaryActors/OutpostGenerators/MOutpostGenerator.h"
+#include "StationaryActors/Outposts/OutpostGenerators/MOutpostGenerator.h"
 
 void UMRoadManager::ConnectTwoChunks(FIntPoint ChunkA, FIntPoint ChunkB, const ERoadType RoadType)
 {

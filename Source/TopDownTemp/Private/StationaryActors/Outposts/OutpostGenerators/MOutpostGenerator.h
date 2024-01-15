@@ -4,6 +4,7 @@
 
 #include "MOutpostGenerator.generated.h"
 
+class AMOutpostHouse;
 /**
  * The base class for all outpost generators. They are responsible for spawning buildings,
  * determining their, types, quantity and other specifics within one outpost.
@@ -18,6 +19,14 @@ public:
 
 	bool IsGenerated() const { return bGenerated; }
 
+	float GetRadius() const { return Radius; }
+
 protected:
 	bool bGenerated = false;
+
+	UPROPERTY(EditDefaultsOnly)
+	float Radius = 1500.f;
+
+	//TODO: Consider tracking other outpost elements
+	TMap<FName, AMOutpostHouse*> Houses;
 };

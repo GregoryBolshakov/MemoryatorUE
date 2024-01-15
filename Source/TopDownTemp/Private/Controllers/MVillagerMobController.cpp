@@ -9,12 +9,11 @@
 #include "Managers/MWorldGenerator.h"
 #include "NavigationSystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "StationaryActors/Outposts/MOutpostHouse.h"
+#include "StationaryActors/Outposts/OutpostGenerators/MOutpostGenerator.h"
 
 AMVillagerMobController::AMVillagerMobController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, HomeBuilding(nullptr)
-	, VillageRadius(0)
-	, bEmbarked(false)
 {
 }
 
@@ -60,19 +59,15 @@ void AMVillagerMobController::PreTick(float DeltaSeconds, const UWorld& World, A
 	}
 }
 
-void AMVillagerMobController::Initialize(AActor& _HomeBuilding, const FVector& _VillageCenter, float _VillageRadius)
-{
-	HomeBuilding = &_HomeBuilding;
-	VillageCenter = _VillageCenter;
-	VillageRadius = _VillageRadius;
-
-	
-}
-
 void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	MyCharacter.SetIsFighting(false);
 	MyCharacter.SetIsMoving(false);
+	if (!House)
+	{
+		//TODO: Cover this case
+		return;
+	}
 
 	if (auto& TimerManager = GetWorld()->GetTimerManager();
 		!TimerManager.IsTimerActive(RestTimerHandle))
@@ -81,6 +76,9 @@ void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& M
 		{
 			if (CurrentBehavior != EMobBehaviors::Idle) // If were interrupted by something more important (like retreat from enemy..)
 				return;
+			const auto Village = House->GetOwnerOutpost();
+			if (!Village) { check(false); return; }
+			const auto VillageCenter = Village->GetActorLocation();
 
 			constexpr int TriesToFindLocation = 3;
 			bool bSuccess = false;
@@ -88,7 +86,7 @@ void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& M
 			{
 				// Calculate a random point within the village to go
 				const float RandomAngle = FMath::RandRange(0.f, 1.f) * 2.0f * PI;
-				const float RandomRadius = FMath::RandRange(0.f, 1.f) * VillageRadius;
+				const float RandomRadius = FMath::RandRange(0.f, 1.f) * Village->GetRadius();
 				const FVector RandomPoint{
 					VillageCenter.X + RandomRadius * cos(RandomAngle),
 					VillageCenter.Y + RandomRadius * sin(RandomAngle),
@@ -178,7 +176,7 @@ void AMVillagerMobController::SetRetreatBehavior(const UWorld& World, AMCharacte
 
 	MyCharacter.GetCharacterMovement()->MaxWalkSpeed = MyCharacter.GetSprintSpeed();
 
-	if (const auto EntryPointComponent = Cast<USceneComponent>(HomeBuilding->GetDefaultSubobjectByName(TEXT("EntryPoint"))))
+	if (const auto EntryPointComponent = Cast<USceneComponent>(House->GetDefaultSubobjectByName(TEXT("EntryPoint"))))
 	{
 		OnMoveCompletedDelegate.Unbind();
 		StopMovement();
@@ -189,7 +187,7 @@ void AMVillagerMobController::SetRetreatBehavior(const UWorld& World, AMCharacte
 			if (CurrentBehavior != EMobBehaviors::Retreat) // If the movement was started not to retreat
 				return;
 
-			if (HomeBuilding)
+			if (House)
 			{
 				SetHideBehavior(World, MyCharacter);
 			}

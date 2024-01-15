@@ -17,8 +17,6 @@ class TOPDOWNTEMP_API AMVillagerMobController : public AMMobControllerBase
 public:
 	virtual void PreTick(float DeltaSeconds, const UWorld& World, AMCharacter& MyCharacter) override;
 
-	void Initialize(AActor& HomeBuilding, const FVector& VillageCenter, float VillageRadius);
-
 private:
 
 	virtual void DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
@@ -43,13 +41,6 @@ private:
 
 	void Disembark(const AMCharacter& MyCharacter);
 
-	UPROPERTY()
-	AActor* HomeBuilding;
-
-	FVector VillageCenter;
-
-	float VillageRadius;
-
 	/** Min time of doing nothing after reaching destination point */
 	UPROPERTY(EditAnywhere, Category = BehaviorParameters, meta = (AllowPrivateAccess = true))
 	float MinRestDuration = 1.5f;
@@ -63,5 +54,5 @@ private:
 	UPROPERTY()
 	TMap<FName, AActor*> EnemiesNearby;
 
-	bool bEmbarked;
+	bool bEmbarked = false;
 };

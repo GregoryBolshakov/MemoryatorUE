@@ -13,7 +13,7 @@
 #include "MExperienceManager.h"
 #include "MRoadManager.h"
 #include "Components/MIsActiveCheckerComponent.h"
-#include "StationaryActors/OutpostGenerators/MVillageGenerator.h"
+#include "StationaryActors/Outposts/OutpostGenerators/MVillageGenerator.h"
 #include "NavigationSystem.h"
 #include "Controllers/MPlayerController.h"
 #include "Kismet/GameplayStatics.h"

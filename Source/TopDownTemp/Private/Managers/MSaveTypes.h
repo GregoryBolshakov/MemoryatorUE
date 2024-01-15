@@ -41,7 +41,7 @@ struct FMActorSaveData
 	bool IsRandomizedAppearance;
 
 	UPROPERTY()
-	TArray<FItem> InventoryContents;
+	TArray<FItem> InventoryContents;there's a problem here
 };
 
 USTRUCT()
@@ -60,6 +60,10 @@ struct FMCharacterSaveData
 
 	UPROPERTY()
 	TArray<FItem> InventoryContents;
+
+	/** Uid of the house where this character resides. MIN_int32 means not assigned */
+	UPROPERTY()
+	int32 HouseUid = MIN_int32;
 };
 
 USTRUCT()
