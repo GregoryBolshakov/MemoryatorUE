@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MSaveTypes.h"
 #include "MSaveManager.generated.h"
 
 class AMActor;
@@ -54,12 +55,12 @@ private:
 
 	// Maps for quick access by name
 
-	/** It maps SavedUid with pointers to FMActorSaveData stored in all blocks in the LoadedGameWorld.\n\n NOT A UPROPERTY\n\n
+	/** It maps FUid with pointers to FMActorSaveData stored in all blocks in the LoadedGameWorld.\n\n NOT A UPROPERTY\n\n
 	 * May contain dangling pointers as blocks' save data might be removed, always validate results. */
-	TMap<int32, FMActorSaveData*> LoadedMActorMap;
+	TMap<FUid, FMActorSaveData*> LoadedMActorMap;
 
-	/** It maps SavedUid with pointers to FMCharacterSaveData stored in all blocks in the LoadedGameWorld.\n NOT A UPROPERTY\n\n
+	/** It maps FUid with pointers to FMCharacterSaveData stored in all blocks in the LoadedGameWorld.\n NOT A UPROPERTY\n\n
 	 * May contain dangling pointers as blocks' save data might be removed, always validate results. */
-	TMap<int32, FMCharacterSaveData*> LoadedMCharacterMap;
+	TMap<FUid, FMCharacterSaveData*> LoadedMCharacterMap;
 };
 

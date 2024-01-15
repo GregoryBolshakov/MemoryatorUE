@@ -6,6 +6,35 @@
 #include "Components/MInventoryComponent.h"
 #include "MSaveTypes.generated.h"
 
+/** Saved actors might depend on other saved actors when loading. They use this ID. \n
+ * Has no relation to the overall uniqueness of actors in the world */
+USTRUCT()
+struct FUid
+{
+	GENERATED_BODY()
+
+	/** When the game is saved, only a portion of the objects touched by the player are written to memory.\n
+	 * Intact objects remain unchanged from previous sessions, and therefore intersection of unique identifiers is possible.\n
+	 * (Because NumberUniqueIndex resets every time game launches)\n
+	 * This ID makes all objects unique within different launches */
+	UPROPERTY()
+	int32 LaunchId = MIN_int32;
+
+	/** Unique object identifier within this game launch */
+	UPROPERTY()
+	int32 ObjectId = MIN_int32;
+
+	friend bool operator==(const FUid& lhs, const FUid& rhs)
+	{
+		return lhs.LaunchId == rhs.LaunchId && lhs.ObjectId == rhs.ObjectId;
+	}
+
+	friend uint32 GetTypeHash(const FUid& uid)
+	{
+		return HashCombine(::GetTypeHash(uid.LaunchId), ::GetTypeHash(uid.ObjectId));
+	}
+};
+
 USTRUCT()
 struct FActorSaveData
 {
@@ -23,7 +52,7 @@ struct FActorSaveData
 	/** Saved actors might depend on other saved actors when loading. They use this ID. \n
 	 * Has no relation to the overall uniqueness of actors in the world */
 	UPROPERTY()
-	int32 SavedUid;
+	FUid SavedUid;
 };
 
 USTRUCT()
@@ -41,7 +70,7 @@ struct FMActorSaveData
 	bool IsRandomizedAppearance;
 
 	UPROPERTY()
-	TArray<FItem> InventoryContents;there's a problem here
+	TArray<FItem> InventoryContents;
 };
 
 USTRUCT()
@@ -63,7 +92,7 @@ struct FMCharacterSaveData
 
 	/** Uid of the house where this character resides. MIN_int32 means not assigned */
 	UPROPERTY()
-	int32 HouseUid = MIN_int32;
+	FUid HouseUid;
 };
 
 USTRUCT()
@@ -100,6 +129,9 @@ public:
 	/** Saved blocks from UMWorldGenerator.GridOfActors */
 	UPROPERTY()
 	TMap<FIntPoint, FBlockSaveData> SavedGrid;
+
+	UPROPERTY()
+	int32 LaunchId = MAX_int32;
 
 	// We don't save ActorsMetadata for 2 reasons:
 	// 1. Too large data. Very long read/write

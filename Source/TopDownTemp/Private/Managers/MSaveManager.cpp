@@ -1,7 +1,6 @@
 #include "MSaveManager.h"
 
 #include "MBlockGenerator.h"
-#include "MSaveTypes.h"
 #include "MWorldGenerator.h"
 #include "Characters/MCharacter.h"
 #include "Characters/MMemoryator.h"
@@ -59,7 +58,7 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 					pActor->GetClass(),
 					pActor->GetActorLocation(),
 					pActor->GetActorRotation(),
-					--NumberUniqueIndex
+					{SaveGameWorld->LaunchId, --NumberUniqueIndex}
 				};
 				if (const auto pMActor = Cast<AMActor>(pActor))
 				{
@@ -87,7 +86,7 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 					pActor->GetClass(),
 					pActor->GetActorLocation(),
 					pActor->GetActorRotation(),
-					--NumberUniqueIndex
+					{SaveGameWorld->LaunchId, --NumberUniqueIndex}
 				};
 				if (const auto pMCharacter = Cast<AMCharacter>(pActor))
 				{
@@ -120,6 +119,8 @@ bool UMSaveManager::LoadFromMemory()
 	LoadedGameWorld = Cast<USaveGameWorld>(UGameplayStatics::LoadGameFromSlot(USaveGameWorld::SlotName, 0));
 	if (!LoadedGameWorld)
 		return false;
+
+	LoadedGameWorld->LaunchId--;
 
 	for (const auto& [Name, BlockSD] : LoadedGameWorld->SavedGrid)
 	{
