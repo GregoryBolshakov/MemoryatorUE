@@ -110,10 +110,10 @@ struct FBlockSaveData
 	bool WasConstant = false;
 
 	UPROPERTY()
-	TArray<FMActorSaveData> SavedMActors;
+	TMap<FUid, FMActorSaveData> SavedMActors;
 
 	UPROPERTY()
-	TArray<FMCharacterSaveData> SavedMCharacters;
+	TMap<FUid, FMCharacterSaveData> SavedMCharacters;
 };
 
 UCLASS()

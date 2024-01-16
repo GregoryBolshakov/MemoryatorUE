@@ -1,18 +1,17 @@
 #include "MCharacter.h"
 
 #include "Helpers/M2DRepresentationBlueprintLibrary.h"
-#include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/M2DRepresentationComponent.h"
 #include "Components/MAttackPuddleComponent.h"
 #include "Components/MBuffBarComponent.h"
 #include "Components/MCommunicationComponent.h"
-#include "Framework/MGameInstance.h"
 #include "Components/MIsActiveCheckerComponent.h"
 #include "Components/MInventoryComponent.h"
 #include "MMemoryator.h" // temporary include
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
+#include "Managers/MSaveManager.h"
 #include "Managers/MSaveTypes.h"
 #include "Managers/MWorldGenerator.h"
 #include "Managers/MWorldManager.h"
@@ -203,7 +202,19 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 void AMCharacter::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)
 {
 	InitialiseInventory(MCharacterSD.InventoryContents);
-	//TODO: load house
+
+	//Load house
+	if (const auto WorldGenerator = GetWorld()->GetSubsystem<UMWorldManager>()->GetWorldGenerator())
+	{
+		if (const auto SaveManager = WorldGenerator->GetSaveManager())
+		{
+			if (const auto HouseSD = SaveManager->GetMActorData(MCharacterSD.HouseUid))
+			{
+				const auto HouseActor = Cast<AMOutpostHouse>(SaveManager->LoadMActorAndClearSD(*HouseSD, WorldGenerator));
+				HouseActor->MoveResidentIn(this);
+			}
+		}
+	}
 }
 
 void AMCharacter::OnEnabled_Implementation()

@@ -31,9 +31,16 @@ public:
 	bool LoadFromMemory();
 	bool TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* WorldGenerator);
 	const FBlockSaveData* GetBlockData(const FIntPoint& Index) const;
+	const FMActorSaveData* GetMActorData(const FUid& Uid);
+	const FMCharacterSaveData* GetMCharacterData(const FUid& Uid);
 	void RemoveBlock(const FIntPoint& Index);
 	TArray<FIntPoint> GetPlayerTraveledPath() const;
 	bool IsLoaded() const { return LoadedGameWorld != nullptr; }
+
+	/** Needed for actors to precisely load dependant actors. It will remove the save data from SaveManager */
+	AMActor* LoadMActorAndClearSD(const FMActorSaveData& MActorSD, AMWorldGenerator* WorldGenerator);
+	/** Needed for actors to precisely load dependant characters. It will remove the save data from SaveManager */
+	AMCharacter* LoadMCharacterAndClearSD(const FMCharacterSaveData& MCharacterSD, AMWorldGenerator* WorldGenerator);
 
 private:
 
@@ -61,5 +68,9 @@ private:
 	/** Matches FUid with pointers to FMCharacterSaveData stored in all blocks in the LoadedGameWorld.\n NOT A UPROPERTY\n\n
 	 * May contain dangling pointers as blocks' save data might be removed, always validate results. */
 	TMap<FUid, FMCharacterSaveData*> LoadedMCharacterMap;
+
+	/** Matches the names of actors spawned during this session with their Uid. Filled only during SaveToMemory.\n
+	 * It is currently not possible to access the Uid of an actor saved in a previous session unless it was loaded during that one. */
+	TMap<FName, FUid> NameToUidMap;
 };
 
