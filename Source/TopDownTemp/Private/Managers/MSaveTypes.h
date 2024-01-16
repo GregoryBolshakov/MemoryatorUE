@@ -13,9 +13,11 @@ struct FUid
 {
 	GENERATED_BODY()
 
-	/** When the game is saved, only a portion of the objects touched by the player are written to memory.\n
-	 * Intact objects remain unchanged from previous sessions, and therefore intersection of unique identifiers is possible.\n
-	 * (Because NumberUniqueIndex resets every time game launches)\n
+	/** When the game is saved, it makes sense to write only GridOfActors's objects to memory.\n
+	 * It means not all the objects from USaveGameWorld::SavedGrid get updated in the save.\n
+	 * Unique names are created by a simple int32 counter (NumberUniqueIndex resets every time game launches),
+	 * and objects in the save can be selectively deleted.
+	 * Therefore intersection of unique identifiers is possible.\n\n
 	 * This ID makes all objects unique within different launches */
 	UPROPERTY()
 	int32 LaunchId = MIN_int32;

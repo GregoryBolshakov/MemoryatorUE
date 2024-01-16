@@ -26,15 +26,14 @@ bool AMOutpostHouse::MoveResidentIn(AMCharacter* NewResident)
 
 	Residents.Add({FName(NewResident->GetName()), NewResident});
 
-	if (const auto MobController = Cast<AMMobControllerBase>(NewResident->GetController()))
-	{
-		MobController->OnMovedIn(this);
-	}
+	NewResident->OnMovedIn(this);
+
 	//TODO: Handle player controller as well
 	return true;
 }
 
 void AMOutpostHouse::MoveResidentOut(AMCharacter* OldResident)
 {
+	OldResident->OnMovedOut();
 	Residents.Remove(FName(OldResident->GetName()));
 }

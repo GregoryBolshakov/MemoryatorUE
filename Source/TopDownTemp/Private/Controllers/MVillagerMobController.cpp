@@ -63,7 +63,7 @@ void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& M
 {
 	MyCharacter.SetIsFighting(false);
 	MyCharacter.SetIsMoving(false);
-	if (!House)
+	if (!MyCharacter.GetHouse())
 	{
 		//TODO: Cover this case
 		return;
@@ -76,7 +76,7 @@ void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& M
 		{
 			if (CurrentBehavior != EMobBehaviors::Idle) // If were interrupted by something more important (like retreat from enemy..)
 				return;
-			const auto Village = House->GetOwnerOutpost();
+			const auto Village = MyCharacter.GetHouse()->GetOwnerOutpost();
 			if (!Village) { check(false); return; }
 			const auto VillageCenter = Village->GetActorLocation();
 
@@ -176,34 +176,38 @@ void AMVillagerMobController::SetRetreatBehavior(const UWorld& World, AMCharacte
 
 	MyCharacter.GetCharacterMovement()->MaxWalkSpeed = MyCharacter.GetSprintSpeed();
 
-	if (const auto EntryPointComponent = Cast<USceneComponent>(House->GetDefaultSubobjectByName(TEXT("EntryPoint"))))
+	if (const auto House = MyCharacter.GetHouse())
 	{
-		OnMoveCompletedDelegate.Unbind();
-		StopMovement();
-		MyCharacter.GetMovementComponent()->StopMovementImmediately(); // In case of slip or other velocity modificators 
-
-		OnMoveCompletedDelegate.BindLambda([this, &World, &MyCharacter]
+		if (const auto EntryPointComponent = Cast<USceneComponent>(House->GetDefaultSubobjectByName(TEXT("EntryPoint"))))
 		{
-			if (CurrentBehavior != EMobBehaviors::Retreat) // If the movement was started not to retreat
-				return;
+			OnMoveCompletedDelegate.Unbind();
+			StopMovement();
+			MyCharacter.GetMovementComponent()->StopMovementImmediately(); // In case of slip or other velocity modificators 
 
-			if (House)
+			OnMoveCompletedDelegate.BindLambda([this, &World, &MyCharacter]
 			{
-				SetHideBehavior(World, MyCharacter);
-			}
-			else
-			{
-				SetIdleBehavior(&World, &MyCharacter);
-				//TODO: implement new home assignment
-			}
-		});
+				if (CurrentBehavior != EMobBehaviors::Retreat) // If the movement was started not to retreat
+					return;
 
-		FVector MyCharacterOrigin, MyCharacterBoxExtent;
-		MyCharacter.GetActorBounds(true, MyCharacterOrigin, MyCharacterBoxExtent, true);
-		MoveToLocation(EntryPointComponent->GetComponentLocation(), /*MyCharacterBoxExtent.Size2D()*/ 20.f); //TODO: remove this workaround
+				if (MyCharacter.GetHouse())
+				{
+					SetHideBehavior(World, MyCharacter);
+				}
+				else
+				{
+					SetIdleBehavior(&World, &MyCharacter);
+					//TODO: implement new home assignment
+				}
+			});
+
+			FVector MyCharacterOrigin, MyCharacterBoxExtent;
+			MyCharacter.GetActorBounds(true, MyCharacterOrigin, MyCharacterBoxExtent, true);
+			MoveToLocation(EntryPointComponent->GetComponentLocation(), /*MyCharacterBoxExtent.Size2D()*/ 20.f); //TODO: remove this workaround
+		}
+
+		OnBehaviorChanged(MyCharacter);
 	}
-
-	OnBehaviorChanged(MyCharacter);
+	else check(false);
 }
 
 void AMVillagerMobController::SetHideBehavior(const UWorld& World, AMCharacter& MyCharacter)

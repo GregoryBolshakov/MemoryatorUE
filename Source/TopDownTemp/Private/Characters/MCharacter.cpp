@@ -16,6 +16,7 @@
 #include "Managers/MSaveTypes.h"
 #include "Managers/MWorldGenerator.h"
 #include "Managers/MWorldManager.h"
+#include "StationaryActors/Outposts/MOutpostHouse.h"
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -202,6 +203,7 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 void AMCharacter::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)
 {
 	InitialiseInventory(MCharacterSD.InventoryContents);
+	//TODO: load house
 }
 
 void AMCharacter::OnEnabled_Implementation()

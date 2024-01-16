@@ -22,9 +22,6 @@ class TOPDOWNTEMP_API AMMobControllerBase : public AAIController, public IMInter
 	GENERATED_UCLASS_BODY()
 
 public:
-	void OnMovedIn(AMOutpostHouse* NewHouse) { House = NewHouse; }
-
-	void OnMovedOut() { House = nullptr; }
 
 protected:
 
@@ -45,9 +42,6 @@ protected:
 	EMobBehaviors CurrentBehavior = EMobBehaviors::Idle;
 
 	FOnMoveCompleted OnMoveCompletedDelegate;
-
-	UPROPERTY()
-	AMOutpostHouse* House;
 
 private:
 	virtual void Tick(float DeltaSeconds) override;

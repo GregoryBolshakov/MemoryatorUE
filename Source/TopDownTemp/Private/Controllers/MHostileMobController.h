@@ -20,8 +20,6 @@ public:
 
 	virtual void OnHit() override;
 
-	AMOutpostHouse* GetHouse() const { return House; }
-
 private:
 	virtual void DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 

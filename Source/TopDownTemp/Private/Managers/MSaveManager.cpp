@@ -4,10 +4,12 @@
 #include "MWorldGenerator.h"
 #include "Characters/MCharacter.h"
 #include "Characters/MMemoryator.h"
+#include "Controllers/MMobControllerBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "StationaryActors/MActor.h"
 #include "StationaryActors/MPickableActor.h"
 #include "StationaryActors/MGroundBlock.h"
+#include "StationaryActors/Outposts/MOutpostHouse.h"
 
 DEFINE_LOG_CATEGORY(LogSaveManager);
 
@@ -100,6 +102,14 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 					{
 						MCharacterSD.InventoryContents = InventoryComponent->GetItemCopies(false);
 					}
+					// Save house if has it //TODO: Consider every AMCharacter having House, not only mobs. Also not sure if it should reside in the controller
+					/*if (const auto House = pMCharacter->GetHouse())
+					{
+						if (const auto* HouseUid = NameToUidMap.Find(FName(House->GetName())))
+						{
+							MCharacterSD.HouseUid = *HouseUid;
+						}
+					}*/
 
 					SavedBlock.SavedMCharacters.Add(MCharacterSD);
 				}
@@ -122,7 +132,7 @@ bool UMSaveManager::LoadFromMemory()
 
 	LoadedGameWorld->LaunchId--;
 
-	for (const auto& [Name, BlockSD] : LoadedGameWorld->SavedGrid)
+	for (const auto& [Index, BlockSD] : LoadedGameWorld->SavedGrid)
 	{
 		for (auto& MActorSD : BlockSD.SavedMActors)
 		{
@@ -136,32 +146,6 @@ bool UMSaveManager::LoadFromMemory()
 
 	return true;
 }
-
-/*//TODO: Ensure priority of loaded blocks over generated in AMWorldGenerator::OnTickGenerateBlocks
-void UMSaveManager::LoadPerTick(AMWorldGenerator* WorldGenerator)
-{
-	constexpr int BlocksPerFrame = 4;
-	int Index;
-	for (Index = BlockToLoadIndex; Index < FMath::Min(BlockToLoadIndex + BlocksPerFrame, LoadedGameWorld->GridOrder.Num()); ++Index)
-	{
-		const auto Block = LoadedGameWorld->SavedGrid.Find(LoadedGameWorld->GridOrder[Index]);
-		check(Block);
-		if (Block)
-		{
-			LoadBlock(LoadedGameWorld->GridOrder[Index], *Block, WorldGenerator);
-		}
-	}
-	BlockToLoadIndex += BlocksPerFrame;
-
-	if (Index < LoadedGameWorld->GridOrder.Num() - 1) // Haven't loaded all the blocks, live it for the next frame
-	{
-		GetWorld()->GetTimerManager().SetTimerForNextTick([this, WorldGenerator]{ LoadPerTick(WorldGenerator); });
-	} else
-	{
-		check(LoadedGameWorld);
-		UE_LOG(LogSaveManager, Log, TEXT("Finished loading the world from the save"))
-	}
-}*/
 
 bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* WorldGenerator)
 {
@@ -199,11 +183,24 @@ const FBlockSaveData* UMSaveManager::GetBlockData(const FIntPoint& Index) const
 	return nullptr;
 }
 
-void UMSaveManager::RemoveBlock(const FIntPoint& Index) const
+void UMSaveManager::RemoveBlock(const FIntPoint& Index)
 {
 	if (LoadedGameWorld)
 	{
-		LoadedGameWorld->SavedGrid.Remove(Index);
+		if (const auto* BlockSD = LoadedGameWorld->SavedGrid.Find(Index))
+		{
+			// Clear Uid mappings
+			for (auto& MActorSD : BlockSD->SavedMActors)
+			{
+				LoadedMActorMap.Remove(MActorSD.ActorSaveData.SavedUid);
+			}
+			for (auto& MCharacterSD : BlockSD->SavedMCharacters)
+			{
+				LoadedMActorMap.Remove(MCharacterSD.ActorSaveData.SavedUid);
+			}
+			// Remove block saved data
+			LoadedGameWorld->SavedGrid.Remove(Index);
+		}
 	}
 }
 
@@ -241,20 +238,6 @@ AMActor* UMSaveManager::LoadMActor(const FMActorSaveData& MActorSD, AMWorldGener
 
 	return MActor;
 }
-
-/*AMPickableActor* UMSaveManager::LoadMPickableActor(const FMPickableActorSaveData& MPickableActorSD,
-	AMWorldGenerator* WorldGenerator)
-{
-	if (!WorldGenerator)
-		return nullptr;
-
-	if (const auto MPickableActor = Cast<AMPickableActor>(LoadMActor(MPickableActorSD.MActorSaveData, WorldGenerator)))
-	{
-		MPickableActor->InitialiseInventory(MPickableActorSD.InventoryContents);
-		return MPickableActor;
-	}
-	return nullptr;
-}*/
 
 AMCharacter* UMSaveManager::LoadMCharacter(const FMCharacterSaveData& MCharacterSD, AMWorldGenerator* WorldGenerator)
 {

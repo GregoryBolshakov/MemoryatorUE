@@ -31,7 +31,7 @@ public:
 	bool LoadFromMemory();
 	bool TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* WorldGenerator);
 	const FBlockSaveData* GetBlockData(const FIntPoint& Index) const;
-	void RemoveBlock(const FIntPoint& Index) const;
+	void RemoveBlock(const FIntPoint& Index);
 	TArray<FIntPoint> GetPlayerTraveledPath() const;
 	bool IsLoaded() const { return LoadedGameWorld != nullptr; }
 
@@ -41,7 +41,6 @@ private:
 	AMCharacter* LoadMCharacter(const FMCharacterSaveData& MCharacterSD, AMWorldGenerator* WorldGenerator);
 
 	FTimerHandle AutoSavesTimer;
-	FTimerHandle BlockLoadingTimer;
 
 	//TODO: To support truly endless worlds we should split save into several files.
 	//TODO: Each will be responsible for a large chunk/region of the world, e.g. 1000 by 1000 blocks
@@ -55,11 +54,11 @@ private:
 
 	// Maps for quick access by name
 
-	/** It maps FUid with pointers to FMActorSaveData stored in all blocks in the LoadedGameWorld.\n\n NOT A UPROPERTY\n\n
+	/** Matches FUid with pointers to FMActorSaveData stored in all blocks in the LoadedGameWorld.\n\n NOT A UPROPERTY\n\n
 	 * May contain dangling pointers as blocks' save data might be removed, always validate results. */
 	TMap<FUid, FMActorSaveData*> LoadedMActorMap;
 
-	/** It maps FUid with pointers to FMCharacterSaveData stored in all blocks in the LoadedGameWorld.\n NOT A UPROPERTY\n\n
+	/** Matches FUid with pointers to FMCharacterSaveData stored in all blocks in the LoadedGameWorld.\n NOT A UPROPERTY\n\n
 	 * May contain dangling pointers as blocks' save data might be removed, always validate results. */
 	TMap<FUid, FMCharacterSaveData*> LoadedMCharacterMap;
 };

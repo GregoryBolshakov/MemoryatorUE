@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "MCharacter.generated.h"
 
+class AMOutpostHouse;
 struct FMCharacterSaveData;
 class UMBuffManagerComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStarted);
@@ -65,6 +66,8 @@ public:
 
 	FName GetSpeciesName() const { return SpeciesName; }
 
+	AMOutpostHouse* GetHouse() const { return House; }
+
 	void InitialiseInventory(const TArray<struct FItem>& IN_Items) const;
 
 	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; UpdateAnimation(); }
@@ -77,6 +80,10 @@ public:
 	void SetIsSprinting(bool IN_bIsSprinting) { IsSprinting = IN_bIsSprinting; }
 
 	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
+
+	void OnMovedIn(AMOutpostHouse* NewHouse) { House = NewHouse; }
+
+	void OnMovedOut() { House = nullptr; }
 
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
@@ -144,6 +151,9 @@ protected:
 	//TODO: create a separate entity to store this. Now it needs to be set for each ancestor (it's bad).
 	UPROPERTY(EditDefaultsOnly, Category=MBuffManagerComponent)
 	TSubclassOf<UUserWidget> BuffBarWidgetBPClass;
+
+	UPROPERTY()
+	AMOutpostHouse* House;
 
 	//TODO: It's hard to say if these booleans should be here or in Controller
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
