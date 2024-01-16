@@ -1040,8 +1040,10 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 				FActorSpawnParameters SpawnParameters;
 				SpawnParameters.Name = FName("TestBounds_" + IN_ActorClass->GetName());
 				SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-				if (const auto Actor = pWorld->SpawnActor(IN_ActorClass, nullptr, nullptr, SpawnParameters))
+				if (const auto Actor = pWorld->SpawnActorDeferred<AActor>(IN_ActorClass, FTransform::Identity))
 				{
+					Actor->Tags.Add("DummyForDefaultBounds");
+					UGameplayStatics::FinishSpawningActor(Actor, FTransform::Identity);
 					Actor->SetActorEnableCollision(false);
 
 					// Calculate the Actor bounds by accumulating the bounds of its components

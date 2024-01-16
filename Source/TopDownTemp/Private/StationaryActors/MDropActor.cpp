@@ -15,7 +15,7 @@ void AMDropActor::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (!IsValid(InventoryComponent))
+	if (!IsValid(InventoryComponent) || ActorHasTag("DummyForDefaultBounds"))
 		return;
 
 	const auto InventorySlots = InventoryComponent->GetSlots();
