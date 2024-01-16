@@ -49,8 +49,9 @@ struct FActorSaveData
 	UPROPERTY()
 	FRotator Rotation;
 
-	/** Saved actors might depend on other saved actors when loading. They use this ID. \n
-	 * Has no relation to the overall uniqueness of actors in the world */
+	/** Saved actors might depend on other saved actors when loading. They use this ID.\n
+	 * Has no relation to the overall uniqueness of actors in the world
+	 * Grants total uniqueness for saved object among different game launches */
 	UPROPERTY()
 	FUid SavedUid;
 };

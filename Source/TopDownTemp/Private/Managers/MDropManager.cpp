@@ -75,24 +75,29 @@ void UMDropManager::Update()
 void UMDropManager::SpawnPickableItem(const FItem& Item)
 {
 	check(Item.Quantity != 0);
-	if (const auto pWorld = GetWorld())
-	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
-			{
-				const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
-				if (!pPlayer) { check(false); return; }
+	const auto pWorld = GetWorld();
+	if (!IsValid(pWorld))
+		return;
 
-				if (const auto PickableItem = pWorldGenerator->SpawnActorInRadius<AMPickableActor>(AMPickableItemBPClass, pPlayer->GetActorLocation(), FRotator::ZeroRotator, {}, 25.f, 0.f))
+	if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
+	{
+		if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
+		{
+			const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
+			if (!pPlayer) { check(false); return; }
+			const auto PlayerLocation = pPlayer->GetActorLocation();
+
+			FOnActorSpawned OnActorSpawned;
+			OnActorSpawned.AddLambda([Item](AActor* Actor)
+			{
+				if (const auto PickableActor = Cast<AMPickableActor>(Actor))
 				{
-					PickableItem->InitialiseInventory({Item});
-					return;
+					PickableActor->InitialiseInventory({Item});
 				}
-			}
+			});
+			pWorldGenerator->SpawnActorInRadius<AMPickableActor>(AMPickableItemBPClass, PlayerLocation, FRotator::ZeroRotator, {}, 25.f, 0.f, OnActorSpawned);
 		}
 	}
-	check(false);
 }
 
 void UMDropManager::GiveBundleToPlayer(const FBundle& Bundle)

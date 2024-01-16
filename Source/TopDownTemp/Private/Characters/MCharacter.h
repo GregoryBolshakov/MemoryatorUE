@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "MCharacter.generated.h"
 
+struct FMCharacterSaveData;
 class UMBuffManagerComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStarted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStopped);
@@ -64,7 +65,7 @@ public:
 
 	FName GetSpeciesName() const { return SpeciesName; }
 
-	virtual void InitialiseInventory(const TArray<struct FItem>& IN_Items);
+	void InitialiseInventory(const TArray<struct FItem>& IN_Items) const;
 
 	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; UpdateAnimation(); }
 
@@ -85,6 +86,9 @@ public:
 
 	virtual void PostInitializeComponents() override;
 
+	virtual void BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD);
+	virtual void EndLoadFromSD() {};
+
 protected:
 
 	void UpdateLastNonZeroDirection();
@@ -92,8 +96,6 @@ protected:
 	virtual void BeginPlay() override;
 
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
-
-	void GenerateStartingInventory();
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnEnabled();

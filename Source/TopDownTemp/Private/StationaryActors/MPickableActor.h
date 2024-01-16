@@ -19,7 +19,7 @@ class AMPickableActor : public AMActor
 
 public:
 
-	virtual void InitialiseInventory(const TArray<FItem>& IN_Items) override;
+	virtual void BeginPlay() override;
 
 	UFUNCTION()
 	void OnItemChanged(int NewItemID, int NewQuantity);

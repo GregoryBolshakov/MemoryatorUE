@@ -93,7 +93,7 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 					FMCharacterSaveData MCharacterSD{
 						ActorSaveData,
 						pMCharacter->GetSpeciesName(),
-						pMCharacter->GetHealth()
+						pMCharacter->GetHealth(),
 					};
 					// Save inventory if MCharacter has it
 					if (const auto InventoryComponent = Cast<UMInventoryComponent>(pMCharacter->GetComponentByClass(UMInventoryComponent::StaticClass())))
@@ -265,37 +265,22 @@ AMCharacter* UMSaveManager::LoadMCharacter(const FMCharacterSaveData& MCharacter
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	// Setup a callback to initialize inventory if it was saved
 	FOnSpawnActorStarted OnSpawnActorStarted;
 	if (!MCharacterSD.InventoryContents.IsEmpty())
 	{
-		OnSpawnActorStarted.AddLambda([InventorySlots = MCharacterSD.InventoryContents](AActor* Actor)
+		OnSpawnActorStarted.AddLambda([MCharacterSD](AActor* Actor)
 		{
 			if (const auto MCharacter = Cast<AMCharacter>(Actor))
 			{
-				MCharacter->InitialiseInventory(InventorySlots);
+				MCharacter->BeginLoadFromSD(MCharacterSD);
 			}
 		});
-	}
-
-	if (ActorSD.FinalClass->IsChildOf(AMMemoryator::StaticClass()))
-	{
-		Params.Name = "Player";
 	}
 
 	// Spawn the character using saved data
 	if (const auto SpawnedCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, /*ActorSD.Rotation*/ FRotator::ZeroRotator, Params, true, OnSpawnActorStarted))
 	{
-		// If it is the player, make it possessed by the player controller
-		if (SpawnedCharacter->IsA<AMMemoryator>())
-		{
-			if (const auto pPlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0))
-			{
-				pPlayerController->Possess(SpawnedCharacter);
-			}
-			else check(false);
-		}
-
+		SpawnedCharacter->EndLoadFromSD();
 		return SpawnedCharacter;
 	}
 

@@ -16,6 +16,6 @@ class AMDropActor : public AMPickableActor
 
 public:
 
-	virtual void InitialiseInventory(const TArray<FItem>& IN_Items) override;
+	virtual void BeginPlay() override;
 };
 

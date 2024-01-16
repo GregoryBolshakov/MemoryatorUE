@@ -6,6 +6,8 @@
 #include "Managers/MWorldGeneratorTypes.h"
 #include "MActor.generated.h"
 
+struct FMActorSaveData;
+
 USTRUCT(BlueprintType)
 struct FArrayMaterialInstanceDynamicWrapper
 {
@@ -39,13 +41,16 @@ public:
 	int GetAppearanceID() const { return AppearanceID; }
 	bool GetIsRandomizedAppearance() const { return IsRandomizedAppearance; }
 
-	virtual void InitialiseInventory(const TArray<struct FItem>& IN_Items);
+	void InitialiseInventory(const TArray<struct FItem>& IN_Items) const;
 
 	UFUNCTION(BlueprintCallable)
 	const TMap<UStaticMeshComponent*, FArrayMaterialInstanceDynamicWrapper>& GetDynamicMaterials() const
 	{
 		return DynamicMaterials;
 	}
+
+	virtual void BeginLoadFromSD(const FMActorSaveData& MActorSD);
+	virtual void EndLoadFromSD() {};
 
 protected:
 

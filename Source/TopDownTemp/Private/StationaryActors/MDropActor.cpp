@@ -11,11 +11,16 @@
 #include "Components/Widget.h"
 #include "Kismet/GameplayStatics.h"
 
-void AMDropActor::InitialiseInventory(const TArray<FItem>& IN_Items)
+void AMDropActor::BeginPlay()
 {
-	Super::InitialiseInventory(IN_Items);
+	Super::BeginPlay();
 
-	if (IN_Items.Num() != 1 || IN_Items[0].ID <= 0 || IN_Items[0].Quantity <= 0)
+	if (!IsValid(InventoryComponent))
+		return;
+
+	const auto InventorySlots = InventoryComponent->GetSlots();
+
+	if (InventorySlots.Num() != 1 || InventorySlots[0].Item.ID <= 0 || InventorySlots[0].Item.Quantity <= 0)
 	{
 		check(false);
 		return;
@@ -28,9 +33,9 @@ void AMDropActor::InitialiseInventory(const TArray<FItem>& IN_Items)
 		if (auto SpriteComponent = Cast<UPaperSpriteComponent>(TaggedComponents[0]))
 		{
 			if (const auto pGameInstace = GetGameInstance<UMGameInstance>();
-				pGameInstace->ItemsDataAsset && pGameInstace->ItemsDataAsset->ItemsData.Num() > IN_Items[0].ID)
+				pGameInstace->ItemsDataAsset && pGameInstace->ItemsDataAsset->ItemsData.Num() > InventorySlots[0].Item.ID)
 			{
-				const auto ItemData = pGameInstace->ItemsDataAsset->ItemsData[IN_Items[0].ID];
+				const auto ItemData = pGameInstace->ItemsDataAsset->ItemsData[InventorySlots[0].Item.ID];
 
 				SpriteComponent->SetSprite(ItemData.IconSprite);
 			}

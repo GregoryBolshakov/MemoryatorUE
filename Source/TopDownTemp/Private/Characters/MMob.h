@@ -19,6 +19,10 @@ public:
 
 protected:
 
+	void BeginPlay() override;
+
+	void GenerateStartingInventory();
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=MobPerks)
 	float PileInLength = 0.f;
 

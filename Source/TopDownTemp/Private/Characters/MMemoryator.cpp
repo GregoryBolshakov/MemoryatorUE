@@ -11,6 +11,7 @@
 #include "Controllers/MPlayerController.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
 
 AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
 	Super(
@@ -56,6 +57,25 @@ void AMMemoryator::Tick(float DeltaSeconds)
 	HandleMovementState();
 
 	HandleCursor();
+}
+
+void AMMemoryator::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)
+{
+	Super::BeginLoadFromSD(MCharacterSD);
+	Rename(*FString("Player"));
+	
+}
+
+void AMMemoryator::EndLoadFromSD()
+{
+	Super::EndLoadFromSD();
+
+	// Possess itself with player controller
+	if (const auto pPlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+	{
+		pPlayerController->Possess(this);
+	}
+	else check(false);
 }
 
 void AMMemoryator::HandleCursor() const
@@ -121,9 +141,8 @@ void AMMemoryator::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (InventoryComponent)
+	if (InventoryComponent && InventoryComponent->GetSlots().IsEmpty())
 	{
-		//InventoryComponent->Initialize(30, {});
 		InventoryComponent->Initialize(30, {{1, 8}, {1, 8}, {2, 8}, {2, 8}, {3, 8}, {3, 8}, {4, 8}, {4, 8}});
 	}
 }

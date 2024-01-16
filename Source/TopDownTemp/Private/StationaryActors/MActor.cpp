@@ -37,9 +37,13 @@ bool AMActor::Destroy(bool bNetForce, bool bShouldModifyLevel)
 	return false;
 }
 
-void AMActor::InitialiseInventory(const TArray<FItem>& IN_Items)
+void AMActor::InitialiseInventory(const TArray<FItem>& IN_Items) const
 {
 	InventoryComponent->Initialize(IN_Items.Num(), IN_Items);
+}
+
+void AMActor::BeginLoadFromSD(const FMActorSaveData& MActorSD)
+{
 }
 
 void AMActor::PostInitializeComponents()

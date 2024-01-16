@@ -13,6 +13,7 @@
 #include "MMemoryator.h" // temporary include
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
+#include "Managers/MSaveTypes.h"
 #include "Managers/MWorldGenerator.h"
 #include "Managers/MWorldManager.h"
 
@@ -98,7 +99,7 @@ float AMCharacter::GetRadius() const
 	return 0.f;
 }
 
-void AMCharacter::InitialiseInventory(const TArray<FItem>& IN_Items)
+void AMCharacter::InitialiseInventory(const TArray<FItem>& IN_Items) const
 {
 	InventoryComponent->Initialize(IN_Items.Num(), IN_Items);
 }
@@ -157,24 +158,6 @@ void AMCharacter::BeginPlay()
 		AttackPuddleComponent->SetLength(GetFightRangePlusMyRadius());
 		AttackPuddleComponent->SetAngle(MeleeSpread);
 	}
-
-	if (const auto pGameInstance = GetGameInstance<UMGameInstance>())
-	{
-		if (const auto CharacterSpeciesDataAsset = pGameInstance->CharacterSpeciesDataAsset)
-		{
-			// Temporary solution. We will do this only when spawn a new character. Already existing will load the SpeciesName from save
-			const auto AllPossibleSpecies = CharacterSpeciesDataAsset->GetAllNamesByClass(GetClass());
-			if (!AllPossibleSpecies.IsEmpty())
-			{
-				SpeciesName = AllPossibleSpecies[FMath::RandRange(0, AllPossibleSpecies.Num()-1)];
-			}
-		}
-
-		if (InventoryComponent->GetSlots().IsEmpty())
-		{
-			GenerateStartingInventory();
-		}
-	}
 }
 
 float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator,
@@ -216,29 +199,9 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 	return Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
 }
 
-void AMCharacter::GenerateStartingInventory()
+void AMCharacter::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)
 {
-	const auto pGameInstance = GetGameInstance<UMGameInstance>();
-	if (InventoryComponent)
-	{
-		if (const auto pCharacterSpeciesDataAsset = pGameInstance->CharacterSpeciesDataAsset)
-		{
-			if (const auto MyData = pCharacterSpeciesDataAsset->Data.Find(SpeciesName))
-			{
-				TArray<FItem> StartingInventory;
-				for (const auto [ItemID, ItemData] : MyData->StartingItemsData)
-				{
-					if (FMath::RandRange(0.f, 1.f) <= ItemData.Probability)
-					{
-						StartingInventory.Add({ItemID, FMath::RandRange(ItemData.MinMaxStartQuantity.X, ItemData.MinMaxStartQuantity.Y)});
-					}
-				}
-				InventoryComponent->Initialize(StartingInventory.Num(), StartingInventory);
-			}
-		}
-		InventoryComponent->SetFlagToAllSlots(FSlot::ESlotFlags::Secret);
-		InventoryComponent->SetFlagToAllSlots(FSlot::ESlotFlags::Locked);
-	}
+	InitialiseInventory(MCharacterSD.InventoryContents);
 }
 
 void AMCharacter::OnEnabled_Implementation()
