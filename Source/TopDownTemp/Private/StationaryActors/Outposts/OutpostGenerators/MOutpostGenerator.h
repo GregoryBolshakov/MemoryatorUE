@@ -30,3 +30,10 @@ protected:
 	//TODO: Consider tracking other outpost elements
 	TMap<FName, AMOutpostHouse*> Houses;
 };
+
+USTRUCT()
+struct FOutpostSave
+{
+	GENERATED_BODY()
+	TArray<FUid> Houses;
+};

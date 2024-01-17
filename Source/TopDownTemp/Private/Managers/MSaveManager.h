@@ -19,6 +19,8 @@ struct FMCharacterSaveData;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogSaveManager, Log, All);
 
+inline bool IsUidValid(const FUid& Uid) { return Uid.ObjectId > MIN_int32; }
+
 UCLASS()
 class UMSaveManager : public UObject
 {
@@ -38,9 +40,9 @@ public:
 	bool IsLoaded() const { return LoadedGameWorld != nullptr; }
 
 	/** Needed for actors to precisely load dependant actors. It will remove the save data from SaveManager */
-	AMActor* LoadMActorAndClearSD(const FMActorSaveData& MActorSD, AMWorldGenerator* WorldGenerator);
+	AMActor* LoadMActorAndClearSD(const FUid& Uid, AMWorldGenerator* WorldGenerator);
 	/** Needed for actors to precisely load dependant characters. It will remove the save data from SaveManager */
-	AMCharacter* LoadMCharacterAndClearSD(const FMCharacterSaveData& MCharacterSD, AMWorldGenerator* WorldGenerator);
+	AMCharacter* LoadMCharacterAndClearSD(const FUid& Uid, AMWorldGenerator* WorldGenerator);
 
 private:
 
@@ -59,18 +61,25 @@ private:
 	UPROPERTY()
 	USaveGameWorld* LoadedGameWorld;
 
-	// Maps for quick access by name
-
-	/** Matches FUid with pointers to FMActorSaveData stored in all blocks in the LoadedGameWorld.\n\n NOT A UPROPERTY\n\n
-	 * May contain dangling pointers as blocks' save data might be removed, always validate results. */
+private: // Relations between saved actors
+	/** Matches FUid with pointers to FMActorSaveData stored in all blocks in the LoadedGameWorld.*/
 	TMap<FUid, FMActorSaveData*> LoadedMActorMap;
 
-	/** Matches FUid with pointers to FMCharacterSaveData stored in all blocks in the LoadedGameWorld.\n NOT A UPROPERTY\n\n
-	 * May contain dangling pointers as blocks' save data might be removed, always validate results. */
+	/** Matches FUid with pointers to FMCharacterSaveData stored in all blocks in the LoadedGameWorld.*/
 	TMap<FUid, FMCharacterSaveData*> LoadedMCharacterMap;
 
-	/** Matches the names of actors spawned during this session with their Uid. Filled only during SaveToMemory.\n
-	 * It is currently not possible to access the Uid of an actor saved in a previous session unless it was loaded during that one. */
+	/** Matches the names of actors spawned during this session with their Uid. Filled only during SaveToMemory. */
+	UPROPERTY()
 	TMap<FName, FUid> NameToUidMap;
+
+	UPROPERTY()
+	TMap<FUid, AActor*> AlreadySpawnedSavedActors;
+	// FUid нужен всем актерам в мире как только они спавнятся.
+	// Сейчас проблема при SaveToMemory(): ссылаясь на FUid актера, не факт, что он был сгенерирован.
+	// А сейчас он генерируется только при сохранении актера
+	// Есть 2 проблемы:
+	// 1) Актеры много раз удаляются и не доживают до сейва,
+	// но можно пренебречь, т.к. количества уникальных идентификаторов хватит на ~23860 часов сессии, если в секунду создавать по 50 актеров.
+	// 2) Разные классы актеров AMActor, AMCharacter, возможно AMOutpostGenerator. Всем придется добавлять Fuid отдельно.
 };
 

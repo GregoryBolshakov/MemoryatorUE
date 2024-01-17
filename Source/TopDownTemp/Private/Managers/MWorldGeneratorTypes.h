@@ -124,8 +124,6 @@ public:
 
 	FIntPoint GroundBlockIndex;
 
-	FIntPoint ChunkIndex;
-
 	FOnBlockChanged OnBlockChangedDelegate;
 
 	FOnChunkChanged OnChunkChangedDelegate;

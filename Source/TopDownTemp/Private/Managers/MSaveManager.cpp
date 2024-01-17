@@ -186,22 +186,6 @@ const FBlockSaveData* UMSaveManager::GetBlockData(const FIntPoint& Index) const
 	return nullptr;
 }
 
-const FMActorSaveData* UMSaveManager::GetMActorData(const FUid& Uid)
-{
-	const auto Data = LoadedMActorMap.Find(Uid);
-	if (Data)
-		return *Data;
-	return nullptr;
-}
-
-const FMCharacterSaveData* UMSaveManager::GetMCharacterData(const FUid& Uid)
-{
-	const auto Data = LoadedMCharacterMap.Find(Uid);
-	if (Data)
-		return *Data;
-	return nullptr;
-}
-
 void UMSaveManager::RemoveBlock(const FIntPoint& Index)
 {
 	if (LoadedGameWorld)
@@ -232,22 +216,50 @@ TArray<FIntPoint> UMSaveManager::GetPlayerTraveledPath() const
 	return {};
 }
 
-AMActor* UMSaveManager::LoadMActorAndClearSD(const FMActorSaveData& MActorSD, AMWorldGenerator* WorldGenerator)
+AMActor* UMSaveManager::LoadMActorAndClearSD(const FUid& Uid, AMWorldGenerator* WorldGenerator)
 {
-	const auto LoadedMActor = LoadMActor(MActorSD, WorldGenerator);
+	check(IsUidValid(Uid));
+	if (const auto pAlreadySpawnedActor = AlreadySpawnedSavedActors.Find(Uid))
+	{
+		const auto AlreadySpawnedMActor = Cast<AMActor>(*pAlreadySpawnedActor);
+		return AlreadySpawnedMActor;
+	}
+	const auto* MActorSD = LoadedMActorMap.FindOrAdd(Uid);
+	if (!MActorSD)
+	{
+		check(false);
+		return nullptr;
+	}
+
+	const auto LoadedMActor = LoadMActor(*MActorSD, WorldGenerator);
 	// Remove save data
-	const auto BlockIndex = WorldGenerator->GetGroundBlockIndex(MActorSD.ActorSaveData.Location);
-	LoadedGameWorld->SavedGrid[BlockIndex].SavedMActors.Remove(MActorSD.ActorSaveData.SavedUid);
+	const auto BlockIndex = WorldGenerator->GetGroundBlockIndex(MActorSD->ActorSaveData.Location);
+	LoadedGameWorld->SavedGrid[BlockIndex].SavedMActors.Remove(MActorSD->ActorSaveData.SavedUid);
+	LoadedMActorMap.Remove(Uid);
+
 	return LoadedMActor;
 }
 
-AMCharacter* UMSaveManager::LoadMCharacterAndClearSD(const FMCharacterSaveData& MCharacterSD,
-	AMWorldGenerator* WorldGenerator)
+AMCharacter* UMSaveManager::LoadMCharacterAndClearSD(const FUid& Uid, AMWorldGenerator* WorldGenerator)
 {
-	const auto LoadedMCharacter = LoadMCharacter(MCharacterSD, WorldGenerator);
+	if (const auto pAlreadySpawnedActor = AlreadySpawnedSavedActors.Find(Uid))
+	{
+		const auto AlreadySpawnedMCharacter = Cast<AMCharacter>(*pAlreadySpawnedActor);
+		return AlreadySpawnedMCharacter;
+	}
+	const auto* MCharacterSD = LoadedMCharacterMap.FindOrAdd(Uid);
+	if (!MCharacterSD)
+	{
+		check(false);
+		return nullptr;
+	}
+
+	const auto LoadedMCharacter = LoadMCharacter(*MCharacterSD, WorldGenerator);
 	// Remove save data
-	const auto BlockIndex = WorldGenerator->GetGroundBlockIndex(MCharacterSD.ActorSaveData.Location);
-	LoadedGameWorld->SavedGrid[BlockIndex].SavedMCharacters.Remove(MCharacterSD.ActorSaveData.SavedUid);
+	const auto BlockIndex = WorldGenerator->GetGroundBlockIndex(MCharacterSD->ActorSaveData.Location);
+	LoadedGameWorld->SavedGrid[BlockIndex].SavedMCharacters.Remove(MCharacterSD->ActorSaveData.SavedUid);
+	LoadedMCharacterMap.Remove(Uid);
+
 	return LoadedMCharacter;
 }
 
@@ -274,6 +286,7 @@ AMActor* UMSaveManager::LoadMActor(const FMActorSaveData& MActorSD, AMWorldGener
 	});
 	if (const auto MActor = WorldGenerator->SpawnActor<AMActor>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, false, OnSpawnActorStarted))
 	{
+		AlreadySpawnedSavedActors.Add(ActorSD.SavedUid, MActor);
 		return MActor;
 	}
 	check(false);
@@ -302,6 +315,7 @@ AMCharacter* UMSaveManager::LoadMCharacter(const FMCharacterSaveData& MCharacter
 	if (const auto SpawnedCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, /*ActorSD.Rotation*/ FRotator::ZeroRotator, Params, true, OnSpawnActorStarted))
 	{
 		SpawnedCharacter->EndLoadFromSD();
+		AlreadySpawnedSavedActors.Add(ActorSD.SavedUid, SpawnedCharacter);
 		return SpawnedCharacter;
 	}
 

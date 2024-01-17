@@ -208,9 +208,9 @@ void AMCharacter::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)
 	{
 		if (const auto SaveManager = WorldGenerator->GetSaveManager())
 		{
-			if (const auto HouseSD = SaveManager->GetMActorData(MCharacterSD.HouseUid))
+			if (IsUidValid(MCharacterSD.HouseUid))
 			{
-				const auto HouseActor = Cast<AMOutpostHouse>(SaveManager->LoadMActorAndClearSD(*HouseSD, WorldGenerator));
+				const auto HouseActor = Cast<AMOutpostHouse>(SaveManager->LoadMActorAndClearSD(MCharacterSD.HouseUid, WorldGenerator));
 				HouseActor->MoveResidentIn(this);
 			}
 		}
