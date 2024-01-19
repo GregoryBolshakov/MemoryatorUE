@@ -33,6 +33,12 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
+
+	/*CustomInputComponent = CreateDefaultSubobject<UInputComponent>(TEXT("CustomInputComponent"));
+	if (CustomInputComponent)
+	{
+		CustomInputComponent->bBlockInput = false; // Set to true to block input to other components
+	}*/
 }
 //temp
 FTimerHandle tempTimer, tempTimer2;
@@ -239,6 +245,8 @@ void AMWorldGenerator::BeginPlay()
 	}
 
 	SaveManager->SetUpAutoSaves(GridOfActors, this);
+
+	SetupCustomInputComponent();
 }
 
 void AMWorldGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -702,14 +710,14 @@ FVector AMWorldGenerator::RaycastScreenPoint(const UObject* pWorldContextObject,
 	return FVector::ZeroVector;
 }
 
-void AMWorldGenerator::DrawDebuggingInfo(float DeltaSeconds) const
+void AMWorldGenerator::DrawDebuggingInfo() const
 {
 	FlushPersistentDebugLines(GetWorld());
 	if (RoadManager)
 	{
 		if (const auto GroundMarker = RoadManager->GetGroundMarker())
 		{
-			GroundMarker->Render(DeltaSeconds);
+			GroundMarker->Render();
 		}
 	}
 }
@@ -797,6 +805,22 @@ TSubclassOf<AActor> AMWorldGenerator::GetActorClassToSpawn(FName Name)
 	return nullptr;
 }
 
+void AMWorldGenerator::SetupCustomInputComponent()
+{
+	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	{
+		EnableInput(PC);
+		if (RoadManager)
+		{
+			if (const auto GroundMarker = RoadManager->GetGroundMarker())
+			{
+				InputComponent->BindAction("ToggleDebuggingGeometry", IE_Released, GroundMarker,
+										   &UMGroundMarker::OnToggleDebuggingGeometry);
+			}
+		}
+	}
+}
+
 // Tick interval is set in the blueprint
 void AMWorldGenerator::Tick(float DeltaSeconds)
 {
@@ -804,7 +828,7 @@ void AMWorldGenerator::Tick(float DeltaSeconds)
 
 	CheckDynamicActorsBlocks();
 
-	DrawDebuggingInfo(DeltaSeconds);
+	DrawDebuggingInfo();
 }
 
 AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation,

@@ -16,9 +16,14 @@ class UMGroundMarker : public UObject
 public:
 	void Initialize(AMWorldGenerator* WorldGenerator, UMRoadManager* RoadManager);
 
-	void Render(float DeltaSeconds) const;
+	void Render() const;
+
+	UFUNCTION()
+	void OnToggleDebuggingGeometry();
 
 private:
+	bool bEnabled = false;
+
 	AMWorldGenerator* pWorldGenerator;
 	UMRoadManager* pRoadManager;
 };

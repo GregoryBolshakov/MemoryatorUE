@@ -9,8 +9,11 @@ void UMGroundMarker::Initialize(AMWorldGenerator* WorldGenerator, UMRoadManager*
 	pRoadManager = RoadManager;
 }
 
-void UMGroundMarker::Render(float DeltaSeconds) const
+void UMGroundMarker::Render() const
 {
+	if (!bEnabled)
+		return;
+
 	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
 	const auto ChunkSizeInBlocks = pRoadManager->GetChunkSize();
 	const FVector ChunkSizeInUnits = FVector(ChunkSizeInBlocks.X, ChunkSizeInBlocks.Y, 0.f) * BlockSize;
@@ -54,4 +57,9 @@ void UMGroundMarker::Render(float DeltaSeconds) const
 			}
 		}
 	}
+}
+
+void UMGroundMarker::OnToggleDebuggingGeometry()
+{
+	bEnabled = !bEnabled;
 }

@@ -126,6 +126,11 @@ protected:
 	virtual ~AMWorldGenerator() override { DefaultBoundsMap.Empty(); };
 #endif
 
+	void SetupCustomInputComponent();
+
+	//UPROPERTY()
+	//UInputComponent* CustomInputComponent;
+
 	// TODO: Remove excess meta modifiers
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UMDropManager> DropManagerBPClass;
@@ -175,7 +180,7 @@ private:
 
 	static FVector RaycastScreenPoint(const UObject* pWorldContextObject, const EScreenPoint ScreenPoint);
 
-	void DrawDebuggingInfo(float DeltaSeconds) const;
+	void DrawDebuggingInfo() const;
 
 	/** The radius of the visible area (in blocks) */
 	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess=true))

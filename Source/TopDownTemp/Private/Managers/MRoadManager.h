@@ -58,7 +58,7 @@ public:
 
 	void SaveToMemory();
 
-	const UMGroundMarker* GetGroundMarker() const { return GroundMarker; }
+	UMGroundMarker* GetGroundMarker() const { return GroundMarker; }
 
 protected:
 
