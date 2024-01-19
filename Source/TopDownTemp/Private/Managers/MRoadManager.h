@@ -1,73 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MRoadManagerTypes.h"
 #include "Math/UnrealMathUtility.h"
 #include "MRoadManager.generated.h"
 
+class URoadManagerSave;
 class AMRoadSplineActor;
 class AMWorldGenerator;
 class AMOutpostGenerator;
-
-USTRUCT(BlueprintType)
-struct FUnorderedConnection
-{
-	GENERATED_BODY()
-	FIntPoint A;
-	FIntPoint B;
-
-	bool operator==(const FUnorderedConnection& Other) const
-	{
-		return (A == Other.A && B == Other.B) ||
-			   (A == Other.B && B == Other.A);
-	}
-};
-
-namespace FUnorderedConnectionHash
-{
-	FORCEINLINE uint32 HashCombine(uint32 A, uint32 B)
-	{
-		return A ^ (B + 0x9e3779b9 + (A << 6) + (A >> 2));
-	}
-}
-
-FORCEINLINE uint32 GetTypeHash(const FUnorderedConnection& Connection)
-{
-	uint32 HashA = GetTypeHash(Connection.A);
-	uint32 HashB = GetTypeHash(Connection.B);
-
-	// Combine hashes in a way that is order-independent
-	return FUnorderedConnectionHash::HashCombine(FMath::Min(HashA, HashB), FMath::Max(HashA, HashB));
-}
-
-UENUM(BlueprintType)
-enum class ERoadType : uint8
-{
-	MainRoad = 0,
-	Trail,
-	Count UMETA(Hidden)
-};
-ENUM_RANGE_BY_COUNT(ERoadType, ERoadType::Count);
-
-USTRUCT()
-struct FChunkMetadata // TODO: Consider converting to a class
-{
-	GENERATED_BODY()
-	/** The chunk was already either connected to another chunk, or decided to be ignored.
-	* Either way it won't be able to pair with such another chunk. */
-	bool bConnectedOrIgnored = false;
-
-	/** Currently we support only up to one Outpost, e.g. a village/camp/site per chunk */
-	UPROPERTY()
-	AMOutpostGenerator* OutpostGenerator; //TODO: Make a special class for Outpost generators.
-};
-
-USTRUCT()
-struct FRegionMetadata
-{
-	GENERATED_BODY()
-	/** If the chunks within were divided into pairs and roads were spawned. */
-	bool bProcessed = false;
-};
 
 /** Class responsible for road generation within Regions, their Chunks and their blocks.\n\n
  *  Handles spawn of Outposts such as villages/camps/sites.\n\n
@@ -78,7 +19,7 @@ class TOPDOWNTEMP_API UMRoadManager : public UObject
 	GENERATED_BODY()
 
 public:
-	void Initialize(AMWorldGenerator* IN_WorldGenerator) { pWorldGenerator = IN_WorldGenerator; }
+	void Initialize(AMWorldGenerator* IN_WorldGenerator);
 
 	void ConnectTwoChunks(FIntPoint ChunkA, FIntPoint ChunkB, const ERoadType RoadType = ERoadType::MainRoad);
 
@@ -110,12 +51,16 @@ public:
 
 	const TMap<FName, TSubclassOf<AActor>>& GetOutpostBPClasses() const { return OutpostBPClasses; }
 
+	void SaveToMemory();
+
 protected:
 
 	/** If adjacent chunks have outpost generators, call their Generate() to spawn their actors */
-	void ProcessAdjacentChunks(const FIntPoint& CurrentChunk);
+	void TriggerOutpostGenerationForAdjacentChunks(const FIntPoint& CurrentChunk);
 
-	void ConnectChunksWithinRegion(const FIntPoint& RegionIndex);
+	void LoadOrGenerateRegion(const FIntPoint& RegionIndex);
+	bool LoadConnectionsBetweenChunksWithinRegion(const FIntPoint& RegionIndex);
+	void GenerateConnectionsBetweenChunksWithinRegion(const FIntPoint& RegionIndex);
 
 	/** Spawns only the generator actor. The actual Generate() call will be triggered as soon as player enters the chunk or adjacent to it.\n
 	 * @param Class Outpost generator class. If null, it will be selected randomly */
@@ -169,14 +114,18 @@ private:
 	UPROPERTY()
 	TMap<FUnorderedConnection, AMRoadSplineActor*> Trails;
 
+	/** Filled in only to create new ones or load existing ones needed for the current session. */
 	UPROPERTY()
 	TMap<FIntPoint, FChunkMetadata> GridOfChunks;
 
+	/** Filled in only to create new ones or load existing ones needed for the current session. */
 	UPROPERTY()
 	TMap<FIntPoint, FRegionMetadata> GridOfRegions;
+	
+	UPROPERTY()
+	URoadManagerSave* LoadedSave;
 
 	//TODO: Remove it from here. It's a temporary measure for quicker prototyping
 	UPROPERTY()
 	AMWorldGenerator* pWorldGenerator;
 };
-

@@ -21,7 +21,7 @@
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "StationaryActors/MPickableActor.h"
 #include "MSaveManager.h"
-#include "MSaveTypes.h"
+#include "MWorldSaveTypes.h"
 #include "MWorldManager.h"
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
@@ -99,7 +99,7 @@ void AMWorldGenerator::InitSurroundingArea()
 				LoadOrGenerateBlock(BlockInRadius, false);
 			}
 
-			if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
+			/*if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
 			{
 				pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()
 				{
@@ -108,7 +108,7 @@ void AMWorldGenerator::InitSurroundingArea()
 					VillageGenerator->Generate();
 					UpdateNavigationMesh();
 				}, 0.3f, false);
-			}
+			}*/
 		}
 	, 0.3f, false);
 
@@ -128,24 +128,18 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 	if (BlockMetadata->ConstantActorsCount > 0 && !IgnoreConstancy)
 		return BlockMetadata;
 
-	// Empty the block if already spawned
-	for (auto It = BlockMetadata->StaticActors.CreateIterator(); It; ++It)
+	// Empty actor maps
+	while(!BlockMetadata->StaticActors.IsEmpty())
 	{
-		if (It->Value)
-		{
-			RemoveActorFromGrid(It->Value); //TODO: Remake this. Removal during iteration
-		}
+		RemoveActorFromGrid(BlockMetadata->StaticActors.CreateIterator()->Value);
 	}
 	check(BlockMetadata->StaticActors.IsEmpty());
 
 	if (!KeepDynamicObjects)
 	{
-		for (auto It = BlockMetadata->DynamicActors.CreateIterator(); It; ++It)
+		while(!BlockMetadata->DynamicActors.IsEmpty())
 		{
-			if (It->Value)
-			{
-				RemoveActorFromGrid(It->Value); //TODO: Remake this. Removal during iteration
-			}
+			RemoveActorFromGrid(BlockMetadata->DynamicActors.CreateIterator()->Value);
 		}
 		check(BlockMetadata->DynamicActors.IsEmpty());
 	}
@@ -159,7 +153,7 @@ void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRe
 	if (const auto BlockSD = SaveManager->GetBlockData(BlockIndex))
 	{
 		// Regeneration feature applies only if the block isn't constant. Otherwise it must be loaded if save is present
-		if (BlockSD->WasConstant || !bRegenerationFeature) //TODO: Implement this!!! Very important
+		if (BlockSD->ConstantActorsCount > 0 || !bRegenerationFeature) //TODO: Implement this!!! Very important
 		{
 			if (SaveManager->TryLoadBlock(BlockIndex, this))
 			{
@@ -172,10 +166,16 @@ void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRe
 	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, BlockMetadata);
 }
 
-void AMWorldGenerator::GenerateBlock(const FIntPoint& BlockIndex)
+void AMWorldGenerator::RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy)
 {
+	//TODO: refactor this function. Seems like it is redundant
+	const auto BlockMetadata = GridOfActors.FindOrAdd(BlockIndex);
+	if (!IgnoreConstancy && BlockMetadata->ConstantActorsCount > 0)
+	{
+		return;
+	}
 	SaveManager->RemoveBlock(BlockIndex); // No longer need a save for this block
-	const auto Block = EmptyBlock(BlockIndex, true);
+	const auto Block = EmptyBlock(BlockIndex, KeepDynamicObjects, true);
 	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, Block);
 }
 
@@ -596,7 +596,6 @@ void AMWorldGenerator::OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate)
 	int Index = 0;
 	for (auto It = BlocksToGenerate.CreateIterator(); It; ++It)
 	{
-		SaveManager->RemoveBlock(*It); // Overwrite the block. Its previously saved data is no longer needed
 		LoadOrGenerateBlock(*It);
 		It.RemoveCurrent();
 
@@ -841,8 +840,8 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 		{
 			if (!SpawnParameters.Name.IsNone())
 				Actor->Rename(*SpawnParameters.Name.ToString());
-			else
-				Actor->Rename(); // Guarantees unique name
+			/*else
+				Actor->Rename(); // Guarantees unique name*/
 
 			OnSpawnActorStarted.Broadcast(Actor);
 
@@ -873,7 +872,10 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 void AMWorldGenerator::EnrollActorToGrid(AActor* Actor)
 {
 	if (!Actor)
+	{
+		check(false);
 		return;
+	}
 
 	const auto GroundBlockIndex = GetGroundBlockIndex(Actor->GetActorLocation());
 
@@ -1004,12 +1006,12 @@ void AMWorldGenerator::RegenerateArea(const FVector& Location, int RadiusInBlock
 	const auto CenterBlock = GetGroundBlockIndex(Location);
 	for (const auto Block : GetBlocksInRadius(CenterBlock.X, CenterBlock.Y, RadiusInBlocks))
 	{
-		const auto BlockMetadata = EmptyBlock(Block, true, true);
+		const auto BlockMetadata = FindOrAddBlock(Block);
 		if (OverridePCGGraph)
 		{
 			BlockMetadata->PCGGraph = OverridePCGGraph;
 		}
-		GenerateBlock(Block);
+		RegenerateBlock(Block, true, true);
 	}
 }
 

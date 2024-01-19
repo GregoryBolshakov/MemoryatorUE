@@ -45,7 +45,7 @@ public:
 	void LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature = true);
 	
 	/** Generate a block */
-	void GenerateBlock(const FIntPoint& BlockIndex);
+	void RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects = true, bool IgnoreConstancy = false);
 
 	/** Turns on all actors in the active zone, turn off all others*/
 	void UpdateActiveZone();
@@ -95,6 +95,8 @@ public:
 	AMCommunicationManager* GetCommunicationManager() const { return CommunicationManager; }
 
 	UMBlockGenerator* GetBlockGenerator() const { return BlockGenerator; }
+
+	UMRoadManager* GetRoadManager() const { return RoadManager; }
 
 	UBlockMetadata* FindOrAddBlock(FIntPoint Index);
 

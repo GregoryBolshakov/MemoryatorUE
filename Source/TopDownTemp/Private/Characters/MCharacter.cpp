@@ -12,7 +12,7 @@
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
 #include "Managers/MSaveManager.h"
-#include "Managers/MSaveTypes.h"
+#include "Managers/MWorldSaveTypes.h"
 #include "Managers/MWorldGenerator.h"
 #include "Managers/MWorldManager.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"

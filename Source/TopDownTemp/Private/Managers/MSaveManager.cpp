@@ -1,6 +1,7 @@
 #include "MSaveManager.h"
 
 #include "MBlockGenerator.h"
+#include "MRoadManager.h"
 #include "MWorldGenerator.h"
 #include "MWorldManager.h"
 #include "Characters/MCharacter.h"
@@ -41,12 +42,16 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 	//TODO: Mark visited(or modified) blocks as dirty and then iterate only marked
 	for (const auto& [BlockIndex, BlockMetadata] : GridOfActors)
 	{
-		if (BlockMetadata && BlockMetadata->pGroundBlock) // We don't consider blocks without actors to be generated, even if they are marked with some biome
+		// We don't consider blocks without actors to be generated, even if they are marked with some biome
+		if (BlockMetadata && (!BlockMetadata->StaticActors.IsEmpty() || !BlockMetadata->DynamicActors.IsEmpty()) || BlockMetadata->pGroundBlock)
 		{
 			auto& SavedBlock = SaveGameWorld->SavedGrid.FindOrAdd(BlockIndex);
 
-			SavedBlock.PCGVariables = BlockMetadata->pGroundBlock->PCGVariables;
-			SavedBlock.WasConstant = BlockMetadata->ConstantActorsCount > 0;
+			if (BlockMetadata->pGroundBlock)
+			{
+				SavedBlock.PCGVariables = BlockMetadata->pGroundBlock->PCGVariables;
+			}
+			SavedBlock.ConstantActorsCount = BlockMetadata->ConstantActorsCount;
 			// Empty in case they've been there since last load
 			SavedBlock.SavedMActors.Empty();
 			SavedBlock.SavedMCharacters.Empty();
@@ -120,6 +125,8 @@ void UMSaveManager::SaveToMemory(TMap<FIntPoint, UBlockMetadata*>& GridOfActors,
 		}
 	}
 
+	WorldGenerator->GetRoadManager()->SaveToMemory();
+
 	check(SaveGameWorld);
 	if (SaveGameWorld)
 	{
@@ -155,10 +162,15 @@ bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* 
 	//TODO: MUST TODO! Support dependencies between actors: e.g. villager and his home. Come up with architecture when accumulate more examples
 	if (!LoadedGameWorld)
 		return false;
-	const auto BlockMetadata = WorldGenerator->EmptyBlock(BlockIndex, true, true);
 	const auto BlockSD = LoadedGameWorld->SavedGrid.Find(BlockIndex);
 	if (!BlockSD)
-		return false;
+		return false; // Either wasn't saved at all or is already loaded
+
+	// THE PREVIOUS CONTENTS OF THE BLOCK ARE NOT DELETED AND NOT GUARANTEED TO BE EMPTY. BECAUSE WE NEED TO BE ABLE TO LOAD ACTORS INDIVIDUALLY.
+	// WE RELY ON ALWAYS CHECKING FOR THE PRESENCE OF A SAVE BEFORE GENERATING A BLOCK.
+	const auto BlockMetadata = WorldGenerator->FindOrAddBlock(BlockIndex);
+
+	BlockMetadata->ConstantActorsCount = BlockSD->ConstantActorsCount;
 	BlockMetadata->Biome = BlockSD->PCGVariables.Biome;
 	//TODO: For static terrain generation we're relying on PCG determinism, be careful
 	WorldGenerator->GetBlockGenerator()->SpawnActorsSpecifically(BlockIndex, WorldGenerator, BlockSD->PCGVariables);
@@ -196,10 +208,12 @@ void UMSaveManager::RemoveBlock(const FIntPoint& Index)
 			for (auto& [Uid, MActorSD] : BlockSD->SavedMActors)
 			{
 				LoadedMActorMap.Remove(Uid);
+				UE_LOG(LogTemp, Warning, TEXT("Removing Uid: %d UMSaveManager::RemoveBlock Characters case"), Uid.ObjectId); // temp
 			}
 			for (auto& [Uid, MCharacterSD] : BlockSD->SavedMCharacters)
 			{
 				LoadedMActorMap.Remove(Uid);
+				UE_LOG(LogTemp, Warning, TEXT("Removing Uid: %d UMSaveManager::RemoveBlock Characters case"), Uid.ObjectId); // temp
 			}
 			// Remove block saved data
 			LoadedGameWorld->SavedGrid.Remove(Index);
@@ -224,19 +238,23 @@ AMActor* UMSaveManager::LoadMActorAndClearSD(const FUid& Uid, AMWorldGenerator* 
 		const auto AlreadySpawnedMActor = Cast<AMActor>(*pAlreadySpawnedActor);
 		return AlreadySpawnedMActor;
 	}
-	const auto* MActorSD = LoadedMActorMap.FindOrAdd(Uid);
-	if (!MActorSD)
+	const auto* pMActorSD = LoadedMActorMap.Find(Uid);
+	if (!pMActorSD)
 	{
 		check(false);
 		return nullptr;
 	}
+	const auto MActorSD = *pMActorSD;
 
 	const auto LoadedMActor = LoadMActor(*MActorSD, WorldGenerator);
 	// Remove save data
 	const auto BlockIndex = WorldGenerator->GetGroundBlockIndex(MActorSD->ActorSaveData.Location);
 	LoadedGameWorld->SavedGrid[BlockIndex].SavedMActors.Remove(MActorSD->ActorSaveData.SavedUid);
 	LoadedMActorMap.Remove(Uid);
+	UE_LOG(LogTemp, Warning, TEXT("Removing Uid: %d UMSaveManager::LoadMActorAndClearSD"), Uid.ObjectId); // temp
+	AlreadySpawnedSavedActors.Add(Uid, LoadedMActor);
 
+	check(LoadedMActor);
 	return LoadedMActor;
 }
 
@@ -247,18 +265,20 @@ AMCharacter* UMSaveManager::LoadMCharacterAndClearSD(const FUid& Uid, AMWorldGen
 		const auto AlreadySpawnedMCharacter = Cast<AMCharacter>(*pAlreadySpawnedActor);
 		return AlreadySpawnedMCharacter;
 	}
-	const auto* MCharacterSD = LoadedMCharacterMap.FindOrAdd(Uid);
-	if (!MCharacterSD)
+	const auto* pMCharacterSD = LoadedMCharacterMap.Find(Uid);
+	if (!pMCharacterSD)
 	{
 		check(false);
 		return nullptr;
 	}
+	const auto MCharacterSD = *pMCharacterSD;
 
 	const auto LoadedMCharacter = LoadMCharacter(*MCharacterSD, WorldGenerator);
 	// Remove save data
 	const auto BlockIndex = WorldGenerator->GetGroundBlockIndex(MCharacterSD->ActorSaveData.Location);
 	LoadedGameWorld->SavedGrid[BlockIndex].SavedMCharacters.Remove(MCharacterSD->ActorSaveData.SavedUid);
 	LoadedMCharacterMap.Remove(Uid);
+	AlreadySpawnedSavedActors.Add(Uid, LoadedMCharacter);
 
 	return LoadedMCharacter;
 }

@@ -61,6 +61,7 @@ void AMVillagerMobController::PreTick(float DeltaSeconds, const UWorld& World, A
 
 void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
+	return; // temp
 	MyCharacter.SetIsFighting(false);
 	MyCharacter.SetIsMoving(false);
 	if (!MyCharacter.GetHouse())

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "MSaveTypes.h"
+#include "MWorldSaveTypes.h"
 #include "MSaveManager.generated.h"
 
 class AMActor;
@@ -43,6 +43,8 @@ public:
 	AMActor* LoadMActorAndClearSD(const FUid& Uid, AMWorldGenerator* WorldGenerator);
 	/** Needed for actors to precisely load dependant characters. It will remove the save data from SaveManager */
 	AMCharacter* LoadMCharacterAndClearSD(const FUid& Uid, AMWorldGenerator* WorldGenerator);
+
+	const TMap<FName, FUid>& GetNameToUidMap() const { return NameToUidMap; }
 
 private:
 

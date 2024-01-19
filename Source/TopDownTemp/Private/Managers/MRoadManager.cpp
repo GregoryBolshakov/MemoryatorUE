@@ -1,10 +1,23 @@
 #include "MRoadManager.h"
+
+#include "MRoadManagerSaveTypes.h"
+#include "MSaveManager.h"
 #include "MWorldGenerator.h"
 #include "Algo/RandomShuffle.h"
 #include "Components/SplineComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "StationaryActors/MRoadSplineActor.h"
 #include "StationaryActors/Outposts/OutpostGenerators/MOutpostGenerator.h"
+
+void UMRoadManager::Initialize(AMWorldGenerator* IN_WorldGenerator)
+{
+	pWorldGenerator = IN_WorldGenerator;
+	LoadedSave = Cast<URoadManagerSave>(UGameplayStatics::LoadGameFromSlot(URoadManagerSave::SlotName, 0));
+	if (!LoadedSave)
+	{
+		LoadedSave = Cast<URoadManagerSave>(UGameplayStatics::CreateSaveGameObject(URoadManagerSave::StaticClass()));
+	}
+}
 
 void UMRoadManager::ConnectTwoChunks(FIntPoint ChunkA, FIntPoint ChunkB, const ERoadType RoadType)
 {
@@ -127,19 +140,56 @@ void UMRoadManager::ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& B
 	}
 }
 
-void UMRoadManager::ProcessAdjacentChunks(const FIntPoint& CurrentChunk)
+void UMRoadManager::SaveToMemory()
+{
+	const auto& NameToUidMap = pWorldGenerator->GetSaveManager()->GetNameToUidMap();
+	// Save chunks
+	for (const auto& [Index, ChunkMetadata] : GridOfChunks)
+	{
+		FChunkSaveData ChunkSD;
+		ChunkSD.bConnectedOrIgnored = ChunkMetadata.bConnectedOrIgnored;
+		if (ChunkMetadata.OutpostGenerator)
+		{
+			const auto pUid = NameToUidMap.Find(FName(ChunkMetadata.OutpostGenerator->GetName()));
+			if (!pUid || !IsUidValid(*pUid))
+			{
+				check(false); // Most likely the block was re-generated (overwritten), hence it's name wasn't mapped during UMSaveManager::SaveToMemory
+				continue;
+			}
+			ChunkSD.OutpostUid = *pUid;
+		}
+		LoadedSave->SavedChunks.FindOrAdd(Index) = ChunkSD;
+	}
+	// Save regions
+	for (const auto& [Index, RegionMetadata] : GridOfRegions)
+	{
+		const FRegionSaveData RegionSD { RegionMetadata.bProcessed};
+		LoadedSave->SavedRegions.FindOrAdd(Index) = RegionSD;
+	}
+
+	UGameplayStatics::SaveGameToSlot(LoadedSave, URoadManagerSave::SlotName, 0);
+}
+
+void UMRoadManager::TriggerOutpostGenerationForAdjacentChunks(const FIntPoint& CurrentChunk)
 {
 	for (int x = -1; x <= 1; ++x)
 	{
 		for (int y = -1; y <= 1; ++y)
 		{
 			const FIntPoint ChunkToProcess = {CurrentChunk.X + x, CurrentChunk.Y + y};
-			const auto& ChunkMetadata = GridOfChunks.FindOrAdd(ChunkToProcess);
-			if (ChunkMetadata.OutpostGenerator && !ChunkMetadata.OutpostGenerator->IsGenerated())
+			if (const auto ChunkMetadata = GridOfChunks.Find(ChunkToProcess); ChunkMetadata && ChunkMetadata->OutpostGenerator && !ChunkMetadata->OutpostGenerator->IsGenerated())
 			{
 				//ChunkMetadata.OutpostGenerator->Generate();
 			}
 		}
+	}
+}
+
+void UMRoadManager::LoadOrGenerateRegion(const FIntPoint& RegionIndex)
+{
+	if (!LoadConnectionsBetweenChunksWithinRegion(RegionIndex))
+	{
+		GenerateConnectionsBetweenChunksWithinRegion(RegionIndex);
 	}
 }
 
@@ -184,18 +234,18 @@ void UMRoadManager::ProcessAdjacentRegions(const FIntPoint& CurrentChunk)
 		ProcessRegionIfUnprocessed({CurrentRegion.X, CurrentRegion.Y - 1});
 	}
 
-	ProcessAdjacentChunks(CurrentChunk);
+	TriggerOutpostGenerationForAdjacentChunks(CurrentChunk);
 }
 
 void UMRoadManager::ProcessRegionIfUnprocessed(const FIntPoint& Region)
 {
 	if (!GridOfRegions.FindOrAdd(Region).bProcessed)
 	{
-		ConnectChunksWithinRegion(Region);
+		LoadOrGenerateRegion(Region);
 	}
 }
 
-void UMRoadManager::ConnectChunksWithinRegion(const FIntPoint& RegionIndex)
+void UMRoadManager::GenerateConnectionsBetweenChunksWithinRegion(const FIntPoint& RegionIndex)
 {
 	GridOfRegions.FindOrAdd(RegionIndex).bProcessed = true;
 	const auto BottomLeftChunk = GetChunkIndexByRegion(RegionIndex);
@@ -229,6 +279,50 @@ void UMRoadManager::ConnectChunksWithinRegion(const FIntPoint& RegionIndex)
 	}
 }
 
+bool UMRoadManager::LoadConnectionsBetweenChunksWithinRegion(const FIntPoint& RegionIndex)
+{
+	if (!LoadedSave)
+		return false;
+	const auto LoadedRegion = LoadedSave->SavedRegions.Find(RegionIndex);
+	if (!LoadedRegion)
+		return false;
+
+	auto& RegionMetadata = GridOfRegions.FindOrAdd(RegionIndex);
+	RegionMetadata.bProcessed = LoadedRegion->bProcessed;
+	//TODO: if new fields are added, fill them here
+
+	// Remove region save data, because it is now in RAM
+	LoadedSave->SavedRegions.Remove(RegionIndex);
+
+	const auto BottomLeftChunk = GetChunkIndexByRegion(RegionIndex);
+	TArray<FIntPoint> ChunkIndexes;
+	// Iterate chunks within the region to spawn outposts
+	for (int i = BottomLeftChunk.X; i < BottomLeftChunk.X + RegionSize.X; ++i)
+	{
+		for (int j = BottomLeftChunk.Y; j < BottomLeftChunk.Y + RegionSize.Y; ++j)
+		{
+			if (const auto LoadedChunk = LoadedSave->SavedChunks.Find({i, j}))
+			{
+				// Found saved chunk, extract its data
+				auto& Chunk = GridOfChunks.FindOrAdd({i, j});
+				Chunk.bConnectedOrIgnored = LoadedChunk->bConnectedOrIgnored;
+				if (IsUidValid(LoadedChunk->OutpostUid))
+				{
+					Chunk.OutpostGenerator = Cast<AMOutpostGenerator>(pWorldGenerator->GetSaveManager()->LoadMActorAndClearSD(LoadedChunk->OutpostUid, pWorldGenerator));
+					check(Chunk.OutpostGenerator);
+				}
+			}
+			else
+			{
+				check(false);
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 void UMRoadManager::SpawnOutpostGenerator(const FIntPoint& Chunk, TSubclassOf<AMOutpostGenerator> Class)
 {
 	auto& ChunkMetadata = GridOfChunks.FindOrAdd(Chunk);
@@ -253,7 +347,13 @@ void UMRoadManager::SpawnOutpostGenerator(const FIntPoint& Chunk, TSubclassOf<AM
 	}
 
 	const auto ChunkCenter = pWorldGenerator->GetGroundBlockLocation(GetChunkCenterBlock(Chunk)); //TODO: Fix that, currently it's not the precise center
-	const auto OutpostGenerator = GetWorld()->SpawnActor<AMOutpostGenerator>(Class, ChunkCenter, FRotator::ZeroRotator);
+	//const auto OutpostGenerator = GetWorld()->SpawnActor<AMOutpostGenerator>(Class, ChunkCenter, FRotator::ZeroRotator);
+
+	//temp
+	if (ChunkCenter.X == 3000.f && ChunkCenter.Y == -5000.f)
+		auto test = 1;
+
+	const auto OutpostGenerator = pWorldGenerator->SpawnActor<AMOutpostGenerator>(Class, ChunkCenter, FRotator::ZeroRotator, {}, false);
 	ChunkMetadata.OutpostGenerator = OutpostGenerator;
 }
 

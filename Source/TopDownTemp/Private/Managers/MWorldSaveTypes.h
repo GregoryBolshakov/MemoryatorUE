@@ -4,7 +4,7 @@
 #include "GameFramework/SaveGame.h"
 #include "MWorldGeneratorTypes.h"
 #include "Components/MInventoryComponent.h"
-#include "MSaveTypes.generated.h"
+#include "MWorldSaveTypes.generated.h"
 
 /** Saved actors might depend on other saved actors when loading. They use this ID. \n
  * Has no relation to the overall uniqueness of actors in the world */
@@ -107,7 +107,7 @@ struct FBlockSaveData
 	FPCGVariables PCGVariables;
 
 	UPROPERTY()
-	bool WasConstant = false;
+	int ConstantActorsCount = 0;
 
 	UPROPERTY()
 	TMap<FUid, FMActorSaveData> SavedMActors;
