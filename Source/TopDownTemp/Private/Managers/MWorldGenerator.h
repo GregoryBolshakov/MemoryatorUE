@@ -175,6 +175,8 @@ private:
 
 	static FVector RaycastScreenPoint(const UObject* pWorldContextObject, const EScreenPoint ScreenPoint);
 
+	void DrawDebuggingInfo(float DeltaSeconds) const;
+
 	/** The radius of the visible area (in blocks) */
 	UPROPERTY(EditDefaultsOnly, meta=(AllowPrivateAccess=true))
 	int ActiveZoneRadius = 0;

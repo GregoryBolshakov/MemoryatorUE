@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "MRoadManagerTypes.h"
 #include "Math/UnrealMathUtility.h"
+#include "Helpers/MGroundMarker.h"
 #include "MRoadManager.generated.h"
 
 class URoadManagerSave;
@@ -30,6 +31,10 @@ public:
 
 	void ProcessRegionIfUnprocessed(const FIntPoint& CurrentChunk);
 
+	FIntPoint GetChunkSize() const { return ChunkSize; }
+
+	FIntPoint GetRegionSize() const { return RegionSize; }
+
 	FIntPoint GetChunkIndexByLocation(const FVector& Location) const;
 
 	FIntPoint GetChunkIndexByBlock(const FIntPoint& BlockIndex) const;
@@ -52,6 +57,8 @@ public:
 	const TMap<FName, TSubclassOf<AActor>>& GetOutpostBPClasses() const { return OutpostBPClasses; }
 
 	void SaveToMemory();
+
+	const UMGroundMarker* GetGroundMarker() const { return GroundMarker; }
 
 protected:
 
@@ -128,4 +135,14 @@ private:
 	//TODO: Remove it from here. It's a temporary measure for quicker prototyping
 	UPROPERTY()
 	AMWorldGenerator* pWorldGenerator;
+
+private: // For debugging
+
+	// Regions that are currently adjacent to the player. For debugging purposes only
+	TSet<FIntPoint> AdjacentRegions;
+
+	friend class UMGroundMarker;
+
+	UPROPERTY()
+	UMGroundMarker* GroundMarker;
 };

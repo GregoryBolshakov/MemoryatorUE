@@ -17,6 +17,9 @@ void UMRoadManager::Initialize(AMWorldGenerator* IN_WorldGenerator)
 	{
 		LoadedSave = Cast<URoadManagerSave>(UGameplayStatics::CreateSaveGameObject(URoadManagerSave::StaticClass()));
 	}
+
+	GroundMarker = NewObject<UMGroundMarker>(GetOuter(), UMGroundMarker::StaticClass(), TEXT("GroundMarker"));
+	GroundMarker->Initialize(IN_WorldGenerator, this);
 }
 
 void UMRoadManager::ConnectTwoChunks(FIntPoint ChunkA, FIntPoint ChunkB, const ERoadType RoadType)
@@ -198,7 +201,9 @@ void UMRoadManager::LoadOrGenerateRegion(const FIntPoint& RegionIndex)
 
 void UMRoadManager::ProcessAdjacentRegions(const FIntPoint& CurrentChunk)
 {
+	AdjacentRegions.Empty();
 	const auto CurrentRegion = GetRegionIndexByChunk(CurrentChunk);
+	AdjacentRegions.Add(CurrentRegion);
 
 	// Self check for reliability
 	ProcessRegionIfUnprocessed({CurrentRegion.X, CurrentRegion.Y});
@@ -242,6 +247,7 @@ void UMRoadManager::ProcessAdjacentRegions(const FIntPoint& CurrentChunk)
 
 void UMRoadManager::ProcessRegionIfUnprocessed(const FIntPoint& Region)
 {
+	AdjacentRegions.Add(Region);
 	if (!GridOfRegions.FindOrAdd(Region).bProcessed)
 	{
 		LoadOrGenerateRegion(Region);

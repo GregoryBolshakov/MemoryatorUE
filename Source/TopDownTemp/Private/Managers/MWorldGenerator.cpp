@@ -702,6 +702,18 @@ FVector AMWorldGenerator::RaycastScreenPoint(const UObject* pWorldContextObject,
 	return FVector::ZeroVector;
 }
 
+void AMWorldGenerator::DrawDebuggingInfo(float DeltaSeconds) const
+{
+	FlushPersistentDebugLines(GetWorld());
+	if (RoadManager)
+	{
+		if (const auto GroundMarker = RoadManager->GetGroundMarker())
+		{
+			GroundMarker->Render(DeltaSeconds);
+		}
+	}
+}
+
 bool IsOnPerimeter(int x, int y, int centerX, int centerY, int radius) {
 	// Calculate the distance of the square's center from the circle's center
 	float dist = std::sqrt(std::pow(x + 0.5 - centerX, 2) + std::pow(y + 0.5 - centerY, 2));
@@ -791,6 +803,8 @@ void AMWorldGenerator::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	CheckDynamicActorsBlocks();
+
+	DrawDebuggingInfo(DeltaSeconds);
 }
 
 AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation,
