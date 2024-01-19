@@ -163,8 +163,11 @@ void UMRoadManager::SaveToMemory()
 	// Save regions
 	for (const auto& [Index, RegionMetadata] : GridOfRegions)
 	{
-		const FRegionSaveData RegionSD { RegionMetadata.bProcessed};
-		LoadedSave->SavedRegions.FindOrAdd(Index) = RegionSD;
+		if (RegionMetadata.bProcessed) // We only save already PROCESSED regions!
+		{
+			const FRegionSaveData RegionSD { /*TODO: if new fields are added to FRegionSaveData, extract them here*/ };
+			LoadedSave->SavedRegions.FindOrAdd(Index) = RegionSD;
+		}
 	}
 
 	UGameplayStatics::SaveGameToSlot(LoadedSave, URoadManagerSave::SlotName, 0);
@@ -288,8 +291,8 @@ bool UMRoadManager::LoadConnectionsBetweenChunksWithinRegion(const FIntPoint& Re
 		return false;
 
 	auto& RegionMetadata = GridOfRegions.FindOrAdd(RegionIndex);
-	RegionMetadata.bProcessed = LoadedRegion->bProcessed;
-	//TODO: if new fields are added, fill them here
+	RegionMetadata.bProcessed = true;
+	//TODO: if new fields are added to FRegionSaveData, extract them here
 
 	// Remove region save data, because it is now in RAM
 	LoadedSave->SavedRegions.Remove(RegionIndex);

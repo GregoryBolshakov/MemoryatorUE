@@ -26,12 +26,11 @@ struct FOutpostSaveData
 	FUid Uid;
 };*/
 
+/** Here we store all the saved data of a Region. We only save already PROCESSED regions! */
 USTRUCT()
 struct FRegionSaveData
 {
 	GENERATED_BODY()
-	/** If the chunks within were divided into pairs and roads were spawned. */
-	bool bProcessed = false;
 };
 
 UCLASS()

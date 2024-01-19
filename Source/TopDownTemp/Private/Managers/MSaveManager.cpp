@@ -142,15 +142,15 @@ bool UMSaveManager::LoadFromMemory()
 
 	LoadedGameWorld->LaunchId--;
 
-	for (const auto& [Index, BlockSD] : LoadedGameWorld->SavedGrid)
+	for (auto& [Index, BlockSD] : LoadedGameWorld->SavedGrid)
 	{
 		for (auto& [Uid, MActorSD] : BlockSD.SavedMActors)
 		{
-			LoadedMActorMap.Add({MActorSD.ActorSaveData.SavedUid, const_cast<FMActorSaveData*>(&MActorSD)});
+			LoadedMActorMap.Add(MActorSD.ActorSaveData.SavedUid, &MActorSD);
 		}
-		for (const auto& [Uid, MCharcterSD] : BlockSD.SavedMCharacters)
+		for (auto& [Uid, MCharacterSD] : BlockSD.SavedMCharacters)
 		{
-			LoadedMCharacterMap.Add({MCharcterSD.ActorSaveData.SavedUid, const_cast<FMCharacterSaveData*>(&MCharcterSD)});
+			LoadedMCharacterMap.Add(MCharacterSD.ActorSaveData.SavedUid, &MCharacterSD);
 		}
 	}
 
@@ -159,7 +159,6 @@ bool UMSaveManager::LoadFromMemory()
 
 bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* WorldGenerator)
 {
-	//TODO: MUST TODO! Support dependencies between actors: e.g. villager and his home. Come up with architecture when accumulate more examples
 	if (!LoadedGameWorld)
 		return false;
 	const auto BlockSD = LoadedGameWorld->SavedGrid.Find(BlockIndex);
@@ -218,6 +217,7 @@ void UMSaveManager::RemoveBlock(const FIntPoint& Index)
 			// Remove block saved data
 			LoadedGameWorld->SavedGrid.Remove(Index);
 		}
+		else check(false);
 	}
 }
 
@@ -252,9 +252,7 @@ AMActor* UMSaveManager::LoadMActorAndClearSD(const FUid& Uid, AMWorldGenerator* 
 	LoadedGameWorld->SavedGrid[BlockIndex].SavedMActors.Remove(MActorSD->ActorSaveData.SavedUid);
 	LoadedMActorMap.Remove(Uid);
 	UE_LOG(LogTemp, Warning, TEXT("Removing Uid: %d UMSaveManager::LoadMActorAndClearSD"), Uid.ObjectId); // temp
-	AlreadySpawnedSavedActors.Add(Uid, LoadedMActor);
 
-	check(LoadedMActor);
 	return LoadedMActor;
 }
 
@@ -278,7 +276,6 @@ AMCharacter* UMSaveManager::LoadMCharacterAndClearSD(const FUid& Uid, AMWorldGen
 	const auto BlockIndex = WorldGenerator->GetGroundBlockIndex(MCharacterSD->ActorSaveData.Location);
 	LoadedGameWorld->SavedGrid[BlockIndex].SavedMCharacters.Remove(MCharacterSD->ActorSaveData.SavedUid);
 	LoadedMCharacterMap.Remove(Uid);
-	AlreadySpawnedSavedActors.Add(Uid, LoadedMCharacter);
 
 	return LoadedMCharacter;
 }
