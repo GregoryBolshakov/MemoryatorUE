@@ -44,7 +44,7 @@ public:
 	FOnEnabled OnEnabledDelegate;
 
 protected:
-	//* Determines the bounds of the object. If it doesnt overlap the World active zone, the object is disabled */
+	/** Determines the bounds of the object. If it doesnt overlap the World active zone, the object is disabled */
 	UPROPERTY()
 	UPrimitiveComponent* CollisionPrimitive = nullptr;
 

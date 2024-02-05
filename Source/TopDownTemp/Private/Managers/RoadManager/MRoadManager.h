@@ -6,6 +6,7 @@
 #include "Helpers/MGroundMarker.h"
 #include "MRoadManager.generated.h"
 
+class UMRoadMap;
 class URoadManagerSave;
 class AMRoadSplineActor;
 class AMWorldGenerator;
@@ -31,6 +32,8 @@ public:
 
 	void ProcessRegionIfUnprocessed(const FIntPoint& CurrentChunk);
 
+	//TODO: Save not adjacent regions and remove them. It's optimizes performance and boosts saving time
+
 	FIntPoint GetChunkSize() const { return ChunkSize; }
 
 	FIntPoint GetRegionSize() const { return RegionSize; }
@@ -51,17 +54,25 @@ public:
 	UFUNCTION()
 	void OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk);
 
-	/** The tag PCG uses to differ the road types */
-	FName GetRoadPCGTag(ERoadType RoadType) const;
-
 	const TMap<FName, TSubclassOf<AActor>>& GetOutpostBPClasses() const { return OutpostBPClasses; }
 
 	void SaveToMemory();
 
 	UMGroundMarker* GetGroundMarker() const { return GroundMarker; }
 
-protected:
+protected: // Road navigation
+	/** Adds BlockB to BlockA's connections and vice versa. */
+	void AddConnection(const FIntPoint& BlockA, const FIntPoint& BlockB, AMRoadSplineActor* RoadActor);
 
+	//TODO: RemoveConnection() ...
+
+	/** Finds a road actor connecting two given blocks. Their order does not matter. */
+	const AMRoadSplineActor* GetRoadActor(const FIntPoint& BlockA, const FIntPoint& BlockB, ERoadType RoadType);
+
+	/** Finds all blocks connected to a given one. */
+	FRoadActorMapWrapper GetConnections(const FIntPoint& Block, ERoadType RoadType);
+
+protected:
 	/** If adjacent chunks have outpost generators, call their Generate() to spawn their actors */
 	void TriggerOutpostGenerationForAdjacentChunks(const FIntPoint& CurrentChunk);
 
@@ -72,9 +83,6 @@ protected:
 	/** Spawns only the generator actor. The actual Generate() call will be triggered as soon as player enters the chunk or adjacent to it.\n
 	 * @param Class Outpost generator class. If null, it will be selected randomly */
 	void SpawnOutpostGenerator(const FIntPoint& Chunk, TSubclassOf<AMOutpostGenerator> Class = nullptr);
-
-	UFUNCTION(BlueprintCallable)
-	TMap<FUnorderedConnection, AMRoadSplineActor*>& GetRoadContainer(ERoadType RoadType);
 
 	/** Chunk is a rectangle (commonly square) area consisting of adjacent ground blocks. Serves only geometry purposes.\n
 	 * Roads go along chunk edges.\n
@@ -106,21 +114,6 @@ protected:
 	TMap<FName, TSubclassOf<AActor>> OutpostBPClasses;
 
 private:
-	/** It maps pairs of CHUNKS and corresponding spline actors (roads) between them.\n
-	 *  Run only along chunk edges, usually large are part of long paths.\n
-	 *  DON'T USE ANYWHERE EXCEPT GetRoadContainer()\n
-	 */
-	UPROPERTY()
-	TMap<FUnorderedConnection, AMRoadSplineActor*> MainRoads;
-
-	/** It maps pairs of BLOCKS and corresponding spline actors (trails) between them.\n
-	 *  Lie between blocks, can have any shape, usually small and should be within one or two chunks.\n
-	 *  It's impossible to track intersections between two trails.\n
-	 *  DON'T USE ANYWHERE EXCEPT GetRoadContainer()\n
-	 */
-	UPROPERTY()
-	TMap<FUnorderedConnection, AMRoadSplineActor*> Trails;
-
 	/** Filled in only to create new ones or load existing ones needed for the current session. */
 	UPROPERTY()
 	TMap<FIntPoint, FChunkMetadata> GridOfChunks;
@@ -143,6 +136,7 @@ private: // For debugging
 
 	friend class UMGroundMarker;
 
+	/** A class responsible for debug rendering of ground geometry */
 	UPROPERTY()
 	UMGroundMarker* GroundMarker;
 };

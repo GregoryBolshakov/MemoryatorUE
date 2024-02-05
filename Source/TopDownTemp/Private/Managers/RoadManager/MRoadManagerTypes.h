@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "MRoadManagerTypes.generated.h"
 
+class AMRoadSplineActor;
 class AMOutpostGenerator;
 
 USTRUCT(BlueprintType)
@@ -59,9 +60,29 @@ struct FChunkMetadata // TODO: Consider converting to a class
 };
 
 USTRUCT()
+struct FRoadActorMapWrapper
+{
+	/** Road actors, available only within the game session */
+	GENERATED_BODY()
+	UPROPERTY()
+	TMap<FIntPoint, AMRoadSplineActor*> Map;
+};
+USTRUCT()
+struct FRoadMatrixWrapper
+{
+	GENERATED_BODY()
+	UPROPERTY()
+	TMap<FIntPoint, FRoadActorMapWrapper> Matrix;
+};
+
+USTRUCT()
 struct FRegionMetadata
 {
 	GENERATED_BODY()
 	/** If the chunks within were divided into pairs and roads were spawned. */
 	bool bProcessed = false;
+
+	/** Matches road type with connectivity matrices */
+	UPROPERTY()
+	TMap<ERoadType, FRoadMatrixWrapper> MatrixWrappers;
 };

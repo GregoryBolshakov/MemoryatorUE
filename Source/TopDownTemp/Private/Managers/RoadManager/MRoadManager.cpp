@@ -1,8 +1,8 @@
 #include "MRoadManager.h"
 
 #include "MRoadManagerSaveTypes.h"
-#include "MSaveManager.h"
-#include "MWorldGenerator.h"
+#include "Managers/MSaveManager.h"
+#include "Managers/MWorldGenerator.h"
 #include "Algo/RandomShuffle.h"
 #include "Components/SplineComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -18,6 +18,7 @@ void UMRoadManager::Initialize(AMWorldGenerator* IN_WorldGenerator)
 		LoadedSave = Cast<URoadManagerSave>(UGameplayStatics::CreateSaveGameObject(URoadManagerSave::StaticClass()));
 	}
 
+	// Create and initialize the class responsible for debug rendering of ground geometry
 	GroundMarker = NewObject<UMGroundMarker>(GetOuter(), UMGroundMarker::StaticClass(), TEXT("GroundMarker"));
 	GroundMarker->Initialize(IN_WorldGenerator, this);
 }
@@ -89,58 +90,45 @@ void UMRoadManager::ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& B
 		check(false);
 		return;
 	}
-
-	// Check if there's no other kind of road between the blocks
-	for (const ERoadType OtherRoadType : TEnumRange<ERoadType>())
+	if (GetRoadActor(BlockA, BlockB, RoadType))
 	{
-		if (OtherRoadType != RoadType)
-		{
-			auto& OtherRoadContainer = GetRoadContainer(OtherRoadType);
-			if (OtherRoadContainer.Contains({BlockA, BlockB}))
-			{
-				check(false);
-				return;
-			}
-		}
+		return;
 	}
 
 	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
 
-	// Find or spawn a Road Spline and populate points towards the adjacent chunk
-	auto& RoadContainer = GetRoadContainer(RoadType);
-	auto& RoadSplineActor = RoadContainer.FindOrAdd({BlockA, BlockB});
+	// Spawn a Road Spline and populate points towards the adjacent chunk
+	auto* RoadSplineActor = GetWorld()->SpawnActor<AMRoadSplineActor>(
+		pWorldGenerator->GetActorClassToSpawn("RoadSpline"),
+		FVector((BlockA.X + 0.5f) * BlockSize.X, (BlockA.Y + 0.5f) * BlockSize.Y, 1.f), // + 0.5f to put in the center of the block
+		FRotator::ZeroRotator,
+		{}
+	);
 	if (!RoadSplineActor)
 	{
-		int x_inc = FMath::Sign(BlockB.X - BlockA.X), y_inc = FMath::Sign(BlockB.Y - BlockA.Y);
-
-		RoadSplineActor = GetWorld()->SpawnActor<AMRoadSplineActor>(
-			pWorldGenerator->GetActorClassToSpawn("RoadSpline"),
-			FVector((BlockA.X + 0.5f) * BlockSize.X, (BlockA.Y + 0.5f) * BlockSize.Y, 1.f), // + 0.5f to put in the center of the block
-			FRotator::ZeroRotator,
-			{}
-		);
-		if (!RoadSplineActor)
-		{
-			check(false);
-			return;
-		}
-		RoadSplineActor->Tags.Add(GetRoadPCGTag(RoadType));
-		RoadSplineActor->GetSplineComponent()->RemoveSplinePoint(1, true);
-
-		int x = BlockA.X, y = BlockA.Y;
-		do
-		{
-			x = x == BlockB.X ? x : x + x_inc;
-			y = y == BlockB.Y ? y : y + y_inc;
-			FVector NewPosition{(x + 0.5f) * BlockSize.X, (y + 0.5f) * BlockSize.Y, 1.f}; // + 0.5f to put in the center of the block
-			if (x != BlockB.X || y != BlockB.Y)
-			{
-				NewPosition.X += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.X; // Random offset
-				NewPosition.Y += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.Y; // Random offset
-			}
-			RoadSplineActor->GetSplineComponent()->AddSplinePoint(NewPosition, ESplineCoordinateSpace::World, true);
-		} while (x != BlockB.X || y != BlockB.Y);
+		check(false);
+		return;
 	}
+	RoadSplineActor->SetRoadType(RoadType);
+	RoadSplineActor->GetSplineComponent()->RemoveSplinePoint(1, true);
+
+	int x_inc = FMath::Sign(BlockB.X - BlockA.X), y_inc = FMath::Sign(BlockB.Y - BlockA.Y);
+
+	int x = BlockA.X, y = BlockA.Y;
+	do
+	{
+		x = x == BlockB.X ? x : x + x_inc;
+		y = y == BlockB.Y ? y : y + y_inc;
+		FVector NewPosition{(x + 0.5f) * BlockSize.X, (y + 0.5f) * BlockSize.Y, 1.f}; // + 0.5f to put in the center of the block
+		if (x != BlockB.X || y != BlockB.Y)
+		{
+			NewPosition.X += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.X; // Random offset
+			NewPosition.Y += FMath::RandRange(-CurveFactor, CurveFactor) * BlockSize.Y; // Random offset
+		}
+		RoadSplineActor->GetSplineComponent()->AddSplinePoint(NewPosition, ESplineCoordinateSpace::World, true);
+	} while (x != BlockB.X || y != BlockB.Y);
+
+	AddConnection(BlockA, BlockB, RoadSplineActor);
 }
 
 void UMRoadManager::SaveToMemory()
@@ -168,12 +156,67 @@ void UMRoadManager::SaveToMemory()
 	{
 		if (RegionMetadata.bProcessed) // We only save already PROCESSED regions!
 		{
-			const FRegionSaveData RegionSD { /*TODO: if new fields are added to FRegionSaveData, extract them here*/ };
+			FRegionSaveData RegionSD;
+			RegionSD.Initialize(RegionMetadata);
 			LoadedSave->SavedRegions.FindOrAdd(Index) = RegionSD;
 		}
 	}
 
 	UGameplayStatics::SaveGameToSlot(LoadedSave, URoadManagerSave::SlotName, 0);
+}
+
+void UMRoadManager::AddConnection(const FIntPoint& BlockA, const FIntPoint& BlockB, AMRoadSplineActor* RoadActor)
+{
+	if (!RoadActor)
+	{
+		check(false);
+		return;
+	}
+	auto& RegionA = GridOfRegions.FindOrAdd(GetRegionIndexByChunk(GetChunkIndexByBlock(BlockA))); // Region metadata
+	auto& RegionB = GridOfRegions.FindOrAdd(GetRegionIndexByChunk(GetChunkIndexByBlock(BlockB)));
+	// Regions A and B might be the same, and it is totally OK
+
+	auto& MatrixA = RegionA.MatrixWrappers.FindOrAdd(RoadActor->GetRoadType()).Matrix; // Connectivity matrix for this road type
+	auto& MatrixB = RegionB.MatrixWrappers.FindOrAdd(RoadActor->GetRoadType()).Matrix;
+
+	auto& pConnectedRoadsA = MatrixA.FindOrAdd(BlockA); // Map of connected road actors to this block
+	auto& pConnectedRoadsB = MatrixB.FindOrAdd(BlockB);
+
+	bool AContains = pConnectedRoadsA.Map.Contains(BlockB); // Is BlockB among those connected to BlockA
+	bool BContains = pConnectedRoadsB.Map.Contains(BlockA); // Is BlockA among those connected to BlockB
+	check(!AContains && !BContains); // Normally the connection is either two-way or completely absent, but connecting already connected is prohibited
+	// If triggered => Missing one side of the connection or it's already existed
+
+	pConnectedRoadsA.Map.Add(BlockB, RoadActor);
+	pConnectedRoadsB.Map.Add(BlockA, RoadActor);
+}
+
+const AMRoadSplineActor* UMRoadManager::GetRoadActor(const FIntPoint& BlockA, const FIntPoint& BlockB, ERoadType RoadType)
+{
+	auto& RegionA = GridOfRegions.FindOrAdd(GetRegionIndexByChunk(GetChunkIndexByBlock(BlockA))); // Region metadata
+	auto& RegionB = GridOfRegions.FindOrAdd(GetRegionIndexByChunk(GetChunkIndexByBlock(BlockB)));
+
+	auto& MatrixA = RegionA.MatrixWrappers.FindOrAdd(RoadType).Matrix; // Connectivity matrix for this road type
+	auto& MatrixB = RegionB.MatrixWrappers.FindOrAdd(RoadType).Matrix;
+
+	auto& pConnectedRoadsA = MatrixA.FindOrAdd(BlockA); // Map of connected road actors to this block
+	auto& pConnectedRoadsB = MatrixB.FindOrAdd(BlockB);
+
+	const auto* ppRoadFoundFromA = pConnectedRoadsA.Map.Find(BlockB);
+	const auto* ppRoadFoundFromB = pConnectedRoadsB.Map.Find(BlockA);
+
+	if (ppRoadFoundFromA && ppRoadFoundFromB)
+	{
+		return *ppRoadFoundFromA;
+	}
+	check(!ppRoadFoundFromA && !ppRoadFoundFromB);
+	return nullptr;
+}
+
+FRoadActorMapWrapper UMRoadManager::GetConnections(const FIntPoint& Block, ERoadType RoadType)
+{
+	//TODO: Implement
+	return {};
 }
 
 void UMRoadManager::TriggerOutpostGenerationForAdjacentChunks(const FIntPoint& CurrentChunk)
@@ -298,18 +341,29 @@ bool UMRoadManager::LoadConnectionsBetweenChunksWithinRegion(const FIntPoint& Re
 
 	auto& RegionMetadata = GridOfRegions.FindOrAdd(RegionIndex);
 	RegionMetadata.bProcessed = true;
+	// Spawn saved roads
+	for (const auto& [RoadType, SavedMatrixWrapper] : LoadedRegion->SavedMatrices)
+	{
+		for (const auto& [IndexA, SavedMapWrapper] : SavedMatrixWrapper.Matrix)
+		{
+			for (const auto& [IndexB, SavedRoadActor] : SavedMapWrapper.Map)
+			{
+				ConnectTwoBlocks(IndexA, IndexB, RoadType);
+			}
+		}
+	}
 	//TODO: if new fields are added to FRegionSaveData, extract them here
 
 	// Remove region save data, because it is now in RAM
 	LoadedSave->SavedRegions.Remove(RegionIndex);
 
 	const auto BottomLeftChunk = GetChunkIndexByRegion(RegionIndex);
-	TArray<FIntPoint> ChunkIndexes;
 	// Iterate chunks within the region to spawn outposts
 	for (int i = BottomLeftChunk.X; i < BottomLeftChunk.X + RegionSize.X; ++i)
 	{
 		for (int j = BottomLeftChunk.Y; j < BottomLeftChunk.Y + RegionSize.Y; ++j)
 		{
+			// Extract chunk save data
 			if (const auto LoadedChunk = LoadedSave->SavedChunks.Find({i, j}))
 			{
 				// Found saved chunk, extract its data
@@ -356,27 +410,9 @@ void UMRoadManager::SpawnOutpostGenerator(const FIntPoint& Chunk, TSubclassOf<AM
 	}
 
 	const auto ChunkCenter = pWorldGenerator->GetGroundBlockLocation(GetChunkCenterBlock(Chunk)); //TODO: Fix that, currently it's not the precise center
-	//const auto OutpostGenerator = GetWorld()->SpawnActor<AMOutpostGenerator>(Class, ChunkCenter, FRotator::ZeroRotator);
-
-	//temp
-	if (ChunkCenter.X == 3000.f && ChunkCenter.Y == -5000.f)
-		auto test = 1;
 
 	const auto OutpostGenerator = pWorldGenerator->SpawnActor<AMOutpostGenerator>(Class, ChunkCenter, FRotator::ZeroRotator, {}, false);
 	ChunkMetadata.OutpostGenerator = OutpostGenerator;
-}
-
-TMap<FUnorderedConnection, AMRoadSplineActor*>& UMRoadManager::GetRoadContainer(ERoadType RoadType)
-{
-	switch (RoadType)
-	{
-	case ERoadType::MainRoad:
-		return MainRoads;
-	case ERoadType::Trail:
-		return Trails;
-	}
-	check(false);
-	return MainRoads;
 }
 
 FIntPoint UMRoadManager::GetChunkIndexByLocation(const FVector& Location) const
@@ -406,16 +442,4 @@ FIntPoint UMRoadManager::GetRegionIndexByChunk(const FIntPoint& ChunkIndex) cons
 void UMRoadManager::OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk)
 {
 	ProcessAdjacentRegions(NewChunk);
-}
-
-FName UMRoadManager::GetRoadPCGTag(ERoadType RoadType) const
-{
-	switch (RoadType)
-	{
-	case ERoadType::MainRoad:
-		return "PCG_MainRoad";
-	case ERoadType::Trail:
-		return "PCG_Trail";
-	}
-	return "";
 }
