@@ -210,8 +210,10 @@ void AMCharacter::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)
 		{
 			if (IsUidValid(MCharacterSD.HouseUid))
 			{
-				const auto HouseActor = Cast<AMOutpostHouse>(SaveManager->LoadMActorAndClearSD(MCharacterSD.HouseUid, WorldGenerator));
-				HouseActor->MoveResidentIn(this);
+				if (const auto HouseActor = Cast<AMOutpostHouse>(SaveManager->LoadMActorAndClearSD(MCharacterSD.HouseUid, WorldGenerator)))
+				{
+					HouseActor->MoveResidentIn(this);
+				}
 			}
 		}
 	}

@@ -139,12 +139,13 @@ void UMRoadManager::SaveToMemory()
 	{
 		FChunkSaveData ChunkSD;
 		ChunkSD.bConnectedOrIgnored = ChunkMetadata.bConnectedOrIgnored;
+		// Save outpost
 		if (ChunkMetadata.OutpostGenerator)
 		{
 			const auto pUid = NameToUidMap.Find(FName(ChunkMetadata.OutpostGenerator->GetName()));
 			if (!pUid || !IsUidValid(*pUid))
 			{
-				check(false); // Most likely the block was re-generated (overwritten), hence it's name wasn't mapped during UMSaveManager::SaveToMemory
+				check(false); // Outpost Actor's name wasn't mapped during UMSaveManager::SaveToMemory. Most likely the block was re-generated (overwritten), or enrollment to the grid went wrong.
 				continue;
 			}
 			ChunkSD.OutpostUid = *pUid;
@@ -163,6 +164,22 @@ void UMRoadManager::SaveToMemory()
 	}
 
 	UGameplayStatics::SaveGameToSlot(LoadedSave, URoadManagerSave::SlotName, 0);
+}
+
+AMOutpostGenerator* UMRoadManager::SpawnOutpostGeneratorForDebugging(const FIntPoint& Chunk, TSubclassOf<AMOutpostGenerator> Class)
+{
+	auto& ChunkMetadata = GridOfChunks.FindOrAdd(Chunk);
+	if (ChunkMetadata.OutpostGenerator)
+	{
+		if (ChunkMetadata.OutpostGenerator->IsGenerated())
+		{
+			check(false); // An outpost has already been generated here, cannot spawn here
+			return nullptr;
+		}
+	}
+	SpawnOutpostGenerator(Chunk, Class);
+	// Don't affect bConnectedOrIgnored on purpose as we don't mind connecting this block with any other
+	return ChunkMetadata.OutpostGenerator;
 }
 
 void UMRoadManager::AddConnection(const FIntPoint& BlockA, const FIntPoint& BlockB, AMRoadSplineActor* RoadActor)

@@ -207,17 +207,14 @@ void UMSaveManager::RemoveBlock(const FIntPoint& Index)
 			for (auto& [Uid, MActorSD] : BlockSD->SavedMActors)
 			{
 				LoadedMActorMap.Remove(Uid);
-				UE_LOG(LogTemp, Warning, TEXT("Removing Uid: %d UMSaveManager::RemoveBlock Characters case"), Uid.ObjectId); // temp
 			}
 			for (auto& [Uid, MCharacterSD] : BlockSD->SavedMCharacters)
 			{
 				LoadedMActorMap.Remove(Uid);
-				UE_LOG(LogTemp, Warning, TEXT("Removing Uid: %d UMSaveManager::RemoveBlock Characters case"), Uid.ObjectId); // temp
 			}
 			// Remove block saved data
 			LoadedGameWorld->SavedGrid.Remove(Index);
 		}
-		else check(false);
 	}
 }
 
@@ -233,6 +230,9 @@ TArray<FIntPoint> UMSaveManager::GetPlayerTraveledPath() const
 AMActor* UMSaveManager::LoadMActorAndClearSD(const FUid& Uid, AMWorldGenerator* WorldGenerator)
 {
 	check(IsUidValid(Uid));
+
+	// Save data is deleted immediately after the actor is loaded.
+	// And so that other dependent saved actors can find this one, we use AlwaysSpawnedSavedActors.
 	if (const auto pAlreadySpawnedActor = AlreadySpawnedSavedActors.Find(Uid))
 	{
 		const auto AlreadySpawnedMActor = Cast<AMActor>(*pAlreadySpawnedActor);
@@ -241,7 +241,7 @@ AMActor* UMSaveManager::LoadMActorAndClearSD(const FUid& Uid, AMWorldGenerator* 
 	const auto* pMActorSD = LoadedMActorMap.Find(Uid);
 	if (!pMActorSD)
 	{
-		check(false);
+		check(false); // Actor's saved data was removed, but the object was never spawned
 		return nullptr;
 	}
 	const auto MActorSD = *pMActorSD;

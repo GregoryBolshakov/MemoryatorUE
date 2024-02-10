@@ -58,7 +58,10 @@ public:
 
 	void SaveToMemory();
 
+public: // For debugging
 	UMGroundMarker* GetGroundMarker() const { return GroundMarker; }
+
+	AMOutpostGenerator* SpawnOutpostGeneratorForDebugging(const FIntPoint& Chunk, TSubclassOf<AMOutpostGenerator> Class = nullptr);
 
 protected: // Road navigation
 	/** Adds BlockB to BlockA's connections and vice versa. */
@@ -77,8 +80,8 @@ protected:
 	void TriggerOutpostGenerationForAdjacentChunks(const FIntPoint& CurrentChunk);
 
 	void LoadOrGenerateRegion(const FIntPoint& RegionIndex);
-	bool LoadConnectionsBetweenChunksWithinRegion(const FIntPoint& RegionIndex);
-	void GenerateConnectionsBetweenChunksWithinRegion(const FIntPoint& RegionIndex);
+	bool LoadConnectionsBetweenChunksWithinRegion(const FIntPoint& RegionIndex); //TODO: Come up with better name
+	void GenerateConnectionsBetweenChunksWithinRegion(const FIntPoint& RegionIndex); //TODO: Come up with better name
 
 	/** Spawns only the generator actor. The actual Generate() call will be triggered as soon as player enters the chunk or adjacent to it.\n
 	 * @param Class Outpost generator class. If null, it will be selected randomly */

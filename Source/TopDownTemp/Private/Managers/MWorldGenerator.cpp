@@ -33,12 +33,6 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
-
-	/*CustomInputComponent = CreateDefaultSubobject<UInputComponent>(TEXT("CustomInputComponent"));
-	if (CustomInputComponent)
-	{
-		CustomInputComponent->bBlockInput = false; // Set to true to block input to other components
-	}*/
 }
 //temp
 FTimerHandle tempTimer, tempTimer2;
@@ -79,20 +73,19 @@ void AMWorldGenerator::InitSurroundingArea()
 		return;
 	}
 
-	const auto PlayerChunk = RoadManager->GetChunkIndexByLocation(pPlayer->GetTransform().GetLocation());
+	const auto PlayerBlock = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
+	const auto PlayerChunk = RoadManager->GetChunkIndexByBlock(PlayerBlock);
 	RoadManager->ProcessAdjacentRegions(PlayerChunk);
 	//temp
 	//RoadManager->ConnectTwoChunks(PlayerChunk, {PlayerChunk.X + 1, PlayerChunk.Y-1});
 
 	UpdateActiveZone(); // temp solution to avoid disabling all subsequently generated actors due to empty ActiveBlocksMap
 
-	pWorld->GetTimerManager().SetTimer(tempTimer, [this, pWorld, pPlayer]()
+	pWorld->GetTimerManager().SetTimer(tempTimer, [this, pWorld, PlayerBlock, PlayerChunk]()
 		{
-			const auto PlayerBlockIndex = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
-
 			// We add 1 to the radius on purpose. Generated area always has to be further then visible
-			auto BlocksInRadius = GetBlocksInRadius(PlayerBlockIndex.X, PlayerBlockIndex.Y, ActiveZoneRadius + 1);
-			BlocksInRadius.Remove(PlayerBlockIndex); // Already loaded above
+			auto BlocksInRadius = GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius + 1);
+			BlocksInRadius.Remove(PlayerBlock); // Already loaded above
 
 			// Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
 			for (const auto BlockInRadius : BlocksInRadius)
@@ -105,16 +98,16 @@ void AMWorldGenerator::InitSurroundingArea()
 				LoadOrGenerateBlock(BlockInRadius, false);
 			}
 
-			/*if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
+			if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
 			{
-				pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, pPlayer]()
+				pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, PlayerChunk]()
 				{
 					const auto VillageClass = RoadManager->GetOutpostBPClasses().Find("Village")->Get();
-					const auto VillageGenerator = pWorld->SpawnActor<AMVillageGenerator>(VillageClass, FVector::Zero(), FRotator::ZeroRotator);
+					const auto VillageGenerator = RoadManager->SpawnOutpostGeneratorForDebugging(PlayerChunk, VillageClass);
 					VillageGenerator->Generate();
 					UpdateNavigationMesh();
 				}, 0.3f, false);
-			}*/
+			}
 		}
 	, 0.3f, false);
 
@@ -122,7 +115,7 @@ void AMWorldGenerator::InitSurroundingArea()
 	BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
 }
 
-UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy)
+UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool KeepOutpostGenerators)
 {
 	const auto pWorld = GetWorld();
 	if (!pWorld)
@@ -131,15 +124,21 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 	// Get the block from grid or add if doesn't exist
 	const auto BlockMetadata = FindOrAddBlock(BlockIndex);
 
-	if (BlockMetadata->ConstantActorsCount > 0 && !IgnoreConstancy)
-		return BlockMetadata;
-
 	// Empty actor maps
+	TMap<FName, AActor*> ExcludedFromDeletion;
 	while(!BlockMetadata->StaticActors.IsEmpty())
 	{
-		RemoveActorFromGrid(BlockMetadata->StaticActors.CreateIterator()->Value);
+		const auto Iterator = BlockMetadata->StaticActors.CreateIterator();
+		if (KeepOutpostGenerators && Iterator->Value->IsA<AMOutpostGenerator>())
+		{
+			ExcludedFromDeletion.Add(Iterator->Key, Iterator->Value);
+			BlockMetadata->StaticActors.Remove(Iterator.Key());
+			continue;
+		}
+		RemoveActorFromGrid(Iterator->Value);
 	}
 	check(BlockMetadata->StaticActors.IsEmpty());
+	BlockMetadata->StaticActors = ExcludedFromDeletion;
 
 	if (!KeepDynamicObjects)
 	{
@@ -149,6 +148,13 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 		}
 		check(BlockMetadata->DynamicActors.IsEmpty());
 	}
+
+	//TODO: Should consider removing block's saved data as well. To prevent actors loaded by dependant actors.
+	// (e.g. there was a house on the block, player moved away, restarted the game, got to the block,
+	// regenerate it but then after a while player meets a resident of the house, which triggers the load of the house.
+	// As the result, the house appears on an already generated block that does not provide for it).
+	//TODO: This should be done carefully and require thorough testing.
+	// For now it's mostly OK because all dependant actors make block constant.
 
 	return BlockMetadata;
 }
@@ -161,18 +167,22 @@ void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRe
 		// Regeneration feature applies only if the block isn't constant. Otherwise it must be loaded if save is present
 		if (BlockSD->ConstantActorsCount > 0 || !bRegenerationFeature) //TODO: Implement this!!! Very important
 		{
-			if (SaveManager->TryLoadBlock(BlockIndex, this))
-			{
-				return;
-			}
+			SaveManager->TryLoadBlock(BlockIndex, this);
+			return;
 		}
 	}
-	// Couldn't load, generate it from scratch
-	const auto BlockMetadata = EmptyBlock(BlockIndex, true);
+	auto BlockMetadata = FindOrAddBlock(BlockIndex);
+	if (BlockMetadata->ConstantActorsCount > 0)
+	{
+		return;
+	}
+
+	// Couldn't load, generate it from scratch (even if bRegenerationFeature is false, because otherwise the block will remain empty)
+	BlockMetadata = EmptyBlock(BlockIndex, true);
 	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, BlockMetadata);
 }
 
-void AMWorldGenerator::RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy)
+void AMWorldGenerator::RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy, bool KeepOutpostGenerators)
 {
 	//TODO: refactor this function. Seems like it is redundant
 	const auto BlockMetadata = GridOfActors.FindOrAdd(BlockIndex);
@@ -180,8 +190,7 @@ void AMWorldGenerator::RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDyn
 	{
 		return;
 	}
-	SaveManager->RemoveBlock(BlockIndex); // No longer need a save for this block
-	const auto Block = EmptyBlock(BlockIndex, KeepDynamicObjects, true);
+	const auto Block = EmptyBlock(BlockIndex, KeepDynamicObjects);
 	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, Block);
 }
 
@@ -246,7 +255,7 @@ void AMWorldGenerator::BeginPlay()
 
 	SaveManager->SetUpAutoSaves(GridOfActors, this);
 
-	SetupCustomInputComponent();
+	SetupInputComponent();
 }
 
 void AMWorldGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -805,7 +814,7 @@ TSubclassOf<AActor> AMWorldGenerator::GetActorClassToSpawn(FName Name)
 	return nullptr;
 }
 
-void AMWorldGenerator::SetupCustomInputComponent()
+void AMWorldGenerator::SetupInputComponent()
 {
 	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
 	{
@@ -1025,18 +1034,18 @@ TMap<FName, AActor*> AMWorldGenerator::GetActorsInRect(FVector UpperLeft, FVecto
 	return Result;
 }
 
-void AMWorldGenerator::CleanArea(const FVector& Location, int RadiusInBlocks, UPCGGraph* OverridePCGGraph)
+/*void AMWorldGenerator::CleanArea(const FVector& Location, int RadiusInBlocks, UPCGGraph* OverridePCGGraph)
 {
 	const auto CenterBlock = GetGroundBlockIndex(Location);
 	for (const auto Block : GetBlocksInRadius(CenterBlock.X, CenterBlock.Y, RadiusInBlocks))
 	{
-		const auto BlockMetadata = EmptyBlock(Block, true, true);
+		const auto BlockMetadata = EmptyBlock(Block, true);
 		if (OverridePCGGraph)
 		{
 			BlockMetadata->PCGGraph = OverridePCGGraph;
 		}
 	}
-}
+}*/
 
 void AMWorldGenerator::RegenerateArea(const FVector& Location, int RadiusInBlocks, UPCGGraph* OverridePCGGraph)
 {

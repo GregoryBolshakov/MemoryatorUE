@@ -39,13 +39,13 @@ public:
 	void InitSurroundingArea(); //TODO: Maybe rename to LoadOrGenerateArea and adapt for teleport usage as well
 
 	/** Deletes all static and optionally dynamic actors. If the BlockMetadata didn't exist, create it. */
-	UBlockMetadata* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy = false);
+	UBlockMetadata* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool KeepOutpostGenerators = true);
 
 	/** First try to look at save, generate new if not found */
 	void LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature = true);
 	
 	/** Generate a block */
-	void RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects = true, bool IgnoreConstancy = false);
+	void RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects = true, bool IgnoreConstancy = false, bool KeepOutpostGenerators = true);
 
 	/** Turns on all actors in the active zone, turn off all others*/
 	void UpdateActiveZone();
@@ -67,9 +67,10 @@ public:
 
 	TMap<FName, AActor*> GetActorsInRect(FVector UpperLeft, FVector BottomRight, bool bDynamic);
 
+	//TODO: Check for correct block constancy handling
 	/** Deletes all static actors(trees, stones, etc.) including the ground block for each block within radius.\n
 	 * Keeps dynamic actors, ignores blocks constancy. If some block's BlockMetadata didn't exist, create it. */
-	void CleanArea(const FVector& Location, int RadiusInBlocks, UPCGGraph* OverridePCGGraph = nullptr);
+	//void CleanArea(const FVector& Location, int RadiusInBlocks, UPCGGraph* OverridePCGGraph = nullptr);
 
 	void RegenerateArea(const FVector& Location, int RadiusInBlocks, UPCGGraph* OverridePCGGraph = nullptr);
 
@@ -121,15 +122,7 @@ public:
 	TSubclassOf<AActor> GetActorClassToSpawn(FName Name);
 
 protected:
-
-#if WITH_EDITOR
-	virtual ~AMWorldGenerator() override { DefaultBoundsMap.Empty(); };
-#endif
-
-	void SetupCustomInputComponent();
-
-	//UPROPERTY()
-	//UInputComponent* CustomInputComponent;
+	void SetupInputComponent();
 
 	// TODO: Remove excess meta modifiers
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
