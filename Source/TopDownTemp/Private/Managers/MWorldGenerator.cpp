@@ -161,25 +161,34 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 
 void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature)
 {
-	// First try to load the block
-	if (const auto BlockSD = SaveManager->GetBlockData(BlockIndex))
+	auto BlockMetadata = FindOrAddBlock(BlockIndex);
+	if (IsValid(BlockMetadata->pGroundBlock)) // The block already exists in the current session
 	{
-		// Regeneration feature applies only if the block isn't constant. Otherwise it must be loaded if save is present
-		if (BlockSD->ConstantActorsCount > 0 || !bRegenerationFeature) //TODO: Implement this!!! Very important
+		if (BlockMetadata->ConstantActorsCount > 0 || !bRegenerationFeature) // No need to regenerate existing block
 		{
-			SaveManager->TryLoadBlock(BlockIndex, this);
 			return;
 		}
+		// Re-generate the block
+		BlockMetadata = EmptyBlock(BlockIndex, true);
+		BlockGenerator->SpawnActorsRandomly(BlockIndex, this, BlockMetadata);
 	}
-	auto BlockMetadata = FindOrAddBlock(BlockIndex);
-	if (BlockMetadata->ConstantActorsCount > 0)
+	else // The block doesn't exist in the current session
 	{
-		return;
-	}
+		// First try to load block data from save
+		if (const auto BlockSD = SaveManager->GetBlockData(BlockIndex))
+		{
+			// Regeneration feature applies only if the block isn't constant. Otherwise it must be loaded if save is present
+			if (BlockSD->ConstantActorsCount > 0 || !bRegenerationFeature) //TODO: Implement this!!! Very important
+			{
+				SaveManager->TryLoadBlock(BlockIndex, this);
+				return;
+			}
+		}
 
-	// Couldn't load, generate it from scratch (even if bRegenerationFeature is false, because otherwise the block will remain empty)
-	BlockMetadata = EmptyBlock(BlockIndex, true);
-	BlockGenerator->SpawnActorsRandomly(BlockIndex, this, BlockMetadata);
+		// There was either no save data or saved block wasn't constant. Generate new contents for it
+		BlockMetadata = EmptyBlock(BlockIndex, true);
+		BlockGenerator->SpawnActorsRandomly(BlockIndex, this, BlockMetadata);
+	}
 }
 
 void AMWorldGenerator::RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy, bool KeepOutpostGenerators)
