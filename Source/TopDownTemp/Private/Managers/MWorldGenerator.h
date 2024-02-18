@@ -10,6 +10,7 @@
 #define ECC_Pickable ECollisionChannel::ECC_GameTraceChannel2
 #define ECC_OccludedTerrain ECollisionChannel::ECC_GameTraceChannel3
 
+class UMMetadataManager;
 class UMRoadManager;
 class AMPickableActor;
 class UMExperienceManager;
@@ -39,26 +40,25 @@ public:
 	void InitSurroundingArea(); //TODO: Maybe rename to LoadOrGenerateArea and adapt for teleport usage as well
 
 	/** Deletes all static and optionally dynamic actors. If the BlockMetadata didn't exist, create it. */
-	UBlockMetadata* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool KeepOutpostGenerators = true);
+	UBlockMetadata* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects);
 
 	/** First try to look at save, generate new if not found */
 	void LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature = true);
 	
 	/** Generate a block */
-	void RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects = true, bool IgnoreConstancy = false, bool KeepOutpostGenerators = true);
+	void RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects = true, bool IgnoreConstancy = false);
 
 	/** Turns on all actors in the active zone, turn off all others*/
-	void UpdateActiveZone();
+	void UpdateActiveZone(const FIntPoint& CenterBlock);
 
 	template< class T >
-	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters(), bool bForceAboveGround = false, const FOnSpawnActorStarted& OnSpawnActorStarted = {})
+	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters(), bool bForceAboveGround = false, const FOnSpawnActorStarted& OnSpawnActorStarted = {}, const FMUid& Uid = {})
 	{
-		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters, bForceAboveGround, OnSpawnActorStarted),ECastCheckedType::NullAllowed);
+		return CastChecked<T>(SpawnActor(Class, Location, Rotation, SpawnParameters, bForceAboveGround, OnSpawnActorStarted, Uid),ECastCheckedType::NullAllowed);
 	}
 
-	UFUNCTION(BlueprintCallable)
-	void EnrollActorToGrid(AActor* Actor);
-	void RemoveActorFromGrid(AActor* Actor);
+	//TODO:Move this to MetadataManager
+	void EnrollActorToGrid(AActor* Actor, const FMUid& Uid = {});
 
 	/** Matches all enabled dynamic actors with the blocks they are on. Triggers all OnBlockChangedDelegates*/
 	void CheckDynamicActorsBlocks();
@@ -82,6 +82,8 @@ public:
 		return CastChecked<T>(SpawnActorInRadius(Class, Location, Rotation, SpawnParameters, ToSpawnRadius, ToSpawnHeight, OnSpawnActorStarted),ECastCheckedType::NullAllowed);
 	}
 
+	UMMetadataManager* GetMetadataManager() const { return MetadataManager; }
+
 	UMDropManager* GetDropManager() const { return DropManager; }
 
 	UMSaveManager* GetSaveManager() const { return SaveManager; }
@@ -98,8 +100,6 @@ public:
 	UMBlockGenerator* GetBlockGenerator() const { return BlockGenerator; }
 
 	UMRoadManager* GetRoadManager() const { return RoadManager; }
-
-	UBlockMetadata* FindOrAddBlock(FIntPoint Index);
 
 	FVector GetGroundBlockSize() const;
 
@@ -148,7 +148,7 @@ protected:
 
 private:
 
-	AActor* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround, const FOnSpawnActorStarted& OnSpawnActorStarted);
+	AActor* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround, const FOnSpawnActorStarted& OnSpawnActorStarted, const FMUid& Uid);
 
 	AActor* SpawnActorInRadius(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, float ToSpawnRadius, const float ToSpawnHeight, const FOnSpawnActorStarted& OnSpawnActorStarted);
 
@@ -169,7 +169,7 @@ private:
 	void SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIntPoint>& BlocksToGenerate);
 
 	/** Function for spreading heavy GenerateBlock calls over multiple ticks */
-	void OnTickGenerateBlocks(TSet<FIntPoint> BlocksToGenerate);
+	void OnTickGenerateBlocks();
 
 	static FVector RaycastScreenPoint(const UObject* pWorldContextObject, const EScreenPoint ScreenPoint);
 
@@ -196,23 +196,23 @@ private:
 	/** Turns on after the player was teleported, is turned off by AMWorldGenerator::OnPlayerChangedBlock */
 	bool bPendingTeleport = false;
 
+	/** Pool of blocks waiting to be generated. */
+	TSet<FIntPoint> PendingBlocks;
+
 private: // Saved to memory
 
 	/** The number of blocks player passed since the last biomes perimeter coloring */
 	int BlocksPassedSinceLastPerimeterColoring;
 
-	UPROPERTY()
-	TMap<FIntPoint, UBlockMetadata*> GridOfActors;
-
 private:
 
-	/** Maps all the actors in the world with their names.
-	 * Once a world is loaded, ActorsMetadata is not immediately available. It loads in parallel */
+	/** Matches actor names/Uids/etc. with their metadata.
+	 * Once a world is loaded, ActorMetadata is available only for actors from visited blocks. */
 	UPROPERTY()
-	TMap<FName, FActorWorldMetadata> ActorsMetadata;
+	UMMetadataManager* MetadataManager;
 
 	UPROPERTY()
-	TMap<FIntPoint, bool> ActiveBlocksMap;
+	TSet<FIntPoint> ActiveBlocksMap;
 
 	UPROPERTY()
 	TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;

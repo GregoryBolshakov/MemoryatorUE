@@ -11,7 +11,8 @@
 #include "MMemoryator.h" // temporary include
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
-#include "Managers/MSaveManager.h"
+#include "Managers/MMetadataManager.h"
+#include "Managers/SaveManager/MSaveManager.h"
 #include "Managers/MWorldSaveTypes.h"
 #include "Managers/MWorldGenerator.h"
 #include "Managers/MWorldManager.h"
@@ -81,7 +82,7 @@ bool AMCharacter::Destroy(bool bNetForce, bool bShouldModifyLevel)
 		{
 			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
 			{
-				pWorldGenerator->RemoveActorFromGrid(this);
+				pWorldGenerator->GetMetadataManager()->Remove(FName(GetName()));
 				return true;
 			}
 		}

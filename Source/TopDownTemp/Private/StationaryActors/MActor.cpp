@@ -6,6 +6,7 @@
 #include "Components/MInventoryComponent.h"
 #include "Components/MIsActiveCheckerComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Managers/MMetadataManager.h"
 #include "Managers/MWorldGenerator.h"
 #include "Managers/MWorldManager.h"
 
@@ -29,7 +30,7 @@ bool AMActor::Destroy(bool bNetForce, bool bShouldModifyLevel)
 		{
 			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
 			{
-				pWorldGenerator->RemoveActorFromGrid(this);
+				pWorldGenerator->GetMetadataManager()->Remove(FName(GetName()));
 				return true;
 			}
 		}
@@ -93,7 +94,7 @@ EBiome AMActor::GetMyBiome()
 			{
 				const FIntPoint MyIndex = pWorldGenerator->GetGroundBlockIndex(GetActorLocation());
 
-				if (const auto MyBlockInGrid = pWorldGenerator->FindOrAddBlock(MyIndex))
+				if (const auto MyBlockInGrid = pWorldGenerator->GetMetadataManager()->FindOrAddBlock(MyIndex))
 				{
 					return MyBlockInGrid->Biome;
 				}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "SaveManager/MUid.h"
 #include "MWorldGeneratorTypes.generated.h"
 
 class UPCGGraph;
@@ -114,13 +115,19 @@ private:
 };
 
 /** Utility class for storing actor's metadata in the grid */
-USTRUCT()
-struct FActorWorldMetadata
+UCLASS()
+class UActorWorldMetadata : public UObject
 {
 	GENERATED_BODY()
 public:
 	UPROPERTY()
 	AActor* Actor;
+
+	/** Saved actors might depend on other saved actors when loading. They use this ID.\n
+	*   Provides the overall uniqueness of actors in the world
+	*   Grants total uniqueness across different game launches */
+	UPROPERTY()
+	FMUid Uid;
 
 	FIntPoint GroundBlockIndex;
 

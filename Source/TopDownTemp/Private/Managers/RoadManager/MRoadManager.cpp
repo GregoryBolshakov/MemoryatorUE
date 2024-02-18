@@ -1,7 +1,8 @@
 #include "MRoadManager.h"
 
 #include "MRoadManagerSaveTypes.h"
-#include "Managers/MSaveManager.h"
+#include "Managers/MMetadataManager.h"
+#include "Managers/SaveManager/MSaveManager.h"
 #include "Managers/MWorldGenerator.h"
 #include "Algo/RandomShuffle.h"
 #include "Components/SplineComponent.h"
@@ -133,7 +134,6 @@ void UMRoadManager::ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& B
 
 void UMRoadManager::SaveToMemory()
 {
-	const auto& NameToUidMap = pWorldGenerator->GetSaveManager()->GetNameToUidMap();
 	// Save chunks
 	for (const auto& [Index, ChunkMetadata] : GridOfChunks)
 	{
@@ -142,13 +142,13 @@ void UMRoadManager::SaveToMemory()
 		// Save outpost
 		if (ChunkMetadata.OutpostGenerator)
 		{
-			const auto pUid = NameToUidMap.Find(FName(ChunkMetadata.OutpostGenerator->GetName()));
-			if (!pUid || !IsUidValid(*pUid))
+			auto* ActorMetadata = pWorldGenerator->GetMetadataManager()->Find(FName(ChunkMetadata.OutpostGenerator->GetName()));
+			if (!ActorMetadata || !IsUidValid(ActorMetadata->Uid))
 			{
-				check(false); // Outpost Actor's name wasn't mapped during UMSaveManager::SaveToMemory. Most likely the block was re-generated (overwritten), or enrollment to the grid went wrong.
+				check(false);
 				continue;
 			}
-			ChunkSD.OutpostUid = *pUid;
+			ChunkSD.OutpostUid = ActorMetadata->Uid;
 		}
 		LoadedSave->SavedChunks.FindOrAdd(Index) = ChunkSD;
 	}

@@ -4,6 +4,7 @@
 #include "GameFramework/SaveGame.h"
 #include "MRoadManagerTypes.h"
 #include "Managers/MWorldSaveTypes.h"
+#include "Managers/SaveManager/MUid.h"
 #include "StationaryActors/MRoadSplineActor.h"
 #include "MRoadManagerSaveTypes.generated.h"
 
@@ -15,7 +16,7 @@ struct FChunkSaveData
 
 	//TODO: Create a separate save data for outposts
 	UPROPERTY()
-	FUid OutpostUid;
+	FMUid OutpostUid;
 };
 
 //TODO: Implement save data for road actors here

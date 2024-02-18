@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MBlockGenerator.h"
+
+#include "MMetadataManager.h"
 #include "MWorldGenerator.h"
 #include "PCGComponent.h"
 #include "StationaryActors/MGroundBlock.h"
@@ -57,7 +59,7 @@ void UMBlockGenerator::SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWor
 	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters, false, OnSpawnActorStarted))
 	{
 		GroundBlock->UpdateBiome(PCGVariables.Biome);
-		const auto BlockMetadata = pWorldGenerator->FindOrAddBlock(BlockIndex);
+		const auto BlockMetadata = pWorldGenerator->GetMetadataManager()->FindOrAddBlock(BlockIndex);
 		BlockMetadata->pGroundBlock = GroundBlock;
 	}
 }

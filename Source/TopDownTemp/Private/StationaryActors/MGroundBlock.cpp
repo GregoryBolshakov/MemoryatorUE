@@ -6,6 +6,7 @@
 #include "Managers/MWorldManager.h"
 
 #include "PaperSpriteComponent.h"
+#include "Managers/MMetadataManager.h"
 
 AMGroundBlock::AMGroundBlock(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -40,7 +41,7 @@ void AMGroundBlock::UpdateBiome(EBiome IN_Biome)
 				TArray<FIntPoint> AdjacentBlockOffsets{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}; // Left; Right; Top; Bottom
 				for (const auto& AdjacentBlockOffset : AdjacentBlockOffsets)
 				{
-					const auto Block = pWorldGenerator->FindOrAddBlock({ MyIndex.X + AdjacentBlockOffset.X, MyIndex.Y + AdjacentBlockOffset.Y });
+					const auto Block = pWorldGenerator->GetMetadataManager()->FindOrAddBlock({ MyIndex.X + AdjacentBlockOffset.X, MyIndex.Y + AdjacentBlockOffset.Y });
 					if (!Block || Block->Biome == IN_Biome)
 					{
 						if (const auto Transition = GetTransitionByOffset(AdjacentBlockOffset))
