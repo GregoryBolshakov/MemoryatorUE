@@ -83,7 +83,8 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 					pActor->GetClass(),
 					pActor->GetActorLocation(),
 					pActor->GetActorRotation(),
-					pActorMetadata->Uid
+					pActorMetadata->Uid,
+					GetSaveDataForComponents(pActor)
 				};
 				if (const auto* pMActor = Cast<AMActor>(pActor))
 				{
@@ -113,7 +114,8 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 					pActor->GetClass(),
 					pActor->GetActorLocation(),
 					pActor->GetActorRotation(),
-					pActorMetadata->Uid
+					pActorMetadata->Uid,
+					GetSaveDataForComponents(pActor)
 				};
 				if (const auto* pMCharacter = Cast<AMCharacter>(pActor))
 				{
@@ -269,8 +271,6 @@ bool UMSaveManager::IsLoaded() const
 
 AMActor* UMSaveManager::LoadMActor_Internal(const FMActorSaveData& MActorSD, AMWorldGenerator* WorldGenerator)
 {
-	const auto& ActorSD = MActorSD.ActorSaveData;
-
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
@@ -281,35 +281,47 @@ AMActor* UMSaveManager::LoadMActor_Internal(const FMActorSaveData& MActorSD, AMW
 		{
 			MActor->SetAppearanceID(MActorSD.AppearanceID);
 			MActor->InitialiseInventory(MActorSD.InventoryContents);
-			return;
 		}
-		check(false);
+		else check(false);
 	});
-	const auto MActor = WorldGenerator->SpawnActor<AMActor>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, false, OnSpawnActorStarted, ActorSD.Uid);
-	check(MActor);
-	return MActor;
+
+	const auto& ActorSD = MActorSD.ActorSaveData;
+	if (const auto MActor = WorldGenerator->SpawnActor<AMActor>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, false, OnSpawnActorStarted, ActorSD.Uid))
+	{
+		if (!ActorSD.Components.IsEmpty())
+		{
+			LoadDataForComponents(MActor, ActorSD.Components);
+		}
+		return MActor;
+	}
+	check(false);
+	return nullptr;
 }
 
 AMCharacter* UMSaveManager::LoadMCharacter_Internal(const FMCharacterSaveData& MCharacterSD, AMWorldGenerator* WorldGenerator)
 {
-	const auto& ActorSD = MCharacterSD.ActorSaveData;
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	FOnSpawnActorStarted OnSpawnActorStarted;
-	OnSpawnActorStarted.AddLambda([MCharacterSD](AActor* Actor)
+	OnSpawnActorStarted.AddLambda([this, &MCharacterSD](AActor* Actor)
 	{
 		if (const auto MCharacter = Cast<AMCharacter>(Actor))
 		{
 			MCharacter->BeginLoadFromSD(MCharacterSD);
 		}
+		else check(false);
 	});
 
-	// Spawn the character using saved data
-	if (const auto SpawnedCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, /*ActorSD.Rotation*/ FRotator::ZeroRotator, Params, true, OnSpawnActorStarted, ActorSD.Uid))
+	const auto& ActorSD = MCharacterSD.ActorSaveData;
+	if (const auto MCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, /*ActorSD.Rotation*/ FRotator::ZeroRotator, Params, true, OnSpawnActorStarted, ActorSD.Uid))
 	{
-		SpawnedCharacter->EndLoadFromSD();
-		return SpawnedCharacter;
+		MCharacter->EndLoadFromSD();
+		if (!ActorSD.Components.IsEmpty())
+		{
+			LoadDataForComponents(MCharacter, ActorSD.Components);
+		}
+		return MCharacter;
 	}
 	check(false);
 	return nullptr;
@@ -331,6 +343,43 @@ void UMSaveManager::ClearMCharacterSD(const FMUid& Uid, const FIntPoint& BlockIn
 		BlockSD->SavedMCharacters.Remove(Uid);
 	}
 	LoadedMCharacterMap.Remove(Uid);
+}
+
+TMap<FString, FComponentSaveData> UMSaveManager::GetSaveDataForComponents(AActor* Actor)
+{
+	TMap<FString, FComponentSaveData> ComponentsSD;
+	TArray<USceneComponent*> Components;
+	Actor->GetComponents<USceneComponent>(Components, false);
+
+	for (const auto* Component : Components)
+	{
+		if (Component->ComponentHasTag("Saved"))
+		{
+			FComponentSaveData ComponentSD { Component->GetRelativeLocation(), Component->GetRelativeRotation() };
+			ComponentsSD.Add(Component->GetName(), ComponentSD);
+		}
+	}
+
+	return ComponentsSD;
+}
+
+void UMSaveManager::LoadDataForComponents(AActor* Actor, const TMap<FString, FComponentSaveData>& ComponentsSD)
+{
+	TArray<USceneComponent*> Components;
+	Actor->GetComponents<USceneComponent>(Components, false);
+
+	for (auto* Component : Components)
+	{
+		if (Component->ComponentHasTag("Saved"))
+		{
+			if (const auto ComponentSD = ComponentsSD.Find(Component->GetName()))
+			{
+				Component->SetRelativeLocation(ComponentSD->RelativeLocation);
+				Component->SetRelativeRotation(ComponentSD->RelativeRotation);
+			}
+			else check(false);
+		}
+	}
 }
 
 AMActor* UMSaveManager::LoadMActorAndClearSD(const FMUid& Uid, AMWorldGenerator* WorldGenerator)

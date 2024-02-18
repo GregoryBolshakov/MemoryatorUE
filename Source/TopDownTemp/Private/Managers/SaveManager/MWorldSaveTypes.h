@@ -6,6 +6,20 @@
 #include "Components/MInventoryComponent.h"
 #include "MWorldSaveTypes.generated.h"
 
+//TODO: Change Locations and Rotations to Transform
+
+USTRUCT()
+struct FComponentSaveData
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY()
+	FVector RelativeLocation;
+
+	UPROPERTY()
+	FRotator RelativeRotation;
+};
+
 USTRUCT()
 struct FActorSaveData
 {
@@ -22,6 +36,15 @@ struct FActorSaveData
 
 	UPROPERTY()
 	FMUid Uid;
+
+	/** Only vital component modifications are saved here.
+	 *  Used for important information that will not be recreated on its own in runtime.
+	 *  E.g. The rotation of a house cannot be neglected, but the rotation of a mob can be.
+	 *  Keys are component names. \n
+	 *
+	 *  Overuse harms performance */
+	UPROPERTY()
+	TMap<FString, FComponentSaveData> Components;
 };
 
 USTRUCT()

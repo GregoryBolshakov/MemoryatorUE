@@ -395,7 +395,6 @@ bool UMRoadManager::LoadConnectionsBetweenChunksWithinRegion(const FIntPoint& Re
 			else
 			{
 				check(false);
-				return false;
 			}
 		}
 	}

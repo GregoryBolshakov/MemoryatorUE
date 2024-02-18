@@ -55,6 +55,9 @@ private:
 	void ClearMActorSD(const FMUid& Uid, const FIntPoint& BlockIndex);
 	void ClearMCharacterSD(const FMUid& Uid, const FIntPoint& BlockIndex);
 
+	TMap<FString, FComponentSaveData> GetSaveDataForComponents(AActor* Actor);
+	void LoadDataForComponents(AActor* Actor, const TMap<FString, FComponentSaveData>& ComponentsSD);
+
 	FTimerHandle AutoSavesTimer;
 
 	//TODO: To support truly endless worlds we should split save into several files.
