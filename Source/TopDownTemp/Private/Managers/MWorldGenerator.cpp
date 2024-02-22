@@ -129,17 +129,17 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 	auto* BlockMetadata = MetadataManager->FindOrAddBlock(BlockIndex);
 
 	// Empty actor maps
-	while(!BlockMetadata->StaticActors.IsEmpty())
+	for (auto It = BlockMetadata->StaticActors.CreateIterator(); It; ++It)
 	{
-		MetadataManager->Remove(BlockMetadata->StaticActors.CreateIterator()->Key);
+		MetadataManager->Remove(It->Key);
 	}
 	check(BlockMetadata->StaticActors.IsEmpty());
 
 	if (!KeepDynamicObjects)
 	{
-		while(!BlockMetadata->DynamicActors.IsEmpty())
+		for (auto It = BlockMetadata->DynamicActors.CreateIterator(); It; ++It)
 		{
-			MetadataManager->Remove(BlockMetadata->DynamicActors.CreateIterator()->Key);
+			MetadataManager->Remove(It->Key);
 		}
 		check(BlockMetadata->DynamicActors.IsEmpty());
 	}
@@ -167,7 +167,7 @@ void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRe
 		EmptyBlock(BlockIndex, true);
 		BlockGenerator->SpawnActorsRandomly(BlockIndex, this, BlockMetadata);
 	}
-	else // The block doesn't exist in the current session
+	else // The block doesn't exist in the current session. BUT THERE MIGHT BE DYNAMIC AND/OR CONSTANT ACTORS
 	{
 		// First try to load block data from save
 		if (const auto BlockSD = SaveManager->GetBlockData(BlockIndex))
@@ -181,7 +181,7 @@ void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRe
 		}
 
 		// There was either no save data or saved block wasn't constant. Generate new contents for it
-		BlockMetadata = EmptyBlock(BlockIndex, true);
+		// WE DON'T EMPTY THE BLOCK, allowing existing dynamic or const objects to remain
 		BlockGenerator->SpawnActorsRandomly(BlockIndex, this, BlockMetadata);
 	}
 }
