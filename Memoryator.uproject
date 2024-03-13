@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "5.3",
+	"EngineAssociation": "{0FA94C25-420A-504C-64BA-269B0FD19471}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -50,11 +50,6 @@
 		{
 			"Name": "XRBase",
 			"Enabled": true
-		},
-		{
-			"Name": "rdMeshTools",
-			"Enabled": true,
-			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/201587b9d55f448888df7823d187a3c2"
 		}
 	]
 }
