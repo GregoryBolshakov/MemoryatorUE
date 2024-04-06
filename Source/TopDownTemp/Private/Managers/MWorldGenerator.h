@@ -35,6 +35,8 @@ class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 	GENERATED_UCLASS_BODY()
 
 public:
+	/** Loads or generates a character for a player that just has logged in. */
+	void LoadOrGenerateCharacter(APlayerController* NewPlayer);
 
 	/** Loads or generates the blocks within Active Zone radius. */
 	void InitSurroundingArea(); //TODO: Maybe rename to LoadOrGenerateArea and adapt for teleport usage as well

@@ -55,6 +55,10 @@
 			"Name": "rdMeshTools",
 			"Enabled": true,
 			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/201587b9d55f448888df7823d187a3c2"
+		},
+		{
+			"Name": "ReplicationGraph",
+			"Enabled": true
 		}
 	]
 }

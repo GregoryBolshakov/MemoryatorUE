@@ -25,6 +25,7 @@
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
 #include "Engine/SplineMeshActor.h"
+#include "GameFramework/PlayerState.h"
 #include "SaveManager/MSaveManager.h"
 #include "StationaryActors/MRoadSplineActor.h"
 
@@ -36,6 +37,21 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 }
 //temp
 FTimerHandle tempTimer, tempTimer2;
+
+void AMWorldGenerator::LoadOrGenerateCharacter(APlayerController* NewPlayer)
+{
+	if (!NewPlayer || !NewPlayer->PlayerState)
+	{
+		check(false);
+		return;
+	}
+	const auto UniqueID = NewPlayer->PlayerState->GetUniqueId().ToString();
+	//SaveManager->LoadMCharacterAndClearSD()
+	
+	// Should load character from SaveManager using the UniqueId.
+	// We won't be using "Player" name anymore, there  will be respective UniqueId instead.
+}
+
 void AMWorldGenerator::InitSurroundingArea()
 {
 	//TODO: Erase the old code. Now we consider this function to be called ONLY in the new empty world.

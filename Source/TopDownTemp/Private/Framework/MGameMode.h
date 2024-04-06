@@ -12,6 +12,9 @@ class AMGameMode : public AGameModeBase
 public:
 	AMGameMode();
 
+	UFUNCTION()
+	void PostLogin(APlayerController* NewPlayer) override;
+
 	/** Temporarily switch to offline mode, continue the game and keep checking the connection */
 	UFUNCTION(BlueprintCallable)
 	void GoOffline();

@@ -16,6 +16,11 @@ AMGameMode::AMGameMode()
 	//}
 }
 
+void AMGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+}
+
 void AMGameMode::GoOffline()
 {
 }
