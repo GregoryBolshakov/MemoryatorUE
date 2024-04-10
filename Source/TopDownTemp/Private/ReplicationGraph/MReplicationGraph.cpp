@@ -1,6 +1,12 @@
 #include "MReplicationGraph.h"
+#include "Engine/LevelScriptActor.h"
 #include "StationaryActors/MActor.h"
-#include "Characters/MCharacter.h"
+#include "Characters/MMob.h"
+#include "StationaryActors/Outposts/MOutpostHouse.h"
+
+#if WITH_GAMEPLAY_DEBUGGER
+#include "GameplayDebuggerCategoryReplicator.h"
+#endif
 
 void UMReplicationGraph::ResetGameWorldState()
 {
@@ -13,8 +19,8 @@ void UMReplicationGraph::ResetGameWorldState()
 		{
 			for (UReplicationGraphNode* ConnectionNode : Connection->GetConnectionGraphNodes())
 			{
-				auto* Node = Cast<UMReplicationGraphNode_AlwaysRelevant_ForConnection>(ConnectionNode);
-				if (Node)
+				UMReplicationGraphNode_AlwaysRelevant_ForConnection* Node = Cast<UMReplicationGraphNode_AlwaysRelevant_ForConnection>(ConnectionNode);
+				if (Node != nullptr)
 				{
 					Node->ResetGameWorldState();
 				}
@@ -25,7 +31,7 @@ void UMReplicationGraph::ResetGameWorldState()
 
 void UMReplicationGraph::InitConnectionGraphNodes(UNetReplicationGraphConnection* ConnectionManager)
 {
-	auto* Node = CreateNewNode<UMReplicationGraphNode_AlwaysRelevant_ForConnection>();
+	UMReplicationGraphNode_AlwaysRelevant_ForConnection* Node = CreateNewNode<UMReplicationGraphNode_AlwaysRelevant_ForConnection>();
 	ConnectionManager->OnClientVisibleLevelNameAdd.AddUObject(Node, &UMReplicationGraphNode_AlwaysRelevant_ForConnection::OnClientLevelVisibilityAdd);
 	ConnectionManager->OnClientVisibleLevelNameRemove.AddUObject(Node, &UMReplicationGraphNode_AlwaysRelevant_ForConnection::OnClientLevelVisibilityRemove);
 
@@ -36,21 +42,30 @@ void UMReplicationGraph::InitGlobalActorClassSettings()
 {
 	Super::InitGlobalActorClassSettings();
 
+	// ----------------------------------------
 	// Assign mapping to classes
-	auto SetRule = [&](UClass* Class, EClassRepPolicy Policy) { RepPoliciesClassMap.Set(Class, Policy); };
 
-	SetRule(AInfo::StaticClass(), EClassRepPolicy::RelevantAllConnections);
-	SetRule(AMActor::StaticClass(), EClassRepPolicy::Spatialize_Static);
-	SetRule(AMCharacter::StaticClass(), EClassRepPolicy::Spatialize_Dynamic);
+	auto SetRule = [&](UClass* InClass, EClassRepPolicy Mapping) { ClassRepPolicies.Set(InClass, Mapping); };
+
+	SetRule(AReplicationGraphDebugActor::StaticClass(),				EClassRepPolicy::NotRouted);
+	SetRule(ALevelScriptActor::StaticClass(),						EClassRepPolicy::NotRouted);
+	SetRule(AInfo::StaticClass(),									EClassRepPolicy::RelevantAllConnections);
+	SetRule(AMOutpostHouse::StaticClass(),							EClassRepPolicy::Spatialize_Static);
+	SetRule(AMMob::StaticClass(),									EClassRepPolicy::Spatialize_Dynamic);
+
+#if WITH_GAMEPLAY_DEBUGGER
+	SetRule(AGameplayDebuggerCategoryReplicator::StaticClass(),		EClassRepPolicy::NotRouted);
+#endif
 
 	TArray<UClass*> ReplicatedClasses;
 	for (TObjectIterator<UClass> Itr; Itr; ++Itr)
 	{
 		UClass* Class = *Itr;
+
 		AActor* ActorCDO = Cast<AActor>(Class->GetDefaultObject());
 
-		// Do not add the actor if it doesn't replicate
-		if (ActorCDO || !ActorCDO->GetIsReplicated())
+		// Do not add the actor if it does not replicate
+		if (!ActorCDO || !ActorCDO->GetIsReplicated())
 		{
 			continue;
 		}
@@ -64,8 +79,8 @@ void UMReplicationGraph::InitGlobalActorClassSettings()
 
 		ReplicatedClasses.Add(Class);
 
-		// If we already have mapped it to the policy, don't do it again
-		if (RepPoliciesClassMap.Contains(Class, false))
+		// if we already have mapped it to the policy, dont do it again
+		if (ClassRepPolicies.Contains(Class, false))
 		{
 			continue;
 		}
@@ -90,6 +105,16 @@ void UMReplicationGraph::InitGlobalActorClassSettings()
 			{
 				NonSpatializedClasses.Add(Class);
 			}
+
+			// Inherit parent's spatialize policy
+			if (ShouldSpatialize(ActorCDO))
+			{
+				if (const auto* SuperPolicy = ClassRepPolicies.Get(SuperClass))
+				{
+					SetRule(Class, *SuperPolicy);
+					continue;
+				}
+			}
 		}
 
 		if (ShouldSpatialize(ActorCDO) == true)
@@ -102,97 +127,110 @@ void UMReplicationGraph::InitGlobalActorClassSettings()
 		}
 	}
 
+	// --------------------------------------
 	// Explicitly set replication info for our classes
 
 	TArray<UClass*> ExplicitlySetClasses;
 
-	auto SetClassIndo = [&](UClass* Class, FClassReplicationInfo& RepInfo)
+	auto SetClassInfo = [&](UClass* InClass, FClassReplicationInfo& RepInfo)
 	{
-		GlobalActorReplicationInfoMap.SetClassInfo(Class, RepInfo);
-		ExplicitlySetClasses.Add(Class);
+		GlobalActorReplicationInfoMap.SetClassInfo(InClass, RepInfo);
+		ExplicitlySetClasses.Add(InClass);
 	};
 
 	FClassReplicationInfo PawnClassInfo;
-	PawnClassInfo.SetCullDistanceSquared(300000.f * 300000.f);
-	SetClassIndo(APawn::StaticClass(), PawnClassInfo);
+	PawnClassInfo.SetCullDistanceSquared(10000.f * 10000.f);
+	SetClassInfo(APawn::StaticClass(), PawnClassInfo);
 
 	for (UClass* ReplicatedClass : ReplicatedClasses)
 	{
-		if(ExplicitlySetClasses.FindByPredicate([&](const UClass* Class) { return ReplicatedClass->IsChildOf(Class); }) != nullptr)
+		if (ExplicitlySetClasses.FindByPredicate([&](const UClass* InClass) { return ReplicatedClass->IsChildOf(InClass); }) != nullptr)
 		{
 			continue;
 		}
 
-		bool bSpatialize = IsSpatialized(RepPoliciesClassMap.GetChecked(ReplicatedClass));
+		if (ReplicatedClass->GetName().Contains("BP_Pea") || ReplicatedClass->GetName().Contains("MMob"))
+		{
+			auto test = 1;
+		}
+
+		bool bSptatilize = IsSpatialized(ClassRepPolicies.GetChecked(ReplicatedClass));
 
 		FClassReplicationInfo ClassInfo;
-		InitClassReplicationInfo(ClassInfo, ReplicatedClass, bSpatialize, NetDriver->GetNetServerMaxTickRate());
+		InitClassReplicationInfo(ClassInfo, ReplicatedClass, bSptatilize, NetDriver->NetServerMaxTickRate);
 		GlobalActorReplicationInfoMap.SetClassInfo(ReplicatedClass, ClassInfo);
 	}
+
+	// -------------------------------
+	// Bind events here
+	
+#if WITH_GAMEPLAY_DEBUGGER
+	AGameplayDebuggerCategoryReplicator::NotifyDebuggerOwnerChange.AddUObject(this, &UMReplicationGraph::OnGameplayDebuggerOwnerChange);
+#endif
 }
 
 void UMReplicationGraph::InitGlobalGraphNodes()
 {
-	/*PreAllocateRepList(3, 12);
-	PreAllocateRepList(6, 12);
-	PreAllocateRepList(128, 64);
-	PreAllocateRepList(512, 16);*/
-
+	// ---------------------------------
 	// Create our grid node
 	GridNode = CreateNewNode<UReplicationGraphNode_GridSpatialization2D>();
 	GridNode->CellSize = GridCellSize;
-	GridNode->SpatialBias = SpatialBias;
+	GridNode->SpatialBias = FVector2D(SpatialBiasX, SpatialBiasY);
 
-	if (bDisableSpatialRebuilding)
+	if (bDisableSpatialRebuilding == true)
 	{
 		GridNode->AddToClassRebuildDenyList(AActor::StaticClass());
 	}
 
 	AddGlobalGraphNode(GridNode);
 
-	// Create out always relevant node
+	// ---------------------------------
+	// Create our always relevant node
 	AlwaysRelevantNode = CreateNewNode<UReplicationGraphNode_ActorList>();
 	AddGlobalGraphNode(AlwaysRelevantNode);
 }
 
-void UMReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicatedActorInfo& ActorInfo,
-	FGlobalActorReplicationInfo& GlobalInfo)
+void UMReplicationGraph::RouteAddNetworkActorToNodes(const FNewReplicatedActorInfo& ActorInfo, FGlobalActorReplicationInfo& GlobalInfo)
 {
 	EClassRepPolicy MappingPolicy = GetMappingPolicy(ActorInfo.Class);
 	switch (MappingPolicy)
 	{
-		case EClassRepPolicy::RelevantAllConnections:
+	case EClassRepPolicy::RelevantAllConnections:
+	{
+		if (ActorInfo.StreamingLevelName == NAME_None)
 		{
-			if (ActorInfo.StreamingLevelName == NAME_None)
-			{
-				AlwaysRelevantNode->NotifyAddNetworkActor(ActorInfo);
-			}
-			else
-			{
-				FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindOrAdd(ActorInfo.StreamingLevelName);
-				//RepList.PrepareForWrite(); Looks like deprecated
-				RepList.ConditionalAdd(ActorInfo.Actor);
-			}
-			break;
+			AlwaysRelevantNode->NotifyAddNetworkActor(ActorInfo);
 		}
-		case EClassRepPolicy::Spatialize_Static:
+		else
 		{
-			GridNode->AddActor_Static(ActorInfo, GlobalInfo);
-			break;
+			FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindOrAdd(ActorInfo.StreamingLevelName);
+			RepList.ConditionalAdd(ActorInfo.Actor);
 		}
-		case EClassRepPolicy::Spatialize_Dynamic:
-		{
-			GridNode->AddActor_Dynamic(ActorInfo, GlobalInfo);
-			break;
-		}
-		case EClassRepPolicy::Spatialize_Dormancy:
-		{
-			GridNode->AddActor_Dormancy(ActorInfo, GlobalInfo);
-			break;
-		}
-		default:
-		{
-		}
+		break;
+	}
+
+	case EClassRepPolicy::Spatialize_Static:
+	{
+		GridNode->AddActor_Static(ActorInfo, GlobalInfo);
+		break;
+	}
+
+	case EClassRepPolicy::Spatialize_Dynamic:
+	{
+		GridNode->AddActor_Dynamic(ActorInfo, GlobalInfo);
+		break;
+	}
+
+	case EClassRepPolicy::Spatialize_Dormancy:
+	{
+		GridNode->AddActor_Dormancy(ActorInfo, GlobalInfo);
+		break;
+	}
+
+	default:
+	{
+		break;
+	}
 	}
 }
 
@@ -201,72 +239,109 @@ void UMReplicationGraph::RouteRemoveNetworkActorToNodes(const FNewReplicatedActo
 	EClassRepPolicy MappingPolicy = GetMappingPolicy(ActorInfo.Class);
 	switch (MappingPolicy)
 	{
-		case EClassRepPolicy::RelevantAllConnections:
+	case EClassRepPolicy::RelevantAllConnections:
+	{
+		if (ActorInfo.StreamingLevelName == NAME_None)
 		{
-			if (ActorInfo.StreamingLevelName == NAME_None)
-			{
-				AlwaysRelevantNode->NotifyRemoveNetworkActor(ActorInfo);
-			}
-			else
-			{
-				FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindOrAdd(ActorInfo.StreamingLevelName);
-				RepList.RemoveFast(ActorInfo.Actor);
-			}
-			break;
+			AlwaysRelevantNode->NotifyRemoveNetworkActor(ActorInfo);
 		}
-		case EClassRepPolicy::Spatialize_Static:
+		else
 		{
-			GridNode->RemoveActor_Static(ActorInfo);
-			break;
+			FActorRepListRefView& RepList = AlwaysRelevantStreamingLevelActors.FindOrAdd(ActorInfo.StreamingLevelName);
+			RepList.RemoveFast(ActorInfo.Actor);
 		}
-		case EClassRepPolicy::Spatialize_Dynamic:
-		{
-			GridNode->RemoveActor_Dynamic(ActorInfo);
-			break;
-		}
-		case EClassRepPolicy::Spatialize_Dormancy:
-		{
-			GridNode->RemoveActor_Dormancy(ActorInfo);
-			break;
-		}
-		default:
-		{
-		}
+		break;
+	}
+
+	case EClassRepPolicy::Spatialize_Static:
+	{
+		GridNode->RemoveActor_Static(ActorInfo);
+		break;
+	}
+
+	case EClassRepPolicy::Spatialize_Dynamic:
+	{
+		GridNode->RemoveActor_Dynamic(ActorInfo);
+		break;
+	}
+
+	case EClassRepPolicy::Spatialize_Dormancy:
+	{
+		GridNode->RemoveActor_Dormancy(ActorInfo);
+		break;
+	}
+
+	default:
+	{
+		break;
+	}
 	}
 }
 
-void UMReplicationGraph::InitClassReplicationInfo(FClassReplicationInfo& Info, UClass* Class, bool bSpatialize,
-	float ServerMaxTickRate)
+void UMReplicationGraph::InitClassReplicationInfo(FClassReplicationInfo& Info, UClass* InClass, bool bSpatilize, float ServerMaxTickRate)
 {
-	if (AActor* CDO = Cast<AActor>(Class->GetDefaultObject()))
+	if (AActor* CDO = Cast<AActor>(InClass->GetDefaultObject()))
 	{
-		if (bSpatialize)
+		if (bSpatilize == true)
 		{
 			Info.SetCullDistanceSquared(CDO->NetCullDistanceSquared);
 		}
 
-		Info.ReplicationPeriodFrame = FMath::Max<uint32>(FMath::RoundToFloat(ServerMaxTickRate / CDO->NetUpdateFrequency), 1);
+		Info.ReplicationPeriodFrame = FMath::Max<uint32>((uint32)FMath::RoundToFloat(ServerMaxTickRate / CDO->NetUpdateFrequency), 1);
 	}
 }
 
-EClassRepPolicy UMReplicationGraph::GetMappingPolicy(UClass* IN_Class)
+class UMReplicationGraphNode_AlwaysRelevant_ForConnection* UMReplicationGraph::GetAlwaysRelevantNode(APlayerController* PlayerController)
 {
-	if (const auto* Policy = RepPoliciesClassMap.Get(IN_Class))
+	if (PlayerController != NULL)
 	{
-		return *Policy;
+		if (UNetConnection* NetConnection = PlayerController->NetConnection)
+		{
+			if (UNetReplicationGraphConnection* GraphConnection = FindOrAddConnectionManager(NetConnection))
+			{
+				for (UReplicationGraphNode* ConnectionNode : GraphConnection->GetConnectionGraphNodes())
+				{
+					UMReplicationGraphNode_AlwaysRelevant_ForConnection* Node = Cast<UMReplicationGraphNode_AlwaysRelevant_ForConnection>(ConnectionNode);
+					if (Node != NULL)
+					{
+						return Node;
+					}
+				}
+			}
+		}
 	}
-	return EClassRepPolicy::NotRouted;
+
+	return nullptr;
 }
 
-//----------------------------------------------------
+#if WITH_GAMEPLAY_DEBUGGER
+void UMReplicationGraph::OnGameplayDebuggerOwnerChange(AGameplayDebuggerCategoryReplicator* Debugger, APlayerController* OldOwner)
+{
+	if (UMReplicationGraphNode_AlwaysRelevant_ForConnection* Node = GetAlwaysRelevantNode(OldOwner))
+	{
+		Node->GameplayDebugger = nullptr;
+	}
+
+	if (UMReplicationGraphNode_AlwaysRelevant_ForConnection* Node = GetAlwaysRelevantNode(Debugger->GetReplicationOwner()))
+	{
+		Node->GameplayDebugger = Debugger;
+	}
+}
+#endif
+
+EClassRepPolicy UMReplicationGraph::GetMappingPolicy(UClass* InClass)
+{
+	return ClassRepPolicies.Get(InClass) != NULL ? *ClassRepPolicies.Get(InClass) : EClassRepPolicy::NotRouted;
+}
+
+// --------------------------------------------------
 // UMReplicationGraphNode_AlwaysRelevant_ForConnection
 
-void UMReplicationGraphNode_AlwaysRelevant_ForConnection::GatherActorListsForConnection(
-	const FConnectionGatherActorListParameters& Params)
+void UMReplicationGraphNode_AlwaysRelevant_ForConnection::GatherActorListsForConnection(const FConnectionGatherActorListParameters& Params)
 {
 	Super::GatherActorListsForConnection(Params);
 
-	auto* RepGraph = CastChecked<UMReplicationGraph>(GetOuter());
+	UMReplicationGraph* RepGraph = CastChecked<UMReplicationGraph>(GetOuter());
 
 	FPerConnectionActorInfoMap& ConnectionActorInfoMap = Params.ConnectionManager.ActorInfoMap;
 	TMap<FName, FActorRepListRefView>& AlwaysRelevantStreamingLevelActors = RepGraph->AlwaysRelevantStreamingLevelActors;
@@ -296,7 +371,7 @@ void UMReplicationGraphNode_AlwaysRelevant_ForConnection::GatherActorListsForCon
 				}
 			}
 
-			if (bAllDormant)
+			if (bAllDormant == true)
 			{
 				AlwaysRelevantStreamingLevels.RemoveAtSwap(Idx, 1, false);
 			}
@@ -306,10 +381,16 @@ void UMReplicationGraphNode_AlwaysRelevant_ForConnection::GatherActorListsForCon
 			}
 		}
 	}
+
+#if WITH_GAMEPLAY_DEBUGGER
+	if (GameplayDebugger != NULL)
+	{
+		ReplicationActorList.ConditionalAdd(GameplayDebugger);
+	}
+#endif
 }
 
-void UMReplicationGraphNode_AlwaysRelevant_ForConnection::OnClientLevelVisibilityAdd(FName LevelName,
-                                                                                     UWorld* LevelWorld)
+void UMReplicationGraphNode_AlwaysRelevant_ForConnection::OnClientLevelVisibilityAdd(FName LevelName, UWorld* LevelWorld)
 {
 	AlwaysRelevantStreamingLevels.Add(LevelName);
 }
