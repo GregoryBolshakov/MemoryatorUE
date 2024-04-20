@@ -9,5 +9,6 @@ public class TopDownTempTarget : TargetRules
 		DefaultBuildSettings = BuildSettingsVersion.V2;
 		//bUsesSteam = true;
 		ExtraModuleNames.Add("TopDownTemp");
+		bUseIris = true;
 	}
 }
