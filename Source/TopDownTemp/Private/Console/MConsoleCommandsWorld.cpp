@@ -1,5 +1,6 @@
 #include "MConsoleCommandsWorld.h"
-#include "Managers/MWorldManager.h"
+
+#include "Framework/MGameMode.h"
 #include "Managers/MWorldGenerator.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -44,21 +45,15 @@ UMConsoleCommandsWorld::UMConsoleCommandsWorld()
 
 void UMConsoleCommandsWorld::SpawnMob(const FString& MobClassString, int Quantity)
 {
-	if (const auto pWorld = GetWorld())
+	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
+		if (const auto Class = WorldGenerator->GetClassToSpawn(FName(MobClassString)))
 		{
-			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
-			{
-				if (const auto Class = pWorldGenerator->GetClassToSpawn(FName(MobClassString)))
-				{
-					const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
-					if (!pPlayer)
-						return;
+			const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
+			if (!pPlayer)
+				return;
 
-					pWorldGenerator->SpawnActorInRadius<AActor>(Class, pPlayer->GetActorLocation(), FRotator::ZeroRotator, {}, 150.f, 350.f);
-				}
-			}
+			WorldGenerator->SpawnActorInRadius<AActor>(Class, pPlayer->GetActorLocation(), FRotator::ZeroRotator, {}, 150.f, 350.f);
 		}
 	}
 }

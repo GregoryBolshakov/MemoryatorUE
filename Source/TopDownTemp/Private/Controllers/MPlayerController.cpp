@@ -9,7 +9,6 @@
 #include "MInterfaceMobController.h"
 #include "Camera/CameraComponent.h"
 #include "Characters/MMob.h"
-#include "Managers/MWorldManager.h"
 #include "Managers/MWorldGenerator.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
@@ -17,6 +16,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
+#include "Framework/MGameMode.h"
 #include "StationaryActors/MActor.h"
 
 AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializer) :
@@ -231,11 +231,11 @@ void AMPlayerController::SetupInputComponent()
 
 void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter& MyCharacter)
 {
-	if (const auto pWorldGenerator = World.GetSubsystem<UMWorldManager>()->GetWorldGenerator())
+	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
 		const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
 		const auto ForgetEnemyRange = MyCharacter.GetForgetEnemyRange();
-		const auto DynamicActorsNearby = pWorldGenerator->GetActorsInRect(
+		const auto DynamicActorsNearby = WorldGenerator->GetActorsInRect(
 			CharacterLocation - FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f),
 			CharacterLocation + FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f), true);
 		EnemiesNearby.Empty();
@@ -516,15 +516,9 @@ void AMPlayerController::OnLeftMouseClick()
 		AMMob* ClickedMob = Cast<AMMob>(HitResult.GetActor());
 		if (ClickedMob)
 		{
-			if (const auto WorldManager = GetWorld()->GetSubsystem<UMWorldManager>())
+			if (const auto CommunicationManager = AMGameMode::GetCommunicationManager(this))
 			{
-				if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
-				{
-					if (const auto CommunicationManager = WorldGenerator->GetCommunicationManager())
-					{
-						CommunicationManager->SpeakTo(ClickedMob);
-					}
-				}
+				CommunicationManager->SpeakTo(ClickedMob);
 			}
 		}
 	}

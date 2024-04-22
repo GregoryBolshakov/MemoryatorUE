@@ -1,11 +1,11 @@
 #include "MDropManager.h"
 #include "UI/MPickUpBarWidget.h"
 #include "StationaryActors/MPickableActor.h"
-#include "MWorldManager.h"
 #include "MWorldGenerator.h"
 #include "Characters/MCharacter.h"
 #include "Components/MInventoryComponent.h"
 #include "Framework/MGameInstance.h"
+#include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "NakamaManager/Private/ShopManagerClient.h"
 
@@ -79,24 +79,21 @@ void UMDropManager::SpawnPickableItem(const FItem& Item)
 	if (!IsValid(pWorld))
 		return;
 
-	if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
+	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
-		if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
-		{
-			const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
-			if (!pPlayer) { check(false); return; }
-			const auto PlayerLocation = pPlayer->GetActorLocation();
+		const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
+		if (!pPlayer) { check(false); return; }
+		const auto PlayerLocation = pPlayer->GetActorLocation();
 
-			FOnActorSpawned OnActorSpawned;
-			OnActorSpawned.AddLambda([Item](AActor* Actor)
+		FOnActorSpawned OnActorSpawned;
+		OnActorSpawned.AddLambda([Item](AActor* Actor)
+		{
+			if (const auto PickableActor = Cast<AMPickableActor>(Actor))
 			{
-				if (const auto PickableActor = Cast<AMPickableActor>(Actor))
-				{
-					PickableActor->InitialiseInventory({Item});
-				}
-			});
-			pWorldGenerator->SpawnActorInRadius<AMPickableActor>(AMPickableItemBPClass, PlayerLocation, FRotator::ZeroRotator, {}, 25.f, 0.f, OnActorSpawned);
-		}
+				PickableActor->InitialiseInventory({Item});
+			}
+		});
+		WorldGenerator->SpawnActorInRadius<AMPickableActor>(AMPickableItemBPClass, PlayerLocation, FRotator::ZeroRotator, {}, 25.f, 0.f, OnActorSpawned);
 	}
 }
 

@@ -50,7 +50,6 @@ public:
 	}
 
 	virtual void BeginLoadFromSD(const FMActorSaveData& MActorSD);
-	virtual void EndLoadFromSD() {};
 
 protected:
 

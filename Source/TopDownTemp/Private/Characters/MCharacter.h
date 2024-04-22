@@ -93,8 +93,9 @@ public:
 
 	virtual void PostInitializeComponents() override;
 
+	/** Loading actor: Actor has just constructed but not finalized (Components are not available).*/
 	virtual void BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD);
-	virtual void EndLoadFromSD() {};
+	// TODO: We might need EndLoadFromSD() but so far there's no use cases
 
 protected:
 

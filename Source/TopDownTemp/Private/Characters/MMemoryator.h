@@ -22,9 +22,6 @@ public:
 	/** Returns CursorToWorld subobject **/
 	FORCEINLINE class USceneComponent* GetCursorToWorld() { return CursorToWorld; }
 
-	virtual void BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD) override;
-	virtual void EndLoadFromSD() override;
-
 private:
 
 	void HandleCursor() const;

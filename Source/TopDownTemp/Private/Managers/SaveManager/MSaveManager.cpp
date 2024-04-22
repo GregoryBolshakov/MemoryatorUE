@@ -4,10 +4,10 @@
 #include "Managers/RoadManager/MRoadManager.h"
 #include "Managers/MWorldGenerator.h"
 #include "Managers/MMetadataManager.h"
-#include "Managers/MWorldManager.h"
 #include "Characters/MCharacter.h"
 #include "Characters/MMemoryator.h"
 #include "Controllers/MMobControllerBase.h"
+#include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "StationaryActors/MActor.h"
 #include "StationaryActors/MPickableActor.h"
@@ -44,11 +44,9 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 
 	WorldGenerator->CheckDynamicActorsBlocks();
 
-	LoadedGameWorld->PlayerTraveledPath = { WorldGenerator->GetPlayerGroundBlockIndex() }; // TODO: Save the whole path
-
 	// Iterate the world grid saving blocks
 	//TODO: Mark visited(or modified) blocks as dirty and then iterate only marked
-	auto* GridOfActors = WorldGenerator->GetMetadataManager()->GetGrid();
+	auto* GridOfActors = AMGameMode::GetMetadataManager(this)->GetGrid();
 	for (const auto& [BlockIndex, BlockMetadata] : *GridOfActors)
 	{
 		// We don't consider blocks without actors to be generated, even if they are marked with some biome
@@ -67,7 +65,7 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 
 			for (const auto& [Name, pActor] : BlockMetadata->StaticActors)
 			{
-				const auto* pActorMetadata = WorldGenerator->GetMetadataManager()->Find(Name);
+				const auto* pActorMetadata = AMGameMode::GetMetadataManager(this)->Find(Name);
 				if (!IsValid(pActor) || !pActorMetadata)
 				{
 					continue;
@@ -103,7 +101,7 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 			}
 			for (const auto& [Name, pActor] : BlockMetadata->DynamicActors)
 			{
-				auto* pActorMetadata = WorldGenerator->GetMetadataManager()->Find(Name);
+				auto* pActorMetadata = AMGameMode::GetMetadataManager(this)->Find(Name);
 				if (!IsValid(pActor) || !pActorMetadata)
 				{
 					continue;
@@ -132,7 +130,7 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 					// Save house if has it
 					if (const auto* House = pMCharacter->GetHouse())
 					{
-						if (const auto* HouseMetadata = WorldGenerator->GetMetadataManager()->Find(FName(House->GetName())))
+						if (const auto* HouseMetadata = AMGameMode::GetMetadataManager(this)->Find(FName(House->GetName())))
 						{
 							MCharacterSD.HouseUid = HouseMetadata->Uid;
 						}
@@ -143,7 +141,7 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 		}
 	}
 
-	WorldGenerator->GetRoadManager()->SaveToMemory();
+	AMGameMode::GetRoadManager(this)->SaveToMemory();
 
 	check(LoadedGameWorld);
 	if (LoadedGameWorld)
@@ -187,7 +185,7 @@ bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* 
 
 	// THE PREVIOUS CONTENTS OF THE BLOCK ARE NOT DELETED AND NOT GUARANTEED TO BE EMPTY. BECAUSE WE NEED TO BE ABLE TO LOAD ACTORS INDIVIDUALLY.
 	// WE RELY ON ALWAYS CHECKING FOR THE PRESENCE OF A SAVE BEFORE GENERATING A BLOCK.
-	const auto BlockMetadata = WorldGenerator->GetMetadataManager()->FindOrAddBlock(BlockIndex);
+	const auto BlockMetadata = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(BlockIndex);
 
 	BlockMetadata->ConstantActorsCount = BlockSD->ConstantActorsCount;
 	BlockMetadata->Biome = BlockSD->PCGVariables.Biome;
@@ -252,13 +250,19 @@ void UMSaveManager::RemoveBlock(const FIntPoint& Index)
 	}
 }
 
-TArray<FIntPoint> UMSaveManager::GetPlayerTraveledPath() const
+FMUid UMSaveManager::FindMUidByUniqueID(FName UniqueID) const
 {
-	if (LoadedGameWorld)
+	if (const auto pUid = LoadedGameWorld->UniqueIDToMUid.Find(UniqueID))
 	{
-		return LoadedGameWorld->PlayerTraveledPath;
+		return *pUid;
 	}
 	return {};
+}
+
+void UMSaveManager::AddMUidByUniqueID(FName UniqueID, const FMUid& Uid) const
+{
+	check(!LoadedGameWorld->UniqueIDToMUid.Contains(UniqueID));
+	LoadedGameWorld->UniqueIDToMUid.Add(UniqueID, Uid);
 }
 
 bool UMSaveManager::IsLoaded() const
@@ -316,7 +320,7 @@ AMCharacter* UMSaveManager::LoadMCharacter_Internal(const FMCharacterSaveData& M
 	const auto& ActorSD = MCharacterSD.ActorSaveData;
 	if (const auto MCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, /*ActorSD.Rotation*/ FRotator::ZeroRotator, Params, true, OnSpawnActorStarted, ActorSD.Uid))
 	{
-		MCharacter->EndLoadFromSD();
+		// TODO: MCharacter->EndLoadFromSD(); if have use cases for EndLoadFromSD
 		if (!ActorSD.Components.IsEmpty())
 		{
 			LoadDataForComponents(MCharacter, ActorSD.Components);
@@ -387,7 +391,7 @@ AMActor* UMSaveManager::LoadMActorAndClearSD(const FMUid& Uid, AMWorldGenerator*
 	check(IsUidValid(Uid));
 	check(WorldGenerator);
 	// Before loading an actor check if it was already loaded
-	if (const auto* AlreadySpawnedActorMetadata = WorldGenerator->GetMetadataManager()->Find(Uid))
+	if (const auto* AlreadySpawnedActorMetadata = AMGameMode::GetMetadataManager(this)->Find(Uid))
 	{
 		const auto AlreadySpawnedMActor = Cast<AMActor>(AlreadySpawnedActorMetadata->Actor);
 		check(AlreadySpawnedMActor);
@@ -416,7 +420,7 @@ AMCharacter* UMSaveManager::LoadMCharacterAndClearSD(const FMUid& Uid, AMWorldGe
 	check(IsUidValid(Uid));
 	check(WorldGenerator);
 	// Before loading an actor check if it was already loaded
-	if (const auto* AlreadySpawnedActorMetadata = WorldGenerator->GetMetadataManager()->Find(Uid))
+	if (const auto* AlreadySpawnedActorMetadata = AMGameMode::GetMetadataManager(this)->Find(Uid))
 	{
 		const auto AlreadySpawnedMCharacter = Cast<AMCharacter>(AlreadySpawnedActorMetadata->Actor);
 		check(AlreadySpawnedMCharacter);

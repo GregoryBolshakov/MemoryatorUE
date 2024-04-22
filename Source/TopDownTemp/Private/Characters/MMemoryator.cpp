@@ -59,25 +59,6 @@ void AMMemoryator::Tick(float DeltaSeconds)
 	HandleCursor();
 }
 
-void AMMemoryator::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)
-{
-	Super::BeginLoadFromSD(MCharacterSD);
-	Rename(*FString("Player"));
-	
-}
-
-void AMMemoryator::EndLoadFromSD()
-{
-	Super::EndLoadFromSD();
-
-	// Possess itself with player controller
-	if (const auto pPlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0))
-	{
-		pPlayerController->Possess(this);
-	}
-	else check(false);
-}
-
 void AMMemoryator::HandleCursor() const
 {
 	if (CursorToWorld != nullptr)

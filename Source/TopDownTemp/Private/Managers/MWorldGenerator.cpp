@@ -21,10 +21,11 @@
 #include "NakamaManager/Private/NakamaManager.h"
 #include "NavMesh/NavMeshBoundsVolume.h"
 #include "StationaryActors/MPickableActor.h"
-#include "MWorldManager.h"
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
 #include "Engine/SplineMeshActor.h"
+#include "Framework/MGameMode.h"
+#include "GameFramework/PlayerState.h"
 #include "SaveManager/MSaveManager.h"
 #include "StationaryActors/MRoadSplineActor.h"
 
@@ -34,86 +35,52 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
 }
-//temp
-FTimerHandle tempTimer, tempTimer2;
-void AMWorldGenerator::InitSurroundingArea()
+
+FTimerHandle tempTimer; //temp
+void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock)
 {
-	//TODO: Erase the old code. Now we consider this function to be called ONLY in the new empty world.
 	auto* pWorld = GetWorld();
 	if (!pWorld)
 		return;
 
-	// Load the last block player travelled, i.e. the block with the player
-	auto PlayerTravelledPath = SaveManager->GetPlayerTraveledPath();
-	if (PlayerTravelledPath.IsEmpty())
-	{
-		PlayerTravelledPath.Add(FIntPoint(0, 0));
-	}
-	LoadOrGenerateBlock(PlayerTravelledPath.Last(), false);
-
-	APawn* pPlayer = nullptr;
-	if (const auto pPlayerMetadata = MetadataManager->Find("Player"))
-	{
-		pPlayer = Cast<APawn>(pPlayerMetadata->Actor);
-	}
-	else // The player wasn't loaded, spawn a new one
-	{
-		if (const auto PlayerClass = ToSpawnActorClasses.Find("Player"))
-		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Name = "Player";
-			pPlayer = SpawnActor<AMCharacter>(*PlayerClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams, true);
-
-			// Possess the player by controller
-			if (const auto pPlayerController = UGameplayStatics::GetPlayerController(pWorld, 0))
-				pPlayerController->Possess(pPlayer);
-			else
-				check(false);
-		}
-	}
-	if (!IsValid(pPlayer))
-	{
-		check(false);
-		return;
-	}
-
-	const auto PlayerBlock = GetGroundBlockIndex(pPlayer->GetTransform().GetLocation());
+	const auto RoadManager = AMGameMode::GetRoadManager(this);
 	const auto PlayerChunk = RoadManager->GetChunkIndexByBlock(PlayerBlock);
 	RoadManager->ProcessAdjacentRegions(PlayerChunk);
+
 	//temp
 	//RoadManager->ConnectTwoChunks(PlayerChunk, {PlayerChunk.X + 1, PlayerChunk.Y-1});
 
 	UpdateActiveZone(PlayerBlock); // temp solution to avoid disabling all subsequently generated actors due to empty ActiveBlocksMap
 
-	pWorld->GetTimerManager().SetTimer(tempTimer, [this, pWorld, PlayerBlock, PlayerChunk]()
+	// We add 1 to the radius on purpose. Generated area always has to be further then visible
+	auto BlocksInRadius = GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius + 1);
+
+	auto* MetadataManager = AMGameMode::GetMetadataManager(this);
+	// Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
+	for (const auto BlockInRadius : BlocksInRadius)
+	{
+		if (MetadataManager->FindBlock(BlockInRadius) == nullptr) // Set biome only for non existent blocks
 		{
-			// We add 1 to the radius on purpose. Generated area always has to be further then visible
-			auto BlocksInRadius = GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius + 1);
-			BlocksInRadius.Remove(PlayerBlock); // Already loaded above
-
-			// Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
-			for (const auto BlockInRadius : BlocksInRadius)
-			{
-				const auto BlockMetadata = GetMetadataManager()->FindOrAddBlock(BlockInRadius);
-				BlockMetadata->Biome = BiomeForInitialGeneration;
-			}
-			for (const auto BlockInRadius : BlocksInRadius)
-			{
-				LoadOrGenerateBlock(BlockInRadius, false);
-			}
-
-			if (!SaveManager->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
-			{
-				pWorld->GetTimerManager().SetTimer(tempTimer2, [this, pWorld, PlayerChunk]()
-				{
-					const auto VillageClass = RoadManager->GetOutpostBPClasses().Find("Village")->Get();
-					const auto VillageGenerator = RoadManager->SpawnOutpostGeneratorForDebugging(PlayerChunk, VillageClass);
-					VillageGenerator->Generate();
-					UpdateNavigationMesh();
-				}, 0.3f, false);
-			}
+			const auto BlockMetadata = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(BlockInRadius);
+			BlockMetadata->Biome = BiomeForInitialGeneration;
 		}
-	, 0.3f, false);
+	}
+	for (const auto BlockInRadius : BlocksInRadius)
+	{
+		LoadOrGenerateBlock(BlockInRadius, false);
+	}
+
+	/*if (!AMGameMode::GetSaveManager(this)->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
+	{
+		pWorld->GetTimerManager().SetTimer(tempTimer, [this, PlayerChunk]()
+		{
+			const auto RoadManager = AMGameMode::GetRoadManager(this);
+			const auto VillageClass = RoadManager->GetOutpostBPClasses().Find("Village")->Get();
+			const auto VillageGenerator = RoadManager->SpawnOutpostGeneratorForDebugging(PlayerChunk, VillageClass);
+			VillageGenerator->Generate();
+			UpdateNavigationMesh();
+		}, 0.3f, false);
+	}*/
 
 	/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
 	BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
@@ -124,6 +91,8 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 	const auto pWorld = GetWorld();
 	if (!pWorld)
 		return nullptr;
+
+	const auto MetadataManager = AMGameMode::GetMetadataManager(this);
 
 	// Get the block from grid or add if doesn't exist
 	auto* BlockMetadata = MetadataManager->FindOrAddBlock(BlockIndex);
@@ -154,9 +123,56 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 	return BlockMetadata;
 }
 
+int playerCount = 0; // Temporarily hardcode UniqueID for players for offline testing
+void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
+{
+	// Function uses UniqueID field of controller's PlayerState to either load the existing character from save or spawn a new one.
+
+	if (!NewPlayer || !NewPlayer->PlayerState)
+	{
+		check(false);
+		return;
+	}
+	auto* SaveManager = AMGameMode::GetSaveManager(this);
+	//const auto UniqueID = NewPlayer->PlayerState->GetUniqueId().ToString();
+	const auto UniqueID = FName("BOLSHAKOV-" + FString::FromInt(playerCount++));
+	auto Uid = SaveManager->FindMUidByUniqueID(FName(UniqueID));
+
+	APawn* pPlayer = nullptr;
+	if (!IsUidValid(Uid)) // First time a player with such UniqueID is logging in. Spawn a pawn for them and generate a Uid for it.
+	{
+		if (const auto PlayerClass = ToSpawnActorClasses.Find("Player")) // TODO: There might be different classes for players, aka different races and whatnot
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Name = FName(UniqueID);
+			pPlayer = SpawnActor<AMCharacter>(*PlayerClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams, true);
+
+			const auto* Metadata = AMGameMode::GetMetadataManager(this)->Find(UniqueID);
+			SaveManager->AddMUidByUniqueID(UniqueID, Metadata->Uid); // Uid was generated when spawning new AMCharacter, map it to the UniqueID
+
+			NewPlayer->Possess(pPlayer); // Possess just spawned player by controller
+		}
+	}
+	else // Load character from SaveManager using the UniqueId
+	{
+		pPlayer = SaveManager->LoadMCharacterAndClearSD(Uid, this); // APawn* pointing to AMCharacter
+		NewPlayer->Possess(pPlayer);
+	}
+
+	InitSurroundingArea(GetGroundBlockIndex(pPlayer->GetActorLocation())); // Init surroundings before spawning player so it doesn't fall underground
+
+	// Bind to the player-moves-to-another-block event
+	AMGameMode::GetExperienceManager(this)->ExperienceAddedDelegate.AddDynamic(Cast<AMPlayerController>(NewPlayer), &AMPlayerController::OnExperienceAdded);
+	if (const auto PlayerMetadata = AMGameMode::GetMetadataManager(this)->Find(FName(pPlayer->GetName())))
+	{
+		PlayerMetadata->OnBlockChangedDelegate.AddDynamic(this, &AMWorldGenerator::OnPlayerChangedBlock);
+		PlayerMetadata->OnChunkChangedDelegate.AddDynamic(AMGameMode::GetRoadManager(this), &UMRoadManager::OnPlayerChangedChunk);
+	}
+}
+
 void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature)
 {
-	auto* BlockMetadata = MetadataManager->FindOrAddBlock(BlockIndex);
+	auto* BlockMetadata = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(BlockIndex);
 	if (IsValid(BlockMetadata->pGroundBlock)) // The block already exists in the current session
 	{
 		if (BlockMetadata->ConstantActorsCount > 0 || !bRegenerationFeature) // No need to regenerate existing block
@@ -170,6 +186,7 @@ void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRe
 	else // The block doesn't exist in the current session. BUT THERE MIGHT BE DYNAMIC AND/OR CONSTANT ACTORS
 	{
 		// First try to load block data from save
+		const auto SaveManager = AMGameMode::GetSaveManager(this);
 		if (const auto BlockSD = SaveManager->GetBlockData(BlockIndex))
 		{
 			// Regeneration feature applies only if the block isn't constant. Otherwise it must be loaded if save is present
@@ -189,7 +206,7 @@ void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRe
 void AMWorldGenerator::RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects, bool IgnoreConstancy)
 {
 	//TODO: refactor this function. Seems like it is redundant
-	const auto BlockMetadata = MetadataManager->FindOrAddBlock(BlockIndex);
+	const auto BlockMetadata = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(BlockIndex);
 	if (!IgnoreConstancy && BlockMetadata->ConstantActorsCount > 0)
 	{
 		return;
@@ -202,62 +219,21 @@ void AMWorldGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 
+	playerCount = 0; // TODO: Remove this temp hack for offline testing
+
 	// Create the Block Generator
 	BlockGenerator = BlockGeneratorBPClass ? NewObject<UMBlockGenerator>(GetOuter(), BlockGeneratorBPClass, TEXT("BlockGenerator")) : nullptr;
 	check(BlockGenerator);
 
-	MetadataManager = NewObject<UMMetadataManager>(GetOuter(), UMMetadataManager::StaticClass(), TEXT("MetadataManager"));
-	check(MetadataManager);
-	MetadataManager->Initialize(BlockGenerator->GetDefaultGraph());
-
-	DropManager = DropManagerBPClass ? NewObject<UMDropManager>(GetOuter(), DropManagerBPClass, TEXT("DropManager")) : nullptr;
-	check(DropManager);
-
-	ReputationManager = ReputationManagerBPClass ? NewObject<UMReputationManager>(GetOuter(), ReputationManagerBPClass, TEXT("ReputationManager")) : nullptr;
-	check(ReputationManager);
-	ReputationManager->Initialize({{EFaction::Humans, {100, 10}}, {EFaction::Nightmares, {5, 4}}, {EFaction::Witches, {1, 0}}}); // temporary set manually
-
-	ExperienceManager = ExperienceManagerBPClass ? NewObject<UMExperienceManager>(GetOuter(), ExperienceManagerBPClass, TEXT("ExperienceManager")) : nullptr;
-	check(ExperienceManager);
-
-	SaveManager = SaveManagerBPClass ? NewObject<UMSaveManager>(GetOuter(), SaveManagerBPClass, TEXT("SaveManager")) : nullptr;
-	check(SaveManager);
-	SaveManager->LoadFromMemory();
-
-	// Spawn the Communication Manager
-	CommunicationManager = CommunicationManagerBPClass ? GetWorld()->SpawnActor<AMCommunicationManager>(CommunicationManagerBPClass) : nullptr;
-	check(CommunicationManager);
-
-	RoadManager = NewObject<UMRoadManager>(GetOuter(), RoadManagerBPClass, TEXT("RoadManager"));
-	check(RoadManager);
-	RoadManager->Initialize(this);
-
 	// We want to set the biome coloring since the first block change
 	BlocksPassedSinceLastPerimeterColoring = BiomesPerimeterColoringRate;
-
-	InitSurroundingArea();
-
-	// Bind to the player-moves-to-another-block event 
-	if (const auto pPlayer = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
-	{
-		ExperienceManager->ExperienceAddedDelegate.AddDynamic(Cast<AMPlayerController>(pPlayer->GetController()), &AMPlayerController::OnExperienceAdded);
-		if (const auto PlayerMetadata = MetadataManager->Find(FName(pPlayer->GetName())))
-		{
-			PlayerMetadata->OnBlockChangedDelegate.AddDynamic(this, &AMWorldGenerator::OnPlayerChangedBlock);
-			PlayerMetadata->OnChunkChangedDelegate.AddDynamic(RoadManager, &UMRoadManager::OnPlayerChangedChunk);
-		}
-	}
-
-	SaveManager->SetUpAutoSaves(this);
-
-	SetupInputComponent();
 }
 
 void AMWorldGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	SaveManager->SaveToMemory(this);
+	AMGameMode::GetSaveManager(this)->SaveToMemory(this);
 }
 
 void AMWorldGenerator::CheckDynamicActorsBlocks()
@@ -280,6 +256,8 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 		TOptional<FIntPoint> NewBlockIndex; // unset means that actor was removed
 	};
 	TMap<FName, FTransition> TransitionList;
+
+	const auto MetadataManager = AMGameMode::GetMetadataManager(this);
 
 	for (const auto& Index : ActiveBlocksMap)
 	{
@@ -319,6 +297,7 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 			// Check the environment for validity if you bind to the delegate!
 			Transition.ActorMetadata->OnBlockChangedDelegate.Broadcast(Transition.OldBlockIndex, Transition.ActorMetadata->GroundBlockIndex);
 
+			const auto RoadManager = AMGameMode::GetRoadManager(this);
 			//Chunk transition check
 			const auto OldChunk = RoadManager->GetChunkIndexByBlock(Transition.OldBlockIndex);
 			const auto ActualChunk = RoadManager->GetChunkIndexByBlock(Transition.ActorMetadata->GroundBlockIndex);
@@ -341,6 +320,8 @@ void AMWorldGenerator::UpdateActiveZone(const FIntPoint& CenterBlock)
 
 	// Enable all the objects within PlayerActiveZone. ActiveBlocksMap is considered as from the previous check.
 	TSet<FIntPoint> ActiveBlocksMap_New;
+
+	const auto MetadataManager = AMGameMode::GetMetadataManager(this);
 
 	//TODO: Consider spreading the block logic over multiple ticks as done in OnTickGenerateBlocks()
 	for (const auto BlockIndex : GetBlocksInRadius(CenterBlock.X, CenterBlock.Y, ActiveZoneRadius)) // you can add +1 to the ActiveZoneRadius if you need to see how the perimeter is generated in PIE
@@ -568,7 +549,7 @@ void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIn
 				++DelimiterIndex;
 			}
 
-			const auto BlockMetadata = MetadataManager->FindOrAddBlock(Block);
+			const auto BlockMetadata = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(Block);
 
 			// So far, biome constancy doesn't look very good
 			//if (BlockMetadata->ConstantActorsCount <= 0) // We keep the biome as well as all other objects
@@ -601,7 +582,7 @@ void AMWorldGenerator::OnTickGenerateBlocks()
 
 FIntPoint AMWorldGenerator::GetPlayerGroundBlockIndex() const
 {
-	if (const auto pPlayerMetadata = MetadataManager->Find("Player"))
+	if (const auto pPlayerMetadata = AMGameMode::GetMetadataManager(this)->Find("Player"))
 	{
 		return GetGroundBlockIndex(pPlayerMetadata->Actor->GetActorLocation());
 	}
@@ -682,7 +663,7 @@ FVector AMWorldGenerator::RaycastScreenPoint(const UObject* pWorldContextObject,
 void AMWorldGenerator::DrawDebuggingInfo() const
 {
 	FlushPersistentDebugLines(GetWorld());
-	if (RoadManager)
+	if (const auto RoadManager = AMGameMode::GetRoadManager(this))
 	{
 		if (const auto GroundMarker = RoadManager->GetGroundMarker())
 		{
@@ -779,7 +760,7 @@ void AMWorldGenerator::SetupInputComponent()
 	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
 	{
 		EnableInput(PC);
-		if (RoadManager)
+		if (const auto RoadManager = AMGameMode::GetRoadManager(this))
 		{
 			if (const auto GroundMarker = RoadManager->GetGroundMarker())
 			{
@@ -868,6 +849,7 @@ AActor* AMWorldGenerator::SpawnActor(UClass* Class, const FVector& Location, con
 
 	EnrollActorToGrid(Actor, Uid);
 
+	const auto ExperienceManager = AMGameMode::GetExperienceManager(this);
 	if (const auto PickableActor = Cast<AMPickableActor>(Actor); PickableActor && ExperienceManager)
 	{ // Enroll pickable actor to experience manager
 		PickableActor->PickedUpCompletelyDelegate.AddDynamic(ExperienceManager, &UMExperienceManager::OnActorPickedUp);
@@ -887,6 +869,8 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor, const FMUid& Uid)
 
 	const auto GroundBlockIndex = GetGroundBlockIndex(Actor->GetActorLocation());
 
+	const auto MetadataManager = AMGameMode::GetMetadataManager(this);
+
 	// If there's an empty block, add it to the map
 	const auto BlockMetadata = MetadataManager->FindOrAddBlock(GroundBlockIndex);
 
@@ -894,7 +878,7 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor, const FMUid& Uid)
 	auto& ListToAdd = UMMetadataManager::IsDynamic(Actor) ? BlockMetadata->DynamicActors : BlockMetadata->StaticActors;
 	ListToAdd.Add(FName(Actor->GetName()), Actor);
 
-	const auto UidChecked = IsUidValid(Uid) ? Uid : SaveManager->GenerateUid();
+	const auto UidChecked = IsUidValid(Uid) ? Uid : AMGameMode::GetSaveManager(this)->GenerateUid();
 
 	// Store actor metadata
 	MetadataManager->Add(FName(Actor->GetName()), Actor, UidChecked, GroundBlockIndex);
@@ -928,6 +912,8 @@ TMap<FName, AActor*> AMWorldGenerator::GetActorsInRect(FVector UpperLeft, FVecto
 	const auto FinishBlock = GetGroundBlockIndex(BottomRight);
 
 	TMap<FName, AActor*> Result;
+
+	const auto MetadataManager = AMGameMode::GetMetadataManager(this);
 
 	for (auto X = StartBlock.X; X <= FinishBlock.X; ++X)
 	{
@@ -972,7 +958,7 @@ void AMWorldGenerator::RegenerateArea(const FVector& Location, int RadiusInBlock
 	const auto CenterBlock = GetGroundBlockIndex(Location);
 	for (const auto Block : GetBlocksInRadius(CenterBlock.X, CenterBlock.Y, RadiusInBlocks))
 	{
-		const auto BlockMetadata = MetadataManager->FindOrAddBlock(Block);
+		const auto BlockMetadata = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(Block);
 		if (OverridePCGGraph)
 		{
 			BlockMetadata->PCGGraph = OverridePCGGraph;
@@ -986,58 +972,52 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 {
 	FBoxSphereBounds ActorBounds(ForceInitToZero);
 
-	if (const auto pWorld = WorldContextObject->GetWorld())
+	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(WorldContextObject))
 	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
+		if (const auto FoundBounds = WorldGenerator->DefaultBoundsMap.Find(IN_ActorClass))
 		{
-			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
+			return *FoundBounds;
+		}
+
+		if (!IN_ActorClass)
+		{
+			check(false)
+			return ActorBounds;
+		}
+
+		const auto _ = AMGameMode::GetMetadataManager(WorldContextObject)->FindOrAddBlock(FIntPoint::ZeroValue);
+
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.Name = FName("TestBounds_" + IN_ActorClass->GetName());
+		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		if (const auto Actor = WorldContextObject->GetWorld()->SpawnActorDeferred<AActor>(IN_ActorClass, FTransform::Identity))
+		{
+			Actor->Tags.Add("DummyForDefaultBounds");
+			UGameplayStatics::FinishSpawningActor(Actor, FTransform::Identity);
+			Actor->SetActorEnableCollision(false);
+
+			// Calculate the Actor bounds by accumulating the bounds of its components
+			FBox ActorBox(EForceInit::ForceInitToZero);
+			for (UActorComponent* Component : Actor->GetComponents())
 			{
-				if (const auto FoundBounds = pWorldGenerator->DefaultBoundsMap.Find(IN_ActorClass))
+				if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component))
 				{
-					return *FoundBounds;
-				}
-
-				if (!IN_ActorClass)
-				{
-					check(false)
-					return ActorBounds;
-				}
-
-				const auto _ = pWorldGenerator->GetMetadataManager()->FindOrAddBlock(FIntPoint::ZeroValue);
-
-				FActorSpawnParameters SpawnParameters;
-				SpawnParameters.Name = FName("TestBounds_" + IN_ActorClass->GetName());
-				SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-				if (const auto Actor = pWorld->SpawnActorDeferred<AActor>(IN_ActorClass, FTransform::Identity))
-				{
-					Actor->Tags.Add("DummyForDefaultBounds");
-					UGameplayStatics::FinishSpawningActor(Actor, FTransform::Identity);
-					Actor->SetActorEnableCollision(false);
-
-					// Calculate the Actor bounds by accumulating the bounds of its components
-					FBox ActorBox(EForceInit::ForceInitToZero);
-					for (UActorComponent* Component : Actor->GetComponents())
+					if (PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds") ||
+					(Cast<UStaticMeshComponent>(Component) != nullptr && !PrimitiveComponent->ComponentHasTag("IgnoreDefaultBounds")))
 					{
-						if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(Component))
-						{
-							if (PrimitiveComponent->ComponentHasTag("AffectsDefaultBounds") ||
-							(Cast<UStaticMeshComponent>(Component) != nullptr && !PrimitiveComponent->ComponentHasTag("IgnoreDefaultBounds")))
-							{
-								FTransform ComponentTransform = PrimitiveComponent->GetComponentTransform();
-								FBoxSphereBounds ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);
-								ActorBox += ComponentBounds.GetBox();
-							}
-						}
+						FTransform ComponentTransform = PrimitiveComponent->GetComponentTransform();
+						FBoxSphereBounds ComponentBounds = PrimitiveComponent->CalcBounds(ComponentTransform);
+						ActorBox += ComponentBounds.GetBox();
 					}
-
-					ActorBounds.Origin = ActorBox.GetCenter();
-					ActorBounds.BoxExtent = ActorBox.GetExtent();
-					ActorBounds.SphereRadius = ActorBox.GetExtent().Size2D();
-					pWorldGenerator->DefaultBoundsMap.Add(IN_ActorClass, ActorBounds);
-
-					Actor->Destroy();
 				}
 			}
+
+			ActorBounds.Origin = ActorBox.GetCenter();
+			ActorBounds.BoxExtent = ActorBox.GetExtent();
+			ActorBounds.SphereRadius = ActorBox.GetExtent().Size2D();
+			WorldGenerator->DefaultBoundsMap.Add(IN_ActorClass, ActorBounds);
+
+			Actor->Destroy();
 		}
 	}
 

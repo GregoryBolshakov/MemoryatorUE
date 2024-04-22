@@ -7,6 +7,7 @@
 #include "PCGComponent.h"
 #include "StationaryActors/MGroundBlock.h"
 #include "PCGGraph.h"
+#include "Framework/MGameMode.h"
 #include "StationaryActors/MActor.h"
 
 void UMBlockGenerator::SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, UBlockMetadata* BlockMetadata, const FName& PresetName)
@@ -59,7 +60,7 @@ void UMBlockGenerator::SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWor
 	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters, false, OnSpawnActorStarted))
 	{
 		GroundBlock->UpdateBiome(PCGVariables.Biome);
-		const auto BlockMetadata = pWorldGenerator->GetMetadataManager()->FindOrAddBlock(BlockIndex);
+		const auto BlockMetadata = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(BlockIndex);
 		BlockMetadata->pGroundBlock = GroundBlock;
 	}
 }

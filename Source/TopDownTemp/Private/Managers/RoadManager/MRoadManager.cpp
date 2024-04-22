@@ -6,6 +6,7 @@
 #include "Managers/MWorldGenerator.h"
 #include "Algo/RandomShuffle.h"
 #include "Components/SplineComponent.h"
+#include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "StationaryActors/MRoadSplineActor.h"
 #include "StationaryActors/Outposts/OutpostGenerators/MOutpostGenerator.h"
@@ -142,7 +143,7 @@ void UMRoadManager::SaveToMemory()
 		// Save outpost
 		if (ChunkMetadata.OutpostGenerator)
 		{
-			auto* ActorMetadata = pWorldGenerator->GetMetadataManager()->Find(FName(ChunkMetadata.OutpostGenerator->GetName()));
+			auto* ActorMetadata = AMGameMode::GetMetadataManager(this)->Find(FName(ChunkMetadata.OutpostGenerator->GetName()));
 			if (!ActorMetadata || !IsUidValid(ActorMetadata->Uid))
 			{
 				check(false);
@@ -261,6 +262,7 @@ void UMRoadManager::LoadOrGenerateRegion(const FIntPoint& RegionIndex)
 
 void UMRoadManager::ProcessAdjacentRegions(const FIntPoint& CurrentChunk)
 {
+	return; // temp // TODO: Multiplayer support and testing
 	AdjacentRegions.Empty();
 	const auto CurrentRegion = GetRegionIndexByChunk(CurrentChunk);
 	AdjacentRegions.Add(CurrentRegion);
@@ -388,7 +390,7 @@ bool UMRoadManager::LoadConnectionsBetweenChunksWithinRegion(const FIntPoint& Re
 				Chunk.bConnectedOrIgnored = LoadedChunk->bConnectedOrIgnored;
 				if (IsUidValid(LoadedChunk->OutpostUid))
 				{
-					Chunk.OutpostGenerator = Cast<AMOutpostGenerator>(pWorldGenerator->GetSaveManager()->LoadMActorAndClearSD(LoadedChunk->OutpostUid, pWorldGenerator));
+					Chunk.OutpostGenerator = Cast<AMOutpostGenerator>(AMGameMode::GetSaveManager(this)->LoadMActorAndClearSD(LoadedChunk->OutpostUid, pWorldGenerator));
 					check(Chunk.OutpostGenerator);
 				}
 			}

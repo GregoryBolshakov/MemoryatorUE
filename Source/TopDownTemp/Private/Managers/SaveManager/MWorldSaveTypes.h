@@ -113,10 +113,14 @@ class USaveGameWorld : public USaveGame
 public:
 	inline static FString SlotName {"WorldSave"};
 
-	/** Used as a deque, this represents the sequence of blocks traveled by the player.
+	//** Mapping between Unreal player network ID and project's FMUid */
+	UPROPERTY()
+	TMap<FName, FMUid> UniqueIDToMUid;
+
+	/** CURRENTLY UNSUPPORTED! Used as a deque, this represents the sequence of blocks traveled by the player.
 	 * The newest blocks are appended to the end, while the oldest ones are removed from the beginning when the limit is reached */
 	UPROPERTY()
-	TArray<FIntPoint> PlayerTraveledPath;
+	TArray<FIntPoint> PlayerTraveledPath; // TODO support it for any player or even FMCharacterSaveData
 
 	/** Saved blocks from GridOfActors */
 	UPROPERTY()

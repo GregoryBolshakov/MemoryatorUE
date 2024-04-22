@@ -6,11 +6,11 @@
 #include "Characters/MMob.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
-#include "Managers/MWorldManager.h"
 #include "Managers/MWorldGenerator.h"
 #include "NavigationSystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/DamageEvents.h"
+#include "Framework/MGameMode.h"
 
 AMHostileMobController::AMHostileMobController(const FObjectInitializer& ObjectInitializer) :
 	  Super(ObjectInitializer)
@@ -20,8 +20,8 @@ AMHostileMobController::AMHostileMobController(const FObjectInitializer& ObjectI
 
 void AMHostileMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
-	const auto pWorldGenerator = World.GetSubsystem<UMWorldManager>()->GetWorldGenerator();
-	if (!pWorldGenerator)
+	const auto WorldGenerator = AMGameMode::GetWorldGenerator(this);
+	if (!WorldGenerator)
 	{
 		check(false);
 		return;
@@ -30,7 +30,7 @@ void AMHostileMobController::DoIdleBehavior(const UWorld& World, AMCharacter& My
 	const auto MyLocation = MyCharacter.GetTransform().GetLocation();
 	//TODO: Optimise the GetActorsInRect() to return elements by Class or Tag, etc.
 	const auto SightRange = MyCharacter.GetSightRange();
-	const auto DynamicActorsInSight = pWorldGenerator->GetActorsInRect(MyLocation - FVector(SightRange,SightRange, 0.f), MyLocation + FVector(SightRange,SightRange, 0.f), true);
+	const auto DynamicActorsInSight = WorldGenerator->GetActorsInRect(MyLocation - FVector(SightRange,SightRange, 0.f), MyLocation + FVector(SightRange,SightRange, 0.f), true);
 
 	if (!DynamicActorsInSight.IsEmpty())
 	{

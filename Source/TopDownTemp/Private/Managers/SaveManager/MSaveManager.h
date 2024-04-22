@@ -20,8 +20,6 @@ struct FMCharacterSaveData;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogSaveManager, Log, All);
 
-inline bool IsUidValid(const FMUid& Uid) { return Uid.ObjectId > MIN_int32; }
-
 UCLASS()
 class UMSaveManager : public UObject
 {
@@ -30,6 +28,8 @@ class UMSaveManager : public UObject
 public:
 
 	FMUid GenerateUid();
+	FMUid FindMUidByUniqueID(FName UniqueID) const;
+	void AddMUidByUniqueID(FName UniqueID, const FMUid& Uid) const;
 
 	void LoadFromMemory();
 	void SetUpAutoSaves(AMWorldGenerator* WorldGenerator);
@@ -39,9 +39,6 @@ public:
 	const FMActorSaveData* GetMActorData(const FMUid& Uid);
 	const FMCharacterSaveData* GetMCharacterData(const FMUid& Uid);
 	void RemoveBlock(const FIntPoint& Index);
-
-	/** Returns an array of visited blocks by player left-right <=> earlier-later. Might be empty. */
-	TArray<FIntPoint> GetPlayerTraveledPath() const;
 
 	bool IsLoaded() const;
 

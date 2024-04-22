@@ -5,10 +5,9 @@
 #include "Components/M2DRepresentationComponent.h"
 #include "Components/MInventoryComponent.h"
 #include "Components/MIsActiveCheckerComponent.h"
-#include "Kismet/GameplayStatics.h"
+#include "Framework/MGameMode.h"
 #include "Managers/MMetadataManager.h"
 #include "Managers/MWorldGenerator.h"
-#include "Managers/MWorldManager.h"
 
 AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -24,16 +23,10 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 
 bool AMActor::Destroy(bool bNetForce, bool bShouldModifyLevel)
 {
-	if (const auto pWorld = GetWorld())
+	if (const auto MetadataManager = AMGameMode::GetMetadataManager(this))
 	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
-			{
-				pWorldGenerator->GetMetadataManager()->Remove(FName(GetName()));
-				return true;
-			}
-		}
+		MetadataManager->Remove(FName(GetName()));
+		return true;
 	}
 	return false;
 }
@@ -86,19 +79,13 @@ void AMActor::CreateDynamicMaterials()
 
 EBiome AMActor::GetMyBiome()
 {
-	if (const auto pWorld = GetWorld())
+	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
-			{
-				const FIntPoint MyIndex = pWorldGenerator->GetGroundBlockIndex(GetActorLocation());
+		const FIntPoint MyIndex = WorldGenerator->GetGroundBlockIndex(GetActorLocation());
 
-				if (const auto MyBlockInGrid = pWorldGenerator->GetMetadataManager()->FindOrAddBlock(MyIndex))
-				{
-					return MyBlockInGrid->Biome;
-				}
-			}
+		if (const auto MyBlockInGrid = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(MyIndex))
+		{
+			return MyBlockInGrid->Biome;
 		}
 	}
 #ifndef WITH_EDITOR

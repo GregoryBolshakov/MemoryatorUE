@@ -5,8 +5,8 @@
 #include "PaperSprite.h"
 #include "Characters/MMemoryator.h"
 #include "Managers/MWorldGenerator.h"
-#include "Managers/MWorldManager.h"
 #include "Components/CapsuleComponent.h"
+#include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
 
 AMPickableActor::AMPickableActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -28,20 +28,6 @@ void AMPickableActor::PostInitializeComponents()
 		Capsule->SetGenerateOverlapEvents(true);
 	}
 	check(Capsule);
-
-	if (const auto pWorld = GetWorld())
-	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
-			{
-				if (pDropManager = pWorldGenerator->GetDropManager(); !pDropManager)
-				{
-					check(false);
-				}
-			}
-		}
-	}
 }
 
 void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)

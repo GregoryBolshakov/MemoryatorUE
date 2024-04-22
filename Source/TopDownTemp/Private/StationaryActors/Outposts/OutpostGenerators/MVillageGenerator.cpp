@@ -5,11 +5,11 @@
 #include "Controllers/MVillagerMobController.h"
 #include "Managers/MBlockGenerator.h"
 #include "Managers/MWorldGenerator.h"
-#include "Managers/MWorldManager.h"
 #include "Math/UnrealMathUtility.h"
 #include "StationaryActors/MActor.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"
 #include "Characters/MCharacter.h"
+#include "Framework/MGameMode.h"
 
 DEFINE_LOG_CATEGORY(LogVillageGenerator);
 
@@ -28,18 +28,12 @@ void AMVillageGenerator::Generate()
 {
 	Super::Generate(); // Mark as generated before any error can occur
 
-	UWorld* pWorld = GetWorld();
-	AMWorldGenerator* pWorldGenerator = nullptr;
-	if (pWorld)
-	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			pWorldGenerator = pWorldManager->GetWorldGenerator();
-		}
-	}
+	UWorld* World = GetWorld();
+	const auto WorldGenerator = AMGameMode::GetWorldGenerator(this);
+
 	const auto GapMetadata = ToSpawnBuildingMetadataMap.Find("Gap");
 
-	if (!pWorldGenerator || ToSpawnBuildingMetadataMap.IsEmpty() || !ToSpawnBuildingMetadataMap.Find("Palace") || !GapMetadata)
+	if (!WorldGenerator || ToSpawnBuildingMetadataMap.IsEmpty() || !ToSpawnBuildingMetadataMap.Find("Palace") || !GapMetadata)
 	{
 		check(false);
 		return;
@@ -48,10 +42,10 @@ void AMVillageGenerator::Generate()
 	const FVector CenterPosition = GetTransform().GetLocation();
 	const FVector TopPoint = GetPointOnCircle(CenterPosition, TownSquareRadius, 0.f);
 
-	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
-	const auto PCGGraphVillage = pWorldGenerator->GetBlockGenerator()->GetGraph("Village");
+	const auto BlockSize = WorldGenerator->GetGroundBlockSize();
+	const auto PCGGraphVillage = WorldGenerator->GetBlockGenerator()->GetGraph("Village");
 	// Here we should clean all the blocks we are about to cover
-	pWorldGenerator->RegenerateArea(CenterPosition, FMath::CeilToInt(TownSquareRadius / FMath::Min(BlockSize.X, BlockSize.Y)), PCGGraphVillage); //TODO: Increase the area somehow! for now I don't know how to calculate it
+	WorldGenerator->RegenerateArea(CenterPosition, FMath::CeilToInt(TownSquareRadius / FMath::Min(BlockSize.X, BlockSize.Y)), PCGGraphVillage); //TODO: Increase the area somehow! for now I don't know how to calculate it
 
 	float DistanceFromCenter = TownSquareRadius;
 
@@ -90,7 +84,7 @@ void AMVillageGenerator::Generate()
 		}
 
 		// The temporary actor to find the position for the building
-		const auto TestingBuildingActor = pWorld->SpawnActor<AActor>(BuildingMetadata->ToSpawnClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
+		const auto TestingBuildingActor = World->SpawnActor<AActor>(BuildingMetadata->ToSpawnClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
 
 		if (!TestingBuildingActor)
 		{
@@ -105,7 +99,7 @@ void AMVillageGenerator::Generate()
 		{
 			if (BuildingMetadata->ToSpawnClass != GapMetadata->ToSpawnClass) // They are supposed to be deleted
 			{
-				pWorldGenerator->EnrollActorToGrid(TestingBuildingActor);
+				WorldGenerator->EnrollActorToGrid(TestingBuildingActor);
 				if (const auto OutpostHouse = Cast<AMOutpostHouse>(TestingBuildingActor))
 				{
 					OutpostHouse->SetOwnerOutpost(this);
@@ -172,16 +166,8 @@ bool AMVillageGenerator::TryToPlaceBuilding(AActor& BuildingActor, int& Building
 
 void AMVillageGenerator::PopulateResidentsInHouse(AMOutpostHouse* HouseActor, const FToSpawnBuildingMetadata* BuildingMetadata)
 {
-	UWorld* pWorld = GetWorld();
-	AMWorldGenerator* pWorldGenerator = nullptr;
-	if (pWorld)
-	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			pWorldGenerator = pWorldManager->GetWorldGenerator();
-		}
-	}
-	if (!IsValid(pWorldGenerator))
+	const auto WorldGenerator = AMGameMode::GetWorldGenerator(this);
+	if (!IsValid(WorldGenerator))
 		return;
 
 	// Calculate the amount of villagers to be spawned and spawn them at the entry point of the building.
@@ -196,7 +182,7 @@ void AMVillageGenerator::PopulateResidentsInHouse(AMOutpostHouse* HouseActor, co
 			{
 				FActorSpawnParameters SpawnParameters;
 				SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-				const auto VillagerPawn = pWorldGenerator->SpawnActor<AMCharacter>(VillagerClass.Get(), EntryPoint, FRotator::ZeroRotator, SpawnParameters, true);
+				const auto VillagerPawn = WorldGenerator->SpawnActor<AMCharacter>(VillagerClass.Get(), EntryPoint, FRotator::ZeroRotator, SpawnParameters, true);
 				if (!VillagerPawn)
 				{
 					check(false);

@@ -5,10 +5,10 @@
 #include "UI/MInventoryWidget.h"
 #include "StationaryActors/MPickableActor.h"
 #include "Managers/MWorldGenerator.h"
-#include "Managers/MWorldManager.h"
 #include "Components/Image.h"
 #include "Components/RichTextBlock.h"
 #include "Components/WrapBox.h"
+#include "Framework/MGameMode.h"
 
 void UMPickUpBarWidget::CreateSlots(TSet<UMInventoryComponent*>& InventoriesToRepresent)
 {
@@ -53,26 +53,17 @@ void UMPickUpBarWidget::NativeDestruct()
 {
 	Super::NativeDestruct();
 
-	if (const auto World = GetWorld())
+	if (const auto DropManager = AMGameMode::GetDropManager(this))
 	{
-		if (const auto WorldManager = World->GetSubsystem<UMWorldManager>())
+		for (const auto& Inventory : DropManager->GetInventoriesToRepresent())
 		{
-			if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
+			if (const auto InventoryOwner = Cast<AMPickableActor>(Inventory->GetOwner()))
 			{
-				if (const auto DropManager = WorldGenerator->GetDropManager())
+				for (auto& ItemSlot : Inventory->GetSlots())
 				{
-					for (const auto& Inventory : DropManager->GetInventoriesToRepresent())
+					if (!ItemSlot.OnSlotChangedDelegate.IsBoundToObject(InventoryOwner))
 					{
-						if (const auto InventoryOwner = Cast<AMPickableActor>(Inventory->GetOwner()))
-						{
-							for (auto& ItemSlot : Inventory->GetSlots())
-							{
-								if (!ItemSlot.OnSlotChangedDelegate.IsBoundToObject(InventoryOwner))
-								{
-									ItemSlot.OnSlotChangedDelegate.Unbind();
-								}
-							}
-						}
+						ItemSlot.OnSlotChangedDelegate.Unbind();
 					}
 				}
 			}

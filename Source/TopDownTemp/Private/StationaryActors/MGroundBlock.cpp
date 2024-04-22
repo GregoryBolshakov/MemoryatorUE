@@ -2,11 +2,11 @@
 
 
 #include "MGroundBlock.h"
-#include "Managers/MWorldGenerator.h"
-#include "Managers/MWorldManager.h"
 
 #include "PaperSpriteComponent.h"
+#include "Framework/MGameMode.h"
 #include "Managers/MMetadataManager.h"
+#include "Managers/MWorldGenerator.h"
 
 AMGroundBlock::AMGroundBlock(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -29,29 +29,23 @@ AMGroundBlock::AMGroundBlock(const FObjectInitializer& ObjectInitializer) : Supe
 void AMGroundBlock::UpdateBiome(EBiome IN_Biome)
 {
 	// Get the grid of actors to access adjacent blocks (for possible disabling of their transitions)
-	if (const auto pWorld = GetWorld())
+	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
-			{
-				const FIntPoint MyIndex = pWorldGenerator->GetGroundBlockIndex(GetActorLocation());
+		const FIntPoint MyIndex = WorldGenerator->GetGroundBlockIndex(GetActorLocation());
 
-				// Disable transitions if they contact with the same biome or the adjacent block doesn't even exist
-				TArray<FIntPoint> AdjacentBlockOffsets{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}; // Left; Right; Top; Bottom
-				for (const auto& AdjacentBlockOffset : AdjacentBlockOffsets)
-				{
-					const auto Block = pWorldGenerator->GetMetadataManager()->FindOrAddBlock({ MyIndex.X + AdjacentBlockOffset.X, MyIndex.Y + AdjacentBlockOffset.Y });
-					if (!Block || Block->Biome == IN_Biome)
-					{
-						if (const auto Transition = GetTransitionByOffset(AdjacentBlockOffset))
-							Transition->SetHiddenInGame(true);
-					}
-					else if (Block->pGroundBlock)
-					{
-						Block->pGroundBlock->UpdateTransition(AdjacentBlockOffset * -1, IN_Biome); // *-1 because we update the opposite side of the adjacent block
-					}
-				}
+		// Disable transitions if they contact with the same biome or the adjacent block doesn't even exist
+		TArray<FIntPoint> AdjacentBlockOffsets{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}; // Left; Right; Top; Bottom
+		for (const auto& AdjacentBlockOffset : AdjacentBlockOffsets)
+		{
+			const auto Block = AMGameMode::GetMetadataManager(this)->FindOrAddBlock({ MyIndex.X + AdjacentBlockOffset.X, MyIndex.Y + AdjacentBlockOffset.Y });
+			if (!Block || Block->Biome == IN_Biome)
+			{
+				if (const auto Transition = GetTransitionByOffset(AdjacentBlockOffset))
+					Transition->SetHiddenInGame(true);
+			}
+			else if (Block->pGroundBlock)
+			{
+				Block->pGroundBlock->UpdateTransition(AdjacentBlockOffset * -1, IN_Biome); // *-1 because we update the opposite side of the adjacent block
 			}
 		}
 	}

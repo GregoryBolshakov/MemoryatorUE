@@ -1,8 +1,7 @@
 #include "MMobControllerBase.h"
 #include "Characters/MCharacter.h"
+#include "Framework/MGameMode.h"
 #include "Managers/MCommunicationManager.h"
-#include "Managers/MWorldGenerator.h"
-#include "Managers/MWorldManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "Navigation/PathFollowingComponent.h"
 
@@ -112,17 +111,11 @@ bool AMMobControllerBase::IsPlayerSpeakingToMe()
 	const auto pWorld = GetWorld();
 	if (!pWorld) { check(false); return false; }
 
-	if (const auto WorldManager = pWorld->GetSubsystem<UMWorldManager>())
+	if (const auto CommunicationManager = AMGameMode::GetCommunicationManager(this))
 	{
-		if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
+		if (const auto InterlocutorCharacter = CommunicationManager->GetInterlocutorCharacter(); InterlocutorCharacter && InterlocutorCharacter == MyCharacter)
 		{
-			if (const auto CommunicationManager = WorldGenerator->GetCommunicationManager())
-			{
-				if (const auto InterlocutorCharacter = CommunicationManager->GetInterlocutorCharacter(); InterlocutorCharacter && InterlocutorCharacter == MyCharacter)
-				{
-					return true;
-				}
-			}
+			return true;
 		}
 	}
 

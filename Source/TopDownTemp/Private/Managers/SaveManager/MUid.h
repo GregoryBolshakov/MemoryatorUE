@@ -34,3 +34,5 @@ struct FMUid
 		return HashCombine(::GetTypeHash(uid.LaunchId), ::GetTypeHash(uid.ObjectId));
 	}
 };
+
+inline bool IsUidValid(const FMUid& Uid) { return Uid.ObjectId > MIN_int32; }

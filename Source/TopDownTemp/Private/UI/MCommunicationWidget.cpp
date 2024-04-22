@@ -8,24 +8,15 @@
 #include "Managers/MCommunicationManager.h"
 #include "UI/MInventoryWidget.h"
 #include "Managers/MWorldGenerator.h"
-#include "Managers/MWorldManager.h"
 #include "Components/Button.h"
+#include "Framework/MGameMode.h"
 
 void UMCommunicationWidget::NativeConstruct()
 {
 	Super::NativeConstruct();
-	if (const auto pWorld = GetWorld())
+	if (const auto CommunicationManager = AMGameMode::GetCommunicationManager(this))
 	{
-		if (const auto WorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
-			{
-				if (const auto CommunicationManager = WorldGenerator->GetCommunicationManager(); CommunicationManager)
-				{
-					pTakeAllButton->OnClicked.AddDynamic(CommunicationManager, &AMCommunicationManager::MakeADeal);
-				}
-			}
-		}
+		pTakeAllButton->OnClicked.AddDynamic(CommunicationManager, &AMCommunicationManager::MakeADeal);
 	}
 }
 
@@ -44,19 +35,10 @@ void UMCommunicationWidget::NativeDestruct()
 		}
 	}
 
-	if (const auto pWorld = GetWorld())
+	if (const auto CommunicationManager = AMGameMode::GetCommunicationManager(this))
 	{
-		if (const auto WorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
-			{
-				if (const auto CommunicationManager = WorldGenerator->GetCommunicationManager(); CommunicationManager)
-				{
-					CommunicationManager->StopSpeaking();
-					pTakeAllButton->OnClicked.RemoveAll(CommunicationManager);
-				}
-			}
-		}
+			CommunicationManager->StopSpeaking();
+			pTakeAllButton->OnClicked.RemoveAll(CommunicationManager);
 	}
 }
 
@@ -71,19 +53,13 @@ void UMCommunicationWidget::CreateItemSlotWidgets()
 	const auto pWorld = GetWorld();
 	if (!pWorld) { check(false); return; }
 
-	const AMCommunicationManager* CommunicationManager = nullptr;
+	const AMCommunicationManager* CommunicationManager = AMGameMode::GetCommunicationManager(this);
 	const AMCharacter* InterlocutorCharacter = nullptr;
-	if (const auto WorldManager = pWorld->GetSubsystem<UMWorldManager>())
+	if (CommunicationManager)
 	{
-		if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
+		if (InterlocutorCharacter = CommunicationManager->GetInterlocutorCharacter(); !InterlocutorCharacter)
 		{
-			if (CommunicationManager = WorldGenerator->GetCommunicationManager(); CommunicationManager)
-			{
-				if (InterlocutorCharacter = CommunicationManager->GetInterlocutorCharacter(); !InterlocutorCharacter)
-				{
-					return;
-				}
-			}
+			return;
 		}
 	}
 
@@ -105,44 +81,35 @@ void UMCommunicationWidget::CreateItemSlotWidgets()
 
 void UMCommunicationWidget::ReCreateRewardItemSlotWidgets()
 {
-	if (const auto pWorld = GetWorld())
+	if (const auto CommunicationManager = AMGameMode::GetCommunicationManager(this))
 	{
-		if (const auto WorldManager = pWorld->GetSubsystem<UMWorldManager>())
+		if (const auto InventoryToReward = CommunicationManager->GetInventoryToReward())
 		{
-			if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
+			pRewardItemSlotsWrapBox->ClearChildren();
+			UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
+
+			// Enable/Disable TakeAllButton depending on the slots locked state
+			bool bHasAnyUnlocked = false;
+			for (const auto ItemSlot : InventoryToReward->GetSlots())
 			{
-				if (const auto CommunicationManager = WorldGenerator->GetCommunicationManager())
+				if (!ItemSlot.CheckFlag(FSlot::ESlotFlags::Locked)) // At least one slot isn't locked
 				{
-					if (const auto InventoryToReward = CommunicationManager->GetInventoryToReward())
+					bHasAnyUnlocked = true;
+					if (pTakeAllButton)
 					{
-						pRewardItemSlotsWrapBox->ClearChildren();
-						UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
-
-						// Enable/Disable TakeAllButton depending on the slots locked state
-						bool bHasAnyUnlocked = false;
-						for (const auto ItemSlot : InventoryToReward->GetSlots())
-						{
-							if (!ItemSlot.CheckFlag(FSlot::ESlotFlags::Locked)) // At least one slot isn't locked
-							{
-								bHasAnyUnlocked = true;
-								if (pTakeAllButton)
-								{
-									pTakeAllButton->SetVisibility(ESlateVisibility::Visible);
-									pTakeAllButton->SetIsEnabled(true);
-								}
-								break;
-							}
-						}
-						if (!bHasAnyUnlocked && pTakeAllButton)
-						{
-							pTakeAllButton->SetVisibility(ESlateVisibility::Hidden);
-							pTakeAllButton->SetIsEnabled(false);
-						}
-
-						return;
+						pTakeAllButton->SetVisibility(ESlateVisibility::Visible);
+						pTakeAllButton->SetIsEnabled(true);
 					}
+					break;
 				}
 			}
+			if (!bHasAnyUnlocked && pTakeAllButton)
+			{
+				pTakeAllButton->SetVisibility(ESlateVisibility::Hidden);
+				pTakeAllButton->SetIsEnabled(false);
+			}
+
+			return;
 		}
 	}
 	check(false);

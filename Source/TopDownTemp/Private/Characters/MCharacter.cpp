@@ -11,11 +11,11 @@
 #include "MMemoryator.h" // temporary include
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
+#include "Framework/MGameMode.h"
 #include "Managers/MMetadataManager.h"
 #include "Managers/SaveManager/MSaveManager.h"
 #include "Managers/MWorldSaveTypes.h"
 #include "Managers/MWorldGenerator.h"
-#include "Managers/MWorldManager.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
@@ -76,16 +76,10 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 
 bool AMCharacter::Destroy(bool bNetForce, bool bShouldModifyLevel)
 {
-	if (const auto pWorld = GetWorld())
+	if (const auto MetadataManager = AMGameMode::GetMetadataManager(this))
 	{
-		if (const auto pWorldManager = pWorld->GetSubsystem<UMWorldManager>())
-		{
-			if (const auto pWorldGenerator = pWorldManager->GetWorldGenerator())
-			{
-				pWorldGenerator->GetMetadataManager()->Remove(FName(GetName()));
-				return true;
-			}
-		}
+		MetadataManager->Remove(FName(GetName()));
+		return true;
 	}
 	return false;
 }
@@ -205,9 +199,9 @@ void AMCharacter::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)
 	InitialiseInventory(MCharacterSD.InventoryContents);
 
 	//Load house
-	if (const auto WorldGenerator = GetWorld()->GetSubsystem<UMWorldManager>()->GetWorldGenerator())
+	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
-		if (const auto SaveManager = WorldGenerator->GetSaveManager())
+		if (const auto SaveManager = AMGameMode::GetSaveManager(this))
 		{
 			if (IsUidValid(MCharacterSD.HouseUid))
 			{

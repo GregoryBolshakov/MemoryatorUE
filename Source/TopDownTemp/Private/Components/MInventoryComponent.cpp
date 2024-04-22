@@ -1,9 +1,8 @@
 #include "MInventoryComponent.h"
 
 #include "Framework/MGameInstance.h"
+#include "Framework/MGameMode.h"
 #include "Managers/MDropManager.h"
-#include "Managers/MWorldGenerator.h"
-#include "Managers/MWorldManager.h"
 
 UMInventoryComponent::UMInventoryComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -337,15 +336,9 @@ void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 		return;
 
 	// Item doesn't fit in the inventory, drop it on the ground
-	if (const auto WorldManager = GetWorld()->GetSubsystem<UMWorldManager>())
+	if (const auto DropManager = AMGameMode::GetDropManager(this))
 	{
-		if (const auto WorldGenerator = WorldManager->GetWorldGenerator())
-		{
-			if (const auto DropManager = WorldGenerator->GetDropManager())
-			{
-				DropManager->SpawnPickableItem(ItemLeft);
-			}
-		}
+		DropManager->SpawnPickableItem(ItemLeft);
 	}
 }
 

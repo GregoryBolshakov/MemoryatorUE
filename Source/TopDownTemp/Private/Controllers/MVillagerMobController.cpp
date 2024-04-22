@@ -1,13 +1,11 @@
 #include "MVillagerMobController.h"
 
-#include "StationaryActors/MActor.h"
 #include "Components/MIsActiveCheckerComponent.h"
 #include "Characters/MMemoryator.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
-#include "Kismet/GameplayStatics.h"
-#include "Managers/MWorldManager.h"
 #include "Managers/MWorldGenerator.h"
 #include "NavigationSystem.h"
+#include "Framework/MGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"
 #include "StationaryActors/Outposts/OutpostGenerators/MOutpostGenerator.h"
@@ -19,40 +17,37 @@ AMVillagerMobController::AMVillagerMobController(const FObjectInitializer& Objec
 
 void AMVillagerMobController::PreTick(float DeltaSeconds, const UWorld& World, AMCharacter& MyCharacter)
 {
-	if (const auto WorldManager = World.GetSubsystem<UMWorldManager>())
+	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
-		if (const auto pWorldGenerator = WorldManager->GetWorldGenerator())
+		const auto MyLocation = MyCharacter.GetTransform().GetLocation();
+		const auto ForgetEnemyRange = MyCharacter.GetForgetEnemyRange();
+		const auto DynamicActorsNearby = WorldGenerator->GetActorsInRect(MyLocation - FVector(ForgetEnemyRange,ForgetEnemyRange, 0.f), MyLocation + FVector(ForgetEnemyRange,ForgetEnemyRange, 0.f), true);
+		EnemiesNearby.Empty();
+
+		if (!DynamicActorsNearby.IsEmpty())
 		{
-			const auto MyLocation = MyCharacter.GetTransform().GetLocation();
-			const auto ForgetEnemyRange = MyCharacter.GetForgetEnemyRange();
-			const auto DynamicActorsNearby = pWorldGenerator->GetActorsInRect(MyLocation - FVector(ForgetEnemyRange,ForgetEnemyRange, 0.f), MyLocation + FVector(ForgetEnemyRange,ForgetEnemyRange, 0.f), true);
-			EnemiesNearby.Empty();
-
-			if (!DynamicActorsNearby.IsEmpty())
+			for (const auto& [Name, DynamicActor] : DynamicActorsNearby)
 			{
-				for (const auto& [Name, DynamicActor] : DynamicActorsNearby)
+				// The actors are taken in a square area, in the corners the distance is greater than the radius
+				const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
+				if (DistanceToActor <= MyCharacter.GetForgetEnemyRange())
 				{
-					// The actors are taken in a square area, in the corners the distance is greater than the radius
-					const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
-					if (DistanceToActor <= MyCharacter.GetForgetEnemyRange())
-					{
-						// Split dynamic actors by role
+					// Split dynamic actors by role
 
-						// Check if the actor is an enemy
-						if (const auto Relationship = RelationshipMap.Find(DynamicActor->GetClass());
-							Relationship && *Relationship == ERelationType::Enemy)
+					// Check if the actor is an enemy
+					if (const auto Relationship = RelationshipMap.Find(DynamicActor->GetClass());
+						Relationship && *Relationship == ERelationType::Enemy)
+					{
+						EnemiesNearby.Add(Name, DynamicActor);
+						// Run if we see an enemy. There is no need to run away if we're already hiding
+						if (DistanceToActor <= MyCharacter.GetSightRange() && CurrentBehavior != EMobBehaviors::Hide)
 						{
-							EnemiesNearby.Add(Name, DynamicActor);
-							// Run if we see an enemy. There is no need to run away if we're already hiding
-							if (DistanceToActor <= MyCharacter.GetSightRange() && CurrentBehavior != EMobBehaviors::Hide)
-							{
-								SetRetreatBehavior(World, MyCharacter);
-								break;
-							}
+							SetRetreatBehavior(World, MyCharacter);
+							break;
 						}
-					
-						//TODO: Check if the actor is a friend
 					}
+				
+					//TODO: Check if the actor is a friend
 				}
 			}
 		}

@@ -27,7 +27,7 @@ class AMCharacter;
 class AMMemoryator;
 
 /**
- * The class responsible for world generation. At the moment it must be placed in the world manually..
+ * The class responsible for world generation.
  */
 UCLASS(Blueprintable)
 class TOPDOWNTEMP_API AMWorldGenerator : public AActor
@@ -36,11 +36,14 @@ class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 
 public:
 
-	/** Loads or generates the blocks within Active Zone radius. */
-	void InitSurroundingArea(); //TODO: Maybe rename to LoadOrGenerateArea and adapt for teleport usage as well
+	/** Loads or generates the blocks within Active Zone radius around given block. */
+	void InitSurroundingArea(const FIntPoint& PlayerBlock);
 
 	/** Deletes all static and optionally dynamic actors. If the BlockMetadata didn't exist, create it. */
 	UBlockMetadata* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects);
+
+	/** Loads or generates a character for a player that just has logged in. Then init surrounding area */
+	void ProcessConnectingPlayer(APlayerController* NewPlayer);
 
 	/** First try to look at save, generate new if not found */
 	void LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature = true);
@@ -82,26 +85,9 @@ public:
 		return CastChecked<T>(SpawnActorInRadius(Class, Location, Rotation, SpawnParameters, ToSpawnRadius, ToSpawnHeight, OnSpawnActorStarted),ECastCheckedType::NullAllowed);
 	}
 
-	UMMetadataManager* GetMetadataManager() const { return MetadataManager; }
-
-	UMDropManager* GetDropManager() const { return DropManager; }
-
-	UMSaveManager* GetSaveManager() const { return SaveManager; }
-
-	UFUNCTION(BlueprintCallable)
-	UMReputationManager* GetReputationManager() const { return ReputationManager; }
-
-	UFUNCTION(BlueprintCallable)
-	UMExperienceManager* GetExperienceManager() const { return ExperienceManager; }
-
-	UFUNCTION(BlueprintCallable)
-	AMCommunicationManager* GetCommunicationManager() const { return CommunicationManager; }
-
 	UMBlockGenerator* GetBlockGenerator() const { return BlockGenerator; }
 
-	UMRoadManager* GetRoadManager() const { return RoadManager; }
-
-	FVector GetGroundBlockSize() const;
+	FVector GetGroundBlockSize() const; //TODO: Can be done static, since WorldGenerator is now statically accessed from GameMode
 
 	FIntPoint GetGroundBlockIndex(FVector Position) const;
 
@@ -121,28 +107,11 @@ public:
 
 	TSubclassOf<AActor> GetActorClassToSpawn(FName Name);
 
-protected:
 	void SetupInputComponent();
 
-	// TODO: Remove excess meta modifiers
-	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
-	TSubclassOf<UMDropManager> DropManagerBPClass;
+protected:
 
-	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
-	TSubclassOf<UMReputationManager> ReputationManagerBPClass;
-
-	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
-	TSubclassOf<UMExperienceManager> ExperienceManagerBPClass;
-
-	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
-	TSubclassOf<UMRoadManager> RoadManagerBPClass;
-
-	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
-	TSubclassOf<UMSaveManager> SaveManagerBPClass;
-
-	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
-	TSubclassOf<AMCommunicationManager> CommunicationManagerBPClass;
-
+	// TODO: Remove excess meta modifier
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UMBlockGenerator> BlockGeneratorBPClass;
 
@@ -206,37 +175,13 @@ private: // Saved to memory
 
 private:
 
-	/** Matches actor names/Uids/etc. with their metadata.
-	 * Once a world is loaded, ActorMetadata is available only for actors from visited blocks. */
-	UPROPERTY()
-	UMMetadataManager* MetadataManager;
-
 	UPROPERTY()
 	TSet<FIntPoint> ActiveBlocksMap;
 
 	UPROPERTY()
 	TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;
 
-private: // Managers
-
-	UPROPERTY()
-	UMDropManager* DropManager = nullptr;
-
-	UPROPERTY()
-	UMReputationManager* ReputationManager = nullptr;
-
-	UPROPERTY()
-	UMExperienceManager* ExperienceManager = nullptr;
-
-	UPROPERTY()
-	UMSaveManager* SaveManager = nullptr;
-
-	//TODO: Fix needed: items disappear when game crashes/closes during a trade after items were moved to the widget
-	UPROPERTY()
-	AMCommunicationManager* CommunicationManager = nullptr;
-
-	UPROPERTY()
-	UMRoadManager* RoadManager = nullptr;
+private:
 
 	UPROPERTY()
 	UMBlockGenerator* BlockGenerator = nullptr;
