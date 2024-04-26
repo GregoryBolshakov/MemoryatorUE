@@ -72,6 +72,12 @@ void AMPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (DeferredPawnToPossess)
+	{
+		Possess(DeferredPawnToPossess);
+		DeferredPawnToPossess = nullptr;
+	}
+
 	if (DashVelocityCurve)
 	{
 		FOnTimelineFloat TimelineProgress;

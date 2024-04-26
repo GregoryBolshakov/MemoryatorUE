@@ -31,13 +31,18 @@ public:
 	FMUid FindMUidByUniqueID(FName UniqueID) const;
 	void AddMUidByUniqueID(FName UniqueID, const FMUid& Uid) const;
 
+	/** Read file with save and fill reversed mappings for loading purposes. */
 	void LoadFromMemory();
+
 	void SetUpAutoSaves(AMWorldGenerator* WorldGenerator);
 	void SaveToMemory(AMWorldGenerator* WorldGenerator);
 	bool TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* WorldGenerator);
 	const FBlockSaveData* GetBlockData(const FIntPoint& Index) const;
-	const FMActorSaveData* GetMActorData(const FMUid& Uid);
-	const FMCharacterSaveData* GetMCharacterData(const FMUid& Uid);
+
+	/** Get MCharacter's ground block index without explicitly loading and spawning it.\n
+	 * Especially useful for processing connecting players for initial surroundings */
+	const FIntPoint GetMCharacterBlock(const FMUid& Uid) const;
+
 	void RemoveBlock(const FIntPoint& Index);
 
 	bool IsLoaded() const;
@@ -84,5 +89,11 @@ private: // Relations between saved actors
 	// При вызове SaveToMemory() всё дерево зависимостей уже существует в AMWorldGenerator::ActorsMetadata
 
 	TAtomic<int32> NumberUniqueIndex = MAX_int32; //TODO: Should also reset between different launches in the editor
+
+	/** Mapping between project's FMUid and Unreal player network ID.\n
+	* Just reversed version of USaveGameWorld's UniqueIDToMUid. Need to skip loading players on blocks.\n
+	* Filled at startup, no need to save, as it's relatively small and duplicates all data in already saved field. */
+	UPROPERTY()
+	TMap<FMUid, FName> MUidToUniqueID;
 };
 
