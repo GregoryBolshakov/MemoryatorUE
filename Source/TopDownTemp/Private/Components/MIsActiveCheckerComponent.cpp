@@ -7,15 +7,13 @@ UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer&
 {
 }
 
-void UMIsActiveCheckerComponent::DisableOwner(bool bForce)
+void UMIsActiveCheckerComponent::DisableOwner()
 {
 	// No need to disable if either already disabled or configured to always be enabled
 	if (!bIsOwnerActive || bAlwaysEnabled)
 	{
 		return;
 	}
-
-	bIsOwnerDisabledByForce = bForce;
 
 	const auto pOwner = GetOwner();
 	if (!pOwner)
@@ -28,6 +26,8 @@ void UMIsActiveCheckerComponent::DisableOwner(bool bForce)
 	pOwner->SetActorHiddenInGame(true);
 	bActorHadTickEnabled = pOwner->PrimaryActorTick.bCanEverTick;
 	pOwner->SetActorTickEnabled(false);
+	SavedNetUpdateFrequency = pOwner->NetUpdateFrequency;
+	pOwner->NetUpdateFrequency = 0.f;
 
 	TArray<UActorComponent*> OwnerComponents;
 	pOwner->GetComponents(OwnerComponents, true);
@@ -42,7 +42,13 @@ void UMIsActiveCheckerComponent::DisableOwner(bool bForce)
 		Component->PrimaryComponentTick.bCanEverTick = false;
 		Component->PrimaryComponentTick.UnRegisterTickFunction();
 
-		//TODO: Check if we need to SetGenerateOverlapEvents(false)
+		// Disable collision checks for any primitive. They are executed regardless of the tick state!
+		if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Component))
+		{
+			ComponentData.CollisionType = PrimitiveComponent->GetCollisionEnabled();
+			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			//TODO: Maybe we need to SetGenerateOverlapEvents(false) too?
+		}
 
 		DisabledComponentsData.Add(ComponentData);
 	}
@@ -53,11 +59,11 @@ void UMIsActiveCheckerComponent::DisableOwner(bool bForce)
 	OnDisabledDelegate.ExecuteIfBound();
 }
 
-void UMIsActiveCheckerComponent::EnableOwner(bool bForce)
+void UMIsActiveCheckerComponent::EnableOwner()
 {
 	// No need to enable if bAlwaysEnabled is true, because it has never been disabled.
 	// If was disabled by force, then can be enabled only by force
-	if (bIsOwnerActive || bAlwaysEnabled || (bIsOwnerDisabledByForce && !bForce))
+	if (bIsOwnerActive || bAlwaysEnabled || bAlwaysDisabled)
 	{
 		return;
 	}
@@ -76,6 +82,10 @@ void UMIsActiveCheckerComponent::EnableOwner(bool bForce)
 	if (bActorHadTickEnabled.IsSet())
 	{
 		pOwner->SetActorTickEnabled(bActorHadTickEnabled.GetValue());
+	}
+	if (SavedNetUpdateFrequency.IsSet())
+	{
+		pOwner->NetUpdateFrequency = SavedNetUpdateFrequency.GetValue();
 	}
 
 	// Set the components state using saved data
@@ -97,6 +107,10 @@ void UMIsActiveCheckerComponent::EnableOwner(bool bForce)
 			}
 
 			Data.Component->PrimaryComponentTick.SetTickFunctionEnable(true);
+		}
+		if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Data.Component))
+		{
+			PrimitiveComponent->SetCollisionEnabled(Data.CollisionType.Get(ECollisionEnabled::NoCollision));
 		}
 	}
 	DisabledComponentsData.Empty();

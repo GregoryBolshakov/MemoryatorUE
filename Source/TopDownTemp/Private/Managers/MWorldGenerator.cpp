@@ -50,8 +50,6 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock)
 	//temp
 	//RoadManager->ConnectTwoChunks(PlayerChunk, {PlayerChunk.X + 1, PlayerChunk.Y-1});
 
-	UpdateActiveZone(PlayerBlock); // temp solution to avoid disabling all subsequently generated actors due to empty ActiveBlocksMap
-
 	// We add 1 to the radius on purpose. Generated area always has to be further then visible
 	auto BlocksInRadius = GetBlocksInRadius(PlayerBlock.X, PlayerBlock.Y, ActiveZoneRadius + 1);
 
@@ -143,20 +141,38 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 	{
 		if (const auto PlayerClass = ToSpawnActorClasses.Find("Player")) // TODO: There might be different classes for players, aka different races and whatnot
 		{
+			UpdateActiveZone(FIntPoint::ZeroValue);
+
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Name = FName(UniqueID);
 			pPlayer = SpawnActor<AMCharacter>(*PlayerClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams, true);
 
 			const auto* Metadata = AMGameMode::GetMetadataManager(this)->Find(UniqueID);
 			SaveManager->AddMUidByUniqueID(UniqueID, Metadata->Uid); // Uid was generated when spawning new AMCharacter, map it to the UniqueID
-
-			NewPlayer->Possess(pPlayer); // Possess just spawned player by controller
 		}
 	}
 	else // Load character from SaveManager using the UniqueId
 	{
-		pPlayer = SaveManager->LoadMCharacterAndClearSD(Uid, this); // APawn* pointing to AMCharacter
-		NewPlayer->Possess(pPlayer);
+		UpdateActiveZone(SaveManager->GetMCharacterBlock(Uid));
+		pPlayer = SaveManager->LoadMCharacterAndClearSD(Uid, this);
+
+		// Undo the forced disabling caused by SaveManager.
+		// (We are not like Rust and inactive players don't come with loaded block,
+		// hence save manager always forcibly disables players loaded along with a block)
+		if (const auto ActiveChecker = pPlayer->GetComponentByClass<UMIsActiveCheckerComponent>())
+		{
+			ActiveChecker->SetAlwaysDisabled(false);
+			ActiveChecker->EnableOwner();
+		}
+	}
+
+	if (NewPlayer->HasActorBegunPlay())
+	{
+		NewPlayer->Possess(pPlayer); // Possess just spawned player by controller
+	}
+	else if (auto* MPlayerController = Cast<AMPlayerController>(NewPlayer))
+	{
+		MPlayerController->DeferredPawnToPossess = pPlayer; // Possess the player later, after controller's BeginPlay()
 	}
 
 	InitSurroundingArea(GetGroundBlockIndex(pPlayer->GetActorLocation())); // Init surroundings before spawning player so it doesn't fall underground
@@ -168,6 +184,8 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 		PlayerMetadata->OnBlockChangedDelegate.AddDynamic(this, &AMWorldGenerator::OnPlayerChangedBlock);
 		PlayerMetadata->OnChunkChangedDelegate.AddDynamic(AMGameMode::GetRoadManager(this), &UMRoadManager::OnPlayerChangedChunk);
 	}
+
+	//TODO: Make sure connecting player doesn't get stuck in terrain which might appear while he is away
 }
 
 void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature)
@@ -992,6 +1010,7 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		if (const auto Actor = WorldContextObject->GetWorld()->SpawnActorDeferred<AActor>(IN_ActorClass, FTransform::Identity))
 		{
+			Actor->SetReplicates(false); // This might cause problems since the actor hasn't Begun Play. Be cautious especially using Iris
 			Actor->Tags.Add("DummyForDefaultBounds");
 			UGameplayStatics::FinishSpawningActor(Actor, FTransform::Identity);
 			Actor->SetActorEnableCollision(false);

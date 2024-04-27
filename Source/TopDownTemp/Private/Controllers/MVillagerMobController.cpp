@@ -227,7 +227,8 @@ void AMVillagerMobController::Embark(const AMCharacter& MyCharacter)
 {
 	if (const auto ActiveCheckerComponent = MyCharacter.GetIsActiveCheckerComponent())
 	{
-		ActiveCheckerComponent->DisableOwner(true);
+		ActiveCheckerComponent->SetAlwaysDisabled(true);
+		ActiveCheckerComponent->DisableOwner();
 	}
 	bEmbarked = true;
 }
@@ -236,7 +237,8 @@ void AMVillagerMobController::Disembark(const AMCharacter& MyCharacter)
 {
 	if (const auto ActiveCheckerComponent = MyCharacter.GetIsActiveCheckerComponent())
 	{
-		ActiveCheckerComponent->EnableOwner(true);
+		ActiveCheckerComponent->SetAlwaysDisabled(false);
+		ActiveCheckerComponent->EnableOwner();
 	}
 	bEmbarked = false;
 }

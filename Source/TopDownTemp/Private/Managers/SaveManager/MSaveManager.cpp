@@ -6,6 +6,7 @@
 #include "Managers/MMetadataManager.h"
 #include "Characters/MCharacter.h"
 #include "Characters/MMemoryator.h"
+#include "Components/MIsActiveCheckerComponent.h"
 #include "Controllers/MMobControllerBase.h"
 #include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
@@ -153,25 +154,31 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 void UMSaveManager::LoadFromMemory()
 {
 	LoadedGameWorld = Cast<USaveGameWorld>(UGameplayStatics::LoadGameFromSlot(USaveGameWorld::SlotName, 0));
-	if (LoadedGameWorld)
-	{
-		LoadedGameWorld->LaunchId--;
-
-		for (auto& [Index, BlockSD] : LoadedGameWorld->SavedGrid)
-		{
-			for (auto& [Uid, MActorSD] : BlockSD.SavedMActors)
-			{
-				LoadedMActorMap.Add(MActorSD.ActorSaveData.Uid, &MActorSD);
-			}
-			for (auto& [Uid, MCharacterSD] : BlockSD.SavedMCharacters)
-			{
-				LoadedMCharacterMap.Add(MCharacterSD.ActorSaveData.Uid, &MCharacterSD);
-			}
-		}
-	}
-	else
+	if (!LoadedGameWorld)
 	{
 		LoadedGameWorld = Cast<USaveGameWorld>(UGameplayStatics::CreateSaveGameObject(USaveGameWorld::StaticClass()));
+		return;
+	}
+
+	LoadedGameWorld->LaunchId--;
+
+	// Fill mappings between Uid and Saved Data
+	for (auto& [Index, BlockSD] : LoadedGameWorld->SavedGrid)
+	{
+		for (auto& [Uid, MActorSD] : BlockSD.SavedMActors)
+		{
+			LoadedMActorMap.Add(MActorSD.ActorSaveData.Uid, &MActorSD);
+		}
+		for (auto& [Uid, MCharacterSD] : BlockSD.SavedMCharacters)
+		{
+			LoadedMCharacterMap.Add(MCharacterSD.ActorSaveData.Uid, &MCharacterSD);
+		}
+	}
+
+	// Fill reverse mapping for UniqueID and Uid
+	for (const auto& [UniqueID, Uid] : LoadedGameWorld->UniqueIDToMUid)
+	{
+		MUidToUniqueID.Add(Uid, UniqueID);
 	}
 }
 
@@ -208,11 +215,22 @@ bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* 
 	while (!BlockSD->SavedMCharacters.IsEmpty())
 	{
 		const auto Num = BlockSD->SavedMCharacters.Num();
-		LoadMCharacterAndClearSD(BlockSD->SavedMCharacters.CreateIterator().Key(), WorldGenerator);
+		const auto* Character = LoadMCharacterAndClearSD(BlockSD->SavedMCharacters.CreateIterator().Key(), WorldGenerator);
 		if (Num == BlockSD->SavedMCharacters.Num())
 		{
-			check(false);
+			check(false); // Some character didn't clear is save data
 			return false;
+		}
+
+		const auto Metadata = AMGameMode::GetMetadataManager(this)->Find(FName(Character->GetName()));
+		// By current design, inactive players don't appear in the world with the rest of the block, but only when the player is connected. We are not like Rust
+		if (const auto UniqueID = MUidToUniqueID.Find(Metadata->Uid))
+		{
+			if (const auto ActiveChecker = Character->GetComponentByClass<UMIsActiveCheckerComponent>())
+			{
+				ActiveChecker->SetAlwaysDisabled(true);
+				ActiveChecker->DisableOwner();
+			}
 		}
 	}
 
@@ -227,6 +245,26 @@ const FBlockSaveData* UMSaveManager::GetBlockData(const FIntPoint& Index) const
 		return LoadedGameWorld->SavedGrid.Find(Index);
 	}
 	return nullptr;
+}
+
+const FIntPoint UMSaveManager::GetMCharacterBlock(const FMUid& Uid) const
+{
+	if (LoadedGameWorld)
+	{
+		if (const auto* AlreadySpawnedActorMetadata = AMGameMode::GetMetadataManager(this)->Find(Uid))
+		{
+			return AlreadySpawnedActorMetadata->GroundBlockIndex;
+		}
+		const auto* pMCharacterSD = LoadedMCharacterMap.Find(Uid);
+		if (!pMCharacterSD)
+		{
+			check(false); // Actor's saved data was removed, but the object was never spawned
+			return {};
+		}
+		return AMGameMode::GetWorldGenerator(this)->GetGroundBlockIndex((*pMCharacterSD)->ActorSaveData.Location);
+	}
+	check(false); // Shouldn't call it until the world savefile is loaded
+	return {};
 }
 
 void UMSaveManager::RemoveBlock(const FIntPoint& Index)

@@ -65,8 +65,7 @@ public:
 
 	const TMap<TSubclassOf<APawn>, ERelationType>& GetRelationshipMap() const { return RelationshipMap; }
 
-	//Dash // TODO: Use gameplay ability system 
-protected:
+protected: //Dash // TODO: Use gameplay ability system 
 	UFUNCTION()
 	void TimelineProgress(float Value);
 
@@ -156,6 +155,10 @@ private:
 public:
 	UFUNCTION(BlueprintCallable)
 	void SyncOccludedActors();
+
+	/** Here is cached the pawn for a connecting player if the controller has not begun play. */
+	UPROPERTY()
+	APawn* DeferredPawnToPossess;
 
 	// Other
 protected:
