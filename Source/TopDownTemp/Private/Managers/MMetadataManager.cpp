@@ -80,10 +80,10 @@ void UMMetadataManager::MoveToBlock(FName Name, const FIntPoint& NewIndex)
 			// Process block constancy
 			if (const auto ActiveCheckerComp = Cast<UMIsActiveCheckerComponent>(Metadata->Actor->GetComponentByClass(UMIsActiveCheckerComponent::StaticClass())))
 			{
-				if (ActiveCheckerComp->GetAlwaysEnabled())
+				if (ActiveCheckerComp->GetAlwaysEnabled() || ActiveCheckerComp->GetPreserveBlockConstancy())
 				{
 					OldBlockMetadata->ConstantActorsCount--;
-					NewBlockMetadata->ConstantActorsCount--;
+					NewBlockMetadata->ConstantActorsCount++;
 				}
 			}
 		}
