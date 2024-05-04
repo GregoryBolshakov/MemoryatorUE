@@ -13,19 +13,6 @@
 #include "Managers/SaveManager/MSaveManager.h"
 #include "UObject/ConstructorHelpers.h"
 
-AMGameMode::AMGameMode()
-{
-	// use our custom PlayerController class
-	PlayerControllerClass = AMPlayerController::StaticClass();
-
-	// set default pawn class to our Blueprinted character
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/Memoryator/Blueprints/BP_Memoryator"));
-	if (PlayerPawnBPClass.Class != nullptr)
-	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
-	}
-}
-
 void AMGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
@@ -46,6 +33,12 @@ void AMGameMode::GoOffline()
 void AMGameMode::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (!HasAuthority())
+	{
+		return; // TODO: Handle multiplayer nicely. Theoretically AMGameMode::BeginPlay() should not be called on client at all.
+	}
+
 	InitializeManagers();
 	while (!ConnectionQueue.IsEmpty())
 	{

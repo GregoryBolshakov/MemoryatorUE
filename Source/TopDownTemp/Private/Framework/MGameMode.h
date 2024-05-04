@@ -19,8 +19,6 @@ class AMGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 public:
-	AMGameMode();
-
 	static inline AMGameMode* GetAMGameMode (const UObject* Caller);
 	// Getters for managers
 	static inline AMWorldGenerator* GetWorldGenerator(const UObject* Caller);
@@ -89,12 +87,12 @@ private: // Managers
 	void InitializeManagers();
 
 	UPROPERTY()
-	AMWorldGenerator* WorldGenerator;
+	AMWorldGenerator* WorldGenerator = nullptr;
 
 	/** Matches actor names/Uids/etc. with their metadata.
 	* Once a world is loaded, ActorMetadata is available only for actors from visited blocks. */
 	UPROPERTY()
-	UMMetadataManager* MetadataManager;
+	UMMetadataManager* MetadataManager = nullptr;
 
 	UPROPERTY()
 	UMDropManager* DropManager = nullptr;
