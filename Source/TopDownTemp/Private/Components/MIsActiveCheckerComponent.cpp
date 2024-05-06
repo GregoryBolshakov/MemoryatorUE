@@ -26,8 +26,8 @@ void UMIsActiveCheckerComponent::DisableOwner()
 	pOwner->SetActorHiddenInGame(true);
 	bActorHadTickEnabled = pOwner->PrimaryActorTick.bCanEverTick;
 	pOwner->SetActorTickEnabled(false);
-	SavedNetUpdateFrequency = pOwner->NetUpdateFrequency;
-	pOwner->NetUpdateFrequency = 0.f;
+	bWasActorReplicated = pOwner->GetIsReplicated();
+	pOwner->SetReplicates(false);
 
 	TArray<UActorComponent*> OwnerComponents;
 	pOwner->GetComponents(OwnerComponents, true);
@@ -83,9 +83,9 @@ void UMIsActiveCheckerComponent::EnableOwner()
 	{
 		pOwner->SetActorTickEnabled(bActorHadTickEnabled.GetValue());
 	}
-	if (SavedNetUpdateFrequency.IsSet())
+	if (bWasActorReplicated.IsSet())
 	{
-		pOwner->NetUpdateFrequency = SavedNetUpdateFrequency.GetValue();
+		pOwner->SetReplicates(bWasActorReplicated.GetValue());
 	}
 
 	// Set the components state using saved data

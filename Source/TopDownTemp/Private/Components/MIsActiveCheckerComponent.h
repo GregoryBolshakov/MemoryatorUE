@@ -74,7 +74,7 @@ private: // Saved data
 
 	TOptional<bool> bActorHadTickEnabled;
 
-	TOptional<float> SavedNetUpdateFrequency; // TODO: This is wrong, should set bReplicates instead but have errors because DisableOwner is called before BeginPlay()
+	TOptional<bool> bWasActorReplicated;
 
 	UPROPERTY()
 	TArray<FDisabledComponentInfo> DisabledComponentsData;
