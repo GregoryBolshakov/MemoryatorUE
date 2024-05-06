@@ -37,7 +37,7 @@ class TOPDOWNTEMP_API AMWorldGenerator : public AActor
 public:
 
 	/** Loads or generates the blocks within Active Zone radius around given block. */
-	void InitSurroundingArea(const FIntPoint& PlayerBlock);
+	void InitSurroundingArea(const FIntPoint& PlayerBlock, const uint8 ObserverIndex);
 
 	/** Deletes all static and optionally dynamic actors. If the BlockMetadata didn't exist, create it. */
 	UBlockMetadata* EmptyBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects);
@@ -46,13 +46,19 @@ public:
 	void ProcessConnectingPlayer(APlayerController* NewPlayer);
 
 	/** First try to look at save, generate new if not found */
-	void LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature = true);
+	void LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature, const uint8 ObserverIndex);
 	
 	/** Generate a block */
 	void RegenerateBlock(const FIntPoint& BlockIndex, bool KeepDynamicObjects = true, bool IgnoreConstancy = false);
 
-	/** Turns on all actors in the active zone, turn off all others*/
-	void UpdateActiveZone(const FIntPoint& CenterBlock);
+	/** Sets the observer's flag on all blocks within a zone at the given center and of radius = ActiveZoneRadius */
+	void AddObserverToZone(const FIntPoint& CenterBlock, const uint8 ObserverIndex);
+
+	/** Removes the observer's flag on all blocks within a zone at the given center and of radius = ActiveZoneRadius */
+	void RemoveObserverFromZone(const FIntPoint& CenterBlock, const uint8 ObserverIndex);
+
+	/** Finds the difference between the new and old zones, removes the observer flag on the abandoned old one and sets it on the entered new parts */
+	void MoveObserverToZone(const FIntPoint& CenterBlockFrom, const FIntPoint& CenterBlockTo, const uint8 ObserverIndex);
 
 	template< class T >
 	T* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters = FActorSpawnParameters(), bool bForceAboveGround = false, const FOnSpawnActorStarted& OnSpawnActorStarted = {}, const FMUid& Uid = {})
@@ -131,11 +137,11 @@ private:
 	void UpdateNavigationMesh();
 
 	UFUNCTION()
-	void OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex);
+	void OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex, const uint8 ObserverIndex);
 
-	void GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock);
+	void GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock, const uint8 ObserverIndex);
 
-	void SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIntPoint>& BlocksToGenerate);
+	void SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIntPoint>& BlocksToGenerate, const uint8 ObserverIndex);
 
 	/** Function for spreading heavy GenerateBlock calls over multiple ticks */
 	void OnTickGenerateBlocks();
@@ -166,7 +172,7 @@ private:
 	bool bPendingTeleport = false;
 
 	/** Pool of blocks waiting to be generated. */
-	TSet<FIntPoint> PendingBlocks;
+	TSet<FBlockAndObserver> PendingBlocks;
 
 private: // Saved to memory
 

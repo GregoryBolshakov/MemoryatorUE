@@ -457,7 +457,7 @@ FIntPoint UMRoadManager::GetRegionIndexByChunk(const FIntPoint& ChunkIndex) cons
 					FMath::FloorToInt(static_cast<float>(ChunkIndex.Y) / RegionSize.Y));
 }
 
-void UMRoadManager::OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk)
+void UMRoadManager::OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex)
 {
-	ProcessAdjacentRegions(NewChunk);
+	ProcessAdjacentRegions(NewChunk); // TODO: process ObserverIndex! VERY IMPORTANT!
 }

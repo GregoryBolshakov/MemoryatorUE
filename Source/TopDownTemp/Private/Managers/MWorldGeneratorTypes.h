@@ -8,8 +8,8 @@ class UPCGGraph;
 class AMRoadSplineActor;
 class ASplineMeshActor;
 class AMGroundBlock;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnBlockChanged, const FIntPoint&, OldBlock, const FIntPoint&, NewBlock);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnChunkChanged, const FIntPoint&, OldChunk, const FIntPoint&, NewChunk);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnBlockChanged, const FIntPoint&, OldBlock, const FIntPoint&, NewBlock, const uint8, ObserverIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnChunkChanged, const FIntPoint&, OldChunk, const FIntPoint&, NewChunk, const uint8, ObserverIndex);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*);
 
 UENUM(BlueprintType)
@@ -29,6 +29,80 @@ struct FBiomeDelimiter
 	EBiome Biome;
 };
 
+USTRUCT()
+struct FObserverFlags
+{
+	GENERATED_BODY()
+
+	FORCEINLINE void SetBit(uint8 BitIndex) {
+		// Atomically set the bit to 1
+		FPlatformAtomics::InterlockedOr((int32*)&Flags, 1 << BitIndex);
+	}
+
+	FORCEINLINE bool CheckBit(uint8 BitIndex) const
+	{
+		// Atomically check the bit
+		return Flags.Load() & (1 << BitIndex);
+	}
+
+	FORCEINLINE void ClearBit(uint8 BitIndex) {
+		// Atomically clear the bit
+		FPlatformAtomics::InterlockedAnd((int32*)&Flags, ~(1 << BitIndex));
+	}
+
+	FORCEINLINE bool IsEmpty() const
+	{
+		// Check if any bit is set
+		return Flags.Load() == 0;
+	}
+
+	FORCEINLINE bool IsAnyOtherBitSet(uint8 BitIndex) const
+	{
+		// Check if any other bit is set, excluding the bit at BitIndex
+		uint32 mask = ~(1 << BitIndex);
+		return (Flags.Load() & mask) != 0;
+	}
+
+	FObserverFlags() {}
+
+	// Copy constructor
+	FObserverFlags(const FObserverFlags& Other)
+	{
+		Flags.Store(Other.Flags.Load());
+	}
+
+	// Copy assignment operator
+	FObserverFlags& operator=(const FObserverFlags& Other)
+	{
+		if (this != &Other)
+		{
+			Flags.Store(Other.Flags.Load());
+		}
+		return *this;
+	}
+
+	TAtomic<uint32> Flags;
+};
+
+/** Is needed for pool of blocks waiting to be generated. Each block needs to know which player it is generated for */
+struct FBlockAndObserver
+{
+	FIntPoint BlockIndex;
+	uint8 ObserverIndex = 0;
+
+	bool operator==(const FBlockAndObserver& Other) const
+	{
+		// If multiple players trigger a block generation, generate only for the first one
+		return BlockIndex == Other.BlockIndex;
+	}
+};
+
+/** Hash function for FBlockAndObserver */
+FORCEINLINE uint32 GetTypeHash(const FBlockAndObserver& BlockAndObserver)
+{
+	return GetTypeHash(BlockAndObserver.BlockIndex);
+}
+
 /** Class for storing the data needed for world generation per grid block */
 UCLASS()
 class UBlockMetadata : public UObject
@@ -41,10 +115,14 @@ public:
 	UPROPERTY()
 	TMap<FName, AActor*> DynamicActors;
 
-	//bool IsConstant = false; //TODO: now it is not evaluated! We should track EnrollToGrid() and RemoveFromGrid() for AlwaysEnabled actors
 	/** If there is at least one AlwaysEnabled actor on the block, it won't be regenerated */
 	UPROPERTY()
 	int ConstantActorsCount = 0;
+
+	/** Multiplayer limit is 32 players. Each block knows whether a certain player is observing it.\n
+	 * Each player is given a unique flag bit position when entering the game. */
+	UPROPERTY()
+	FObserverFlags ObserverFlags;
 
 	/** Is set in either AMWorldGenerator::PrepareVisibleZone, or UMSaveManager::LoadBlock */
 	UPROPERTY()

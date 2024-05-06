@@ -37,7 +37,7 @@ AMWorldGenerator::AMWorldGenerator(const FObjectInitializer& ObjectInitializer)
 }
 
 FTimerHandle tempTimer; //temp
-void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock)
+void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const uint8 ObserverIndex)
 {
 	auto* pWorld = GetWorld();
 	if (!pWorld)
@@ -65,7 +65,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock)
 	}
 	for (const auto BlockInRadius : BlocksInRadius)
 	{
-		LoadOrGenerateBlock(BlockInRadius, false);
+		LoadOrGenerateBlock(BlockInRadius, false, ObserverIndex);
 	}
 
 	/*if (!AMGameMode::GetSaveManager(this)->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
@@ -121,30 +121,35 @@ UBlockMetadata* AMWorldGenerator::EmptyBlock(const FIntPoint& BlockIndex, bool K
 	return BlockMetadata;
 }
 
-int playerCount = 0; // Temporarily hardcode UniqueID for players for offline testing
+uint8 playerCount = 0; // Temporarily hardcode UniqueID for players for offline testing
 void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 {
 	// Function uses UniqueID field of controller's PlayerState to either load the existing character from save or spawn a new one.
 
-	if (!NewPlayer || !NewPlayer->PlayerState)
+	auto* MPlayerController = Cast<AMPlayerController>(NewPlayer);
+	if (!MPlayerController || !MPlayerController->PlayerState)
 	{
 		check(false);
 		return;
 	}
 	auto* SaveManager = AMGameMode::GetSaveManager(this);
 	//const auto UniqueID = NewPlayer->PlayerState->GetUniqueId().ToString();
-	const auto UniqueID = FName("BOLSHAKOV-" + FString::FromInt(playerCount++));
+	const auto UniqueID = FName("BOLSHAKOV-" + FString::FromInt(playerCount));
 	auto Uid = SaveManager->FindMUidByUniqueID(FName(UniqueID));
+	MPlayerController->ObserverIndex = playerCount;
+	playerCount++;
 
 	APawn* pPlayer = nullptr;
 	if (!IsUidValid(Uid)) // First time a player with such UniqueID is logging in. Spawn a pawn for them and generate a Uid for it.
 	{
 		if (const auto PlayerClass = ToSpawnActorClasses.Find("Player")) // TODO: There might be different classes for players, aka different races and whatnot
 		{
-			UpdateActiveZone(FIntPoint::ZeroValue);
+			AddObserverToZone(FIntPoint::ZeroValue, MPlayerController->ObserverIndex);
 
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Name = FName(UniqueID);
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn; //TODO: Fix obscured locations
+			// If not using AlwaysSpawn, character might be silently shifted to another block which will cause numerous problems for the whole system.
 			pPlayer = SpawnActor<AMCharacter>(*PlayerClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams, true);
 
 			const auto* Metadata = AMGameMode::GetMetadataManager(this)->Find(UniqueID);
@@ -153,7 +158,7 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 	}
 	else // Load character from SaveManager using the UniqueId
 	{
-		UpdateActiveZone(SaveManager->GetMCharacterBlock(Uid));
+		AddObserverToZone(SaveManager->GetMCharacterBlock(Uid), MPlayerController->ObserverIndex);
 		pPlayer = SaveManager->LoadMCharacterAndClearSD(Uid, this);
 
 		// Undo the forced disabling caused by SaveManager.
@@ -166,16 +171,16 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 		}
 	}
 
-	if (NewPlayer->HasActorBegunPlay())
+	if (MPlayerController->HasActorBegunPlay())
 	{
-		NewPlayer->Possess(pPlayer); // Possess just spawned player by controller
+		MPlayerController->Possess(pPlayer); // Possess just spawned player by controller
 	}
-	else if (auto* MPlayerController = Cast<AMPlayerController>(NewPlayer))
+	else
 	{
 		MPlayerController->DeferredPawnToPossess = pPlayer; // Possess the player later, after controller's BeginPlay()
 	}
 
-	InitSurroundingArea(GetGroundBlockIndex(pPlayer->GetActorLocation())); // Init surroundings before spawning player so it doesn't fall underground
+	InitSurroundingArea(GetGroundBlockIndex(pPlayer->GetActorLocation()), MPlayerController->ObserverIndex); // Init surroundings before spawning player so it doesn't fall underground
 
 	// Bind to the player-moves-to-another-block event
 	AMGameMode::GetExperienceManager(this)->ExperienceAddedDelegate.AddDynamic(Cast<AMPlayerController>(NewPlayer), &AMPlayerController::OnExperienceAdded);
@@ -188,15 +193,19 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 	//TODO: Make sure connecting player doesn't get stuck in terrain which might appear while he is away
 }
 
-void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature)
+void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRegenerationFeature, const uint8 ObserverIndex)
 {
 	auto* BlockMetadata = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(BlockIndex);
 	if (IsValid(BlockMetadata->pGroundBlock)) // The block already exists in the current session
 	{
-		if (BlockMetadata->ConstantActorsCount > 0 || !bRegenerationFeature) // No need to regenerate existing block
+		if (!bRegenerationFeature || // Regen feature is not needed for this block.
+			BlockMetadata->ConstantActorsCount > 0 || // E.g. a mob went off active zone but when you see it again, its block hasn't changed
+			BlockMetadata->ObserverFlags.IsAnyOtherBitSet(ObserverIndex) // The block is visible by other players
+			)
 		{
-			return;
+			return; // No need to regenerate existing block
 		}
+
 		// Re-generate the block
 		EmptyBlock(BlockIndex, true);
 		BlockGenerator->SpawnActorsRandomly(BlockIndex, this, BlockMetadata);
@@ -207,7 +216,7 @@ void AMWorldGenerator::LoadOrGenerateBlock(const FIntPoint& BlockIndex, bool bRe
 		const auto SaveManager = AMGameMode::GetSaveManager(this);
 		if (const auto BlockSD = SaveManager->GetBlockData(BlockIndex))
 		{
-			// Regeneration feature applies only if the block isn't constant. Otherwise it must be loaded if save is present
+			// Regeneration feature applies only if the block isn't constant. Otherwise, it must be loaded if save is present
 			if (BlockSD->ConstantActorsCount > 0 || !bRegenerationFeature) //TODO: Implement this!!! Very important
 			{
 				SaveManager->TryLoadBlock(BlockIndex, this);
@@ -254,7 +263,7 @@ void AMWorldGenerator::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	AMGameMode::GetSaveManager(this)->SaveToMemory(this);
 }
 
-void AMWorldGenerator::CheckDynamicActorsBlocks()
+void AMWorldGenerator::CheckDynamicActorsBlocks() // TODO: use APawns instead of AActors, since they are supposed to be dynamic actors
 {
 	//TODO: TEST FOR EXCEPTIONS!
 	if (ActiveBlocksMap.IsEmpty())
@@ -310,10 +319,22 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 		{
 			MetadataManager->MoveToBlock(Name, Transition.NewBlockIndex.GetValue());
 
+			// Get AMPlayerController
+			AMPlayerController* MPlayerController = nullptr;
+			if (const auto Pawn = Cast<APawn>(Transition.ActorMetadata->Actor))
+			{
+				MPlayerController = Cast<AMPlayerController>(Pawn->GetController());
+			}
+			if (!MPlayerController)
+			{
+				check(false);
+				continue;
+			}
+
 			// Even though the dynamic object is still enabled, it might have moved to the disabled block (or even not generated yet),
 			// where all surrounding static objects are disabled.
 			// Check the environment for validity if you bind to the delegate!
-			Transition.ActorMetadata->OnBlockChangedDelegate.Broadcast(Transition.OldBlockIndex, Transition.ActorMetadata->GroundBlockIndex);
+			Transition.ActorMetadata->OnBlockChangedDelegate.Broadcast(Transition.OldBlockIndex, Transition.ActorMetadata->GroundBlockIndex, MPlayerController->ObserverIndex);
 
 			const auto RoadManager = AMGameMode::GetRoadManager(this);
 			//Chunk transition check
@@ -321,7 +342,7 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 			const auto ActualChunk = RoadManager->GetChunkIndexByBlock(Transition.ActorMetadata->GroundBlockIndex);
 			if (OldChunk != ActualChunk)
 			{
-				Transition.ActorMetadata->OnChunkChangedDelegate.Broadcast(OldChunk, ActualChunk);
+				Transition.ActorMetadata->OnChunkChangedDelegate.Broadcast(OldChunk, ActualChunk, MPlayerController->ObserverIndex);
 			}
 		}
 		else
@@ -331,86 +352,128 @@ void AMWorldGenerator::CheckDynamicActorsBlocks()
 	}
 }
 
-void AMWorldGenerator::UpdateActiveZone(const FIntPoint& CenterBlock)
+auto EnableActorsInBlock = [&](const TMap<FName, AActor*>& Actors)
+{
+	for (const auto& [Name, Data] : Actors)
+	{
+		check(Data); //TODO: Investigate it further, normally it shouldn't happen
+		if (Data)
+		{
+			if (UMIsActiveCheckerComponent* IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
+			{
+				IsActiveCheckerComponent->EnableOwner();
+			}
+		}
+	}
+};
+
+void AMWorldGenerator::AddObserverToZone(const FIntPoint& CenterBlock, const uint8 ObserverIndex)
 {
 	const auto World = GetWorld();
 	if (!IsValid(World)) return;
 
-	// Enable all the objects within PlayerActiveZone. ActiveBlocksMap is considered as from the previous check.
-	TSet<FIntPoint> ActiveBlocksMap_New;
-
 	const auto MetadataManager = AMGameMode::GetMetadataManager(this);
 
 	//TODO: Consider spreading the block logic over multiple ticks as done in OnTickGenerateBlocks()
-	for (const auto BlockIndex : GetBlocksInRadius(CenterBlock.X, CenterBlock.Y, ActiveZoneRadius)) // you can add +1 to the ActiveZoneRadius if you need to see how the perimeter is generated in PIE
+
+	// you can temporarily add +1 to the ActiveZoneRadius if you need to see how the perimeter is generated in PIE,
+	// but you have to add it to RemoveObserverFromZone as well, otherwise it will be very bad for performance
+	for (const auto BlockIndex : GetBlocksInRadius(CenterBlock.X, CenterBlock.Y, ActiveZoneRadius))
 	{
-		ActiveBlocksMap_New.Add(BlockIndex);
-		ActiveBlocksMap.Remove(BlockIndex);
+		ActiveBlocksMap.Add(BlockIndex);
 		auto* BlockMetadata = MetadataManager->FindOrAddBlock(BlockIndex);
+		BlockMetadata->ObserverFlags.SetBit(ObserverIndex);
 
 		// Enable all the static Actors in the block
-		for (const auto& [Index, Data] : BlockMetadata->StaticActors)
-		{
-			if (!Data)
-			{ //TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
-				check(false);
-				continue;
-			}
-			if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-			{
-				IsActiveCheckerComponent->EnableOwner();
-			}
-		}
+		EnableActorsInBlock(BlockMetadata->StaticActors);
 		// Enable all dynamic Actors in the block
-		for (const auto& [Index, Data] : BlockMetadata->DynamicActors)
+		EnableActorsInBlock(BlockMetadata->DynamicActors);
+	}
+}
+
+auto DisableActorsInBlock = [&](const TMap<FName, AActor*>& Actors)
+{
+	for (const auto& [Name, Data] : Actors)
+	{
+		check(Data); //TODO: Investigate it further, normally it shouldn't happen
+		if (Data)
 		{
-			if (!Data)
-			{
-				check(false);
-				continue;
-			}
 			if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
 			{
-				IsActiveCheckerComponent->EnableOwner();
+				IsActiveCheckerComponent->DisableOwner();
 			}
 		}
 	}
+};
 
-	// Disable/Remove all the rest of objects that were in PlayerActiveZone in the previous check but no longer there.
-	for (const auto& BlockIndex : ActiveBlocksMap)
+void AMWorldGenerator::RemoveObserverFromZone(const FIntPoint& CenterBlock, const uint8 ObserverIndex)
+{
+	const auto World = GetWorld();
+	if (!IsValid(World)) return;
+
+	const auto MetadataManager = AMGameMode::GetMetadataManager(this);
+
+	for (const auto BlockIndex : GetBlocksInRadius(CenterBlock.X, CenterBlock.Y, ActiveZoneRadius))
 	{
-		if (const auto* GridBlock = MetadataManager->FindBlock(BlockIndex))
-		{
-			for (const auto& [Name, Data] : GridBlock->StaticActors)
-			{
-				if (!Data)
-				{ //TODO: Add a function to check the Data for nullptr and if yes then remove the record from StaticActors and ActorsMetadata
-					check(false);
-					continue;
-				}
-				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-				{
-					IsActiveCheckerComponent->DisableOwner();
-				}
-			}
-			for (const auto& [Name, Data] : GridBlock->DynamicActors)
-			{
-				if (!Data)
-				{
-					check(false);
-					continue;
-				}
-				if (const auto IsActiveCheckerComponent = Data->FindComponentByClass<UMIsActiveCheckerComponent>())
-				{
-					IsActiveCheckerComponent->DisableOwner();
-				}
-			}
-		}
-		else check(false);
-	}
+		auto* BlockMetadata = MetadataManager->FindOrAddBlock(BlockIndex);
+		check(BlockMetadata->ObserverFlags.CheckBit(ObserverIndex));
+		BlockMetadata->ObserverFlags.ClearBit(ObserverIndex);
 
-	// All and only ActiveBlocksMap_New forms the new ActiveBlocksMap collection.
-	ActiveBlocksMap = ActiveBlocksMap_New;
+		if (BlockMetadata->ObserverFlags.IsEmpty()) // The last observer stops observing the block
+		{
+			ActiveBlocksMap.Remove(BlockIndex);
+
+			// Disable all static actors in the block
+			DisableActorsInBlock(BlockMetadata->StaticActors);
+			// Disable all dynamic actors in the block
+			DisableActorsInBlock(BlockMetadata->DynamicActors);
+		}
+	}
+}
+
+void AMWorldGenerator::MoveObserverToZone(const FIntPoint& CenterBlockFrom, const FIntPoint& CenterBlockTo,	const uint8 ObserverIndex)
+{
+	const auto World = GetWorld();
+	if (!IsValid(World)) return;
+
+	const auto MetadataManager = AMGameMode::GetMetadataManager(this);
+
+	const auto NewZone = GetBlocksInRadius(CenterBlockTo.X, CenterBlockTo.Y, ActiveZoneRadius);
+	const auto OldZone = GetBlocksInRadius(CenterBlockFrom.X, CenterBlockFrom.Y, ActiveZoneRadius);
+
+	auto test1 = OldZone.Difference(NewZone);
+	auto test2 = NewZone.Difference(OldZone);
+
+	// Remove observer flag on the abandoned blocks
+	for (const auto BlockIndex : OldZone.Difference(NewZone))
+	{
+		auto* BlockMetadata = MetadataManager->FindOrAddBlock(BlockIndex);
+		check(BlockMetadata->ObserverFlags.CheckBit(ObserverIndex));
+		BlockMetadata->ObserverFlags.ClearBit(ObserverIndex);
+
+		if (BlockMetadata->ObserverFlags.IsEmpty()) // The last observer stops observing the block
+		{
+			ActiveBlocksMap.Remove(BlockIndex);
+
+			// Disable all static actors in the block
+			DisableActorsInBlock(BlockMetadata->StaticActors);
+			// Disable all dynamic actors in the block
+			DisableActorsInBlock(BlockMetadata->DynamicActors);
+		}
+	}
+	// Set observer flag on the entered blocks
+	for (const auto BlockIndex : NewZone.Difference(OldZone))
+	{
+		auto* BlockMetadata = MetadataManager->FindOrAddBlock(BlockIndex);
+		BlockMetadata->ObserverFlags.SetBit(ObserverIndex);
+
+		ActiveBlocksMap.Add(BlockIndex);
+
+		// Enable all the static Actors in the block
+		EnableActorsInBlock(BlockMetadata->StaticActors);
+		// Enable all dynamic Actors in the block
+		EnableActorsInBlock(BlockMetadata->DynamicActors);
+	}
 }
 
 void AMWorldGenerator::UpdateNavigationMesh()
@@ -448,8 +511,9 @@ void AMWorldGenerator::UpdateNavigationMesh()
 //  xxx xxx  
 //     x
 
-void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex)
+void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex, const uint8 ObserverIndex)
 {
+	check(IN_OldBlockIndex != IN_NewBlockIndex);
 	if (bPendingTeleport)
 	{
 		//TODO: Handle teleport case
@@ -458,6 +522,8 @@ void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, c
 	// If the next block is not adjacent (due to lag/low fps/very high player speed)
 	// we recreate the continuous path travelled and generate perimeter for each travelled block
 	auto OldBlockIndex = IN_OldBlockIndex;
+	TravelledDequeue.Add(OldBlockIndex);
+
 	while(OldBlockIndex != IN_NewBlockIndex)
 	{
 		// Do increments separately for X and Y to prevent corner cutting. It is crucial for perimeter generation to avoid skipping tiles
@@ -475,38 +541,31 @@ void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, c
 		}
 	}
 
-	for (const auto& Block : TravelledDequeue)
+	for (int i = 1; i < TravelledDequeue.Num(); ++i)
 	{
-		UpdateActiveZone(Block);
-		GenerateNewPieceOfPerimeter(Block);
+		MoveObserverToZone(TravelledDequeue[i-1], TravelledDequeue[i], ObserverIndex); //TODO: Don't process Enable/Disable logic for each call, but rather fetch all flags first
+		GenerateNewPieceOfPerimeter(TravelledDequeue[i], ObserverIndex);
 	}
+
 	TravelledDequeue.Empty();
 
 	UpdateNavigationMesh();
 }
 
-void AMWorldGenerator::GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock)
+void AMWorldGenerator::GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock, const uint8 ObserverIndex)
 {
 	auto pWorld = GetWorld();
 	if (!pWorld)
 		return;
 
 	auto NewPerimeter = GetBlocksOnPerimeter(CenterBlock.X, CenterBlock.Y, ActiveZoneRadius + 1);
-	SetBiomesForBlocks(CenterBlock, NewPerimeter);
-	PendingBlocks.Append(NewPerimeter);
 
-	auto TopLeftScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopLeft);
-	auto TopRighScreenPointInWorld = RaycastScreenPoint(pWorld, EScreenPoint::TopRight);
-	PendingBlocks.Sort([this, &TopLeftScreenPointInWorld, &TopRighScreenPointInWorld](const FIntPoint& BlockA, const FIntPoint& BlockB)
-	{ // Sort blocks so that the closest to the screen corners would be the first
-		const auto LocationA = GetGroundBlockLocation(BlockA);
-		const auto LocationB = GetGroundBlockLocation(BlockB);
+	SetBiomesForBlocks(CenterBlock, NewPerimeter, ObserverIndex);
 
-		const auto MinDistanceToScreenEdgesA = FMath::Min(FVector::Distance(LocationA, TopLeftScreenPointInWorld), FVector::Distance(LocationA, TopRighScreenPointInWorld));
-		const auto MinDistanceToScreenEdgesB = FMath::Min(FVector::Distance(LocationB, TopLeftScreenPointInWorld), FVector::Distance(LocationB, TopRighScreenPointInWorld));
-
-		return MinDistanceToScreenEdgesA <= MinDistanceToScreenEdgesB;
-	});
+	for (const auto& BlockIndex : NewPerimeter)
+	{
+		PendingBlocks.Add({BlockIndex, ObserverIndex});
+	}
 
 	// We'll spread heavy GenerateBlock calls over the next few ticks
 	OnTickGenerateBlocks();
@@ -523,7 +582,7 @@ float GetAngle(const FIntPoint& O, const FIntPoint& P)
 }
 
 TArray<FBiomeDelimiter> Delimiters;
-void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIntPoint>& BlocksToGenerate)
+void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIntPoint>& BlocksToGenerate, const uint8 ObserverIndex)
 {
 	check(!BlocksToGenerate.IsEmpty())
 	++BlocksPassedSinceLastPerimeterColoring;
@@ -568,6 +627,10 @@ void AMWorldGenerator::SetBiomesForBlocks(const FIntPoint& CenterBlock, TSet<FIn
 			}
 
 			const auto BlockMetadata = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(Block);
+			if (BlockMetadata->ObserverFlags.IsAnyOtherBitSet(ObserverIndex))
+			{
+				continue; // Other players still see the block, can't change biome
+			}
 
 			// So far, biome constancy doesn't look very good
 			//if (BlockMetadata->ConstantActorsCount <= 0) // We keep the biome as well as all other objects
@@ -587,7 +650,7 @@ void AMWorldGenerator::OnTickGenerateBlocks()
 	while (!PendingBlocks.IsEmpty())
 	{
 		auto It = PendingBlocks.CreateIterator();
-		LoadOrGenerateBlock(*It);
+		LoadOrGenerateBlock(It->BlockIndex, true, It->ObserverIndex);
 		It.RemoveCurrent();
 
 		if (++Index >= BlocksPerFrame)

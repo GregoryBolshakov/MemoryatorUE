@@ -160,6 +160,11 @@ public:
 	UPROPERTY()
 	APawn* DeferredPawnToPossess;
 
+	/** Flag bit index. Multiplayer limit is 32 players. Each block knows whether a certain player is observing it.\n
+	* Each player is given a unique flag bit position when entering the game. */
+	UPROPERTY()
+	uint8 ObserverIndex = -1;
+
 	// Other
 protected:
 	virtual void BeginPlay() override;

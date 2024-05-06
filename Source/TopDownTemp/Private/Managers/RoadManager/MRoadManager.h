@@ -52,7 +52,7 @@ public:
 	FIntPoint GetChunkIndexByRegion(const FIntPoint& RegionIndex) const { return RegionIndex * RegionSize; }
 
 	UFUNCTION()
-	void OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk);
+	void OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex);
 
 	const TMap<FName, TSubclassOf<AActor>>& GetOutpostBPClasses() const { return OutpostBPClasses; }
 
