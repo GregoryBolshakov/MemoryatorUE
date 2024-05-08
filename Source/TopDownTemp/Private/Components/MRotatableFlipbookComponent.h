@@ -15,8 +15,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FOnFlipbookChanged
 	);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSpriteChanged);
 
-/** Structure that provides array placement of UPaperFlipbook ptrs to containers.
- *  Also represents the array in the editor. */
+// TODO: think of using soft pointers
+/** An array of pointers to UPaperFlipbook and various settings e.g. play rate, looping, etc. */
 USTRUCT()
 struct FFlipbooksArray
 {
@@ -35,6 +35,8 @@ public:
 };
 
 //TODO: Add a minimum playing time for every flipbook to avoid flickering due to frequent animation changes
+/** Component that uses an array of flipbooks to mimic multi-directional actions for a flat body/part.
+ *  Not replicated. Actor blueprint needs to store action names in RepNotify FName variables and put them to SetAction() when needed. */
 UCLASS(HideCategories=(Sprite), meta=(BlueprintSpawnableComponent))
 class TOPDOWNTEMP_API UMRotatableFlipbookComponent : public UPaperFlipbookComponent
 {
