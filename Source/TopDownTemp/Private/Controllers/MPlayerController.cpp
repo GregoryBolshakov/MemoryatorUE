@@ -342,6 +342,8 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 
 void AMPlayerController::OnHit()
 {
+	// TODO: Currently is called from a blueprint basing on the current frame.
+	// TODO: Should rely on a fixed timing rather than a frame of a non-replicated component.
 	const auto MyCharacter = Cast<AMCharacter>(GetCharacter());
 	if (!MyCharacter)
 	{
