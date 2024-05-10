@@ -319,22 +319,20 @@ void AMWorldGenerator::CheckDynamicActorsBlocks() // TODO: use APawns instead of
 		{
 			MetadataManager->MoveToBlock(Name, Transition.NewBlockIndex.GetValue());
 
-			// Get AMPlayerController
-			AMPlayerController* MPlayerController = nullptr;
+			// If Pawn is a player, get its observer index
+			uint8 ObserverIndex = -1;
 			if (const auto Pawn = Cast<APawn>(Transition.ActorMetadata->Actor))
 			{
-				MPlayerController = Cast<AMPlayerController>(Pawn->GetController());
-			}
-			if (!MPlayerController)
-			{
-				check(false);
-				continue;
+				if (const auto* MPlayerController = Cast<AMPlayerController>(Pawn->GetController()))
+				{
+					ObserverIndex = MPlayerController->ObserverIndex;
+				}
 			}
 
 			// Even though the dynamic object is still enabled, it might have moved to the disabled block (or even not generated yet),
 			// where all surrounding static objects are disabled.
 			// Check the environment for validity if you bind to the delegate!
-			Transition.ActorMetadata->OnBlockChangedDelegate.Broadcast(Transition.OldBlockIndex, Transition.ActorMetadata->GroundBlockIndex, MPlayerController->ObserverIndex);
+			Transition.ActorMetadata->OnBlockChangedDelegate.Broadcast(Transition.OldBlockIndex, Transition.ActorMetadata->GroundBlockIndex, ObserverIndex);
 
 			const auto RoadManager = AMGameMode::GetRoadManager(this);
 			//Chunk transition check
@@ -342,7 +340,7 @@ void AMWorldGenerator::CheckDynamicActorsBlocks() // TODO: use APawns instead of
 			const auto ActualChunk = RoadManager->GetChunkIndexByBlock(Transition.ActorMetadata->GroundBlockIndex);
 			if (OldChunk != ActualChunk)
 			{
-				Transition.ActorMetadata->OnChunkChangedDelegate.Broadcast(OldChunk, ActualChunk, MPlayerController->ObserverIndex);
+				Transition.ActorMetadata->OnChunkChangedDelegate.Broadcast(OldChunk, ActualChunk, ObserverIndex);
 			}
 		}
 		else
@@ -514,6 +512,7 @@ void AMWorldGenerator::UpdateNavigationMesh()
 void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex, const uint8 ObserverIndex)
 {
 	check(IN_OldBlockIndex != IN_NewBlockIndex);
+	check(ObserverIndex != -1);
 	if (bPendingTeleport)
 	{
 		//TODO: Handle teleport case
