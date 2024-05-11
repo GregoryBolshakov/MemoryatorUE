@@ -16,6 +16,7 @@ class TOPDOWNTEMP_API AMHostileMobController : public AMMobControllerBase
 	GENERATED_UCLASS_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
 	virtual void OnFightAnimationEnd() override;
 
 	virtual void OnHit() override;
