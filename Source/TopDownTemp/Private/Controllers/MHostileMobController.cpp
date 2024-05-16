@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Managers/MWorldGenerator.h"
 #include "NavigationSystem.h"
+#include "Components/MStateModelComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Framework/MGameMode.h"
@@ -117,8 +118,8 @@ void AMHostileMobController::DoRetreatBehavior(const UWorld& World, AMCharacter&
 
 void AMHostileMobController::SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter)
 {
-	MyCharacter->SetIsFighting(false);
-	MyCharacter->SetIsMoving(false);
+	MyCharacter->GetStateModelComponent()->SetIsFighting(false);
+	MyCharacter->GetStateModelComponent()->SetIsMoving(false);
 
 	StopMovement();
 
@@ -130,8 +131,8 @@ void AMHostileMobController::SetIdleBehavior(const UWorld* World, AMCharacter* M
 
 void AMHostileMobController::SetChaseBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
-	MyCharacter.SetIsFighting(false);
-	MyCharacter.SetIsMoving(true);
+	MyCharacter.GetStateModelComponent()->SetIsFighting(false);
+	MyCharacter.GetStateModelComponent()->SetIsMoving(true);
 
 	CurrentBehavior = EMobBehaviors::Chase;
 
@@ -174,8 +175,8 @@ void AMHostileMobController::SetFightBehavior(const UWorld& World, AMCharacter& 
 		return;
 	}
 
-	MyCharacter.SetIsFighting(true);
-	MyCharacter.SetIsMoving(false);
+	MyCharacter.GetStateModelComponent()->SetIsFighting(true);
+	MyCharacter.GetStateModelComponent()->SetIsMoving(false);
 
 	CurrentBehavior = EMobBehaviors::Fight;
 
@@ -188,8 +189,8 @@ void AMHostileMobController::SetFightBehavior(const UWorld& World, AMCharacter& 
 
 void AMHostileMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
-	MyCharacter.SetIsFighting(false);
-	MyCharacter.SetIsMoving(true);
+	MyCharacter.GetStateModelComponent()->SetIsFighting(false);
+	MyCharacter.GetStateModelComponent()->SetIsMoving(true);
 
 	CurrentBehavior = EMobBehaviors::Retreat;
 
@@ -230,7 +231,7 @@ void AMHostileMobController::SetRetreatBehavior(const UWorld& World, AMCharacter
 
 void AMHostileMobController::OnBehaviorChanged(AMCharacter& MyCharacter)
 {
-	MyCharacter.UpdateAnimation();
+	// TODO: Consider removing this function
 }
 
 void AMHostileMobController::OnFightAnimationEnd()

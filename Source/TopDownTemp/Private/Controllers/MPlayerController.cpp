@@ -9,6 +9,7 @@
 #include "MInterfaceMobController.h"
 #include "Camera/CameraComponent.h"
 #include "Characters/MMob.h"
+#include "Components/MStateModelComponent.h"
 #include "Managers/MWorldGenerator.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/TimelineComponent.h"
@@ -44,8 +45,7 @@ void AMPlayerController::TimelineProgress(float Value)
 		if (FMath::IsNearlyEqual(Value, 1.f, 0.0001f)) // Passed the timeline, stop dashing
 		{
 			EnableInput(this);
-			MyCharacter->SetIsDashing(false);
-			MyCharacter->UpdateAnimation();
+			MyCharacter->GetStateModelComponent()->SetIsDashing(false);
 			DashVelocityTimeline.Stop();
 
 			TurnSprintOff();
@@ -135,9 +135,9 @@ void AMPlayerController::StartSprintTimer()
 
 void AMPlayerController::TurnSprintOn()
 {
-	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()); MyCharacter && !MyCharacter->GetIsSprinting())
+	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()); MyCharacter && !MyCharacter->GetStateModelComponent()->GetIsSprinting())
 	{
-		MyCharacter->SetIsSprinting(true);
+		MyCharacter->GetStateModelComponent()->SetIsSprinting(true);
 		if (const auto MovementComponent = MyCharacter->GetCharacterMovement())
 		{
 			MovementComponent->MaxWalkSpeed = MyCharacter->GetSprintSpeed();
@@ -148,9 +148,9 @@ void AMPlayerController::TurnSprintOn()
 void AMPlayerController::TurnSprintOff()
 {
 	GetWorld()->GetTimerManager().ClearTimer(RunningTimerHandle);
-	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()); MyCharacter && MyCharacter->GetIsSprinting())
+	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()); MyCharacter && MyCharacter->GetStateModelComponent()->GetIsSprinting())
 	{
-		MyCharacter->SetIsSprinting(false);
+		MyCharacter->GetStateModelComponent()->SetIsSprinting(false);
 		if (const auto CharacterMovement = MyCharacter->GetCharacterMovement())
 		{
 			CharacterMovement->MaxWalkSpeed = MyCharacter->GetWalkSpeed();
@@ -168,6 +168,7 @@ void AMPlayerController::OnExperienceAdded(int Amount)
 
 void AMPlayerController::PlayerTick(float DeltaTime)
 {
+	// TODO: Refactor this for replication support. It works with simulated client but will crash if a real player connects.
 	Super::PlayerTick(DeltaTime);
 
 	DashVelocityTimeline.TickTimeline(DeltaTime);
@@ -273,13 +274,17 @@ void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter
 
 void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 {
+	if (IsLocalController())
+	{
+		return;
+	}
 	const auto PuddleComponent = MyCharacter.GetAttackPuddleComponent();
 	if (!PuddleComponent)
 	{
 		return;
 	}
 
-	if (MyCharacter.GetIsDashing()) // check for any action that shouldn't rotate character towards enemy
+	if (MyCharacter.GetStateModelComponent()->GetIsDashing()) // check for any action that shouldn't rotate character towards enemy
 	{
 		PuddleComponent->SetHiddenInGame(true);
 		return;
@@ -323,10 +328,9 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 		MyCharacter.SetForcedGazeVector(VectorToEnemy);
 		PuddleComponent->SetHiddenInGame(false);
 
-		if (VectorToEnemy.Size2D() <= MyCharacter.GetFightRangePlusMyRadius() + ClosestEnemyRadius && !MyCharacter.
-			GetIsFighting())
+		if (VectorToEnemy.Size2D() <= MyCharacter.GetFightRangePlusMyRadius() + ClosestEnemyRadius && !MyCharacter.GetStateModelComponent()->GetIsFighting())
 		{
-			MyCharacter.SetIsFighting(true);
+			//MyCharacter.SetIsFighting(true);
 		}
 	}
 	else
@@ -509,9 +513,9 @@ void AMPlayerController::OnToggleTurnAroundReleased()
 
 void AMPlayerController::OnToggleFightPressed()
 {
-	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && !MyCharacter->GetIsFighting())
+	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && !MyCharacter->GetStateModelComponent()->GetIsFighting())
 	{
-		MyCharacter->SetIsFighting(true);
+		MyCharacter->GetStateModelComponent()->SetIsFighting(true);
 	}
 }
 
@@ -534,13 +538,12 @@ void AMPlayerController::OnLeftMouseClick()
 
 void AMPlayerController::OnDashPressed()
 {
-	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && !MyCharacter->GetIsDashing())
+	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && !MyCharacter->GetStateModelComponent()->GetIsDashing())
 	{
 		MyCharacter->SetForcedGazeVector(FVector::ZeroVector); // If character was facing enemy, stop
-		MyCharacter->SetIsDashing(true);
-		MyCharacter->SetIsMoving(false);
-		MyCharacter->SetIsFighting(false);
-		MyCharacter->UpdateAnimation();
+		MyCharacter->GetStateModelComponent()->SetIsDashing(true);
+		MyCharacter->GetStateModelComponent()->SetIsMoving(false);
+		MyCharacter->GetStateModelComponent()->SetIsFighting(false);
 		DisableInput(this);
 
 		TimeSinceLastDashUpdate = FDateTime::UtcNow();

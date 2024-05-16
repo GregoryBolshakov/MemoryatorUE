@@ -12,6 +12,7 @@
 #include "Materials/Material.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components//MStateModelComponent.h"
 
 AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
 	Super(
@@ -92,6 +93,10 @@ void AMMemoryator::HandleCursor() const
 
 void AMMemoryator::HandleMovementState()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
 	// TODO: Send this logic to custom Movement Component
 	const auto Velocity = GetVelocity();
 
@@ -99,20 +104,18 @@ void AMMemoryator::HandleMovementState()
 	if (!PlayerController)
 		return;
 
-	if (IsDashing) return;
+	if (StateModelComponent->GetIsDashing()) return;
 
 	// We consider movement as changing of either X or Y. Moving only along Z is falling.
-	if (IsMoving && FMath::IsNearlyZero(Velocity.X) && FMath::IsNearlyZero(Velocity.Y))
+	if (StateModelComponent->GetIsMoving() && FMath::IsNearlyZero(Velocity.X) && FMath::IsNearlyZero(Velocity.Y))
 	{
-		IsMoving = false;
-		UpdateAnimation();
+		StateModelComponent->SetIsMoving(false);
 
 		PlayerController->TurnSprintOff();
 	}
-	if (!IsMoving && !(FMath::IsNearlyZero(Velocity.X) && FMath::IsNearlyZero(Velocity.Y)))
+	if (!StateModelComponent->GetIsMoving() && !(FMath::IsNearlyZero(Velocity.X) && FMath::IsNearlyZero(Velocity.Y)))
 	{
-		IsMoving = true;
-		UpdateAnimation();
+		StateModelComponent->SetIsMoving(true);
 
 		PlayerController->StartSprintTimer();
 	}

@@ -6,6 +6,7 @@
 #include "PaperSpriteComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "MRotatableFlipbookComponent.h"
+#include "Characters/MMemoryator.h"
 #include "Components/WidgetComponent.h"
 #include "Kismet/KismetMathLibrary.h"
 

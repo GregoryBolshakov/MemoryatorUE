@@ -4,6 +4,12 @@
 #include "GameFramework/Character.h"
 #include "MCharacter.generated.h"
 
+class UM2DRepresentationComponent;
+class UMStateModelComponent;
+class UMIsActiveCheckerComponent;
+class UMInventoryComponent;
+class UMCommunicationComponent;
+class UMAttackPuddleComponent;
 class AMOutpostHouse;
 struct FMCharacterSaveData;
 class UMBuffManagerComponent;
@@ -26,8 +32,6 @@ public:
 
 	float GetRadius() const;
 
-	bool GetIsFighting() const { return IsFighting; }
-
 	float GetSightRange() const { return SightRange; }
 
 	float GetFightRangePlusMyRadius() const { return FightRange + GetRadius(); }
@@ -44,40 +48,29 @@ public:
 
 	float GetStrength() const { return Strength; }
 
-	bool GetIsSprinting() const { return IsSprinting; }
-
 	bool GetCanRetreat() const { return bCanRetreat; }
 
 	float GetTimeBeforeSprint() const { return TimeBeforeSprint; }
 
 	FVector GetForcedGazeVector() const { return ForcedGazeVector; }
 
-	class UMIsActiveCheckerComponent* GetIsActiveCheckerComponent() const { return IsActiveCheckerComponent; }
+	UMStateModelComponent* GetStateModelComponent() const { return StateModelComponent; }
 
-	class UMInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+	UMIsActiveCheckerComponent* GetIsActiveCheckerComponent() const { return IsActiveCheckerComponent; }
 
-	class UMAttackPuddleComponent* GetAttackPuddleComponent() const { return AttackPuddleComponent; }
+	UMInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
-	class UMCommunicationComponent* GetCommunicationComponent() const { return CommunicationComponent; }
+	UMAttackPuddleComponent* GetAttackPuddleComponent() const { return AttackPuddleComponent; }
+
+	UMCommunicationComponent* GetCommunicationComponent() const { return CommunicationComponent; }
 
 	FVector GetLastNonZeroVelocity() const { return LastNonZeroVelocity; }
-
-	bool GetIsDashing() const { return IsDashing; }
 
 	FName GetSpeciesName() const { return SpeciesName; }
 
 	AMOutpostHouse* GetHouse() const { return House; }
 
 	void InitialiseInventory(const TArray<struct FItem>& IN_Items) const;
-
-	void SetIsMoving(bool bIsMoving) { IsMoving = bIsMoving; UpdateAnimation(); }
-
-	UFUNCTION(BlueprintCallable)
-	void SetIsFighting(bool bIsFighting) { IsFighting = bIsFighting; UpdateAnimation(); }
-
-	void SetIsDashing(bool bIsDashing) { IsDashing = bIsDashing; }
-
-	void SetIsSprinting(bool IN_bIsSprinting) { IsSprinting = IN_bIsSprinting; }
 
 	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
 
@@ -88,16 +81,18 @@ public:
 	// Called every frame.
 	virtual void Tick(float DeltaSeconds) override;
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Animation")
-	void UpdateAnimation();
-
 	virtual void PostInitializeComponents() override;
 
 	/** Loading actor: Actor has just constructed but not finalized (Components are not available).*/
 	virtual void BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD);
 	// TODO: We might need EndLoadFromSD() but so far there's no use cases
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 protected:
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Animation")
+	void UpdateAnimation();
 
 	void UpdateLastNonZeroDirection();
 
@@ -112,9 +107,19 @@ protected:
 	void OnDisabled();
 
 	/** Representation (collection of sprites) */
-	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCharacterComponents, meta = (AllowPrivateAccess = "true"))
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class UM2DRepresentationComponent* OptionalRepresentationComponent; //TODO: Remove this. Temp workaround for legacy 2D actors
+	UM2DRepresentationComponent* OptionalRepresentationComponent; //TODO: Remove this. Temp workaround for legacy 2D actors
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UMStateModelComponent* StateModelComponent;
+	/** Triggers replication by flipping value. */
+	UPROPERTY(ReplicatedUsing=OnRep_StateModelReplicationTrigger)
+	bool StateModelReplicationTrigger = false;
+	// We have to trigger state model replication from the owner level (MCharacter/MActor)
+	// because components are less reliable and sometimes are ignored for replication.
+	// Initially this was tracked and called from UMStateModelComponent.
+	UFUNCTION()
+	void OnRep_StateModelReplicationTrigger();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMInventoryComponent* InventoryComponent;
@@ -156,22 +161,7 @@ protected:
 	UPROPERTY()
 	AMOutpostHouse* House;
 
-	//TODO: It's hard to say if these booleans should be here or in Controller
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsDying = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsTakingDamage = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsFighting = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsMoving = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsPicking = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsDashing = false;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = AnimationState, meta = (AllowPrivateAccess = "true"))
-	bool IsSprinting = false;
-
+	//TODO: Create another model for stats. It also will be storing their original values e.g. MaxHealth, DefaultSightRange, etc.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float MaxHealth = 100.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
@@ -196,7 +186,5 @@ protected:
 	float SprintSpeed = 260.f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
 	float TimeBeforeSprint = 1.f;
-
-	//TODO: Create variables for original values e.g. MaxHealth, DefaultSightRange, etc.
 };
 

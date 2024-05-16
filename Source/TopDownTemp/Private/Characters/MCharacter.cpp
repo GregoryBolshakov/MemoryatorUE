@@ -16,12 +16,17 @@
 #include "Managers/SaveManager/MSaveManager.h"
 #include "Managers/MWorldSaveTypes.h"
 #include "Managers/MWorldGenerator.h"
+#include "Net/UnrealNetwork.h"
+#include "Components/MStateModelComponent.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, Health(MaxHealth)
 {
+	StateModelComponent = CreateDefaultSubobject<UMStateModelComponent>(TEXT("StateModel"));
+	StateModelComponent->SetIsReplicated(true);
+
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("InventoryrComponent"));
 
 	CommunicationComponent = CreateDefaultSubobject<UMCommunicationComponent>(TEXT("CommunicationComponent"));
@@ -103,6 +108,13 @@ void AMCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	if (StateModelComponent->GetIsDirty() && HasAuthority())
+	{
+		StateModelComponent->CleanDirty();
+		StateModelReplicationTrigger = !StateModelReplicationTrigger;
+		UpdateAnimation();
+	}
+
 	//TODO: Clean up the code below this. This is legacy logic related to M2DRepresentationComponent
 	UpdateLastNonZeroDirection();
 
@@ -135,6 +147,18 @@ void AMCharacter::PostInitializeComponents()
 	}
 }
 
+void AMCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AMCharacter, StateModelReplicationTrigger);
+}
+
+void AMCharacter::OnRep_StateModelReplicationTrigger()
+{
+	UpdateAnimation();
+}
+
 void AMCharacter::UpdateLastNonZeroDirection()
 {
 	if (const auto CurrentVelocity = GetVelocity();
@@ -155,8 +179,7 @@ void AMCharacter::BeginPlay()
 	}
 }
 
-float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator,
-	AActor* DamageCauser)
+float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (Damage)
 	{
@@ -175,8 +198,7 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 				OptionalRepresentationComponent->SetColor(FLinearColor(1.f, 0.25f, 0.25f, 1.f));
 			}
 
-			IsTakingDamage = true;
-			UpdateAnimation();
+			StateModelComponent->SetIsTakingDamage(true);
 
 			Health = FMath::Max(Health - abs(Damage), 0.f);
 			if (FMath::IsNearlyZero(Health))

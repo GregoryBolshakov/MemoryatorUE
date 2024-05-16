@@ -48,7 +48,7 @@ public:
 	FName GetAction() const { return Action; }
 
 	UFUNCTION(BlueprintCallable, Category = "MRotatableFlipbookComponent")
-	void SetAction(const FName& _Action) { Action = _Action; SetFlipbookByRotation(LastValidViewingAngle); }
+	void SetAction(FName _Action) { Action = _Action; SetFlipbookByRotation(LastValidViewingAngle); }
 
 	/** 
 	 * Called to set appropriate flipbook to represent the angular direction. 

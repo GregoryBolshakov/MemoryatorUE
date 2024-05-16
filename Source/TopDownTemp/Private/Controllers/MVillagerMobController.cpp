@@ -5,6 +5,7 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Managers/MWorldGenerator.h"
 #include "NavigationSystem.h"
+#include "Components/MStateModelComponent.h"
 #include "Framework/MGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"
@@ -57,8 +58,8 @@ void AMVillagerMobController::PreTick(float DeltaSeconds, const UWorld& World, A
 void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
 	return; // temp
-	MyCharacter.SetIsFighting(false);
-	MyCharacter.SetIsMoving(false);
+	MyCharacter.GetStateModelComponent()->SetIsFighting(false);
+	MyCharacter.GetStateModelComponent()->SetIsMoving(false);
 	if (!MyCharacter.GetHouse())
 	{
 		//TODO: Cover this case
@@ -129,8 +130,8 @@ void AMVillagerMobController::DoHideBehavior(const UWorld& World, AMCharacter& M
 
 void AMVillagerMobController::SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter)
 {
-	MyCharacter->SetIsFighting(false);
-	MyCharacter->SetIsMoving(false);
+	MyCharacter->GetStateModelComponent()->SetIsFighting(false);
+	MyCharacter->GetStateModelComponent()->SetIsMoving(false);
 
 	GetWorld()->GetTimerManager().ClearTimer(RestTimerHandle);
 
@@ -143,8 +144,8 @@ void AMVillagerMobController::SetIdleBehavior(const UWorld* World, AMCharacter* 
 
 void AMVillagerMobController::SetWalkBehavior(const UWorld& World, AMCharacter& MyCharacter, const FVector& DestinationPoint)
 {
-	MyCharacter.SetIsFighting(false);
-	MyCharacter.SetIsMoving(true);
+	MyCharacter.GetStateModelComponent()->SetIsFighting(false);
+	MyCharacter.GetStateModelComponent()->SetIsMoving(true);
 
 	CurrentBehavior = EMobBehaviors::Walk;
 
@@ -165,8 +166,8 @@ void AMVillagerMobController::SetWalkBehavior(const UWorld& World, AMCharacter& 
 
 void AMVillagerMobController::SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
-	MyCharacter.SetIsFighting(false);
-	MyCharacter.SetIsMoving(true);
+	MyCharacter.GetStateModelComponent()->SetIsFighting(false);
+	MyCharacter.GetStateModelComponent()->SetIsMoving(true);
 
 	CurrentBehavior = EMobBehaviors::Retreat;
 
@@ -219,8 +220,7 @@ void AMVillagerMobController::SetHideBehavior(const UWorld& World, AMCharacter& 
 void AMVillagerMobController::OnBehaviorChanged(AMCharacter& MyCharacter)
 {
 	MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
-
-	MyCharacter.UpdateAnimation();
+	// TODO: Consider removing this function
 }
 
 void AMVillagerMobController::Embark(const AMCharacter& MyCharacter)
