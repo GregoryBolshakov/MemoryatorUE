@@ -255,6 +255,7 @@ void AMHostileMobController::OnFightAnimationEnd()
 
 void AMHostileMobController::OnHit()
 {
+	check(HasAuthority());
 	const auto MyCharacter = Cast<AMCharacter>(GetCharacter());
 	if (!MyCharacter)
 		return;
