@@ -1,6 +1,7 @@
 #include "MIsActiveCheckerComponent.h"
 
 #include "Components/PrimitiveComponent.h"
+#include "StationaryActors/Outposts/MOutpostHouse.h"
 
 UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -42,12 +43,15 @@ void UMIsActiveCheckerComponent::DisableOwner()
 		Component->PrimaryComponentTick.bCanEverTick = false;
 		Component->PrimaryComponentTick.UnRegisterTickFunction();
 
-		// Disable collision checks for any primitive. They are executed regardless of the tick state!
-		if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Component))
+		if (bAffectCollisions)
 		{
-			ComponentData.CollisionType = PrimitiveComponent->GetCollisionEnabled();
-			PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			//TODO: Maybe we need to SetGenerateOverlapEvents(false) too?
+			// Disable collision checks for every primitive. They are executed regardless of the tick state!
+			if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Component))
+			{
+				ComponentData.CollisionType = PrimitiveComponent->GetCollisionEnabled();
+				PrimitiveComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+				//TODO: Maybe we need to SetGenerateOverlapEvents(false) too?
+			}
 		}
 
 		DisabledComponentsData.Add(ComponentData);
@@ -108,9 +112,13 @@ void UMIsActiveCheckerComponent::EnableOwner()
 
 			Data.Component->PrimaryComponentTick.SetTickFunctionEnable(true);
 		}
-		if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Data.Component))
+		if (bAffectCollisions)
 		{
-			PrimitiveComponent->SetCollisionEnabled(Data.CollisionType.Get(ECollisionEnabled::NoCollision));
+			// Enable collision checks for every primitive.
+			if (const auto PrimitiveComponent = Cast<UPrimitiveComponent>(Data.Component))
+			{
+				PrimitiveComponent->SetCollisionEnabled(Data.CollisionType.Get(ECollisionEnabled::NoCollision));
+			}
 		}
 	}
 	DisabledComponentsData.Empty();
