@@ -68,7 +68,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 		LoadOrGenerateBlock(BlockInRadius, false, ObserverIndex);
 	}
 
-	/*if (!AMGameMode::GetSaveManager(this)->IsLoaded()) // spawn a village (testing purposes). Only if there was no save.
+	if (!RoadManager->GetOutpostGenerator(PlayerChunk))
 	{
 		pWorld->GetTimerManager().SetTimer(tempTimer, [this, PlayerChunk]()
 		{
@@ -78,7 +78,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 			VillageGenerator->Generate();
 			UpdateNavigationMesh();
 		}, 0.3f, false);
-	}*/
+	}
 
 	/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
 	BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
@@ -180,7 +180,7 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 		MPlayerController->DeferredPawnToPossess = pPlayer; // Possess the player later, after controller's BeginPlay()
 	}
 
-	InitSurroundingArea(GetGroundBlockIndex(pPlayer->GetActorLocation()), MPlayerController->ObserverIndex); // Init surroundings before spawning player so it doesn't fall underground
+	InitSurroundingArea(GetGroundBlockIndex(pPlayer->GetActorLocation()), MPlayerController->ObserverIndex);
 
 	// Bind to the player-moves-to-another-block event
 	AMGameMode::GetExperienceManager(this)->ExperienceAddedDelegate.AddDynamic(Cast<AMPlayerController>(NewPlayer), &AMPlayerController::OnExperienceAdded);

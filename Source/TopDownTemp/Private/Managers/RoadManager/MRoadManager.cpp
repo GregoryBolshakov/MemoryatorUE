@@ -457,6 +457,15 @@ FIntPoint UMRoadManager::GetRegionIndexByChunk(const FIntPoint& ChunkIndex) cons
 					FMath::FloorToInt(static_cast<float>(ChunkIndex.Y) / RegionSize.Y));
 }
 
+AMOutpostGenerator* UMRoadManager::GetOutpostGenerator(const FIntPoint& ChunkIndex)
+{
+	if (const auto ChunkMetadata = GridOfChunks.Find(ChunkIndex))
+	{
+		return ChunkMetadata->OutpostGenerator;
+	}
+	return nullptr;
+}
+
 void UMRoadManager::OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex)
 {
 	ProcessAdjacentRegions(NewChunk); // TODO: process ObserverIndex! VERY IMPORTANT!

@@ -51,6 +51,10 @@ public:
 
 	FIntPoint GetChunkIndexByRegion(const FIntPoint& RegionIndex) const { return RegionIndex * RegionSize; }
 
+	/** Get the chunk's outpost. If the chunk has no outpost generated, return nullptr */
+	UFUNCTION()
+	AMOutpostGenerator* GetOutpostGenerator(const FIntPoint& ChunkIndex);
+
 	UFUNCTION()
 	void OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex);
 
