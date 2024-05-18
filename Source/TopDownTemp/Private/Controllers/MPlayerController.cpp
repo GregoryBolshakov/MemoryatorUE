@@ -168,20 +168,18 @@ void AMPlayerController::OnExperienceAdded(int Amount)
 
 void AMPlayerController::PlayerTick(float DeltaTime)
 {
-	// TODO: Refactor this for replication support. It works with simulated client but will crash if a real player connects.
 	Super::PlayerTick(DeltaTime);
+
+	if (!HasAuthority())
+	{
+		return;
+	}
 
 	DashVelocityTimeline.TickTimeline(DeltaTime);
 
 	const auto pWorld = GetWorld();
-	if (!pWorld)
-	{
-		check(false);
-		return;
-	}
-
 	const auto pMyCharacter = Cast<AMCharacter>(GetPawn());
-	if (!pMyCharacter)
+	if (!pWorld || !pMyCharacter)
 	{
 		check(false);
 		return;
@@ -200,6 +198,7 @@ void AMPlayerController::PlayerTick(float DeltaTime)
 	UpdateClosestEnemy(*pMyCharacter);
 
 	// Keep updating the destination every tick while desired
+	// TODO: support this if needed, right now it doesn't work
 	if (bMoveToMouseCursor)
 	{
 		MoveToMouseCursor();
@@ -238,6 +237,10 @@ void AMPlayerController::SetupInputComponent()
 
 void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter& MyCharacter)
 {
+	if (!HasAuthority() || IsLocalController())
+	{
+		return;
+	}
 	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
 		const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
