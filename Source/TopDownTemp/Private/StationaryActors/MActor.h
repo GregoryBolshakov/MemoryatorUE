@@ -77,7 +77,7 @@ protected:
 	USceneComponent* PointComponent;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly) 
-	class UM2DRepresentationComponent* OptionalRepresentationComponent; //TODO: Remove this. Temp workaround for legacy 2D actors
+	class UM2DRepresentationComponent* FaceCameraComponent;
 
 	UPROPERTY(Category=ActiveCheck, EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UMIsActiveCheckerComponent* IsActiveCheckerComponent;

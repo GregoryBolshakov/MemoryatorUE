@@ -6,21 +6,22 @@
 class UCapsuleComponent;
 class UM2DShadowControllerComponent;
 
-/** Collection of 2D sprites or flipbooks that automatically face the camera.
+/** Component that rotates all attached UMeshComponents towards the first local camera.
  *
  * @ Don't attach any mesh to another mesh.
  * 
- * @ Each mesh might have one origin point (attached USceneComponent) which acts as the pivot point. If none is present, it uses its location.
+ * @ Each mesh can have one attached USceneComponent acting as the pivot point. If none is present, it uses mesh's location.
  * 
  * @ Each mesh determines its own flipped state (Z-axis mirroring)
+ *
+ *  Right now it is responsible for creating shadow twins, but it is subject to change.
  */
-UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent, IgnoreCategoryKeywordsInSubclasses, ShortTooltip="A component that has 2D sprites which always face the camera."))
+UCLASS(BlueprintType, meta=(BlueprintSpawnableComponent, IgnoreCategoryKeywordsInSubclasses, ShortTooltip="Component that rotates all attached UMeshComponents towards the first local camera."))
 class TOPDOWNTEMP_API UM2DRepresentationComponent : public USceneComponent
 {
 	GENERATED_UCLASS_BODY()
 
 public:
-
 	const TArray<UCapsuleComponent*>& GetCapsuleComponentArray() { return CapsuleComponentArray; }
 
 	/** Should be called in owner's PostInitializeComponents */
@@ -50,7 +51,6 @@ public:
 	FVector LastValidGaze;
 
 private:
-
 	void FaceToCamera();
 
 	void SetUpSprites();
@@ -63,7 +63,7 @@ private:
 	void InterpolateColor(float DeltaTime);
 
 	UPROPERTY() 
-	TArray<UCapsuleComponent*> CapsuleComponentArray;
+	TArray<UCapsuleComponent*> CapsuleComponentArray; // TODO: It's no longer used, should be removed
 
 	UPROPERTY()
 	TArray<UMeshComponent*> RenderComponentArray;

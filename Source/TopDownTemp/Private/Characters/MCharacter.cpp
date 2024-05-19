@@ -35,8 +35,11 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	IsActiveCheckerComponent->OnDisabledDelegate.BindUObject(this, &AMCharacter::OnDisabled);
 	IsActiveCheckerComponent->OnEnabledDelegate.BindUObject(this, &AMCharacter::OnEnabled);
 
+	FaceCameraComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("FaceCameraComponent"));
+	FaceCameraComponent->SetupAttachment(RootComponent);
+
 	BuffBarComponent = CreateDefaultSubobject<UMBuffBarComponent>(TEXT("BuffBar"));
-	BuffBarComponent->SetupAttachment(RootComponent);
+	BuffBarComponent->SetupAttachment(FaceCameraComponent);
 	BuffBarComponent->SetWidgetClass(BuffBarWidgetBPClass);
 
 	AttackPuddleComponent = CreateDefaultSubobject<UMAttackPuddleComponent>(TEXT("AttackPuddle"));
@@ -130,9 +133,9 @@ void AMCharacter::Tick(float DeltaSeconds)
 		OnReverseMovementStoppedDelegate.Broadcast();
 	}
 
-	if (OptionalRepresentationComponent)
+	if (FaceCameraComponent)
 	{
-		OptionalRepresentationComponent->SetMeshByGazeAndVelocity(GazeDirection, GetVelocity());
+		FaceCameraComponent->SetMeshByGazeAndVelocity(GazeDirection, GetVelocity());
 	}
 }
 
@@ -140,10 +143,9 @@ void AMCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
-	OptionalRepresentationComponent = Cast<UM2DRepresentationComponent>(GetComponentByClass(UM2DRepresentationComponent::StaticClass()));
-	if (OptionalRepresentationComponent)
+	if (FaceCameraComponent)
 	{
-		OptionalRepresentationComponent->PostInitChildren();
+		FaceCameraComponent->PostInitChildren();
 	}
 }
 
@@ -193,9 +195,9 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 			const auto LaunchVelocity = (GetActorLocation() - DamageCauser->GetActorLocation()).GetSafeNormal() * 140.f; // TODO: add a UPROPERTY for the knock back length
 			LaunchCharacter(LaunchVelocity, false, false);
 
-			if (OptionalRepresentationComponent)
+			if (FaceCameraComponent)
 			{
-				OptionalRepresentationComponent->SetColor(FLinearColor(1.f, 0.25f, 0.25f, 1.f));
+				FaceCameraComponent->SetColor(FLinearColor(1.f, 0.25f, 0.25f, 1.f));
 			}
 
 			StateModelComponent->SetIsTakingDamage(true);

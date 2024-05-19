@@ -108,7 +108,7 @@ protected:
 
 	/** Representation (collection of sprites) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UM2DRepresentationComponent* OptionalRepresentationComponent; //TODO: Remove this. Temp workaround for legacy 2D actors
+	UM2DRepresentationComponent* FaceCameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMStateModelComponent* StateModelComponent;

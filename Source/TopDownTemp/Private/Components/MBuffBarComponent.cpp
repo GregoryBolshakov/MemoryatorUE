@@ -88,6 +88,7 @@ void UMBuffBarComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	return; // TODO: Figure out if this old code is needed. It used to lock component position and make it impossible to set up
 
 	UpdateChildTransforms();
 	UpdateBounds();

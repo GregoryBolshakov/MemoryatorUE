@@ -18,6 +18,9 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	IsActiveCheckerComponent->OnDisabledDelegate.BindUObject(this, &AMActor::OnDisabled);
 	IsActiveCheckerComponent->OnEnabledDelegate.BindUObject(this, &AMActor::OnEnabled);
 
+	FaceCameraComponent = CreateDefaultSubobject<UM2DRepresentationComponent>(TEXT("FaceCameraComponent"));
+	FaceCameraComponent->SetupAttachment(RootComponent);
+
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("Inventory"));
 }
 
@@ -51,10 +54,9 @@ void AMActor::PostInitializeComponents()
 
 	ApplyAppearanceID();
 
-	OptionalRepresentationComponent = Cast<UM2DRepresentationComponent>(GetComponentByClass(UM2DRepresentationComponent::StaticClass()));
-	if (OptionalRepresentationComponent)
+	if (FaceCameraComponent)
 	{
-		OptionalRepresentationComponent->PostInitChildren();
+		FaceCameraComponent->PostInitChildren();
 	}
 
 	CreateDynamicMaterials();
