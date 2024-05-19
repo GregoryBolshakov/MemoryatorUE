@@ -237,10 +237,6 @@ void AMPlayerController::SetupInputComponent()
 
 void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter& MyCharacter)
 {
-	if (!HasAuthority() || IsLocalController())
-	{
-		return;
-	}
 	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
 		const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
@@ -277,10 +273,6 @@ void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter
 
 void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 {
-	if (IsLocalController())
-	{
-		return;
-	}
 	const auto PuddleComponent = MyCharacter.GetAttackPuddleComponent();
 	if (!PuddleComponent)
 	{
@@ -333,7 +325,7 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 
 		if (VectorToEnemy.Size2D() <= MyCharacter.GetFightRangePlusMyRadius() + ClosestEnemyRadius && !MyCharacter.GetStateModelComponent()->GetIsFighting())
 		{
-			//MyCharacter.SetIsFighting(true);
+			MyCharacter.GetStateModelComponent()->SetIsFighting(true);
 		}
 	}
 	else
