@@ -89,11 +89,10 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-protected:
-
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Animation")
-	void UpdateAnimation();
+	void UpdateAnimation(); // TODO: Move to protected;
 
+protected:
 	void UpdateLastNonZeroDirection();
 
 	virtual void BeginPlay() override;
@@ -112,14 +111,6 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMStateModelComponent* StateModelComponent;
-	/** Triggers replication by flipping value. */
-	UPROPERTY(ReplicatedUsing=OnRep_StateModelReplicationTrigger)
-	bool StateModelReplicationTrigger = false;
-	// We have to trigger state model replication from the owner level (MCharacter/MActor)
-	// because components are less reliable and sometimes are ignored for replication.
-	// Initially this was tracked and called from UMStateModelComponent.
-	UFUNCTION()
-	void OnRep_StateModelReplicationTrigger();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMInventoryComponent* InventoryComponent;

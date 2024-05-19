@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Net/UnrealNetwork.h"
+#include "Characters/MCharacter.h" // TODO: Remove
 #include "MStateModelComponent.generated.h"
 
 /** Component that stores and replicates all boolean states e.g. IsDashing, IsTakingDamage, IsDying, etc.\n
@@ -47,27 +48,29 @@ public:
 	inline void SetIsTakingDamage(bool IN_IsTakingDamage);
 
 protected:
-	UPROPERTY()
+	// TODO: Figure out why making all properties using OnRep fixes the bug with inconsistent updates for client
+	UPROPERTY(ReplicatedUsing=OnRep_IsDirty)
 	bool IsDirty = true;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere, BlueprintReadOnly)
 	bool IsDashing = false;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere, BlueprintReadOnly)
 	bool IsDying = false;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere, BlueprintReadOnly)
 	bool IsFighting = false;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere, BlueprintReadOnly)
 	bool IsMoving = false;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere, BlueprintReadOnly)
 	bool IsPicking = false;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere, BlueprintReadOnly)
 	bool IsSprinting = false;
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere, BlueprintReadOnly)
 	bool IsTakingDamage = false;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override
 	{
 		Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+		DOREPLIFETIME(UMStateModelComponent, IsDirty);
 		DOREPLIFETIME(UMStateModelComponent, IsDashing);
 		DOREPLIFETIME(UMStateModelComponent, IsDying);
 		DOREPLIFETIME(UMStateModelComponent, IsFighting);
@@ -76,6 +79,12 @@ protected:
 		DOREPLIFETIME(UMStateModelComponent, IsSprinting);
 		DOREPLIFETIME(UMStateModelComponent, IsTakingDamage);
 		// Add other properties as needed
+	}
+
+	UFUNCTION()
+	void OnRep_IsDirty()
+	{
+		Cast<AMCharacter>(GetOwner())->UpdateAnimation(); // TODO: Execute a delegate instead
 	}
 };
 

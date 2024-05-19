@@ -24,8 +24,10 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 	, Health(MaxHealth)
 {
-	StateModelComponent = CreateDefaultSubobject<UMStateModelComponent>(TEXT("StateModel"));
+	// Optional because children might use different type for the model component
+	StateModelComponent = CreateOptionalDefaultSubobject<UMStateModelComponent>(TEXT("StateModel"));
 	StateModelComponent->SetIsReplicated(true);
+	StateModelComponent->SetNetAddressable(); // Make DSO components net addressable
 
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("InventoryrComponent"));
 
@@ -114,7 +116,6 @@ void AMCharacter::Tick(float DeltaSeconds)
 	if (StateModelComponent->GetIsDirty() && HasAuthority())
 	{
 		StateModelComponent->CleanDirty();
-		StateModelReplicationTrigger = !StateModelReplicationTrigger;
 		UpdateAnimation();
 	}
 
@@ -153,12 +154,7 @@ void AMCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AMCharacter, StateModelReplicationTrigger);
-}
-
-void AMCharacter::OnRep_StateModelReplicationTrigger()
-{
-	UpdateAnimation();
+	// Add replicated properties here.
 }
 
 void AMCharacter::UpdateLastNonZeroDirection()
