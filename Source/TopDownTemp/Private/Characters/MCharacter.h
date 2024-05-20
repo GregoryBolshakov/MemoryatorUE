@@ -6,6 +6,7 @@
 
 class UM2DRepresentationComponent;
 class UMStateModelComponent;
+class UMStatsModelComponent;
 class UMIsActiveCheckerComponent;
 class UMInventoryComponent;
 class UMCommunicationComponent;
@@ -32,29 +33,11 @@ public:
 
 	float GetRadius() const;
 
-	float GetSightRange() const { return SightRange; }
-
-	float GetFightRangePlusMyRadius() const { return FightRange + GetRadius(); }
-
-	float GetForgetEnemyRange() const { return ForgetEnemyRange; }
-
-	float GetHealth() const { return Health; }
-
-	float GetRetreatRange() const { return RetreatRange; }
-
-	float GetWalkSpeed() const { return WalkSpeed; }
-
-	float GetSprintSpeed() const { return SprintSpeed; }
-
-	float GetStrength() const { return Strength; }
-
-	bool GetCanRetreat() const { return bCanRetreat; }
-
-	float GetTimeBeforeSprint() const { return TimeBeforeSprint; }
-
 	FVector GetForcedGazeVector() const { return ForcedGazeVector; }
 
 	UMStateModelComponent* GetStateModelComponent() const { return StateModelComponent; }
+
+	UMStatsModelComponent* GetStatsModelComponent() const { return StatsModelComponent; }
 
 	UMIsActiveCheckerComponent* GetIsActiveCheckerComponent() const { return IsActiveCheckerComponent; }
 
@@ -113,6 +96,9 @@ protected:
 	UMStateModelComponent* StateModelComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UMStatsModelComponent* StatsModelComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMInventoryComponent* InventoryComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -151,31 +137,5 @@ protected:
 
 	UPROPERTY()
 	AMOutpostHouse* House;
-
-	//TODO: Create another model for stats. It also will be storing their original values e.g. MaxHealth, DefaultSightRange, etc.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float MaxHealth = 100.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float Health;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float SightRange = 500.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float FightRange = 50.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float ForgetEnemyRange = 1000.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float Strength = 10.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float RetreatRange = 200.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	bool bCanRetreat = true;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float MeleeSpread = 40.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float WalkSpeed = 185.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float SprintSpeed = 260.f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Perks, meta = (AllowPrivateAccess = "true"))
-	float TimeBeforeSprint = 1.f;
 };
 

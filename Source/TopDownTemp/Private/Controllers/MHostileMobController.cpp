@@ -10,6 +10,7 @@
 #include "NavigationSystem.h"
 #include "Components/MStateModelComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/MStatsModelComponent.h"
 #include "Engine/DamageEvents.h"
 #include "Framework/MGameMode.h"
 
@@ -30,7 +31,7 @@ void AMHostileMobController::DoIdleBehavior(const UWorld& World, AMCharacter& My
 
 	const auto MyLocation = MyCharacter.GetTransform().GetLocation();
 	//TODO: Optimise the GetActorsInRect() to return elements by Class or Tag, etc.
-	const auto SightRange = MyCharacter.GetSightRange();
+	const auto SightRange = MyCharacter.GetStatsModelComponent()->GetSightRange();
 	const auto DynamicActorsInSight = WorldGenerator->GetActorsInRect(MyLocation - FVector(SightRange,SightRange, 0.f), MyLocation + FVector(SightRange,SightRange, 0.f), true);
 
 	if (!DynamicActorsInSight.IsEmpty())
@@ -41,7 +42,7 @@ void AMHostileMobController::DoIdleBehavior(const UWorld& World, AMCharacter& My
 			if (DynamicActor && DynamicActor != this && DynamicActor->GetClass()->GetSuperClass()->IsChildOf(AMMemoryator::StaticClass()))
 			{
 				const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
-				if (DistanceToActor <= MyCharacter.GetSightRange())
+				if (DistanceToActor <= MyCharacter.GetStatsModelComponent()->GetSightRange())
 				{
 					Victim = Cast<APawn>(DynamicActor);
 					SetChaseBehavior(World, MyCharacter);
@@ -62,7 +63,7 @@ void AMHostileMobController::DoChaseBehavior(const UWorld& World, AMCharacter& M
 	}
 
 	const auto DistanceToVictim = FVector::Distance(Victim->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
-	if (DistanceToVictim > MyCharacter.GetForgetEnemyRange())
+	if (DistanceToVictim > MyCharacter.GetStatsModelComponent()->GetForgetEnemyRange())
 	{
 		SetIdleBehavior(&World, &MyCharacter);
 		return;
@@ -78,7 +79,7 @@ void AMHostileMobController::DoChaseBehavior(const UWorld& World, AMCharacter& M
 	const float PileInLength = MyMob ? MyMob->GetPileInLength() : 0.f;
 
 	// For reliability, update the move goal
-	MoveToLocation(Victim->GetActorLocation(), MyCharacter.GetFightRangePlusMyRadius() + VictimRadius - PileInLength, false);
+	MoveToLocation(Victim->GetActorLocation(), MyCharacter.GetStatsModelComponent()->GetFightRangePlusRadius(MyCharacter.GetRadius()) + VictimRadius - PileInLength, false);
 
 	//TODO: Add a logic to do during chase (shouts, effects, etc.)
 }
@@ -110,7 +111,7 @@ void AMHostileMobController::DoRetreatBehavior(const UWorld& World, AMCharacter&
 
 	// if we have already run back a sufficient length, then there is no need to run away anymore
 	const auto DistanceToVictim = FVector::Distance(Victim->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
-	if (DistanceToVictim >= MyCharacter.GetRetreatRange())
+	if (DistanceToVictim >= MyCharacter.GetStatsModelComponent()->GetRetreatRange())
 	{
 		SetChaseBehavior(World, MyCharacter);
 	}
@@ -161,7 +162,7 @@ void AMHostileMobController::SetChaseBehavior(const UWorld& World, AMCharacter& 
 	const auto MyMob = Cast<AMMob>(&MyCharacter);
 	const float PileInLength = MyMob ? MyMob->GetPileInLength() : 0.f;
 
-	MoveToLocation(Victim->GetActorLocation(), MyCharacter.GetFightRangePlusMyRadius() + VictimRadius - PileInLength, false);
+	MoveToLocation(Victim->GetActorLocation(), MyCharacter.GetStatsModelComponent()->GetFightRangePlusRadius(MyCharacter.GetRadius()) + VictimRadius - PileInLength, false);
 
 	OnBehaviorChanged(MyCharacter);
 }
@@ -206,7 +207,7 @@ void AMHostileMobController::SetRetreatBehavior(const UWorld& World, AMCharacter
 	const auto MyLocation = MyCharacter.GetTransform().GetLocation();
 	auto RetreatDirection = MyLocation - Victim->GetTransform().GetLocation();
 	RetreatDirection.Normalize();
-	RetreatDirection *= MyCharacter.GetRetreatRange();
+	RetreatDirection *= MyCharacter.GetStatsModelComponent()->GetRetreatRange();
 	const auto RetreatLocation = MyLocation + RetreatDirection;
 
 	// Project the point of retreat to navigation mesh to find the closest reachable node
@@ -243,7 +244,7 @@ void AMHostileMobController::OnFightAnimationEnd()
 		return;
 	}
 
-	if (MyCharacter->GetCanRetreat())
+	if (MyCharacter->GetStatsModelComponent()->GetCanRetreat())
 	{
 		SetRetreatBehavior(*GetWorld(), *MyCharacter);
 	}
@@ -256,7 +257,7 @@ void AMHostileMobController::OnFightAnimationEnd()
 void AMHostileMobController::OnHit()
 {
 	check(HasAuthority());
-	const auto MyCharacter = Cast<AMCharacter>(GetCharacter());
+	const auto MyCharacter = Cast<AMCharacter>(GetPawn());
 	if (!MyCharacter)
 		return;
 
@@ -280,7 +281,7 @@ void AMHostileMobController::OnHit()
 		{
 			if (AttackPuddleComponent->IsCircleWithin(Actor->GetActorLocation(), CapsuleComponent->GetScaledCapsuleRadius()))
 			{
-				Actor->TakeDamage(MyCharacter->GetStrength(), FDamageEvent(), this, MyCharacter);
+				Actor->TakeDamage(MyCharacter->GetStatsModelComponent()->GetStrength(), FDamageEvent(), this, MyCharacter);
 			}
 		}
 	}

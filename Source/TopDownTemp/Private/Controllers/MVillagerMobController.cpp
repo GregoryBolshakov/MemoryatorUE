@@ -6,6 +6,7 @@
 #include "Managers/MWorldGenerator.h"
 #include "NavigationSystem.h"
 #include "Components/MStateModelComponent.h"
+#include "Components/MStatsModelComponent.h"
 #include "Framework/MGameMode.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"
@@ -21,7 +22,7 @@ void AMVillagerMobController::PreTick(float DeltaSeconds, const UWorld& World, A
 	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
 		const auto MyLocation = MyCharacter.GetTransform().GetLocation();
-		const auto ForgetEnemyRange = MyCharacter.GetForgetEnemyRange();
+		const auto ForgetEnemyRange = MyCharacter.GetStatsModelComponent()->GetForgetEnemyRange();
 		const auto DynamicActorsNearby = WorldGenerator->GetActorsInRect(MyLocation - FVector(ForgetEnemyRange,ForgetEnemyRange, 0.f), MyLocation + FVector(ForgetEnemyRange,ForgetEnemyRange, 0.f), true);
 		EnemiesNearby.Empty();
 
@@ -31,7 +32,7 @@ void AMVillagerMobController::PreTick(float DeltaSeconds, const UWorld& World, A
 			{
 				// The actors are taken in a square area, in the corners the distance is greater than the radius
 				const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(), MyCharacter.GetTransform().GetLocation());
-				if (DistanceToActor <= MyCharacter.GetForgetEnemyRange())
+				if (DistanceToActor <= MyCharacter.GetStatsModelComponent()->GetForgetEnemyRange())
 				{
 					// Split dynamic actors by role
 
@@ -41,7 +42,7 @@ void AMVillagerMobController::PreTick(float DeltaSeconds, const UWorld& World, A
 					{
 						EnemiesNearby.Add(Name, DynamicActor);
 						// Run if we see an enemy. There is no need to run away if we're already hiding
-						if (DistanceToActor <= MyCharacter.GetSightRange() && CurrentBehavior != EMobBehaviors::Hide)
+						if (DistanceToActor <= MyCharacter.GetStatsModelComponent()->GetSightRange() && CurrentBehavior != EMobBehaviors::Hide)
 						{
 							SetRetreatBehavior(World, MyCharacter);
 							break;
@@ -149,7 +150,7 @@ void AMVillagerMobController::SetWalkBehavior(const UWorld& World, AMCharacter& 
 
 	CurrentBehavior = EMobBehaviors::Walk;
 
-	MyCharacter.GetCharacterMovement()->MaxWalkSpeed = MyCharacter.GetWalkSpeed();
+	MyCharacter.GetCharacterMovement()->MaxWalkSpeed = MyCharacter.GetStatsModelComponent()->GetWalkSpeed();
 
 	OnMoveCompletedDelegate.Unbind();
 	OnMoveCompletedDelegate.BindLambda([this, &World, &MyCharacter]
@@ -171,7 +172,7 @@ void AMVillagerMobController::SetRetreatBehavior(const UWorld& World, AMCharacte
 
 	CurrentBehavior = EMobBehaviors::Retreat;
 
-	MyCharacter.GetCharacterMovement()->MaxWalkSpeed = MyCharacter.GetSprintSpeed();
+	MyCharacter.GetCharacterMovement()->MaxWalkSpeed = MyCharacter.GetStatsModelComponent()->GetSprintSpeed();
 
 	if (const auto House = MyCharacter.GetHouse())
 	{

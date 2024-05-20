@@ -18,16 +18,20 @@
 #include "Managers/MWorldGenerator.h"
 #include "Net/UnrealNetwork.h"
 #include "Components/MStateModelComponent.h"
+#include "Components/MStatsModelComponent.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"
 
 AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, Health(MaxHealth)
 {
 	// Optional because children might use different type for the model component
 	StateModelComponent = CreateOptionalDefaultSubobject<UMStateModelComponent>(TEXT("StateModel"));
 	StateModelComponent->SetIsReplicated(true);
 	StateModelComponent->SetNetAddressable(); // Make DSO components net addressable
+
+	StatsModelComponent = CreateOptionalDefaultSubobject<UMStatsModelComponent>(TEXT("StatsModel"));
+	StatsModelComponent->SetIsReplicated(true);
+	StatsModelComponent->SetNetAddressable(); // Make DSO components net addressable
 
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("InventoryrComponent"));
 
@@ -118,6 +122,10 @@ void AMCharacter::Tick(float DeltaSeconds)
 		StateModelComponent->CleanDirty();
 		UpdateAnimation();
 	}
+	if (StatsModelComponent->GetIsDirty() && HasAuthority())
+	{
+		StatsModelComponent->CleanDirty();
+	}
 
 	//TODO: Clean up the code below this. This is legacy logic related to M2DRepresentationComponent
 	UpdateLastNonZeroDirection();
@@ -144,6 +152,10 @@ void AMCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 
+	if (StateModelComponent && !HasAuthority())
+	{
+		StateModelComponent->OnDirtyDelegate.AddDynamic(this, &AMCharacter::UpdateAnimation);
+	}
 	if (FaceCameraComponent)
 	{
 		FaceCameraComponent->PostInitChildren();
@@ -172,8 +184,8 @@ void AMCharacter::BeginPlay()
 
 	if (AttackPuddleComponent)
 	{
-		AttackPuddleComponent->SetLength(GetFightRangePlusMyRadius());
-		AttackPuddleComponent->SetAngle(MeleeSpread);
+		AttackPuddleComponent->SetLength(StatsModelComponent->GetFightRangePlusRadius(GetRadius()));
+		AttackPuddleComponent->SetAngle(StatsModelComponent->GetMeleeSpread());
 	}
 }
 
@@ -198,8 +210,8 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 
 			StateModelComponent->SetIsTakingDamage(true);
 
-			Health = FMath::Max(Health - abs(Damage), 0.f);
-			if (FMath::IsNearlyZero(Health))
+			StatsModelComponent->SetHealth(FMath::Max(StatsModelComponent->GetHealth() - abs(Damage), 0.f));
+			if (FMath::IsNearlyZero(StatsModelComponent->GetHealth()))
 			{
 				if (!GetClass()->IsChildOf(AMMemoryator::StaticClass())) // Temporary check
 				{

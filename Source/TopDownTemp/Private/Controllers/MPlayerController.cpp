@@ -12,6 +12,7 @@
 #include "Components/MStateModelComponent.h"
 #include "Managers/MWorldGenerator.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/MStatsModelComponent.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -120,7 +121,7 @@ FTimerHandle RunningTimerHandle;
 
 void AMPlayerController::StartSprintTimer()
 {
-	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()))
+	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()))
 	{
 		if (auto& TimerManager = GetWorld()->GetTimerManager();
 			!TimerManager.IsTimerActive(RunningTimerHandle))
@@ -128,19 +129,19 @@ void AMPlayerController::StartSprintTimer()
 			TimerManager.SetTimer(RunningTimerHandle, [this, &MyCharacter]
 			{
 				TurnSprintOn();
-			}, MyCharacter->GetTimeBeforeSprint(), false);
+			}, MyCharacter->GetStatsModelComponent()->GetTimeBeforeSprint(), false);
 		}
 	}
 }
 
 void AMPlayerController::TurnSprintOn()
 {
-	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()); MyCharacter && !MyCharacter->GetStateModelComponent()->GetIsSprinting())
+	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && !MyCharacter->GetStateModelComponent()->GetIsSprinting())
 	{
 		MyCharacter->GetStateModelComponent()->SetIsSprinting(true);
 		if (const auto MovementComponent = MyCharacter->GetCharacterMovement())
 		{
-			MovementComponent->MaxWalkSpeed = MyCharacter->GetSprintSpeed();
+			MovementComponent->MaxWalkSpeed = MyCharacter->GetStatsModelComponent()->GetSprintSpeed();
 		}
 	}
 }
@@ -148,19 +149,19 @@ void AMPlayerController::TurnSprintOn()
 void AMPlayerController::TurnSprintOff()
 {
 	GetWorld()->GetTimerManager().ClearTimer(RunningTimerHandle);
-	if (const auto MyCharacter = Cast<AMCharacter>(GetCharacter()); MyCharacter && MyCharacter->GetStateModelComponent()->GetIsSprinting())
+	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && MyCharacter->GetStateModelComponent()->GetIsSprinting())
 	{
 		MyCharacter->GetStateModelComponent()->SetIsSprinting(false);
 		if (const auto CharacterMovement = MyCharacter->GetCharacterMovement())
 		{
-			CharacterMovement->MaxWalkSpeed = MyCharacter->GetWalkSpeed();
+			CharacterMovement->MaxWalkSpeed = MyCharacter->GetStatsModelComponent()->GetWalkSpeed();
 		}
 	}
 }
 
 void AMPlayerController::OnExperienceAdded(int Amount)
 {
-	if (const auto pCharacter = GetCharacter())
+	if (const auto pCharacter = GetPawn())
 	{
 		MakeFloatingNumber(pCharacter->GetActorLocation(), Amount, EFloatingNumberType::Experience);
 	}
@@ -240,7 +241,7 @@ void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter
 	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
 		const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
-		const auto ForgetEnemyRange = MyCharacter.GetForgetEnemyRange();
+		const auto ForgetEnemyRange = MyCharacter.GetStatsModelComponent()->GetForgetEnemyRange();
 		const auto DynamicActorsNearby = WorldGenerator->GetActorsInRect(
 			CharacterLocation - FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f),
 			CharacterLocation + FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f), true);
@@ -253,7 +254,7 @@ void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter
 				// The actors are taken in a square area, in the corners the distance is greater than the radius
 				const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(),
 				                                               MyCharacter.GetTransform().GetLocation());
-				if (DistanceToActor <= MyCharacter.GetForgetEnemyRange())
+				if (DistanceToActor <= MyCharacter.GetStatsModelComponent()->GetForgetEnemyRange())
 				{
 					// Split dynamic actors by role
 
@@ -307,7 +308,7 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 		const auto EnemyLocation = EnemyActor->GetTransform().GetLocation();
 		const auto DistanceToActor = FVector::Distance(CharacterLocation, EnemyLocation);
 		// Fix our character's gaze on the enemy if it is the closest one and 
-		if (DistanceToActor + EnemyRadius <= MyCharacter.GetFightRangePlusMyRadius() * 3.5f &&
+		if (DistanceToActor + EnemyRadius <= MyCharacter.GetStatsModelComponent()->GetFightRangePlusRadius(MyCharacter.GetRadius()) * 3.5f &&
 			// Actor is within sight range TODO: put the " * 2.5f" to the properties
 			(!ClosestEnemy || DistanceToActor < FVector::Distance(CharacterLocation, ClosestEnemy->GetActorLocation())))
 		// It is either the only one in sight or the closest
@@ -323,7 +324,7 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 		MyCharacter.SetForcedGazeVector(VectorToEnemy);
 		PuddleComponent->SetHiddenInGame(false);
 
-		if (VectorToEnemy.Size2D() <= MyCharacter.GetFightRangePlusMyRadius() + ClosestEnemyRadius && !MyCharacter.GetStateModelComponent()->GetIsFighting())
+		if (VectorToEnemy.Size2D() <= MyCharacter.GetStatsModelComponent()->GetFightRangePlusRadius(MyCharacter.GetRadius()) + ClosestEnemyRadius && !MyCharacter.GetStateModelComponent()->GetIsFighting())
 		{
 			MyCharacter.GetStateModelComponent()->SetIsFighting(true);
 		}
@@ -332,7 +333,8 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 	{
 		MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
 		PuddleComponent->SetHiddenInGame(true);
-		if (bEnemyWasValid) // Was valid but no there is no such
+		if (bEnemyWasValid && // Enemy was valid but has just become invalid
+			MyCharacter.GetStateModelComponent()->GetIsMoving()) 
 		{
 			StartSprintTimer();
 		}
@@ -344,7 +346,7 @@ void AMPlayerController::OnHit()
 	check(HasAuthority());
 	// TODO: Currently is called from a blueprint basing on the current frame.
 	// TODO: Should rely on a fixed timing rather than a frame of a non-replicated component. (Might be wrong, as it is set in the BP only by server)
-	const auto MyCharacter = Cast<AMCharacter>(GetCharacter());
+	const auto MyCharacter = Cast<AMCharacter>(GetPawn());
 	if (!MyCharacter)
 	{
 		return;
@@ -371,7 +373,7 @@ void AMPlayerController::OnHit()
 				if (AttackPuddleComponent->IsCircleWithin(Actor->GetActorLocation(),
 				                                          CapsuleComponent->GetScaledCapsuleRadius()))
 				{
-					Actor->TakeDamage(MyCharacter->GetStrength(), {}, this, MyCharacter);
+					Actor->TakeDamage(MyCharacter->GetStatsModelComponent()->GetStrength(), {}, this, MyCharacter);
 				}
 			}
 		}

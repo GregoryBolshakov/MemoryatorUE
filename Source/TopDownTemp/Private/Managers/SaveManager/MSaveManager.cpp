@@ -7,6 +7,7 @@
 #include "Characters/MCharacter.h"
 #include "Characters/MMemoryator.h"
 #include "Components/MIsActiveCheckerComponent.h"
+#include "Components/MStatsModelComponent.h"
 #include "Controllers/MMobControllerBase.h"
 #include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
@@ -121,7 +122,7 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 					FMCharacterSaveData MCharacterSD{
 						ActorSaveData,
 						pMCharacter->GetSpeciesName(),
-						pMCharacter->GetHealth(),
+						pMCharacter->GetStatsModelComponent()->GetHealth(),
 					};
 					// Save inventory if MCharacter has it
 					if (auto* InventoryComponent = Cast<UMInventoryComponent>(pMCharacter->GetComponentByClass(UMInventoryComponent::StaticClass())))

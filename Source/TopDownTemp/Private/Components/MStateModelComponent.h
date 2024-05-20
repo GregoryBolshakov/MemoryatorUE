@@ -2,8 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "Net/UnrealNetwork.h"
-#include "Characters/MCharacter.h" // TODO: Remove
 #include "MStateModelComponent.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStateDirty);
 
 /** Component that stores and replicates all boolean states e.g. IsDashing, IsTakingDamage, IsDying, etc.\n
  * Supposed to be attached to AMCharacter or AMActor */
@@ -14,7 +15,6 @@ class UMStateModelComponent : public UActorComponent
 
 public:
 	bool GetIsDirty() const { return IsDirty; }
-	void MarkDirty() { IsDirty = true; }
 	void CleanDirty() { IsDirty = false; }
 
 	UFUNCTION(BlueprintCallable)
@@ -47,6 +47,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	inline void SetIsTakingDamage(bool IN_IsTakingDamage);
 
+	UPROPERTY()
+	FOnStateDirty OnDirtyDelegate;
+
 protected:
 	// TODO: Figure out why making all properties using OnRep fixes the bug with inconsistent updates for client
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty)
@@ -78,13 +81,12 @@ protected:
 		DOREPLIFETIME(UMStateModelComponent, IsPicking);
 		DOREPLIFETIME(UMStateModelComponent, IsSprinting);
 		DOREPLIFETIME(UMStateModelComponent, IsTakingDamage);
-		// Add other properties as needed
 	}
 
 	UFUNCTION()
 	void OnRep_IsDirty()
 	{
-		Cast<AMCharacter>(GetOwner())->UpdateAnimation(); // TODO: Execute a delegate instead
+		OnDirtyDelegate.Broadcast();
 	}
 };
 
