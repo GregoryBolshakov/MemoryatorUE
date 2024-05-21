@@ -123,12 +123,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	FVector ForcedGazeVector;
 
-	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent", meta=(AllowPrivateAccess=true))
+	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent")
 	FOnReverseMovementStarted OnReverseMovementStartedDelegate;
-	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent", meta=(AllowPrivateAccess=true))
+	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent")
 	FOnReverseMovementStopped OnReverseMovementStoppedDelegate;
 
 	//TODO: create a separate entity to store this. Now it needs to be set for each ancestor (it's bad).

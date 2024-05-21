@@ -166,7 +166,7 @@ void AMCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// Add replicated properties here.
+	DOREPLIFETIME(AMCharacter, ForcedGazeVector);
 }
 
 void AMCharacter::UpdateLastNonZeroDirection()
