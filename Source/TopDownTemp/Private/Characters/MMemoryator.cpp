@@ -1,6 +1,8 @@
 #include "MMemoryator.h"
 
+#include "AbilitySystemComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
+#include "TopDownTemp.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -58,6 +60,24 @@ void AMMemoryator::Tick(float DeltaSeconds)
 	HandleMovementState();
 
 	HandleCursor();
+}
+
+void AMMemoryator::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+	//TODO: Call BindASCInput() when move AbilitySystemComponent to PlayerState
+}
+
+void AMMemoryator::BindASCInput()
+{
+	if (!bASCInputBound && IsValid(AbilitySystemComponent) && IsValid(InputComponent))
+	{
+		FTopLevelAssetPath AbilityEnumAssetPath = FTopLevelAssetPath(FName("/Script/TopDownTemp"), FName("EMAbilityInputID"));
+		AbilitySystemComponent->BindAbilityActivationToInputComponent(InputComponent, FGameplayAbilityInputBinds(FString("ConfirmTarget"),
+			FString("CancelTarget"), AbilityEnumAssetPath, static_cast<int32>(EMAbilityInputID::Confirm), static_cast<int32>(EMAbilityInputID::Cancel)));
+
+		bASCInputBound = true;
+	}
 }
 
 void AMMemoryator::HandleCursor() const

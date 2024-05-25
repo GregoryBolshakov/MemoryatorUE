@@ -22,6 +22,13 @@ public:
 	/** Returns CursorToWorld subobject **/
 	FORCEINLINE class USceneComponent* GetCursorToWorld() { return CursorToWorld; }
 
+protected:
+	virtual void OnRep_PlayerState() override; 	// Client only
+
+	// TODO: When ASC is moved to Player State: Call from both SetupPlayerInputComponent and OnRep_PlayerState
+	// because of a potential race condition
+	void BindASCInput();
+
 private:
 
 	void HandleCursor() const;
@@ -45,5 +52,7 @@ private:
 	/** A decal that projects to the cursor location. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USceneComponent* CursorToWorld;
+
+	bool bASCInputBound = false;
 };
 
