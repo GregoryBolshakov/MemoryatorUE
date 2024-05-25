@@ -1,5 +1,6 @@
 #include "MCharacter.h"
 
+#include "GameplayAbilities/Public/AbilitySystemComponent.h"
 #include "Helpers/M2DRepresentationBlueprintLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/M2DRepresentationComponent.h"
@@ -31,7 +32,11 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 
 	StatsModelComponent = CreateOptionalDefaultSubobject<UMStatsModelComponent>(TEXT("StatsModel"));
 	StatsModelComponent->SetIsReplicated(true);
-	StatsModelComponent->SetNetAddressable(); // Make DSO components net addressable
+	StatsModelComponent->SetNetAddressable();
+
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetNetAddressable();
 
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("InventoryrComponent"));
 
@@ -224,6 +229,19 @@ float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, ACo
 		}
 	}
 	return Super::TakeDamage(Damage, DamageEvent, EventInstigator, DamageCauser);
+}
+
+void AMCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	if (AbilitySystemComponent)
+	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	}
+
+	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
+	SetOwner(NewController);
 }
 
 void AMCharacter::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)

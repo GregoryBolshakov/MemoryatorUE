@@ -65,6 +65,9 @@ public:
 
 	const TMap<TSubclassOf<APawn>, ERelationType>& GetRelationshipMap() const { return RelationshipMap; }
 
+protected:
+	virtual void AcknowledgePossession(APawn* P) override;
+
 protected: //Dash // TODO: Use gameplay ability system 
 	UFUNCTION()
 	void TimelineProgress(float Value);

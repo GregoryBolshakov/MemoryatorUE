@@ -1,4 +1,6 @@
 #include "MPlayerController.h"
+
+#include "AbilitySystemComponent.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "Components/MAttackPuddleComponent.h"
@@ -37,6 +39,17 @@ AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializ
 	}
 
 	ConsoleCommandsManager = CreateDefaultSubobject<UMConsoleCommandsManager>(TEXT("ConsoleCommandsManager"));
+}
+
+void AMPlayerController::AcknowledgePossession(APawn* P)
+{
+	Super::AcknowledgePossession(P);
+
+	AMCharacter* MCharacter = Cast<AMCharacter>(P);
+	if (MCharacter)
+	{
+		MCharacter->GetAbilitySystemComponent()->InitAbilityActorInfo(MCharacter, MCharacter);
+	}
 }
 
 void AMPlayerController::TimelineProgress(float Value)

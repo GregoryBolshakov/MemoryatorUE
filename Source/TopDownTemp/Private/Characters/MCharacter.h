@@ -9,6 +9,7 @@ class UMStateModelComponent;
 class UMStatsModelComponent;
 class UMIsActiveCheckerComponent;
 class UMInventoryComponent;
+class UAbilitySystemComponent;
 class UMCommunicationComponent;
 class UMAttackPuddleComponent;
 class AMOutpostHouse;
@@ -40,6 +41,8 @@ public:
 	UMStatsModelComponent* GetStatsModelComponent() const { return StatsModelComponent; }
 
 	UMIsActiveCheckerComponent* GetIsActiveCheckerComponent() const { return IsActiveCheckerComponent; }
+
+	UAbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
 
 	UMInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
@@ -88,6 +91,8 @@ protected:
 	UFUNCTION(BlueprintNativeEvent)
 	void OnDisabled();
 
+	virtual void PossessedBy(AController* NewController) override;
+
 	/** Representation (collection of sprites) */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UM2DRepresentationComponent* FaceCameraComponent;
@@ -97,6 +102,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMStatsModelComponent* StatsModelComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAbilitySystemComponent* AbilitySystemComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMInventoryComponent* InventoryComponent;
