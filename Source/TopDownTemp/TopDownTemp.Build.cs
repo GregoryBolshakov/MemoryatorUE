@@ -28,7 +28,16 @@ public class TopDownTemp : ModuleRules
 				"UMG",
 				"XRBase",
 			});
-		PrivateDependencyModuleNames.AddRange(new string[] { "GoogleTest", "CADKernel", "XRBase", "PCG", "GameplayAbilities" });
+		PrivateDependencyModuleNames.AddRange(new string[]
+		{
+			"GoogleTest",
+			"CADKernel",
+			"XRBase",
+			"PCG",
+			"GameplayAbilities",
+			"GameplayTags",
+			"GameplayTasks",
+		});
 
 		SetupGameplayDebuggerSupport(Target);
 		SetupIrisSupport(Target);

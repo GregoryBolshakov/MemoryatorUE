@@ -7,9 +7,12 @@
 class UM2DRepresentationComponent;
 class UMStateModelComponent;
 class UMStatsModelComponent;
+class UIsActiveCheckerComponent;
 class UMIsActiveCheckerComponent;
 class UMInventoryComponent;
 class UAbilitySystemComponent;
+class UMAbilitySystemComponent;
+class UMGameplayAbility;
 class UMCommunicationComponent;
 class UMAttackPuddleComponent;
 class AMOutpostHouse;
@@ -42,13 +45,13 @@ public:
 
 	UMIsActiveCheckerComponent* GetIsActiveCheckerComponent() const { return IsActiveCheckerComponent; }
 
-	UAbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
-
 	UMInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
 
 	UMAttackPuddleComponent* GetAttackPuddleComponent() const { return AttackPuddleComponent; }
 
 	UMCommunicationComponent* GetCommunicationComponent() const { return CommunicationComponent; }
+
+	UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
 	FVector GetLastNonZeroVelocity() const { return LastNonZeroVelocity; }
 
@@ -104,7 +107,7 @@ protected:
 	UMStatsModelComponent* StatsModelComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UAbilitySystemComponent* AbilitySystemComponent;
+	UMAbilitySystemComponent* AbilitySystemComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMInventoryComponent* InventoryComponent;
@@ -145,5 +148,23 @@ protected:
 
 	UPROPERTY()
 	AMOutpostHouse* House;
+
+// Ability system
+public:
+	// Switch on AbilityID to return individual ability levels.
+	UFUNCTION(BlueprintCallable, Category = "Abilities")
+	virtual int32 GetAbilityLevel(EMAbilityInputID AbilityID) const;
+
+// Ability system
+protected:
+	/** Grant abilities on the Server. The Ability Specs will be replicated to the owning client. */
+	virtual void AddCharacterAbilities();
+
+	// TODO: virtual void RemoveCharacterAbilities();
+	// TODO: Removes all CharacterAbilities. Can only be called by the Server. Removing on the Server will remove from Client too.
+
+	// Default abilities for this Character. They will be removed on Character death and re-given if Character respawns.
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Abilities")
+	TArray<TSubclassOf<UMGameplayAbility>> CharacterAbilities;
 };
 

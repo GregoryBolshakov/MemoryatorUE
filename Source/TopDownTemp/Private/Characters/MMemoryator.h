@@ -23,6 +23,8 @@ public:
 	FORCEINLINE class USceneComponent* GetCursorToWorld() { return CursorToWorld; }
 
 protected:
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
 	virtual void OnRep_PlayerState() override; 	// Client only
 
 	// TODO: When ASC is moved to Player State: Call from both SetupPlayerInputComponent and OnRep_PlayerState

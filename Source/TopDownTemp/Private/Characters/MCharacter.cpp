@@ -12,6 +12,8 @@
 #include "MMemoryator.h" // temporary include
 #include "Components/CapsuleComponent.h"
 #include "PaperSpriteComponent.h"
+#include "Abilities/MGameplayAbility.h"
+#include "Components/MAbilitySystemComponent.h"
 #include "Framework/MGameMode.h"
 #include "Managers/MMetadataManager.h"
 #include "Managers/SaveManager/MSaveManager.h"
@@ -34,7 +36,7 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	StatsModelComponent->SetIsReplicated(true);
 	StatsModelComponent->SetNetAddressable();
 
-	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystem"));
+	AbilitySystemComponent = CreateDefaultSubobject<UMAbilitySystemComponent>(TEXT("AbilitySystem"));
 	AbilitySystemComponent->SetIsReplicated(true);
 	AbilitySystemComponent->SetNetAddressable();
 
@@ -111,6 +113,11 @@ float AMCharacter::GetRadius() const
 	}
 	check(false);
 	return 0.f;
+}
+
+UAbilitySystemComponent* AMCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
 }
 
 void AMCharacter::InitialiseInventory(const TArray<FItem>& IN_Items) const
@@ -194,6 +201,22 @@ void AMCharacter::BeginPlay()
 	}
 }
 
+void AMCharacter::AddCharacterAbilities()
+{
+	if (GetLocalRole() != ROLE_Authority || !IsValid(AbilitySystemComponent) || AbilitySystemComponent->bCharacterAbilitiesGiven)
+	{
+		return;
+	}
+
+	for (TSubclassOf<UMGameplayAbility>& StartupAbility : CharacterAbilities)
+	{
+		AbilitySystemComponent->GiveAbility(
+			FGameplayAbilitySpec(StartupAbility, GetAbilityLevel(StartupAbility.GetDefaultObject()->AbilityID), static_cast<int32>(StartupAbility.GetDefaultObject()->AbilityInputID), this));
+	}
+
+	AbilitySystemComponent->bCharacterAbilitiesGiven = true;
+}
+
 float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	if (Damage)
@@ -240,6 +263,8 @@ void AMCharacter::PossessedBy(AController* NewController)
 		AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	}
 
+	AddCharacterAbilities();
+
 	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
 	SetOwner(NewController);
 }
@@ -262,6 +287,12 @@ void AMCharacter::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)
 			}
 		}
 	}
+}
+
+int32 AMCharacter::GetAbilityLevel(EMAbilityInputID AbilityID) const
+{
+	// TODO: Implement
+	return 1;
 }
 
 void AMCharacter::OnEnabled_Implementation()

@@ -234,8 +234,9 @@ void AMPlayerController::SetupInputComponent()
 
 	//InputComponent->BindAction("ToggleIsFighting", IE_Pressed, this, &AMPlayerController::OnToggleFightPressed);
 
+	// Outdated implementation TODO: Delete when finish Gameplay Ability implementation 
 	// we use only pressed, because player cannot stop performing the dash by himself
-	InputComponent->BindAction("Dash", IE_Pressed, this, &AMPlayerController::OnDashPressed);
+	//InputComponent->BindAction("Dash", IE_Pressed, this, &AMPlayerController::OnDashPressed);
 
 	InputComponent->BindAction("LeftMouseClick", IE_Released, this, &AMPlayerController::OnLeftMouseClick);
 

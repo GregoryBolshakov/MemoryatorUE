@@ -19,20 +19,22 @@ enum class EMAbilityInputID : uint8
 	Cancel				UMETA(DisplayName = "Cancel"),
 	// 3 Sprint
 	Sprint				UMETA(DisplayName = "Sprint"),
-	// 4 Jump
+	// 4 Dash
 	Dash				UMETA(DisplayName = "Dash"),
-	// 5 PrimaryFire
+	// 5 Jump
+	Jump				UMETA(DisplayName = "Jump"),
+	// 6 PrimaryFire
 	PrimaryFire			UMETA(DisplayName = "Primary Fire"),
-	// 6 SecondaryFire
+	// 7 SecondaryFire
 	SecondaryFire		UMETA(DisplayName = "Secondary Fire"),
-	// 7 Alternate Fire
+	// 8 Alternate Fire
 	AlternateFire		UMETA(DisplayName = "Alternate Fire"),
-	// 8 Reload
+	// 9 Reload
 	Reload				UMETA(DisplayName = "Reload"),
-	// 9 NextWeapon
+	// 10 NextWeapon
 	NextWeapon			UMETA(DisplayName = "Next Weapon"), 
-	// 10 PrevWeapon
+	// 11 PrevWeapon
 	PrevWeapon			UMETA(DisplayName = "Previous Weapon"),
-	// 11 Interact
+	// 12 Interact
 	Interact			UMETA(DisplayName = "Interact")
 };

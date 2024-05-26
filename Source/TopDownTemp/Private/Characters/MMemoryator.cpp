@@ -1,6 +1,5 @@
 #include "MMemoryator.h"
 
-#include "AbilitySystemComponent.h"
 #include "HeadMountedDisplayFunctionLibrary.h"
 #include "TopDownTemp.h"
 #include "UObject/ConstructorHelpers.h"
@@ -15,6 +14,7 @@
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components//MStateModelComponent.h"
+#include "Components/MAbilitySystemComponent.h"
 
 AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
 	Super(
@@ -60,6 +60,15 @@ void AMMemoryator::Tick(float DeltaSeconds)
 	HandleMovementState();
 
 	HandleCursor();
+}
+
+void AMMemoryator::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	// TODO: Move input binding from AMPlayerController::SetupInputComponent here
+
+	BindASCInput();
 }
 
 void AMMemoryator::OnRep_PlayerState()
