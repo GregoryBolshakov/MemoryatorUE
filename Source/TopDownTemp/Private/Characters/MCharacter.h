@@ -131,7 +131,7 @@ protected:
 	UPROPERTY()
 	FName SpeciesName;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)

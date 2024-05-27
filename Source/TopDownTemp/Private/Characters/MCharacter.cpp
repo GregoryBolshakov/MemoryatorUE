@@ -178,6 +178,7 @@ void AMCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(AMCharacter, LastNonZeroVelocity);
 	DOREPLIFETIME(AMCharacter, ForcedGazeVector);
 }
 
