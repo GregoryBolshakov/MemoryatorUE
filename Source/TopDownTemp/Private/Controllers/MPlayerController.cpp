@@ -15,7 +15,6 @@
 #include "Managers/MWorldGenerator.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/MStatsModelComponent.h"
-#include "Components/TimelineComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -52,36 +51,6 @@ void AMPlayerController::AcknowledgePossession(APawn* P)
 	}
 }
 
-void AMPlayerController::TimelineProgress(float Value)
-{
-	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()))
-	{
-		if (FMath::IsNearlyEqual(Value, 1.f, 0.0001f)) // Passed the timeline, stop dashing
-		{
-			EnableInput(this);
-			MyCharacter->GetStateModelComponent()->SetIsDashing(false);
-			DashVelocityTimeline.Stop();
-
-			TurnSprintOff();
-
-			return;
-		}
-
-		if (const auto MovementComponent = Cast<UCharacterMovementComponent>(MyCharacter->GetMovementComponent()))
-		{
-			// Set velocity to the distance we should have passed since the last frame and force movement component to consume the velocity
-			MovementComponent->UpdateComponentVelocity();
-			MovementComponent->MoveUpdatedComponent(
-				(Value - LastDashProgressValue) * DashLength * MyCharacter->GetLastNonZeroVelocity().GetSafeNormal(),
-				MyCharacter->GetActorRotation(), true);
-
-			// Update last frame info
-			TimeSinceLastDashUpdate = FDateTime::UtcNow();
-			LastDashProgressValue = Value;
-		}
-	}
-}
-
 void AMPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
@@ -90,14 +59,6 @@ void AMPlayerController::BeginPlay()
 	{
 		Possess(DeferredPawnToPossess);
 		DeferredPawnToPossess = nullptr;
-	}
-
-	if (DashVelocityCurve)
-	{
-		FOnTimelineFloat TimelineProgress;
-		TimelineProgress.BindDynamic(this, &AMPlayerController::TimelineProgress);
-		DashVelocityTimeline.AddInterpFloat(DashVelocityCurve, TimelineProgress);
-		DashVelocityTimeline.SetLooping(false);
 	}
 
 	if (IsValid(GetPawn()))
@@ -188,8 +149,6 @@ void AMPlayerController::PlayerTick(float DeltaTime)
 	{
 		return;
 	}
-
-	DashVelocityTimeline.TickTimeline(DeltaTime);
 
 	const auto pWorld = GetWorld();
 	const auto pMyCharacter = Cast<AMCharacter>(GetPawn());
@@ -545,23 +504,6 @@ void AMPlayerController::OnLeftMouseClick()
 				CommunicationManager->SpeakTo(ClickedMob);
 			}
 		}
-	}
-}
-
-void AMPlayerController::OnDashPressed()
-{
-	if (const auto MyCharacter = Cast<AMCharacter>(GetPawn()); MyCharacter && !MyCharacter->GetStateModelComponent()->GetIsDashing())
-	{
-		MyCharacter->SetForcedGazeVector(FVector::ZeroVector); // If character was facing enemy, stop
-		MyCharacter->GetStateModelComponent()->SetIsDashing(true);
-		MyCharacter->GetStateModelComponent()->SetIsMoving(false);
-		MyCharacter->GetStateModelComponent()->SetIsFighting(false);
-		DisableInput(this);
-
-		TimeSinceLastDashUpdate = FDateTime::UtcNow();
-		LastDashProgressValue = 0.f;
-
-		DashVelocityTimeline.PlayFromStart();
 	}
 }
 

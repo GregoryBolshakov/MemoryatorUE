@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-#include "Components/TimelineComponent.h"
 #include "MPlayerController.generated.h"
 
 class AMCharacter;
@@ -68,24 +67,7 @@ public:
 protected:
 	virtual void AcknowledgePossession(APawn* P) override;
 
-protected: //Dash // TODO: Use gameplay ability system 
-	UFUNCTION()
-	void TimelineProgress(float Value);
-
-	void OnDashPressed();
-
-	UPROPERTY(EditDefaultsOnly, Category="Dash")
-	float DashLength = 337.f;
-
-	FTimeline DashVelocityTimeline;
-
-	UPROPERTY(EditAnywhere, Category = "Dash")
-	UCurveFloat* DashVelocityCurve;
-
-	FDateTime TimeSinceLastDashUpdate;
-	float LastDashProgressValue;
-
-	// Interaction with other mobs
+// Interaction with other mobs
 protected:
 	void SetDynamicActorsNearby(const UWorld& World, AMCharacter& MyCharacter);
 
