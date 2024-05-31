@@ -69,12 +69,9 @@ protected:
 
 // Interaction with other mobs
 protected:
-	void SetDynamicActorsNearby(const UWorld& World, AMCharacter& MyCharacter);
+	void SetDynamicActorsNearby(const UWorld* World, AMCharacter* MyCharacter);
 
 	void UpdateClosestEnemy(AMCharacter& MyCharacter);
-
-	UFUNCTION(BlueprintCallable)
-	void OnHit();
 
 	/** Represents relationship with other pawns. Neutral if not listed */
 	UPROPERTY(EditAnywhere, Category = BehaviorParameters, meta=(AllowPrivateAccess = true))

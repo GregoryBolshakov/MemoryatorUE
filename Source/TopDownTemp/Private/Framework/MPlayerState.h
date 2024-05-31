@@ -8,7 +8,7 @@
 
 class UAbilitySystemComponent;
 
-// TODO: Right now is not used. Should move AbilitySystemComponent here. Should also use it (player state) instead of MStateModelComponent.
+// TODO: Right now is not used. May move AbilitySystemComponent here (or may not).
 UCLASS()
 class AMPlayerState : public APlayerState, public IAbilitySystemInterface
 {

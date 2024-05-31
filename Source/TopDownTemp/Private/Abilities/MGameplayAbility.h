@@ -5,6 +5,8 @@
 #include "TopDownTemp.h"
 #include "MGameplayAbility.generated.h"
 
+class AMCharacter;
+
 UCLASS()
 class UMGameplayAbility : public UGameplayAbility
 {
@@ -22,6 +24,11 @@ public:
 	// TODO: Figure out what that means
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Ability")
 	EMAbilityInputID AbilityID = EMAbilityInputID::None;
+
+protected:
+	/** Cast the physical actor that is executing this ability to MCharacter. May be null */
+	UFUNCTION(BlueprintCallable, Category = Ability)
+	AMCharacter* GetAvatarMCharacterFromActorInfo() const;
 
 	// TODO: Add the rest of the code
 };

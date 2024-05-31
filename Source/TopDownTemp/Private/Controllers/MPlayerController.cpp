@@ -164,7 +164,7 @@ void AMPlayerController::PlayerTick(float DeltaTime)
 	{
 		TimerManager.SetTimer(ActorsNearbyUpdateTimerHandle, [this, pWorld, pMyCharacter]
 		{
-			SetDynamicActorsNearby(*pWorld, *pMyCharacter);
+			SetDynamicActorsNearby(pWorld, pMyCharacter);
 		}, 1.f, false);
 	}
 
@@ -209,12 +209,12 @@ void AMPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("TurnAround", this, &AMPlayerController::TurnAround);
 }
 
-void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter& MyCharacter)
+void AMPlayerController::SetDynamicActorsNearby(const UWorld* World, AMCharacter* MyCharacter)
 {
 	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
-		const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
-		const auto ForgetEnemyRange = MyCharacter.GetStatsModelComponent()->GetForgetEnemyRange();
+		const auto CharacterLocation = MyCharacter->GetTransform().GetLocation();
+		const auto ForgetEnemyRange = MyCharacter->GetStatsModelComponent()->GetForgetEnemyRange();
 		const auto DynamicActorsNearby = WorldGenerator->GetActorsInRect(
 			CharacterLocation - FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f),
 			CharacterLocation + FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f), true);
@@ -224,10 +224,14 @@ void AMPlayerController::SetDynamicActorsNearby(const UWorld& World, AMCharacter
 		{
 			for (const auto& [Name, DynamicActor] : DynamicActorsNearby)
 			{
+				if (DynamicActor == MyCharacter)
+				{
+					continue; // Skip myself
+				}
 				// The actors are taken in a square area, in the corners the distance is greater than the radius
 				const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(),
-				                                               MyCharacter.GetTransform().GetLocation());
-				if (DistanceToActor <= MyCharacter.GetStatsModelComponent()->GetForgetEnemyRange())
+				                                               MyCharacter->GetTransform().GetLocation());
+				if (DistanceToActor <= MyCharacter->GetStatsModelComponent()->GetForgetEnemyRange())
 				{
 					// Split dynamic actors by role
 
@@ -310,45 +314,6 @@ void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
 			MyCharacter.GetStateModelComponent()->GetIsMoving()) 
 		{
 			StartSprintTimer();
-		}
-	}
-}
-
-void AMPlayerController::OnHit()
-{
-	check(HasAuthority());
-	// TODO: Currently is called from a blueprint basing on the current frame.
-	// TODO: Should rely on a fixed timing rather than a frame of a non-replicated component. (Might be wrong, as it is set in the BP only by server)
-	const auto MyCharacter = Cast<AMCharacter>(GetPawn());
-	if (!MyCharacter)
-	{
-		return;
-	}
-
-	if (const auto AttackPuddleComponent = MyCharacter->GetAttackPuddleComponent())
-	{
-		TArray<AActor*> OutActors;
-		auto test0 = UEngineTypes::ConvertToObjectType(ECC_Pawn);
-		UKismetSystemLibrary::BoxOverlapActors(GetWorld(), AttackPuddleComponent->GetComponentLocation(),
-		                                       AttackPuddleComponent->Bounds.BoxExtent, {
-			                                       UEngineTypes::ConvertToObjectType(
-				                                       ECC_Pawn)
-		                                       }, AMCharacter::StaticClass(), {MyCharacter}, OutActors);
-		for (const auto Actor : OutActors)
-		{
-			if (!Actor)
-			{
-				continue;
-			}
-
-			if (const auto CapsuleComponent = Cast<UCapsuleComponent>(Actor->GetRootComponent()))
-			{
-				if (AttackPuddleComponent->IsCircleWithin(Actor->GetActorLocation(),
-				                                          CapsuleComponent->GetScaledCapsuleRadius()))
-				{
-					Actor->TakeDamage(MyCharacter->GetStatsModelComponent()->GetStrength(), {}, this, MyCharacter);
-				}
-			}
 		}
 	}
 }

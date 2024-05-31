@@ -26,6 +26,7 @@ public:
 
 	void UpdateRotation();
 
+	UFUNCTION(BlueprintCallable)
 	bool IsCircleWithin(const FVector& Center, float Radius) const;
 
 	UPROPERTY()

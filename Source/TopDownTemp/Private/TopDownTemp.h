@@ -23,12 +23,12 @@ enum class EMAbilityInputID : uint8
 	Dash				UMETA(DisplayName = "Dash"),
 	// 5 Jump
 	Jump				UMETA(DisplayName = "Jump"),
-	// 6 PrimaryFire
-	PrimaryFire			UMETA(DisplayName = "Primary Fire"),
-	// 7 SecondaryFire
-	SecondaryFire		UMETA(DisplayName = "Secondary Fire"),
-	// 8 Alternate Fire
-	AlternateFire		UMETA(DisplayName = "Alternate Fire"),
+	// 6 PrimaryAttack
+	PrimaryAttack		UMETA(DisplayName = "Primary Attack"),
+	// 7 SecondaryAttack
+	SecondaryAttack		UMETA(DisplayName = "Secondary Attack"),
+	// 8 Alternate Attack
+	AlternateAttack		UMETA(DisplayName = "Alternate Attack"),
 	// 9 Reload
 	Reload				UMETA(DisplayName = "Reload"),
 	// 10 NextWeapon

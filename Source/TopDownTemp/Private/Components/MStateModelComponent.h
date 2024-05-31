@@ -8,6 +8,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStateDirty);
 
 /** Component that stores and replicates all boolean states e.g. IsDashing, IsTakingDamage, IsDying, etc.\n
  * Supposed to be attached to AMCharacter or AMActor */
+// TODO: Supposedly will be using GAS attributes instead
 UCLASS(BlueprintType)
 class UMStateModelComponent : public UActorComponent
 {
