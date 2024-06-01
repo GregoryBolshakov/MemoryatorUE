@@ -62,28 +62,8 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void MakeFloatingNumber(const FVector& Location, int Value, EFloatingNumberType Type);
 
-	const TMap<TSubclassOf<APawn>, ERelationType>& GetRelationshipMap() const { return RelationshipMap; }
-
 protected:
 	virtual void AcknowledgePossession(APawn* P) override;
-
-// Interaction with other mobs
-protected:
-	void SetDynamicActorsNearby(const UWorld* World, AMCharacter* MyCharacter);
-
-	void UpdateClosestEnemy(AMCharacter& MyCharacter);
-
-	/** Represents relationship with other pawns. Neutral if not listed */
-	UPROPERTY(EditAnywhere, Category = BehaviorParameters, meta=(AllowPrivateAccess = true))
-	TMap<TSubclassOf<APawn>, ERelationType> RelationshipMap;
-
-	UPROPERTY()
-	TMap<FName, AActor*> EnemiesNearby;
-
-	UPROPERTY()
-	AActor* ClosestEnemy;
-
-	FTimerHandle ActorsNearbyUpdateTimerHandle;
 
 // Occlusion
 protected:

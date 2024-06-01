@@ -14,7 +14,10 @@
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components//MStateModelComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/MAbilitySystemComponent.h"
+#include "Components/MStatsModelComponent.h"
+#include "Framework/MGameMode.h"
 
 AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
 	Super(
@@ -57,9 +60,24 @@ void AMMemoryator::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
-	HandleMovementState();
+	if (HasAuthority())
+	{
+		// Get actors nearby every N seconds. We don't need to do this every frame
+		if (auto& TimerManager = GetWorld()->GetTimerManager();
+			!TimerManager.IsTimerActive(ActorsNearbyUpdateTimerHandle))
+		{
+			TimerManager.SetTimer(ActorsNearbyUpdateTimerHandle, [this]
+			{
+				SetDynamicActorsNearby();
+			}, 1.f, false);
+		}
 
-	HandleCursor();
+		UpdateClosestEnemy();
+
+		HandleMovementState();
+
+		HandleCursor();
+	}
 }
 
 void AMMemoryator::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -86,6 +104,118 @@ void AMMemoryator::BindASCInput()
 			FString("CancelTarget"), AbilityEnumAssetPath, static_cast<int32>(EMAbilityInputID::Confirm), static_cast<int32>(EMAbilityInputID::Cancel)));
 
 		bASCInputBound = true;
+	}
+}
+
+void AMMemoryator::SetDynamicActorsNearby()
+{
+	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
+	{
+		const auto CharacterLocation = GetTransform().GetLocation();
+		const auto ForgetEnemyRange =GetStatsModelComponent()->GetForgetEnemyRange();
+		const auto DynamicActorsNearby = WorldGenerator->GetActorsInRect(
+			CharacterLocation - FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f),
+			CharacterLocation + FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f), true);
+		EnemiesNearby.Empty();
+
+		if (!DynamicActorsNearby.IsEmpty())
+		{
+			for (const auto& [Name, DynamicActor] : DynamicActorsNearby)
+			{
+				if (DynamicActor == this)
+				{
+					continue; // Skip myself
+				}
+				// The actors are taken in a square area, in the corners the distance is greater than the radius
+				const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(),
+				                                               GetTransform().GetLocation());
+				if (DistanceToActor <= GetStatsModelComponent()->GetForgetEnemyRange())
+				{
+					// Split dynamic actors by role
+
+					// Check if the actor is an enemy
+					if (const auto Relationship = RelationshipMap.Find(DynamicActor->GetClass());
+						Relationship && *Relationship == ERelationType::Enemy)
+					{
+						EnemiesNearby.Add(Name, DynamicActor);
+					}
+
+					//TODO: Check if the actor is a friend
+				}
+			}
+		}
+	}
+}
+
+void AMMemoryator::UpdateClosestEnemy()
+{
+	const auto PuddleComponent = AttackPuddleComponent;
+	if (!PuddleComponent)
+	{
+		return;
+	}
+
+	if (StateModelComponent->GetIsDashing()) // check for any action that shouldn't rotate character towards enemy
+	{
+		PuddleComponent->SetHiddenInGame(true);
+		return;
+	}
+
+	const auto CharacterLocation = GetTransform().GetLocation();
+	bool bEnemyWasValid = IsValid(ClosestEnemy);
+	ClosestEnemy = nullptr;
+
+	float ClosestEnemyRadius = 0.f;
+	for (const auto [Name, EnemyActor] : EnemiesNearby)
+	{
+		if (!IsValid(EnemyActor))
+		{
+			continue;
+		}
+		const auto Capsule = EnemyActor->FindComponentByClass<UCapsuleComponent>();
+		if (!Capsule)
+		{
+			check(false);
+			continue;
+		}
+
+		const auto EnemyRadius = Capsule->GetScaledCapsuleRadius();
+		const auto EnemyLocation = EnemyActor->GetTransform().GetLocation();
+		const auto DistanceToActor = FVector::Distance(CharacterLocation, EnemyLocation);
+		// Fix our character's gaze on the enemy if it is the closest one and 
+		if (DistanceToActor + EnemyRadius <= StatsModelComponent->GetFightRangePlusRadius(GetRadius()) * 3.5f &&
+			// Actor is within sight range TODO: put the " * 2.5f" to the properties
+			(!ClosestEnemy || DistanceToActor < FVector::Distance(CharacterLocation, ClosestEnemy->GetActorLocation())))
+		// It is either the only one in sight or the closest
+		{
+			ClosestEnemy = EnemyActor;
+			ClosestEnemyRadius = EnemyRadius;
+		}
+	}
+
+	if (ClosestEnemy)
+	{
+		const auto VectorToEnemy = ClosestEnemy->GetActorLocation() - CharacterLocation;
+		SetForcedGazeVector(VectorToEnemy);
+		PuddleComponent->SetHiddenInGame(false);
+
+		if (VectorToEnemy.Size2D() <= StatsModelComponent->GetFightRangePlusRadius(GetRadius()) + ClosestEnemyRadius && !StateModelComponent->GetIsFighting())
+		{
+			StateModelComponent->SetIsFighting(true);
+		}
+	}
+	else
+	{
+		SetForcedGazeVector(FVector::ZeroVector);
+		PuddleComponent->SetHiddenInGame(true);
+		if (bEnemyWasValid && // Enemy was valid but has just become invalid
+			StateModelComponent->GetIsMoving()) 
+		{
+			if (auto* MPlayerController = Cast<AMPlayerController>(GetController()))
+			{
+				MPlayerController->StartSprintTimer();
+			}
+		}
 	}
 }
 
@@ -166,7 +296,7 @@ void AMMemoryator::NotifyActorBeginOverlap(AActor* OtherActor)
 
 	if (const auto MPlayerController = Cast<AMPlayerController>(Controller))
 	{
-		if (const auto Relation = MPlayerController->GetRelationshipMap().Find(OtherActor->GetClass()); Relation && *Relation == ERelationType::Enemy)
+		if (const auto Relation = RelationshipMap.Find(OtherActor->GetClass()); Relation && *Relation == ERelationType::Enemy)
 		{
 			AttackPuddleComponent->ActorsWithin.Add(*OtherActor->GetName(), OtherActor);
 		}

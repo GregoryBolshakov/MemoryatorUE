@@ -10,7 +10,6 @@ class AMMemoryator : public AMCharacter
 	GENERATED_UCLASS_BODY()
 
 public:
-
 	virtual void AddMovementInput(FVector WorldDirection, float ScaleValue = 1.0f, bool bForce = false) override;
 
 	virtual void Tick(float DeltaSeconds) override;
@@ -31,8 +30,21 @@ protected:
 	// because of a potential race condition
 	void BindASCInput();
 
-private:
+// Interaction with other mobs
+protected:
+	void SetDynamicActorsNearby();
 
+	void UpdateClosestEnemy();
+
+	UPROPERTY()
+	TMap<FName, AActor*> EnemiesNearby;
+
+	UPROPERTY()
+	AActor* ClosestEnemy;
+
+	FTimerHandle ActorsNearbyUpdateTimerHandle;
+
+private:
 	void HandleCursor() const;
 
 	void HandleMovementState();

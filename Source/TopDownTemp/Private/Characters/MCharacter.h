@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "MCharacterSpecificTypes.h"
 #include "MCharacter.generated.h"
 
 class UM2DRepresentationComponent;
@@ -53,9 +54,11 @@ public:
 
 	UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
-	FVector GetLastNonZeroVelocity() const { return LastNonZeroVelocity; }
-
 	FName GetSpeciesName() const { return SpeciesName; }
+
+	FORCEINLINE const TMap<TSubclassOf<APawn>, ERelationType>& GetRelationshipMap() const { return RelationshipMap; }
+
+	FVector GetLastNonZeroVelocity() const { return LastNonZeroVelocity; }
 
 	AMOutpostHouse* GetHouse() const { return House; }
 
@@ -130,6 +133,10 @@ protected:
 
 	UPROPERTY()
 	FName SpeciesName;
+
+	/** Stores relationship with other pawns. Neutral if not listed */
+	UPROPERTY(EditAnywhere, Category = BehaviorParameters, meta=(AllowPrivateAccess = true))
+	TMap<TSubclassOf<APawn>, ERelationType> RelationshipMap;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);

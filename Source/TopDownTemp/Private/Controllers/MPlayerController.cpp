@@ -145,37 +145,12 @@ void AMPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 
-	if (!HasAuthority())
-	{
-		return;
-	}
-
-	const auto pWorld = GetWorld();
-	const auto pMyCharacter = Cast<AMCharacter>(GetPawn());
-	if (!pWorld || !pMyCharacter)
-	{
-		check(false);
-		return;
-	}
-
-	// Get actors nearby every N seconds. We don't need to do this every frame
-	if (auto& TimerManager = GetWorld()->GetTimerManager();
-		!TimerManager.IsTimerActive(ActorsNearbyUpdateTimerHandle))
-	{
-		TimerManager.SetTimer(ActorsNearbyUpdateTimerHandle, [this, pWorld, pMyCharacter]
-		{
-			SetDynamicActorsNearby(pWorld, pMyCharacter);
-		}, 1.f, false);
-	}
-
-	UpdateClosestEnemy(*pMyCharacter);
-
 	// Keep updating the destination every tick while desired
 	// TODO: support this if needed, right now it doesn't work
-	if (bMoveToMouseCursor)
+	/*if (bMoveToMouseCursor)
 	{
 		MoveToMouseCursor();
-	}
+	}*/
 }
 
 void AMPlayerController::SetupInputComponent()
@@ -207,115 +182,6 @@ void AMPlayerController::SetupInputComponent()
 	InputComponent->BindAxis("MoveRight", this, &AMPlayerController::MoveRight);
 
 	InputComponent->BindAxis("TurnAround", this, &AMPlayerController::TurnAround);
-}
-
-void AMPlayerController::SetDynamicActorsNearby(const UWorld* World, AMCharacter* MyCharacter)
-{
-	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
-	{
-		const auto CharacterLocation = MyCharacter->GetTransform().GetLocation();
-		const auto ForgetEnemyRange = MyCharacter->GetStatsModelComponent()->GetForgetEnemyRange();
-		const auto DynamicActorsNearby = WorldGenerator->GetActorsInRect(
-			CharacterLocation - FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f),
-			CharacterLocation + FVector(ForgetEnemyRange, ForgetEnemyRange, 0.f), true);
-		EnemiesNearby.Empty();
-
-		if (!DynamicActorsNearby.IsEmpty())
-		{
-			for (const auto& [Name, DynamicActor] : DynamicActorsNearby)
-			{
-				if (DynamicActor == MyCharacter)
-				{
-					continue; // Skip myself
-				}
-				// The actors are taken in a square area, in the corners the distance is greater than the radius
-				const auto DistanceToActor = FVector::Distance(DynamicActor->GetTransform().GetLocation(),
-				                                               MyCharacter->GetTransform().GetLocation());
-				if (DistanceToActor <= MyCharacter->GetStatsModelComponent()->GetForgetEnemyRange())
-				{
-					// Split dynamic actors by role
-
-					// Check if the actor is an enemy
-					if (const auto Relationship = RelationshipMap.Find(DynamicActor->GetClass());
-						Relationship && *Relationship == ERelationType::Enemy)
-					{
-						EnemiesNearby.Add(Name, DynamicActor);
-					}
-
-					//TODO: Check if the actor is a friend
-				}
-			}
-		}
-	}
-}
-
-void AMPlayerController::UpdateClosestEnemy(AMCharacter& MyCharacter)
-{
-	const auto PuddleComponent = MyCharacter.GetAttackPuddleComponent();
-	if (!PuddleComponent)
-	{
-		return;
-	}
-
-	if (MyCharacter.GetStateModelComponent()->GetIsDashing()) // check for any action that shouldn't rotate character towards enemy
-	{
-		PuddleComponent->SetHiddenInGame(true);
-		return;
-	}
-
-	const auto CharacterLocation = MyCharacter.GetTransform().GetLocation();
-	bool bEnemyWasValid = IsValid(ClosestEnemy);
-	ClosestEnemy = nullptr;
-
-	float ClosestEnemyRadius = 0.f;
-	for (const auto [Name, EnemyActor] : EnemiesNearby)
-	{
-		if (!IsValid(EnemyActor))
-		{
-			continue;
-		}
-		const auto Capsule = EnemyActor->FindComponentByClass<UCapsuleComponent>();
-		if (!Capsule)
-		{
-			check(false);
-			continue;
-		}
-
-		const auto EnemyRadius = Capsule->GetScaledCapsuleRadius();
-		const auto EnemyLocation = EnemyActor->GetTransform().GetLocation();
-		const auto DistanceToActor = FVector::Distance(CharacterLocation, EnemyLocation);
-		// Fix our character's gaze on the enemy if it is the closest one and 
-		if (DistanceToActor + EnemyRadius <= MyCharacter.GetStatsModelComponent()->GetFightRangePlusRadius(MyCharacter.GetRadius()) * 3.5f &&
-			// Actor is within sight range TODO: put the " * 2.5f" to the properties
-			(!ClosestEnemy || DistanceToActor < FVector::Distance(CharacterLocation, ClosestEnemy->GetActorLocation())))
-		// It is either the only one in sight or the closest
-		{
-			ClosestEnemy = EnemyActor;
-			ClosestEnemyRadius = EnemyRadius;
-		}
-	}
-
-	if (ClosestEnemy)
-	{
-		const auto VectorToEnemy = ClosestEnemy->GetActorLocation() - CharacterLocation;
-		MyCharacter.SetForcedGazeVector(VectorToEnemy);
-		PuddleComponent->SetHiddenInGame(false);
-
-		if (VectorToEnemy.Size2D() <= MyCharacter.GetStatsModelComponent()->GetFightRangePlusRadius(MyCharacter.GetRadius()) + ClosestEnemyRadius && !MyCharacter.GetStateModelComponent()->GetIsFighting())
-		{
-			MyCharacter.GetStateModelComponent()->SetIsFighting(true);
-		}
-	}
-	else
-	{
-		MyCharacter.SetForcedGazeVector(FVector::ZeroVector);
-		PuddleComponent->SetHiddenInGame(true);
-		if (bEnemyWasValid && // Enemy was valid but has just become invalid
-			MyCharacter.GetStateModelComponent()->GetIsMoving()) 
-		{
-			StartSprintTimer();
-		}
-	}
 }
 
 void AMPlayerController::MoveRight(float Value)

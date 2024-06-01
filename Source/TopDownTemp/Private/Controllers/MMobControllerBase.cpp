@@ -125,11 +125,12 @@ bool AMMobControllerBase::IsPlayerSpeakingToMe()
 ERelationType AMMobControllerBase::GetRelationshipWithPlayer()
 {
 	const auto pWorld = GetWorld();
-	if (!pWorld) { check(false); return ERelationType::Neutral; }
+	const auto MyMCharacter = Cast<AMCharacter>(GetPawn());
+	if (!pWorld || !MyMCharacter) { check(false); return ERelationType::Neutral; }
 
 	if (const auto PlayerCharacter = UGameplayStatics::GetPlayerCharacter(pWorld, 0))
 	{
-		if (const auto RelationshipWithPlayer = RelationshipMap.Find(PlayerCharacter->GetClass()))
+		if (const auto RelationshipWithPlayer = MyMCharacter->GetRelationshipMap().Find(PlayerCharacter->GetClass()))
 		{
 			return *RelationshipWithPlayer;
 		}

@@ -18,14 +18,6 @@ enum class EMobBehaviors
 	Hide,
 };
 
-UENUM()
-enum class ERelationType
-{
-	Neutral = 0,
-	Enemy = 1,
-	Friend = 2
-};
-
 // Class needed to support InterfaceCast<class IInterfaceDriver>(Object)
 UINTERFACE(BlueprintType, meta = (CannotImplementInterfaceInBlueprint = true))
 class UMInterfaceMobController : public UInterface
