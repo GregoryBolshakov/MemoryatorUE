@@ -64,6 +64,7 @@ public:
 
 	void InitialiseInventory(const TArray<struct FItem>& IN_Items) const;
 
+	UFUNCTION(BlueprintCallable)
 	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
 
 	void OnMovedIn(AMOutpostHouse* NewHouse) { House = NewHouse; }
