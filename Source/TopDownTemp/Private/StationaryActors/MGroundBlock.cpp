@@ -28,6 +28,10 @@ AMGroundBlock::AMGroundBlock(const FObjectInitializer& ObjectInitializer) : Supe
 
 void AMGroundBlock::UpdateBiome(EBiome IN_Biome)
 {
+	if (Tags.Contains("DummyForDefaultBounds"))
+	{
+		return; // Prevents endless loop
+	}
 	// Get the grid of actors to access adjacent blocks (for possible disabling of their transitions)
 	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{

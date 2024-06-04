@@ -90,7 +90,7 @@ void UMBuffBarComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	return; // TODO: Figure out if this old code is needed. It used to lock component position and make it impossible to set up
 
-	UpdateChildTransforms();
+	/*UpdateChildTransforms();
 	UpdateBounds();
 
 	if (const auto MyWidget = GetWidget())
@@ -107,7 +107,7 @@ void UMBuffBarComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		const auto TopCapsulePoint = OwnerCapsule->GetComponentLocation() + FVector(0.f, 0.f, OwnerCapsule->GetScaledCapsuleHalfHeight());
 		const auto NewLocation = TopCapsulePoint + FVector(0.f, 0.f, Bounds.BoxExtent.Z / 2.f);
 		SetWorldLocation(NewLocation);
-	}
+	}*/
 }
 
 void UMBuffBarComponent::BeginPlay()

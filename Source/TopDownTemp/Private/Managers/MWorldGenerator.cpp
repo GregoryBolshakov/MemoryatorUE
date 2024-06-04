@@ -57,9 +57,9 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 	// Set the biomes in a separate pass first because we need to know each biome during block generation in order to disable/enable block transitions
 	for (const auto BlockInRadius : BlocksInRadius)
 	{
-		if (MetadataManager->FindBlock(BlockInRadius) == nullptr) // Set biome only for non existent blocks
+		if (const auto BlockMetadata = MetadataManager->FindOrAddBlock(BlockInRadius); !BlockMetadata->pGroundBlock)
 		{
-			const auto BlockMetadata = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(BlockInRadius);
+			// Set biome only for non existent blocks
 			BlockMetadata->Biome = BiomeForInitialGeneration;
 		}
 	}

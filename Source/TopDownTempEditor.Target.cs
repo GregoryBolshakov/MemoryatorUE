@@ -7,7 +7,8 @@ public class TopDownTempEditorTarget : TargetRules
 	{
 		//BuildEnvironment = TargetBuildEnvironment.Unique;
 		Type = TargetType.Editor;
-		DefaultBuildSettings = BuildSettingsVersion.V2;
+		DefaultBuildSettings = BuildSettingsVersion.V4;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_3;
 		ExtraModuleNames.Add("TopDownTemp");
 	}
 }

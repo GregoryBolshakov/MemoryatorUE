@@ -262,7 +262,9 @@ void UMRoadManager::LoadOrGenerateRegion(const FIntPoint& RegionIndex)
 
 void UMRoadManager::ProcessAdjacentRegions(const FIntPoint& CurrentChunk)
 {
-	return; // temp // TODO: Multiplayer support and testing
+	// TODO: Multiplayer support and testing
+	// Temporarily deactivated code
+	/*
 	AdjacentRegions.Empty();
 	const auto CurrentRegion = GetRegionIndexByChunk(CurrentChunk);
 	AdjacentRegions.Add(CurrentRegion);
@@ -304,7 +306,7 @@ void UMRoadManager::ProcessAdjacentRegions(const FIntPoint& CurrentChunk)
 		ProcessRegionIfUnprocessed({CurrentRegion.X, CurrentRegion.Y - 1});
 	}
 
-	TriggerOutpostGenerationForAdjacentChunks(CurrentChunk);
+	TriggerOutpostGenerationForAdjacentChunks(CurrentChunk);*/
 }
 
 void UMRoadManager::ProcessRegionIfUnprocessed(const FIntPoint& Region)

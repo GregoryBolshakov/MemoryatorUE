@@ -37,7 +37,7 @@ void UMSaveManager::SetUpAutoSaves(AMWorldGenerator* WorldGenerator)
 
 void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 {
-	if (!IsValid(LoadedGameWorld))
+	/*if (!IsValid(LoadedGameWorld))
 	{
 		LoadedGameWorld = Cast<USaveGameWorld>(UGameplayStatics::CreateSaveGameObject(USaveGameWorld::StaticClass()));
 	}
@@ -149,7 +149,7 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 	if (LoadedGameWorld)
 	{
 		UGameplayStatics::SaveGameToSlot(LoadedGameWorld, USaveGameWorld::SlotName, 0);
-	}
+	}*/
 }
 
 void UMSaveManager::LoadFromMemory()
