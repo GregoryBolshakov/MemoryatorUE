@@ -10,6 +10,7 @@ class AMGroundBlock;
 class AMActor;
 class UPCGGraph;
 class UBlockMetadata;
+class UPCGGraphInterface;
 enum class EBiome : uint8;
 
 /** Describes all the data can be configured for a one kind of objects in this block (trees/flowers/mushrooms/etc.) */
@@ -59,7 +60,7 @@ public:
 	void SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, const FPCGVariables& PCGVariables);
 
 	/** Calculate values for PCG based on the Preset */
-	void SetPCGVariablesByPreset(AMGroundBlock* BlockActor, const FName PresetName, EBiome Biome);
+	void SetPCGVariablesByPreset(AMGroundBlock* BlockActor, const FName PresetName, EBiome Biome, UPCGGraphInterface* Graph);
 
 	UPCGGraph* GetDefaultGraph();
 

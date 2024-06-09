@@ -10,6 +10,7 @@
 #define ECC_Pickable ECollisionChannel::ECC_GameTraceChannel2
 #define ECC_OccludedTerrain ECollisionChannel::ECC_GameTraceChannel3
 
+class AMNavMeshBoundsVolume;
 class UMMetadataManager;
 class UMRoadManager;
 class AMPickableActor;
@@ -121,6 +122,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UMBlockGenerator> BlockGeneratorBPClass;
 
+	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
+	TSubclassOf<AMNavMeshBoundsVolume> NavMeshBoundsBPClass;
+
 private:
 
 	AActor* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround, const FOnSpawnActorStarted& OnSpawnActorStarted, const FMUid& Uid);
@@ -186,6 +190,10 @@ private:
 
 	UPROPERTY()
 	TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;
+
+	/** A map of NavMeshBoundsVolumes for each connected player. Populates in ProcessConnectingPlayer(). */
+	UPROPERTY(VisibleAnywhere)
+	TMap<FName, AMNavMeshBoundsVolume*> NavMeshBoundsVolumes;
 
 private:
 

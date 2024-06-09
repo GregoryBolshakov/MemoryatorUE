@@ -16,6 +16,7 @@
 #include "Components/MIsActiveCheckerComponent.h"
 #include "StationaryActors/Outposts/OutpostGenerators/MVillageGenerator.h"
 #include "NavigationSystem.h"
+#include "Components/BrushComponent.h"
 #include "Controllers/MPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "NakamaManager/Private/NakamaManager.h"
@@ -26,6 +27,7 @@
 #include "Engine/SplineMeshActor.h"
 #include "Framework/MGameMode.h"
 #include "GameFramework/PlayerState.h"
+#include "Helpers/MNavMeshBoundsVolume.h"
 #include "SaveManager/MSaveManager.h"
 #include "StationaryActors/MRoadSplineActor.h"
 

@@ -21,26 +21,15 @@ public:
 	/** Get the biome from AMWorldGenerator::GetGridOfActors.
 	 * We can't rely on storing biome here because there is a gap between biome setting pass and block generating pass.
 	 * During generating pass each block gets its biome in turn so there would be a risk of adjacent block store an old biome */
+	UFUNCTION(BlueprintCallable)
 	void UpdateBiome(EBiome IN_Biome);
 
 	/** Function updates the transition if needed. Called by an adjacent block that just received its biome. */
 	void UpdateTransition(FIntPoint Offset, EBiome AdjacentBiome);
 
-public: // PCG
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	FPCGVariables PCGVariables = {};
-
-	// Hopefully PCG plugin will get more flexible way to forward values from the owner to the graph
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	EBiome PCG_Biome;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int PCG_TreesCount = 0;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int PCG_BushesCount = 0;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	int PCG_StonesCount = 0;*/
-
 protected:
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnBiomeUpdated();
@@ -57,4 +46,12 @@ protected:
 	UStaticMeshComponent* GroundTransitionMeshTop;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	UStaticMeshComponent* GroundTransitionMeshBottom;
+
+// PCG
+public:
+	UPROPERTY(ReplicatedUsing=OnPCGVariablesReplicated, VisibleAnywhere, BlueprintReadOnly)
+	FPCGVariables PCGVariables = {};
+
+	UFUNCTION()
+	void OnPCGVariablesReplicated();
 };

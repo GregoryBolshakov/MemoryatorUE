@@ -4,6 +4,7 @@
 #include "SaveManager/MUid.h"
 #include "MWorldGeneratorTypes.generated.h"
 
+class UPCGGraphInterface;
 class UPCGGraph;
 class AMRoadSplineActor;
 class ASplineMeshActor;
@@ -220,9 +221,14 @@ enum class EScreenPoint
 	TopRight
 };
 
+/** Struct for storing all PCG information for a block. E.g. Biome, Graph, amount of trees, bushes, etc.\n
+ * Replicated. On replication triggers block generation for the owning block.\n
+ * Is set/modified only once, right after the block is spawned on the Server.*/
 USTRUCT(BlueprintType)
 struct FPCGVariables
 {
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TSoftObjectPtr<UPCGGraphInterface> Graph = nullptr;
 	GENERATED_BODY()
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EBiome Biome;

@@ -4,6 +4,9 @@
 #include "MGroundBlock.h"
 
 #include "PaperSpriteComponent.h"
+#include "PCGComponent.h"
+#include "PCGGraph.h"
+#include "Net/UnrealNetwork.h"
 #include "Framework/MGameMode.h"
 #include "Managers/MMetadataManager.h"
 #include "Managers/MWorldGenerator.h"
@@ -28,6 +31,8 @@ AMGroundBlock::AMGroundBlock(const FObjectInitializer& ObjectInitializer) : Supe
 
 void AMGroundBlock::UpdateBiome(EBiome IN_Biome)
 {
+	// TODO: Support it on clients
+
 	if (Tags.Contains("DummyForDefaultBounds"))
 	{
 		return; // Prevents endless loop
@@ -66,6 +71,13 @@ void AMGroundBlock::UpdateTransition(FIntPoint Offset, EBiome AdjacentBiome)
 	}
 }
 
+void AMGroundBlock::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AMGroundBlock, PCGVariables);
+}
+
 UStaticMeshComponent* AMGroundBlock::GetTransitionByOffset(FIntPoint Offset) const
 {
 	if (Offset == FIntPoint(-1, 0))
@@ -86,4 +98,15 @@ UStaticMeshComponent* AMGroundBlock::GetTransitionByOffset(FIntPoint Offset) con
 	}
 	check(false);
 	return nullptr;
+}
+
+void AMGroundBlock::OnPCGVariablesReplicated()
+{
+	if (const auto PCGComponent = GetComponentByClass<UPCGComponent>())
+	{
+		check(PCGVariables.Graph);
+		PCGComponent->SetGraph(PCGVariables.Graph.Get());
+		PCGComponent->GenerateLocal(false);
+	}
+	OnBiomeUpdated();
 }

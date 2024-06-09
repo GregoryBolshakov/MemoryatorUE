@@ -23,14 +23,15 @@ void UMBlockGenerator::SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGe
 
 	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters, false))
 	{
-		GroundBlock->UpdateBiome(BlockMetadata->Biome);
-		BlockMetadata->pGroundBlock = GroundBlock;
 		if (const auto PCGComponent = Cast<UPCGComponent>(GroundBlock->GetComponentByClass(UPCGComponent::StaticClass())))
 		{
+			SetPCGVariablesByPreset(GroundBlock, PresetName, BlockMetadata->Biome, BlockMetadata->PCGGraph);
 			PCGComponent->SetGraph(BlockMetadata->PCGGraph);
-			SetPCGVariablesByPreset(GroundBlock, PresetName, BlockMetadata->Biome);
-			PCGComponent->Generate();
+			PCGComponent->Generate(false);
 		}
+		GroundBlock->UpdateBiome(BlockMetadata->Biome);
+		// If you add any additional logic, make sure to duplicate it for AMGroundBlock::OnPCGVariablesReplicated
+		BlockMetadata->pGroundBlock = GroundBlock;
 	}
 }
 
@@ -65,10 +66,11 @@ void UMBlockGenerator::SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWor
 	}
 }
 
-void UMBlockGenerator::SetPCGVariablesByPreset(AMGroundBlock* BlockActor, const FName PresetName, EBiome Biome)
+void UMBlockGenerator::SetPCGVariablesByPreset(AMGroundBlock* BlockActor, const FName PresetName, EBiome Biome, UPCGGraphInterface* Graph)
 {
 	if (BlockActor) 
 	{
+		BlockActor->PCGVariables.Graph = Graph;
 		BlockActor->PCGVariables.Biome = Biome;
 
 		FPreset Preset;
