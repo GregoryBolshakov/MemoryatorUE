@@ -267,10 +267,9 @@ void UMRoadManager::ProcessAdjacentRegions(const FIntPoint& CurrentChunk)
 	/*
 	AdjacentRegions.Empty();
 	const auto CurrentRegion = GetRegionIndexByChunk(CurrentChunk);
-	AdjacentRegions.Add(CurrentRegion);
 
 	// Self check for reliability
-	ProcessRegionIfUnprocessed({CurrentRegion.X, CurrentRegion.Y});
+	ProcessRegionIfUnprocessed(CurrentRegion);
 
 	// When we approach the edge of the current region, we process the neighboring region
 	if ((CurrentChunk.X + 1) % RegionSize.X == 0) // Right Edge

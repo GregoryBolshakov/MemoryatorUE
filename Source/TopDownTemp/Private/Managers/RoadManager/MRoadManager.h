@@ -138,7 +138,7 @@ private:
 
 private: // For debugging
 
-	// Regions that are currently adjacent to the player. For debugging purposes only
+	// Regions that are currently adjacent to the player (including the one the player is currently on). For debugging purposes only
 	TSet<FIntPoint> AdjacentRegions;
 
 	friend class UMGroundMarker;

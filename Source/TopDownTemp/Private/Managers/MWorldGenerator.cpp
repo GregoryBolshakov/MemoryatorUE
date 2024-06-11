@@ -27,7 +27,7 @@
 #include "Engine/SplineMeshActor.h"
 #include "Framework/MGameMode.h"
 #include "GameFramework/PlayerState.h"
-#include "Helpers/MNavMeshBoundsVolume.h"
+#include "NavMesh/NavMeshBoundsVolume.h"
 #include "SaveManager/MSaveManager.h"
 #include "StationaryActors/MRoadSplineActor.h"
 
@@ -78,7 +78,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 			const auto VillageClass = RoadManager->GetOutpostBPClasses().Find("Village")->Get();
 			const auto VillageGenerator = RoadManager->SpawnOutpostGeneratorForDebugging(PlayerChunk, VillageClass);
 			VillageGenerator->Generate();
-			UpdateNavigationMesh();
+			// UpdateNavigationMesh(); // TODO: Support this if needed
 		}, 0.3f, false);
 	}
 
@@ -183,6 +183,16 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 	}
 
 	InitSurroundingArea(GetGroundBlockIndex(pPlayer->GetActorLocation()), MPlayerController->ObserverIndex);
+
+	//NavMeshBoundsVolumes // TODO: Move this code to RoadManager
+	auto* NavMeshBoundsVolume = GetWorld()->SpawnActor<ANavMeshBoundsVolume>(pPlayer->GetActorLocation(), FRotator::ZeroRotator);
+	auto NavMeshBrush = NavMeshBoundsVolume->GetBrushComponent();
+	NavMeshBrush->Bounds.BoxExtent = {1000.f, 1000.f, 200.f};
+	if (const auto NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+	{
+		NavSystem->OnNavigationBoundsUpdated(NavMeshBoundsVolume);
+	}
+	NavMeshBoundsVolumes.Add(UniqueID, NavMeshBoundsVolume);
 
 	// Bind to the player-moves-to-another-block event
 	AMGameMode::GetExperienceManager(this)->ExperienceAddedDelegate.AddDynamic(Cast<AMPlayerController>(NewPlayer), &AMPlayerController::OnExperienceAdded);
@@ -323,18 +333,20 @@ void AMWorldGenerator::CheckDynamicActorsBlocks() // TODO: use APawns instead of
 
 			// If Pawn is a player, get its observer index
 			uint8 ObserverIndex = -1;
+			AMPlayerController* MPlayerController = nullptr;
 			if (const auto Pawn = Cast<APawn>(Transition.ActorMetadata->Actor))
 			{
-				if (const auto* MPlayerController = Cast<AMPlayerController>(Pawn->GetController()))
-				{
-					ObserverIndex = MPlayerController->ObserverIndex;
-				}
+				MPlayerController = Cast<AMPlayerController>(Pawn->GetController());
+			}
+			if (!MPlayerController)
+			{
+				continue;
 			}
 
 			// Even though the dynamic object is still enabled, it might have moved to the disabled block (or even not generated yet),
 			// where all surrounding static objects are disabled.
 			// Check the environment for validity if you bind to the delegate!
-			Transition.ActorMetadata->OnBlockChangedDelegate.Broadcast(Transition.OldBlockIndex, Transition.ActorMetadata->GroundBlockIndex, ObserverIndex);
+			Transition.ActorMetadata->OnBlockChangedDelegate.Broadcast(Transition.OldBlockIndex, Transition.ActorMetadata->GroundBlockIndex, MPlayerController);
 
 			const auto RoadManager = AMGameMode::GetRoadManager(this);
 			//Chunk transition check
@@ -342,7 +354,7 @@ void AMWorldGenerator::CheckDynamicActorsBlocks() // TODO: use APawns instead of
 			const auto ActualChunk = RoadManager->GetChunkIndexByBlock(Transition.ActorMetadata->GroundBlockIndex);
 			if (OldChunk != ActualChunk)
 			{
-				Transition.ActorMetadata->OnChunkChangedDelegate.Broadcast(OldChunk, ActualChunk, ObserverIndex);
+				Transition.ActorMetadata->OnChunkChangedDelegate.Broadcast(OldChunk, ActualChunk, MPlayerController->ObserverIndex);
 			}
 		}
 		else
@@ -476,24 +488,21 @@ void AMWorldGenerator::MoveObserverToZone(const FIntPoint& CenterBlockFrom, cons
 	}
 }
 
-void AMWorldGenerator::UpdateNavigationMesh()
+void AMWorldGenerator::UpdateNavigationMesh(const AMPlayerController* PlayerController)
 {
 	if (const auto pWorld = GetWorld())
 	{
-		if (const auto PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
+		if (const auto NavMeshVolume = Cast<ANavMeshBoundsVolume>(UGameplayStatics::GetActorOfClass(pWorld, ANavMeshBoundsVolume::StaticClass())))
 		{
-			if (const auto NavMeshVolume = Cast<ANavMeshBoundsVolume>(UGameplayStatics::GetActorOfClass(pWorld, ANavMeshBoundsVolume::StaticClass())))
-			{
-				NavMeshVolume->SetActorLocation(PlayerPawn->GetTransform().GetLocation());
+			NavMeshVolume->SetActorLocation(PlayerController->GetFocalLocation());
 
-				if (const auto NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
-				{
-					NavSystem->OnNavigationBoundsUpdated(NavMeshVolume);
-				}
-				else
-				{
-					check(false);
-				}
+			if (const auto NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+			{
+				NavSystem->OnNavigationBoundsUpdated(NavMeshVolume);
+			}
+			else
+			{
+				check(false);
 			}
 		}
 	}
@@ -511,10 +520,10 @@ void AMWorldGenerator::UpdateNavigationMesh()
 //  xxx xxx  
 //     x
 
-void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex, const uint8 ObserverIndex)
+void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex, const AMPlayerController* PlayerController)
 {
 	check(IN_OldBlockIndex != IN_NewBlockIndex);
-	check(ObserverIndex != -1);
+	check(PlayerController->ObserverIndex != -1);
 	if (bPendingTeleport)
 	{
 		//TODO: Handle teleport case
@@ -544,13 +553,13 @@ void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, c
 
 	for (int i = 1; i < TravelledDequeue.Num(); ++i)
 	{
-		MoveObserverToZone(TravelledDequeue[i-1], TravelledDequeue[i], ObserverIndex); //TODO: Don't process Enable/Disable logic for each call, but rather fetch all flags first
-		GenerateNewPieceOfPerimeter(TravelledDequeue[i], ObserverIndex);
+		MoveObserverToZone(TravelledDequeue[i-1], TravelledDequeue[i], PlayerController->ObserverIndex); //TODO: Don't process Enable/Disable logic for each call, but rather fetch all flags first
+		GenerateNewPieceOfPerimeter(TravelledDequeue[i], PlayerController->ObserverIndex);
 	}
 
 	TravelledDequeue.Empty();
 
-	UpdateNavigationMesh();
+	//UpdateNavigationMesh(PlayerController);
 }
 
 void AMWorldGenerator::GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock, const uint8 ObserverIndex)

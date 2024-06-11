@@ -10,7 +10,7 @@
 #define ECC_Pickable ECollisionChannel::ECC_GameTraceChannel2
 #define ECC_OccludedTerrain ECollisionChannel::ECC_GameTraceChannel3
 
-class AMNavMeshBoundsVolume;
+class ANavMeshBoundsVolume;
 class UMMetadataManager;
 class UMRoadManager;
 class AMPickableActor;
@@ -122,9 +122,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UMBlockGenerator> BlockGeneratorBPClass;
 
-	UPROPERTY(EditDefaultsOnly, Category=MWorldGenerator)
-	TSubclassOf<AMNavMeshBoundsVolume> NavMeshBoundsBPClass;
-
 private:
 
 	AActor* SpawnActor(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, bool bForceAboveGround, const FOnSpawnActorStarted& OnSpawnActorStarted, const FMUid& Uid);
@@ -138,10 +135,10 @@ private:
 	virtual void Tick(float DeltaSeconds) override;
 
 	/** Moves the navigation mesh to the player's position */
-	void UpdateNavigationMesh();
+	void UpdateNavigationMesh(const AMPlayerController* PlayerController);
 
 	UFUNCTION()
-	void OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex, const uint8 ObserverIndex);
+	void OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex, const AMPlayerController* PlayerController);
 
 	void GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock, const uint8 ObserverIndex);
 
@@ -193,7 +190,7 @@ private:
 
 	/** A map of NavMeshBoundsVolumes for each connected player. Populates in ProcessConnectingPlayer(). */
 	UPROPERTY(VisibleAnywhere)
-	TMap<FName, AMNavMeshBoundsVolume*> NavMeshBoundsVolumes;
+	TMap<FName, ANavMeshBoundsVolume*> NavMeshBoundsVolumes;
 
 private:
 

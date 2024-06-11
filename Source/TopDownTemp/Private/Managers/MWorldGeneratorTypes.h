@@ -4,13 +4,14 @@
 #include "SaveManager/MUid.h"
 #include "MWorldGeneratorTypes.generated.h"
 
+class AMPlayerController;
 class UPCGGraphInterface;
 class UPCGGraph;
 class AMRoadSplineActor;
 class ASplineMeshActor;
 class AMGroundBlock;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnBlockChanged, const FIntPoint&, OldBlock, const FIntPoint&, NewBlock, const uint8, ObserverIndex);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnChunkChanged, const FIntPoint&, OldChunk, const FIntPoint&, NewChunk, const uint8, ObserverIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnBlockChanged, const FIntPoint&, OldBlock, const FIntPoint&, NewBlock, const AMPlayerController*, PlayerController);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnChunkChanged, const FIntPoint&, OldChunk, const FIntPoint&, NewChunk, const uint8, ObserverIndex); // TODO: Replace to player controller
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpawnActorStarted, AActor*);
 
 UENUM(BlueprintType)
