@@ -27,10 +27,21 @@ public:
 
 	void ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& BlockB, const ERoadType RoadType = ERoadType::Trail);
 
-	/** If current chunk is near the edge of the current region, generate the roads for adjacent one(s) */
-	void ProcessAdjacentRegions(const FIntPoint& CurrentChunk);
+	const TSet<FIntPoint> GetAdjacentRegions(const FIntPoint& ChunkIndex) const;
 
-	void ProcessRegionIfUnprocessed(const FIntPoint& CurrentChunk);
+	/** Set the observer flag for the current region and all adjacent regions to the chunk.
+	 * It's not the same as all regions adjacent to the current region! Only to the chunk. */
+	void AddObserverToZone(const FIntPoint& ChunkIndex, const uint8 ObserverIndex);
+
+	/** Helper function. Called for each region by AddObserverToZone() and MoveObserverToZone() */
+	void AddObserverToRegion(const FIntPoint& RegionIndex, const uint8 ObserverIndex);
+
+	// TODO: Implement void RemoveObserverFromZone(const FIntPoint& ChunkIndex, const uint8 ObserverIndex);
+	// It should be unloading regions that are no longer adjacent to anybody
+
+	/** Same as AddObserverToChunk but also removes the Observer index from regions left by the observer.
+	 * Need it to avoid instant -1 +1 problem. */
+	void MoveObserverToZone(const FIntPoint& PreviousChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex);
 
 	//TODO: Save not adjacent regions and remove them. It's optimizes performance and boosts saving time
 
