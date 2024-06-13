@@ -47,7 +47,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 
 	const auto RoadManager = AMGameMode::GetRoadManager(this);
 	const auto PlayerChunk = RoadManager->GetChunkIndexByBlock(PlayerBlock);
-	RoadManager->ProcessAdjacentRegions(PlayerChunk);
+	RoadManager->AddObserverToZone(PlayerChunk, ObserverIndex);
 
 	//temp
 	//RoadManager->ConnectTwoChunks(PlayerChunk, {PlayerChunk.X + 1, PlayerChunk.Y-1});
@@ -452,9 +452,6 @@ void AMWorldGenerator::MoveObserverToZone(const FIntPoint& CenterBlockFrom, cons
 
 	const auto NewZone = GetBlocksInRadius(CenterBlockTo.X, CenterBlockTo.Y, ActiveZoneRadius);
 	const auto OldZone = GetBlocksInRadius(CenterBlockFrom.X, CenterBlockFrom.Y, ActiveZoneRadius);
-
-	auto test1 = OldZone.Difference(NewZone);
-	auto test2 = NewZone.Difference(OldZone);
 
 	// Remove observer flag on the abandoned blocks
 	for (const auto BlockIndex : OldZone.Difference(NewZone))

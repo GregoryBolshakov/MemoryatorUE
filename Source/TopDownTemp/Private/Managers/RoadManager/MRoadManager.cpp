@@ -133,6 +133,102 @@ void UMRoadManager::ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& B
 	AddConnection(BlockA, BlockB, RoadSplineActor);
 }
 
+const TSet<FIntPoint> UMRoadManager::GetAdjacentRegions(const FIntPoint& ChunkIndex) const
+{
+	TSet<FIntPoint> Result;
+	const auto CurrentRegion = GetRegionIndexByChunk(ChunkIndex);
+	Result.Add(CurrentRegion);
+
+	// When we on an edging chunk of the region, consider regions next to the chunk as adjacent
+	if ((ChunkIndex.X + 1) % RegionSize.X == 0) // Right Edge
+	{
+		Result.Add({CurrentRegion.X + 1, CurrentRegion.Y});
+		if ((ChunkIndex.Y + 1) % RegionSize.Y == 0) // Top-Right Diagonal Edge
+		{
+			Result.Add({CurrentRegion.X + 1, CurrentRegion.Y + 1});
+		}
+		if (ChunkIndex.Y % RegionSize.Y == 0) // Bottom-Right Diagonal Edge
+		{
+			Result.Add({CurrentRegion.X + 1, CurrentRegion.Y - 1});
+		}
+	}
+	if (ChunkIndex.X % RegionSize.X == 0) // Left Edge
+	{
+		Result.Add({CurrentRegion.X - 1, CurrentRegion.Y});
+		if ((ChunkIndex.Y + 1) % RegionSize.Y == 0) // Top-Left Diagonal Edge
+		{
+			Result.Add({CurrentRegion.X - 1, CurrentRegion.Y + 1});
+		}
+		if (ChunkIndex.Y % RegionSize.Y == 0) // Bottom-Left Diagonal Edge
+		{
+			Result.Add({CurrentRegion.X - 1, CurrentRegion.Y - 1});
+		}
+	}
+	if ((ChunkIndex.Y + 1) % RegionSize.Y == 0) // Top Edge
+	{
+		Result.Add({CurrentRegion.X, CurrentRegion.Y + 1});
+	}
+	if (ChunkIndex.Y % RegionSize.Y == 0) // Bottom Edge
+	{
+		Result.Add({CurrentRegion.X, CurrentRegion.Y - 1});
+	}
+
+	return Result;
+}
+
+auto AddObserverToRegion = [](const FIntPoint& RegionIndex)
+{
+
+};
+void UMRoadManager::AddObserverToZone(const FIntPoint& ChunkIndex, const uint8 ObserverIndex)
+{
+	for (const auto& RegionIndex : GetAdjacentRegions(ChunkIndex))
+	{
+		AddObserverToRegion(RegionIndex, ObserverIndex);
+	}
+}
+
+void UMRoadManager::AddObserverToRegion(const FIntPoint& RegionIndex, const uint8 ObserverIndex)
+{
+	AdjacentRegions.Add(RegionIndex);
+	if (!GridOfRegions.Contains(RegionIndex)) // Region doesn't exist yet, load/generate it for this observer
+	{
+		auto& Region = GridOfRegions.Add(RegionIndex);
+		Region.ObserverFlags.SetBit(ObserverIndex);
+		LoadOrGenerateRegion(RegionIndex);
+	}
+	else // Region already existed, add this observer to the region
+	{
+		auto* Region = GridOfRegions.Find(RegionIndex);
+		Region->ObserverFlags.SetBit(ObserverIndex);
+	}
+}
+
+void UMRoadManager::MoveObserverToZone(const FIntPoint& PreviousChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex)
+{
+	const auto NewZone = GetAdjacentRegions(NewChunk);
+	const auto OldZone = GetAdjacentRegions(PreviousChunk);
+
+	// Remove observer flag on the abandoned regions
+	for (const auto RegionIndex : OldZone.Difference(NewZone))
+	{
+		auto* RegionMetadata = GridOfRegions.Find(RegionIndex);
+		check(RegionMetadata->ObserverFlags.CheckBit(ObserverIndex));
+		RegionMetadata->ObserverFlags.ClearBit(ObserverIndex);
+
+		if (RegionMetadata->ObserverFlags.IsEmpty()) // The last observer stops observing the block
+		{
+			AdjacentRegions.Remove(RegionIndex);
+			// TODO: Unload the region from RAM
+		}
+	}
+	// Set observer flag on the entered regions
+	for (const auto RegionIndex : NewZone.Difference(OldZone))
+	{
+		AddObserverToRegion(RegionIndex,ObserverIndex);
+	}
+}
+
 void UMRoadManager::SaveToMemory()
 {
 	// Save chunks
@@ -257,63 +353,6 @@ void UMRoadManager::LoadOrGenerateRegion(const FIntPoint& RegionIndex)
 	if (!LoadConnectionsBetweenChunksWithinRegion(RegionIndex))
 	{
 		GenerateConnectionsBetweenChunksWithinRegion(RegionIndex);
-	}
-}
-
-void UMRoadManager::ProcessAdjacentRegions(const FIntPoint& CurrentChunk)
-{
-	// TODO: Multiplayer support and testing
-	// Temporarily deactivated code
-	/*
-	AdjacentRegions.Empty();
-	const auto CurrentRegion = GetRegionIndexByChunk(CurrentChunk);
-
-	// Self check for reliability
-	ProcessRegionIfUnprocessed(CurrentRegion);
-
-	// When we approach the edge of the current region, we process the neighboring region
-	if ((CurrentChunk.X + 1) % RegionSize.X == 0) // Right Edge
-	{
-		ProcessRegionIfUnprocessed({CurrentRegion.X + 1, CurrentRegion.Y});
-		if ((CurrentChunk.Y + 1) % RegionSize.Y == 0) // Top-Right Diagonal Edge
-		{
-			ProcessRegionIfUnprocessed({CurrentRegion.X + 1, CurrentRegion.Y + 1});
-		}
-		if (CurrentChunk.Y % RegionSize.Y == 0) // Bottom-Right Diagonal Edge
-		{
-			ProcessRegionIfUnprocessed({CurrentRegion.X + 1, CurrentRegion.Y - 1});
-		}
-	}
-	if (CurrentChunk.X % RegionSize.X == 0) // Left Edge
-	{
-		ProcessRegionIfUnprocessed({CurrentRegion.X - 1, CurrentRegion.Y});
-		if ((CurrentChunk.Y + 1) % RegionSize.Y == 0) // Top-Left Diagonal Edge
-		{
-			ProcessRegionIfUnprocessed({CurrentRegion.X - 1, CurrentRegion.Y + 1});
-		}
-		if (CurrentChunk.Y % RegionSize.Y == 0) // Bottom-Left Diagonal Edge
-		{
-			ProcessRegionIfUnprocessed({CurrentRegion.X - 1, CurrentRegion.Y - 1});
-		}
-	}
-	if ((CurrentChunk.Y + 1) % RegionSize.Y == 0) // Top Edge
-	{
-		ProcessRegionIfUnprocessed({CurrentRegion.X, CurrentRegion.Y + 1});
-	}
-	if (CurrentChunk.Y % RegionSize.Y == 0) // Bottom Edge
-	{
-		ProcessRegionIfUnprocessed({CurrentRegion.X, CurrentRegion.Y - 1});
-	}
-
-	TriggerOutpostGenerationForAdjacentChunks(CurrentChunk);*/
-}
-
-void UMRoadManager::ProcessRegionIfUnprocessed(const FIntPoint& Region)
-{
-	AdjacentRegions.Add(Region);
-	if (!GridOfRegions.FindOrAdd(Region).bProcessed)
-	{
-		LoadOrGenerateRegion(Region);
 	}
 }
 
@@ -469,5 +508,5 @@ AMOutpostGenerator* UMRoadManager::GetOutpostGenerator(const FIntPoint& ChunkInd
 
 void UMRoadManager::OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex)
 {
-	ProcessAdjacentRegions(NewChunk); // TODO: process ObserverIndex! VERY IMPORTANT!
+	MoveObserverToZone(OldChunk, NewChunk, ObserverIndex);
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Managers/MWorldGeneratorTypes.h"
 #include "MRoadManagerTypes.generated.h"
 
 class AMRoadSplineActor;
@@ -85,4 +86,9 @@ struct FRegionMetadata
 	/** Matches road type with connectivity matrices */
 	UPROPERTY()
 	TMap<ERoadType, FRoadMatrixWrapper> MatrixWrappers;
+
+	/** Multiplayer limit is 32 players. Each block knows whether a certain player is observing it.\n
+	* Each player is given a unique flag bit position when entering the game. */
+	UPROPERTY()
+	FObserverFlags ObserverFlags;
 };
