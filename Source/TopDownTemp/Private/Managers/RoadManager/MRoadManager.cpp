@@ -130,6 +130,17 @@ void UMRoadManager::ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& B
 		RoadSplineActor->GetSplineComponent()->AddSplinePoint(NewPosition, ESplineCoordinateSpace::World, true);
 	} while (x != BlockB.X || y != BlockB.Y);
 
+	/** Set manually replicated point positions. Spline component doesn't replicate any of its properties. */
+	TArray<FVector> PointsForReplication;
+	const int32 PointsCount = RoadSplineActor->GetSplineComponent()->GetNumberOfSplinePoints();
+	for (int32 i = 0; i < PointsCount; ++i)
+	{
+		FVector PointLocation = RoadSplineActor->GetSplineComponent()->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::World);
+		PointsForReplication.Add(PointLocation);
+	}
+	RoadSplineActor->SetPointsForReplication(PointsForReplication);
+
+	// Adds BlockB to BlockA's connections and vice versa.
 	AddConnection(BlockA, BlockB, RoadSplineActor);
 }
 

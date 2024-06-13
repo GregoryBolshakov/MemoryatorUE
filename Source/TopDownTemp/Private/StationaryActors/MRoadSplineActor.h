@@ -22,12 +22,24 @@ public:
 
 	USplineComponent* GetSplineComponent() const { return SplineComponent; }
 
+	/** Set manually replicated point positions. Spline component doesn't replicate any of its properties. */
+	void SetPointsForReplication(const TArray<FVector>& Points);
+
 protected:
 	/** The tag PCG uses to differ the road types. */
 	FName GetRoadPCGTag(ERoadType IN_RoadType) const;
 
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	UFUNCTION()
+	void OnPointsReplicated();
+
 	UPROPERTY(EditAnywhere)
 	USplineComponent* SplineComponent;
+
+	/** Manually replicated point positions. Spline component doesn't replicate any of its properties. */
+	UPROPERTY(ReplicatedUsing=OnPointsReplicated)
+	TArray<FVector> ReplicatedPoints;
 
 	ERoadType RoadType;
 };
