@@ -1,6 +1,6 @@
 #include "MRoadSplineActor.h"
 
-#include "../../../../../../Temp/PackagedEngineBuilds/Windows/Engine/Source/Runtime/Engine/Public/Net/UnrealNetwork.h"
+#include "Net/UnrealNetwork.h"
 #include "Components/SplineComponent.h"
 
 AMRoadSplineActor::AMRoadSplineActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
