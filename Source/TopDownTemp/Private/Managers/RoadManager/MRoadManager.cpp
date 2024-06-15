@@ -21,7 +21,7 @@ void UMRoadManager::Initialize(AMWorldGenerator* IN_WorldGenerator)
 	}
 
 	// Create and initialize the class responsible for debug rendering of ground geometry
-	GroundMarker = NewObject<UMGroundMarker>(GetOuter(), UMGroundMarker::StaticClass(), TEXT("GroundMarker"));
+	GroundMarker = GetWorld()->SpawnActor<AMGroundMarker>(FVector::ZeroVector, FRotator::ZeroRotator);
 	GroundMarker->Initialize(IN_WorldGenerator, this);
 }
 

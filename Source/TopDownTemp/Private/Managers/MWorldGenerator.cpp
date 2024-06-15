@@ -750,12 +750,12 @@ FVector AMWorldGenerator::RaycastScreenPoint(const UObject* pWorldContextObject,
 
 void AMWorldGenerator::DrawDebuggingInfo() const
 {
-	FlushPersistentDebugLines(GetWorld());
 	if (const auto RoadManager = AMGameMode::GetRoadManager(this))
 	{
 		if (const auto GroundMarker = RoadManager->GetGroundMarker())
 		{
-			GroundMarker->Render();
+			GroundMarker->SetReplicatedData();
+			GroundMarker->RenderLocally();
 		}
 	}
 }
@@ -853,7 +853,7 @@ void AMWorldGenerator::SetupInputComponent()
 			if (const auto GroundMarker = RoadManager->GetGroundMarker())
 			{
 				InputComponent->BindAction("ToggleDebuggingGeometry", IE_Released, GroundMarker,
-										   &UMGroundMarker::OnToggleDebuggingGeometry);
+										   &AMGroundMarker::OnToggleDebuggingGeometry);
 			}
 		}
 	}

@@ -74,7 +74,7 @@ public:
 	void SaveToMemory();
 
 public: // For debugging
-	UMGroundMarker* GetGroundMarker() const { return GroundMarker; }
+	AMGroundMarker* GetGroundMarker() const { return GroundMarker; }
 
 	AMOutpostGenerator* SpawnOutpostGeneratorForDebugging(const FIntPoint& Chunk, TSubclassOf<AMOutpostGenerator> Class = nullptr);
 
@@ -152,9 +152,9 @@ private: // For debugging
 	// Regions that are currently adjacent to the player (including the one the player is currently on). For debugging purposes only
 	TSet<FIntPoint> AdjacentRegions;
 
-	friend class UMGroundMarker;
+	friend class AMGroundMarker;
 
 	/** A class responsible for debug rendering of ground geometry */
 	UPROPERTY()
-	UMGroundMarker* GroundMarker;
+	AMGroundMarker* GroundMarker;
 };

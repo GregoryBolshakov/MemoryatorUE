@@ -1,29 +1,47 @@
 #include "MGroundMarker.h"
 
+#include "Net/UnrealNetwork.h"
 #include "Managers/MWorldGenerator.h"
 #include "Managers/RoadManager/MRoadManager.h"
 
-void UMGroundMarker::Initialize(AMWorldGenerator* WorldGenerator, UMRoadManager* RoadManager)
+AMGroundMarker::AMGroundMarker(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	SetReplicates(true);
+}
+
+void AMGroundMarker::Initialize(AMWorldGenerator* WorldGenerator, UMRoadManager* RoadManager)
 {
 	pWorldGenerator = WorldGenerator;
 	pRoadManager = RoadManager;
 }
 
-void UMGroundMarker::Render() const
+void AMGroundMarker::SetReplicatedData()
 {
-	if (!bEnabled)
+	ReplicatedData.Enabled = EnabledOnServer;
+	if (EnabledOnServer) // Don't send the rest of the diff when disabled
+	{
+		ReplicatedData.AdjacentRegions.Empty();
+		ReplicatedData.AdjacentRegions.Append(pRoadManager->AdjacentRegions.Array());
+		ReplicatedData.BlockSize = pWorldGenerator->GetGroundBlockSize();
+		ReplicatedData.ChunkSizeInBlocks = pRoadManager->GetChunkSize();
+		ReplicatedData.RegionSizeInChunks = pRoadManager->GetRegionSize();
+	}
+}
+
+void AMGroundMarker::RenderLocally()
+{
+	FlushPersistentDebugLines(GetWorld());
+
+	if (!ReplicatedData.Enabled)
 		return;
 
-	const auto BlockSize = pWorldGenerator->GetGroundBlockSize();
-	const auto ChunkSizeInBlocks = pRoadManager->GetChunkSize();
-	const FVector ChunkSizeInUnits = FVector(ChunkSizeInBlocks.X, ChunkSizeInBlocks.Y, 0.f) * BlockSize;
-	const auto RegionSizeInChunks = pRoadManager->GetRegionSize();
-	const auto RegionSizeInUnits = FVector(RegionSizeInChunks.X, RegionSizeInChunks.Y, 0.f) * ChunkSizeInUnits;
-	for (const auto AdjacentRegion : pRoadManager->AdjacentRegions)
+	const FVector ChunkSizeInUnits = FVector(ReplicatedData.ChunkSizeInBlocks.X, ReplicatedData.ChunkSizeInBlocks.Y, 0.f) * ReplicatedData.BlockSize;
+	const auto RegionSizeInUnits = FVector(ReplicatedData.RegionSizeInChunks.X, ReplicatedData.RegionSizeInChunks.Y, 0.f) * ChunkSizeInUnits;
+	for (const auto AdjacentRegion : ReplicatedData.AdjacentRegions)
 	{
-		const auto ChunkIndex = pRoadManager->GetChunkIndexByRegion(AdjacentRegion);
-		const auto BlockIndex = pRoadManager->GetBlockIndexByChunk(ChunkIndex);
-		const auto Location = pWorldGenerator->GetGroundBlockLocation(BlockIndex);
+		const auto ChunkIndex = AdjacentRegion * ReplicatedData.RegionSizeInChunks;
+		const auto BlockIndex = ChunkIndex * ReplicatedData.ChunkSizeInBlocks;
+		const auto Location = FVector(BlockIndex) * ReplicatedData.BlockSize;
 
 		// Draw region boundaries
 		DrawDebugBox(
@@ -37,16 +55,15 @@ void UMGroundMarker::Render() const
 			10.f
 		);
 
-		// We will split all the chunks into pairs, and then we will connect some pairs and some not
-		TArray<FIntPoint> ChunkIndexes;
-		for (int i = ChunkIndex.X; i < ChunkIndex.X + RegionSizeInChunks.X; ++i)
+		for (int i = ChunkIndex.X; i < ChunkIndex.X + ReplicatedData.RegionSizeInChunks.X; ++i)
 		{
-			for (int j = ChunkIndex.Y; j < ChunkIndex.Y + RegionSizeInChunks.Y; ++j)
+			for (int j = ChunkIndex.Y; j < ChunkIndex.Y + ReplicatedData.RegionSizeInChunks.Y; ++j)
 			{
+				const auto BlockIndexByChunk = FIntPoint(i, j) * ReplicatedData.ChunkSizeInBlocks;
 				// Draw each chunk boundaries
 				DrawDebugBox(
 					GetWorld(),
-					pWorldGenerator->GetGroundBlockLocation(pRoadManager->GetBlockIndexByChunk({i, j})) + ChunkSizeInUnits / 2.f,
+					FVector(BlockIndexByChunk) * ReplicatedData.BlockSize + ChunkSizeInUnits / 2.f,
 					ChunkSizeInUnits / 2.f,
 					FColor::Blue,
 					true,
@@ -59,7 +76,14 @@ void UMGroundMarker::Render() const
 	}
 }
 
-void UMGroundMarker::OnToggleDebuggingGeometry()
+void AMGroundMarker::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	bEnabled = !bEnabled;
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AMGroundMarker, ReplicatedData);
+}
+
+void AMGroundMarker::OnToggleDebuggingGeometry_Implementation()
+{
+	EnabledOnServer = !EnabledOnServer;
 }
