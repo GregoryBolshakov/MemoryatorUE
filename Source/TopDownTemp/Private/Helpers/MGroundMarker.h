@@ -33,7 +33,7 @@ struct FReplicatedData
 UCLASS()
 class AMGroundMarker : public AActor
 {
-	GENERATED_UCLASS_BODY()
+	GENERATED_BODY()
 
 public:
 	void Initialize(AMWorldGenerator* WorldGenerator, UMRoadManager* RoadManager);
@@ -48,6 +48,8 @@ public:
 	void OnToggleDebuggingGeometry();
 
 protected:
+	void BeginPlay() override;
+
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:

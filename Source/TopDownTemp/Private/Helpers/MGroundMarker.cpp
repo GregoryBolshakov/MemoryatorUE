@@ -4,11 +4,6 @@
 #include "Managers/MWorldGenerator.h"
 #include "Managers/RoadManager/MRoadManager.h"
 
-AMGroundMarker::AMGroundMarker(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
-{
-	SetReplicates(true);
-}
-
 void AMGroundMarker::Initialize(AMWorldGenerator* WorldGenerator, UMRoadManager* RoadManager)
 {
 	pWorldGenerator = WorldGenerator;
@@ -74,6 +69,12 @@ void AMGroundMarker::RenderLocally()
 			}
 		}
 	}
+}
+
+void AMGroundMarker::BeginPlay()
+{
+	Super::BeginPlay();
+	SetReplicates(true);
 }
 
 void AMGroundMarker::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

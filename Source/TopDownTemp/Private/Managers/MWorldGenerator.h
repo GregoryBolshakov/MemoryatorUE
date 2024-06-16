@@ -134,9 +134,6 @@ private:
 
 	virtual void Tick(float DeltaSeconds) override;
 
-	/** Moves the navigation mesh to the player's position */
-	void UpdateNavigationMesh(const AMPlayerController* PlayerController);
-
 	UFUNCTION()
 	void OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, const FIntPoint& IN_NewBlockIndex, const AMPlayerController* PlayerController);
 

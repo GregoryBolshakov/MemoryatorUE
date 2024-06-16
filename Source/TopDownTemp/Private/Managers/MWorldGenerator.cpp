@@ -15,12 +15,9 @@
 #include "Managers/RoadManager/MRoadManager.h"
 #include "Components/MIsActiveCheckerComponent.h"
 #include "StationaryActors/Outposts/OutpostGenerators/MVillageGenerator.h"
-#include "NavigationSystem.h"
-#include "Components/BrushComponent.h"
 #include "Controllers/MPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "NakamaManager/Private/NakamaManager.h"
-#include "NavMesh/NavMeshBoundsVolume.h"
 #include "StationaryActors/MPickableActor.h"
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
@@ -474,26 +471,6 @@ void AMWorldGenerator::MoveObserverToZone(const FIntPoint& CenterBlockFrom, cons
 	}
 }
 
-void AMWorldGenerator::UpdateNavigationMesh(const AMPlayerController* PlayerController)
-{
-	if (const auto pWorld = GetWorld())
-	{
-		if (const auto NavMeshVolume = Cast<ANavMeshBoundsVolume>(UGameplayStatics::GetActorOfClass(pWorld, ANavMeshBoundsVolume::StaticClass())))
-		{
-			NavMeshVolume->SetActorLocation(PlayerController->GetFocalLocation());
-
-			if (const auto NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
-			{
-				NavSystem->OnNavigationBoundsUpdated(NavMeshVolume);
-			}
-			else
-			{
-				check(false);
-			}
-		}
-	}
-}
-
 //     x     
 //  xxx xxx  
 // xx     xx 
@@ -544,8 +521,6 @@ void AMWorldGenerator::OnPlayerChangedBlock(const FIntPoint& IN_OldBlockIndex, c
 	}
 
 	TravelledDequeue.Empty();
-
-	//UpdateNavigationMesh(PlayerController);
 }
 
 void AMWorldGenerator::GenerateNewPieceOfPerimeter(const FIntPoint& CenterBlock, const uint8 ObserverIndex)

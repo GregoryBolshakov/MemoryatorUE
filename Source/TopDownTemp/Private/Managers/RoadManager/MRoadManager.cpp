@@ -18,8 +18,12 @@
 void UMRoadManager::Initialize(AMWorldGenerator* IN_WorldGenerator)
 {
 	pWorldGenerator = IN_WorldGenerator;
-	LoadedSave = Cast<URoadManagerSave>(UGameplayStatics::LoadGameFromSlot(URoadManagerSave::SlotName, 0));
-	if (!LoadedSave)
+	if (UGameplayStatics::DoesSaveGameExist(URoadManagerSave::SlotName, 0))
+	{
+		LoadedSave = Cast<URoadManagerSave>(UGameplayStatics::LoadGameFromSlot(URoadManagerSave::SlotName, 0));
+		check(LoadedSave);
+	}
+	else
 	{
 		LoadedSave = Cast<URoadManagerSave>(UGameplayStatics::CreateSaveGameObject(URoadManagerSave::StaticClass()));
 	}
