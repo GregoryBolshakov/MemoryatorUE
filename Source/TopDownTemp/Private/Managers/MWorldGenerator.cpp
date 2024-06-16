@@ -353,7 +353,7 @@ void AMWorldGenerator::CheckDynamicActorsBlocks() // TODO: use APawns instead of
 	}
 }
 
-auto EnableActorsInBlock = [&](const TMap<FName, AActor*>& Actors)
+auto EnableActorsInBlock = [](const TMap<FName, AActor*>& Actors)
 {
 	for (const auto& [Name, Data] : Actors)
 	{
@@ -392,7 +392,7 @@ void AMWorldGenerator::AddObserverToZone(const FIntPoint& CenterBlock, const uin
 	}
 }
 
-auto DisableActorsInBlock = [&](const TMap<FName, AActor*>& Actors)
+auto DisableActorsInBlock = [](const TMap<FName, AActor*>& Actors)
 {
 	for (const auto& [Name, Data] : Actors)
 	{

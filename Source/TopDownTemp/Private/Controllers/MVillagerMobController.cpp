@@ -58,7 +58,7 @@ void AMVillagerMobController::PreTick(float DeltaSeconds, const UWorld& World, A
 
 void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
-	return; // temp
+	/*
 	MyCharacter.GetStateModelComponent()->SetIsFighting(false);
 	MyCharacter.GetStateModelComponent()->SetIsMoving(false);
 	if (!MyCharacter.GetHouse())
@@ -106,7 +106,7 @@ void AMVillagerMobController::DoIdleBehavior(const UWorld& World, AMCharacter& M
 				SetIdleBehavior(&World, &MyCharacter);
 			}
 		}, FMath::RandRange(MinRestDuration, MaxRestDuration), false);
-	}
+	}*/
 }
 
 void AMVillagerMobController::DoWalkBehavior(const UWorld& World, AMCharacter& MyCharacter)

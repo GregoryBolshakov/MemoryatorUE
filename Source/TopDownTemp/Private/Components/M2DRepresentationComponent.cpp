@@ -147,19 +147,19 @@ void UM2DRepresentationComponent::SetColor(const FLinearColor& Color)
 	DesiredColor = Color;
 }
 
+#if WITH_EDITOR
 void UM2DRepresentationComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-#if WITH_EDITOR
 	if (GIsPlayInEditorWorld)
 	{
 		// It is still poorly understood, but for some reason some of the stored pointers to components are invalidated
 		// after changing parameters at runtime. Therefore, we point them again.
 		PostInitChildren();
 	}
-#endif
 }
+#endif
 
 void UM2DRepresentationComponent::InterpolateColor(const float DeltaTime)
 {

@@ -58,7 +58,9 @@ private:
 	/** Creates invisible twin-components for casting non rotatable shadows */
 	void CreateShadowTwins();
 
+#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 
 	void InterpolateColor(float DeltaTime);
 
