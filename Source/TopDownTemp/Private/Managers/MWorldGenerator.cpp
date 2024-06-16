@@ -27,7 +27,6 @@
 #include "Engine/SplineMeshActor.h"
 #include "Framework/MGameMode.h"
 #include "GameFramework/PlayerState.h"
-#include "NavMesh/NavMeshBoundsVolume.h"
 #include "SaveManager/MSaveManager.h"
 #include "StationaryActors/MRoadSplineActor.h"
 
@@ -47,7 +46,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 
 	const auto RoadManager = AMGameMode::GetRoadManager(this);
 	const auto PlayerChunk = RoadManager->GetChunkIndexByBlock(PlayerBlock);
-	RoadManager->AddObserverToZone(PlayerChunk, ObserverIndex);
+	RoadManager->AddObserverToRegionZone(PlayerChunk, ObserverIndex);
 
 	//temp
 	//RoadManager->ConnectTwoChunks(PlayerChunk, {PlayerChunk.X + 1, PlayerChunk.Y-1});
@@ -70,7 +69,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 		LoadOrGenerateBlock(BlockInRadius, false, ObserverIndex);
 	}
 
-	if (!RoadManager->GetOutpostGenerator(PlayerChunk))
+	/*if (!RoadManager->GetOutpostGenerator(PlayerChunk))
 	{
 		pWorld->GetTimerManager().SetTimer(tempTimer, [this, PlayerChunk]()
 		{
@@ -80,7 +79,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 			VillageGenerator->Generate();
 			// UpdateNavigationMesh(); // TODO: Support this if needed
 		}, 0.3f, false);
-	}
+	}*/
 
 	/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
 	BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
@@ -183,16 +182,6 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 	}
 
 	InitSurroundingArea(GetGroundBlockIndex(pPlayer->GetActorLocation()), MPlayerController->ObserverIndex);
-
-	//NavMeshBoundsVolumes // TODO: Move this code to RoadManager
-	auto* NavMeshBoundsVolume = GetWorld()->SpawnActor<ANavMeshBoundsVolume>(pPlayer->GetActorLocation(), FRotator::ZeroRotator);
-	auto NavMeshBrush = NavMeshBoundsVolume->GetBrushComponent();
-	NavMeshBrush->Bounds.BoxExtent = {1000.f, 1000.f, 200.f};
-	if (const auto NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
-	{
-		NavSystem->OnNavigationBoundsUpdated(NavMeshBoundsVolume);
-	}
-	NavMeshBoundsVolumes.Add(UniqueID, NavMeshBoundsVolume);
 
 	// Bind to the player-moves-to-another-block event
 	AMGameMode::GetExperienceManager(this)->ExperienceAddedDelegate.AddDynamic(Cast<AMPlayerController>(NewPlayer), &AMPlayerController::OnExperienceAdded);

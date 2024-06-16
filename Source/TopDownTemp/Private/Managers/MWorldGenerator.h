@@ -188,10 +188,6 @@ private:
 	UPROPERTY()
 	TMap<UClass*, FBoxSphereBounds> DefaultBoundsMap;
 
-	/** A map of NavMeshBoundsVolumes for each connected player. Populates in ProcessConnectingPlayer(). */
-	UPROPERTY(VisibleAnywhere)
-	TMap<FName, ANavMeshBoundsVolume*> NavMeshBoundsVolumes;
-
 private:
 
 	UPROPERTY()

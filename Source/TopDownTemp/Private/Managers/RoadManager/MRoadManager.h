@@ -11,6 +11,7 @@ class URoadManagerSave;
 class AMRoadSplineActor;
 class AMWorldGenerator;
 class AMOutpostGenerator;
+class ANavMeshBoundsVolume;
 
 /** Class responsible for road generation within Regions, their Chunks and their blocks.\n\n
  *  Handles spawn of Outposts such as villages/camps/sites.\n\n
@@ -31,17 +32,23 @@ public:
 
 	/** Set the observer flag for the current region and all adjacent regions to the chunk.
 	 * It's not the same as all regions adjacent to the current region! Only to the chunk. */
-	void AddObserverToZone(const FIntPoint& ChunkIndex, const uint8 ObserverIndex);
+	void AddObserverToRegionZone(const FIntPoint& ChunkIndex, const uint8 ObserverIndex);
 
 	/** Helper function. Called for each region by AddObserverToZone() and MoveObserverToZone() */
 	void AddObserverToRegion(const FIntPoint& RegionIndex, const uint8 ObserverIndex);
+
+	/** Helper function. Called for each region by RemoveObserverFromZone() and MoveObserverToZone() */
+	void RemoveObserverFromRegion(const FIntPoint& RegionIndex, const uint8 ObserverIndex);
 
 	// TODO: Implement void RemoveObserverFromZone(const FIntPoint& ChunkIndex, const uint8 ObserverIndex);
 	// It should be unloading regions that are no longer adjacent to anybody
 
 	/** Same as AddObserverToChunk but also removes the Observer index from regions left by the observer.
 	 * Need it to avoid instant -1 +1 problem. */
-	void MoveObserverToZone(const FIntPoint& PreviousChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex);
+	void MoveObserverToRegionZone(const FIntPoint& PreviousChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex);
+
+	void AddNavMeshToRegion(const FIntPoint& RegionIndex);
+	void RemoveNavMeshFromRegion(const FIntPoint& RegionIndex);
 
 	//TODO: Save not adjacent regions and remove them. It's optimizes performance and boosts saving time
 
@@ -78,7 +85,7 @@ public: // For debugging
 
 	AMOutpostGenerator* SpawnOutpostGeneratorForDebugging(const FIntPoint& Chunk, TSubclassOf<AMOutpostGenerator> Class = nullptr);
 
-protected: // Road navigation
+protected: // Road connections
 	/** Adds BlockB to BlockA's connections and vice versa. */
 	void AddConnection(const FIntPoint& BlockA, const FIntPoint& BlockB, AMRoadSplineActor* RoadActor);
 
@@ -131,11 +138,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TMap<FName, TSubclassOf<AActor>> OutpostBPClasses;
 
+	/** A map of NavMeshBoundsVolumes. Stores one for each region occupied by a player.\n
+	 * It's ok to have such vast navigation volumes, all players are navigation invokers. */
+	UPROPERTY(VisibleAnywhere)
+	TMap<FIntPoint, ANavMeshBoundsVolume*> NavMeshBoundsVolumes;
+
 private:
 	/** Filled in only to create new ones or load existing ones needed for the current session. */
 	UPROPERTY()
 	TMap<FIntPoint, FChunkMetadata> GridOfChunks;
 
+	// TODO: Might become deprecated. Try to unload regions as soon as last observer leaves them. I.e. using only a thing like AdjacentRegions.
 	/** Filled in only to create new ones or load existing ones needed for the current session. */
 	UPROPERTY()
 	TMap<FIntPoint, FRegionMetadata> GridOfRegions;

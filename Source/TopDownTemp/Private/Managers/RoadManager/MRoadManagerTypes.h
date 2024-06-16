@@ -58,6 +58,8 @@ struct FChunkMetadata // TODO: Consider converting to a class
 	/** Currently we support only up to one Outpost, e.g. a village/camp/site per chunk */
 	UPROPERTY()
 	AMOutpostGenerator* OutpostGenerator = nullptr;
+
+	// TODO: Might support ObserverFlags as well
 };
 
 USTRUCT()
@@ -87,8 +89,8 @@ struct FRegionMetadata
 	UPROPERTY()
 	TMap<ERoadType, FRoadMatrixWrapper> MatrixWrappers;
 
-	/** Multiplayer limit is 32 players. Each block knows whether a certain player is observing it.\n
-	* Each player is given a unique flag bit position when entering the game. */
+	/** Works the same way as ObserverFlags in UBlockMetadata.\n
+	 * Used for adding/removing navigation bounds volumes. Might be used for loading/unloading regions when observing starts or ends. */
 	UPROPERTY()
 	FObserverFlags ObserverFlags;
 };

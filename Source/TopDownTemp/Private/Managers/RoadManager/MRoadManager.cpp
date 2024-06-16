@@ -1,6 +1,8 @@
 #include "MRoadManager.h"
 
 #include "MRoadManagerSaveTypes.h"
+#include "NavigationSystem.h"
+#include "AI/NavigationSystemBase.h"
 #include "Managers/MMetadataManager.h"
 #include "Managers/SaveManager/MSaveManager.h"
 #include "Managers/MWorldGenerator.h"
@@ -8,8 +10,10 @@
 #include "Components/SplineComponent.h"
 #include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "NavMesh/NavMeshBoundsVolume.h"
 #include "StationaryActors/MRoadSplineActor.h"
 #include "StationaryActors/Outposts/OutpostGenerators/MOutpostGenerator.h"
+#include "Components/BrushComponent.h"
 
 void UMRoadManager::Initialize(AMWorldGenerator* IN_WorldGenerator)
 {
@@ -191,7 +195,7 @@ auto AddObserverToRegion = [](const FIntPoint& RegionIndex)
 {
 
 };
-void UMRoadManager::AddObserverToZone(const FIntPoint& ChunkIndex, const uint8 ObserverIndex)
+void UMRoadManager::AddObserverToRegionZone(const FIntPoint& ChunkIndex, const uint8 ObserverIndex)
 {
 	for (const auto& RegionIndex : GetAdjacentRegions(ChunkIndex))
 	{
@@ -201,43 +205,75 @@ void UMRoadManager::AddObserverToZone(const FIntPoint& ChunkIndex, const uint8 O
 
 void UMRoadManager::AddObserverToRegion(const FIntPoint& RegionIndex, const uint8 ObserverIndex)
 {
-	AdjacentRegions.Add(RegionIndex);
-	if (!GridOfRegions.Contains(RegionIndex)) // Region doesn't exist yet, load/generate it for this observer
+	if (!GridOfRegions.Contains(RegionIndex))
 	{
-		auto& Region = GridOfRegions.Add(RegionIndex);
-		Region.ObserverFlags.SetBit(ObserverIndex);
-		LoadOrGenerateRegion(RegionIndex);
+		LoadOrGenerateRegion(RegionIndex); // Region doesn't exist yet, load/generate it
 	}
-	else // Region already existed, add this observer to the region
+	AdjacentRegions.Add(RegionIndex);
+	auto& Region = GridOfRegions.FindOrAdd(RegionIndex);
+	if (Region.ObserverFlags.IsEmpty())
 	{
-		auto* Region = GridOfRegions.Find(RegionIndex);
-		Region->ObserverFlags.SetBit(ObserverIndex);
+		AddNavMeshToRegion(RegionIndex); // The first observer enters the region
+	}
+	Region.ObserverFlags.SetBit(ObserverIndex);
+}
+
+void UMRoadManager::RemoveObserverFromRegion(const FIntPoint& RegionIndex, const uint8 ObserverIndex)
+{
+	auto* RegionMetadata = GridOfRegions.Find(RegionIndex);
+	check(RegionMetadata->ObserverFlags.CheckBit(ObserverIndex));
+	RegionMetadata->ObserverFlags.ClearBit(ObserverIndex);
+
+	if (RegionMetadata->ObserverFlags.IsEmpty()) // The last observer stops observing the region
+	{
+		RemoveNavMeshFromRegion(RegionIndex);
+		AdjacentRegions.Remove(RegionIndex);
+		// TODO: Unload the region from RAM. But also convert AddObserverToRegion so it stops using GridOfRegions
 	}
 }
 
-void UMRoadManager::MoveObserverToZone(const FIntPoint& PreviousChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex)
+void UMRoadManager::MoveObserverToRegionZone(const FIntPoint& PreviousChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex)
 {
 	const auto NewZone = GetAdjacentRegions(NewChunk);
 	const auto OldZone = GetAdjacentRegions(PreviousChunk);
 
 	// Remove observer flag on the abandoned regions
-	for (const auto RegionIndex : OldZone.Difference(NewZone))
+	for (const auto& RegionIndex : OldZone.Difference(NewZone))
 	{
-		auto* RegionMetadata = GridOfRegions.Find(RegionIndex);
-		check(RegionMetadata->ObserverFlags.CheckBit(ObserverIndex));
-		RegionMetadata->ObserverFlags.ClearBit(ObserverIndex);
-
-		if (RegionMetadata->ObserverFlags.IsEmpty()) // The last observer stops observing the block
-		{
-			AdjacentRegions.Remove(RegionIndex);
-			// TODO: Unload the region from RAM
-		}
+		RemoveObserverFromRegion(RegionIndex, ObserverIndex);
 	}
 	// Set observer flag on the entered regions
-	for (const auto RegionIndex : NewZone.Difference(OldZone))
+	for (const auto& RegionIndex : NewZone.Difference(OldZone))
 	{
 		AddObserverToRegion(RegionIndex,ObserverIndex);
 	}
+}
+
+void UMRoadManager::AddNavMeshToRegion(const FIntPoint& RegionIndex)
+{
+	const FIntPoint RegionSizeInBlocks = RegionSize * ChunkSize;
+	const auto HalfRegionSizeInUnits = pWorldGenerator->GetGroundBlockSize() * FVector(RegionSizeInBlocks.X, RegionSizeInBlocks.Y, 0) / 2.f;
+	const auto RegionCenter = pWorldGenerator->GetGroundBlockLocation(GetBlockIndexByChunk(GetChunkIndexByRegion(RegionIndex))) + HalfRegionSizeInUnits;
+
+	auto* NavMeshBoundsVolume = GetWorld()->SpawnActor<ANavMeshBoundsVolume>(RegionCenter, FRotator::ZeroRotator);
+	auto* NavMeshBrush = NavMeshBoundsVolume->GetBrushComponent();
+	NavMeshBrush->Bounds.BoxExtent = {HalfRegionSizeInUnits.X, HalfRegionSizeInUnits.Y, 200.f};
+
+	if (const auto NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+	{
+		NavSystem->OnNavigationBoundsAdded(NavMeshBoundsVolume);
+	}
+	NavMeshBoundsVolumes.Add(RegionIndex, NavMeshBoundsVolume);
+}
+
+void UMRoadManager::RemoveNavMeshFromRegion(const FIntPoint& RegionIndex)
+{
+	auto* NavMeshBoundsVolume = NavMeshBoundsVolumes.FindChecked(RegionIndex);
+	if (const auto NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+	{
+		NavSystem->OnNavigationBoundsRemoved(NavMeshBoundsVolume);
+	}
+	NavMeshBoundsVolumes.Remove(RegionIndex);
 }
 
 void UMRoadManager::SaveToMemory()
@@ -519,5 +555,5 @@ AMOutpostGenerator* UMRoadManager::GetOutpostGenerator(const FIntPoint& ChunkInd
 
 void UMRoadManager::OnPlayerChangedChunk(const FIntPoint& OldChunk, const FIntPoint& NewChunk, const uint8 ObserverIndex)
 {
-	MoveObserverToZone(OldChunk, NewChunk, ObserverIndex);
+	MoveObserverToRegionZone(OldChunk, NewChunk, ObserverIndex);
 }
