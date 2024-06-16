@@ -48,8 +48,6 @@ public:
 	void OnToggleDebuggingGeometry();
 
 protected:
-	void BeginPlay() override;
-
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:

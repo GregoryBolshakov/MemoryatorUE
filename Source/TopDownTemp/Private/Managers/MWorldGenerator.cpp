@@ -1044,7 +1044,7 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		if (const auto Actor = WorldContextObject->GetWorld()->SpawnActorDeferred<AActor>(IN_ActorClass, FTransform::Identity))
 		{
-			Actor->SetReplicates(false); // This might cause problems since the actor hasn't Begun Play. Be cautious especially using Iris
+			//Actor->SetReplicates(false); // This might cause problems since the actor hasn't Begun Play. Be cautious especially using Iris
 			Actor->Tags.Add("DummyForDefaultBounds");
 			UGameplayStatics::FinishSpawningActor(Actor, FTransform::Identity);
 			Actor->SetActorEnableCollision(false);

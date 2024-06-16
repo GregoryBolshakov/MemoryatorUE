@@ -71,12 +71,6 @@ void AMGroundMarker::RenderLocally()
 	}
 }
 
-void AMGroundMarker::BeginPlay()
-{
-	Super::BeginPlay();
-	SetReplicates(true);
-}
-
 void AMGroundMarker::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
