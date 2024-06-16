@@ -324,7 +324,6 @@ void AMPlayerController::OnToggleFightPressed()
 void AMPlayerController::OnLeftMouseClick()
 {
 	FHitResult HitResult;
-	auto test0 = UEngineTypes::ConvertToObjectType(ECC_Pawn);
 	if (GetHitResultUnderCursorForObjects({UEngineTypes::ConvertToObjectType(ECC_Pawn)}, true, HitResult))
 	{
 		AMMob* ClickedMob = Cast<AMMob>(HitResult.GetActor());

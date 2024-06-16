@@ -5,6 +5,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "UI/MCommunicationWidget.h"
 #include "Components/MInventoryComponent.h"
+#include "Components/MStatsModelComponent.h"
 
 AMCommunicationManager::AMCommunicationManager()
 {
@@ -21,7 +22,8 @@ void AMCommunicationManager::SpeakTo(AMCharacter* IN_InterlocutorCharacter)
 	const auto PlayerCharacter = Cast<AMCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	if (!IsValid(PlayerCharacter) || !IsValid(IN_InterlocutorCharacter)) { check(false); return; }
 
-	if (FVector::Dist(PlayerCharacter->GetActorLocation(), IN_InterlocutorCharacter->GetActorLocation()) > 100.f) // TODO: put to variables
+	const float SpeakingRange = PlayerCharacter->GetStatsModelComponent()->GetSpeakingRange();
+	if (FVector::Dist(PlayerCharacter->GetActorLocation(), IN_InterlocutorCharacter->GetActorLocation()) > SpeakingRange)
 		return;
 
 	// Remove the communication screen widget from previous conversation if it was present
@@ -75,9 +77,10 @@ void AMCommunicationManager::Tick(float DeltaSeconds)
 	// Check if the player had had a conversation with some mob but ran away
 	if (InterlocutorCharacter)
 	{
-		if (const auto PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0))
+		if (const auto PlayerCharacter = Cast<AMCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 		{
-			if (FVector::Dist(PlayerCharacter->GetActorLocation(), InterlocutorCharacter->GetActorLocation()) > CommunicationDistance)
+			const float SpeakingRange = PlayerCharacter->GetStatsModelComponent()->GetSpeakingRange();
+			if (FVector::Dist(PlayerCharacter->GetActorLocation(), InterlocutorCharacter->GetActorLocation()) > SpeakingRange)
 			{
 				StopSpeaking();
 			}

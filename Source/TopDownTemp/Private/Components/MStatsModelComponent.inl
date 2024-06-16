@@ -56,6 +56,15 @@ inline void UMStatsModelComponent::SetSightRange(float IN_SightRange)
 	}
 }
 
+inline void UMStatsModelComponent::SetSpeakingRange(float IN_SpeakingRange)
+{
+	if (SpeakingRange != IN_SpeakingRange)
+	{
+		SpeakingRange = IN_SpeakingRange;
+		IsDirty = true;
+	}
+}
+
 inline void UMStatsModelComponent::SetSprintSpeed(float IN_SprintSpeed)
 {
 	if (SprintSpeed != IN_SprintSpeed)

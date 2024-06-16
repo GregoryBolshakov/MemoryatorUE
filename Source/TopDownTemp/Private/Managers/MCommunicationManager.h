@@ -49,9 +49,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = MCommunicationManager)
 	TSubclassOf<UMCommunicationWidget> CommunicationWidgetBPClass;
 
-	UPROPERTY(EditDefaultsOnly, Category = MCommunicationManager)
-	float CommunicationDistance = 100.f;
-
 	/** Temporary inventory with empty slots player uses to offer their items to an interlocutor */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCommunicationManager)
 	UMInventoryComponent* InventoryToOffer;

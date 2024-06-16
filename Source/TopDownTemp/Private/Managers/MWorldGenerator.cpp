@@ -66,7 +66,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 		LoadOrGenerateBlock(BlockInRadius, false, ObserverIndex);
 	}
 
-	/*if (!RoadManager->GetOutpostGenerator(PlayerChunk))
+	if (!RoadManager->GetOutpostGenerator(PlayerChunk))
 	{
 		pWorld->GetTimerManager().SetTimer(tempTimer, [this, PlayerChunk]()
 		{
@@ -76,7 +76,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 			VillageGenerator->Generate();
 			// UpdateNavigationMesh(); // TODO: Support this if needed
 		}, 0.3f, false);
-	}*/
+	}
 
 	/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
 	BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
@@ -142,13 +142,22 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 	{
 		if (const auto PlayerClass = ToSpawnActorClasses.Find("Player")) // TODO: There might be different classes for players, aka different races and whatnot
 		{
-			AddObserverToZone(FIntPoint::ZeroValue, MPlayerController->ObserverIndex);
+			// Default position for new players might be set from CVars
+			const auto* CVarDefaultSpawnLocationX = IConsoleManager::Get().FindConsoleVariable(TEXT("Player.DefaultSpawnLocationX"));
+			const auto* CVarDefaultSpawnLocationY = IConsoleManager::Get().FindConsoleVariable(TEXT("Player.DefaultSpawnLocationY"));
+			FVector PlayerDefaultSpawnLocation(FVector::ZeroVector);
+			if (CVarDefaultSpawnLocationX && CVarDefaultSpawnLocationY)
+			{
+				PlayerDefaultSpawnLocation = {CVarDefaultSpawnLocationX->GetFloat(), CVarDefaultSpawnLocationY->GetFloat(), 0.f};
+			}
+
+			AddObserverToZone(GetGroundBlockIndex(PlayerDefaultSpawnLocation), MPlayerController->ObserverIndex);
 
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Name = FName(UniqueID);
 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn; //TODO: Fix obscured locations
 			// If not using AlwaysSpawn, character might be silently shifted to another block which will cause numerous problems for the whole system.
-			pPlayer = SpawnActor<AMCharacter>(*PlayerClass, FVector::ZeroVector, FRotator::ZeroRotator, SpawnParams, true);
+			pPlayer = SpawnActor<AMCharacter>(*PlayerClass, PlayerDefaultSpawnLocation, FRotator::ZeroRotator, SpawnParams, true);
 
 			const auto* Metadata = AMGameMode::GetMetadataManager(this)->Find(UniqueID);
 			SaveManager->AddMUidByUniqueID(UniqueID, Metadata->Uid); // Uid was generated when spawning new AMCharacter, map it to the UniqueID
