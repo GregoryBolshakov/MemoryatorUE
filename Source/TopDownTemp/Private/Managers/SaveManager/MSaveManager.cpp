@@ -37,7 +37,7 @@ void UMSaveManager::SetUpAutoSaves(AMWorldGenerator* WorldGenerator)
 
 void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 {
-	/*if (!IsValid(LoadedGameWorld))
+	if (!IsValid(LoadedGameWorld))
 	{
 		LoadedGameWorld = Cast<USaveGameWorld>(UGameplayStatics::CreateSaveGameObject(USaveGameWorld::StaticClass()));
 	}
@@ -65,80 +65,26 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 			SavedBlock.SavedMActors.Empty();
 			SavedBlock.SavedMCharacters.Empty();
 
-			for (const auto& [Name, pActor] : BlockMetadata->StaticActors)
+			for (const auto& [Name, pActor] : BlockMetadata->StaticActors) // Save every AMActor
 			{
+				const auto* pMActor = Cast<AMActor>(pActor);
 				const auto* pActorMetadata = AMGameMode::GetMetadataManager(this)->Find(Name);
-				if (!IsValid(pActor) || !pActorMetadata)
+				if (!IsValid(pMActor) || !pActorMetadata || // Valid check
+					Cast<AMGroundBlock>(pActor)) // Don't save ground blocks as we recreate them manually
 				{
 					continue;
 				}
-				// Don't save ground blocks as we recreate them manually
-				if (Cast<AMGroundBlock>(pActor))
-				{
-					continue;
-				}
-
-				// Start from the base and compose structs upwards
-				FActorSaveData ActorSaveData = {
-					pActor->GetClass(),
-					pActor->GetActorLocation(),
-					pActor->GetActorRotation(),
-					pActorMetadata->Uid,
-					GetSaveDataForComponents(pActor)
-				};
-				if (const auto* pMActor = Cast<AMActor>(pActor))
-				{
-					FMActorSaveData MActorSD{
-						ActorSaveData,
-						pMActor->GetAppearanceID(),
-						pMActor->GetIsRandomizedAppearance()
-					};
-					// Save inventory if MActor has it
-					if (auto* InventoryComponent = Cast<UMInventoryComponent>(pMActor->GetComponentByClass(UMInventoryComponent::StaticClass())))
-					{
-						MActorSD.InventoryContents = InventoryComponent->GetItemCopies(false);
-					}
-					SavedBlock.SavedMActors.Add({ActorSaveData.Uid, MActorSD});
-				}
+				SavedBlock.SavedMActors.Add({pActorMetadata->Uid, pMActor->GetSaveData()});
 			}
-			for (const auto& [Name, pActor] : BlockMetadata->DynamicActors)
+			for (const auto& [Name, pActor] : BlockMetadata->DynamicActors) // Save every AMCharacter
 			{
+				const auto* pMCharacter = Cast<AMCharacter>(pActor);
 				auto* pActorMetadata = AMGameMode::GetMetadataManager(this)->Find(Name);
-				if (!IsValid(pActor) || !pActorMetadata)
+				if (!IsValid(pMCharacter) || !pActorMetadata)
 				{
 					continue;
 				}
-
-				// Start from the base and compose structs upwards
-				FActorSaveData ActorSaveData = {
-					pActor->GetClass(),
-					pActor->GetActorLocation(),
-					pActor->GetActorRotation(),
-					pActorMetadata->Uid,
-					GetSaveDataForComponents(pActor)
-				};
-				if (const auto* pMCharacter = Cast<AMCharacter>(pActor))
-				{
-					FMCharacterSaveData MCharacterSD{
-						ActorSaveData,
-						pMCharacter->GetSpeciesName(),
-						pMCharacter->GetStatsModelComponent()->GetHealth(),
-					};
-					// Save inventory if MCharacter has it
-					if (auto* InventoryComponent = Cast<UMInventoryComponent>(pMCharacter->GetComponentByClass(UMInventoryComponent::StaticClass())))
-					{
-						MCharacterSD.InventoryContents = InventoryComponent->GetItemCopies(false);
-					}
-					// Save house if has it
-					if (const auto* House = pMCharacter->GetHouse())
-					{
-						if (const auto* HouseMetadata = AMGameMode::GetMetadataManager(this)->Find(FName(House->GetName())))
-						{
-							MCharacterSD.HouseUid = HouseMetadata->Uid;
-						}
-					}
-					SavedBlock.SavedMCharacters.Add({ActorSaveData.Uid, MCharacterSD});
-				}
+				SavedBlock.SavedMCharacters.Add({pActorMetadata->Uid, pMCharacter->GetSaveData()});
 			}
 		}
 	}
@@ -149,7 +95,7 @@ void UMSaveManager::SaveToMemory(AMWorldGenerator* WorldGenerator)
 	if (LoadedGameWorld)
 	{
 		UGameplayStatics::SaveGameToSlot(LoadedGameWorld, USaveGameWorld::SlotName, 0);
-	}*/
+	}
 }
 
 void UMSaveManager::LoadFromMemory()
@@ -208,7 +154,7 @@ bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* 
 	while (!BlockSD->SavedMActors.IsEmpty())
 	{
 		const auto Num = BlockSD->SavedMActors.Num();
-		LoadMActorAndClearSD(BlockSD->SavedMActors.CreateIterator().Key(), WorldGenerator);
+		LoadMActorAndClearSD(BlockSD->SavedMActors.CreateIterator().Key());
 		if (Num == BlockSD->SavedMActors.Num())
 		{
 			check(false);
@@ -220,7 +166,7 @@ bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* 
 	while (!BlockSD->SavedMCharacters.IsEmpty())
 	{
 		const auto Num = BlockSD->SavedMCharacters.Num();
-		const auto* Character = LoadMCharacterAndClearSD(BlockSD->SavedMCharacters.CreateIterator().Key(), WorldGenerator);
+		const auto* Character = LoadMCharacterAndClearSD(BlockSD->SavedMCharacters.CreateIterator().Key());
 		if (Num == BlockSD->SavedMCharacters.Num())
 		{
 			check(false); // Some character didn't clear is save data
@@ -316,7 +262,7 @@ bool UMSaveManager::IsLoaded() const
 }
 
 
-AMActor* UMSaveManager::LoadMActor_Internal(const FMActorSaveData& MActorSD, AMWorldGenerator* WorldGenerator)
+AMActor* UMSaveManager::LoadMActor_Internal(const FMActorSaveData& MActorSD)
 {
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -326,13 +272,15 @@ AMActor* UMSaveManager::LoadMActor_Internal(const FMActorSaveData& MActorSD, AMW
 	{
 		if (const auto MActor = Cast<AMActor>(Actor))
 		{
-			MActor->SetAppearanceID(MActorSD.AppearanceID);
-			MActor->InitialiseInventory(MActorSD.InventoryContents);
+			MActor->BeginLoadFromSD(MActorSD);
+			MActor->SetAppearanceID(MActorSD.AppearanceID); // TODO: Try move it to BeginLoadFromSD()
+			MActor->InitialiseInventory(MActorSD.InventoryContents); // TODO: and this as well
 		}
 		else check(false);
 	});
 
 	const auto& ActorSD = MActorSD.ActorSaveData;
+	auto* WorldGenerator = AMGameMode::GetWorldGenerator(this);
 	if (const auto MActor = WorldGenerator->SpawnActor<AMActor>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, false, OnSpawnActorStarted, ActorSD.Uid))
 	{
 		if (!ActorSD.Components.IsEmpty())
@@ -345,7 +293,7 @@ AMActor* UMSaveManager::LoadMActor_Internal(const FMActorSaveData& MActorSD, AMW
 	return nullptr;
 }
 
-AMCharacter* UMSaveManager::LoadMCharacter_Internal(const FMCharacterSaveData& MCharacterSD, AMWorldGenerator* WorldGenerator)
+AMCharacter* UMSaveManager::LoadMCharacter_Internal(const FMCharacterSaveData& MCharacterSD)
 {
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -362,6 +310,7 @@ AMCharacter* UMSaveManager::LoadMCharacter_Internal(const FMCharacterSaveData& M
 
 	const auto& ActorSD = MCharacterSD.ActorSaveData;
 	// TODO: Fix skewed AttackPuddleComponent, PerimeterOutlineComponent, etc. when loading ActorSD.Rotation
+	auto* WorldGenerator = AMGameMode::GetWorldGenerator(this);
 	if (const auto MCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, /*ActorSD.Rotation*/ FRotator::ZeroRotator, Params, true, OnSpawnActorStarted, ActorSD.Uid))
 	{
 		// TODO: MCharacter->EndLoadFromSD(); if have use cases for EndLoadFromSD
@@ -393,7 +342,7 @@ void UMSaveManager::ClearMCharacterSD(const FMUid& Uid, const FIntPoint& BlockIn
 	LoadedMCharacterMap.Remove(Uid);
 }
 
-TMap<FString, FComponentSaveData> UMSaveManager::GetSaveDataForComponents(AActor* Actor)
+TMap<FString, FComponentSaveData> UMSaveManager::GetSaveDataForComponents(const AActor* Actor)
 {
 	TMap<FString, FComponentSaveData> ComponentsSD;
 	TArray<USceneComponent*> Components;
@@ -430,10 +379,10 @@ void UMSaveManager::LoadDataForComponents(AActor* Actor, const TMap<FString, FCo
 	}
 }
 
-AMActor* UMSaveManager::LoadMActorAndClearSD(const FMUid& Uid, AMWorldGenerator* WorldGenerator)
+AMActor* UMSaveManager::LoadMActorAndClearSD(const FMUid& Uid)
 {
 	check(IsUidValid(Uid));
-	check(WorldGenerator);
+	auto* WorldGenerator = AMGameMode::GetWorldGenerator(this);
 	// Before loading an actor check if it was already loaded
 	if (const auto* AlreadySpawnedActorMetadata = AMGameMode::GetMetadataManager(this)->Find(Uid))
 	{
@@ -450,7 +399,7 @@ AMActor* UMSaveManager::LoadMActorAndClearSD(const FMUid& Uid, AMWorldGenerator*
 	}
 	const auto MActorSD = *pMActorSD;
 
-	const auto LoadedMActor = LoadMActor_Internal(*MActorSD, WorldGenerator);
+	const auto LoadedMActor = LoadMActor_Internal(*MActorSD);
 
 	// Save data is deleted immediately after the actor is loaded.
 	const auto BlockIndex = WorldGenerator->GetGroundBlockIndex(MActorSD->ActorSaveData.Location);
@@ -459,10 +408,10 @@ AMActor* UMSaveManager::LoadMActorAndClearSD(const FMUid& Uid, AMWorldGenerator*
 	return LoadedMActor;
 }
 
-AMCharacter* UMSaveManager::LoadMCharacterAndClearSD(const FMUid& Uid, AMWorldGenerator* WorldGenerator)
+AMCharacter* UMSaveManager::LoadMCharacterAndClearSD(const FMUid& Uid)
 {
 	check(IsUidValid(Uid));
-	check(WorldGenerator);
+	auto* WorldGenerator = AMGameMode::GetWorldGenerator(this);
 	// Before loading an actor check if it was already loaded
 	if (const auto* AlreadySpawnedActorMetadata = AMGameMode::GetMetadataManager(this)->Find(Uid))
 	{
@@ -479,7 +428,7 @@ AMCharacter* UMSaveManager::LoadMCharacterAndClearSD(const FMUid& Uid, AMWorldGe
 	}
 	const auto MCharacterSD = *pMCharacterSD;
 
-	const auto LoadedMCharacter = LoadMCharacter_Internal(*MCharacterSD, WorldGenerator);
+	const auto LoadedMCharacter = LoadMCharacter_Internal(*MCharacterSD);
 
 	// Save data is deleted immediately after the actor is loaded.
 	const auto BlockIndex = WorldGenerator->GetGroundBlockIndex(MCharacterSD->ActorSaveData.Location);

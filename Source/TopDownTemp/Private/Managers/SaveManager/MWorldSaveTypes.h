@@ -45,7 +45,13 @@ struct FActorSaveData
 	 *  Overuse harms performance */
 	UPROPERTY()
 	TMap<FString, FComponentSaveData> Components;
+
+	/** Miscellaneous bool values */ // TODO: Find a proper way of storing miscellaneous values of ANY type
+	UPROPERTY()
+	TMap<FName, bool> MiscBool;
 };
+
+// TODO: If FMActorSaveData and FMCharacterSaveData share too much in common, add a common base class
 
 USTRUCT()
 struct FMActorSaveData
@@ -63,6 +69,10 @@ struct FMActorSaveData
 
 	UPROPERTY()
 	TArray<FItem> InventoryContents;
+
+	/** Stores Uid for any actor this is depending on. House would store its outpost, etc. */
+	UPROPERTY()
+	TMap<FName, FMUid> DependenciesUid;
 };
 
 USTRUCT()

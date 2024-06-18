@@ -23,6 +23,10 @@ public:
 	float GetRadius() const { return Radius; }
 
 protected:
+	FMActorSaveData GetSaveData() const override;
+
+	void BeginLoadFromSD(const FMActorSaveData& MActorSD) override;
+
 	bool bGenerated = false;
 
 	UPROPERTY(EditDefaultsOnly)

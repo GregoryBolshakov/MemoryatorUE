@@ -251,6 +251,9 @@ void UMRoadManager::MoveObserverToRegionZone(const FIntPoint& PreviousChunk, con
 	{
 		AddObserverToRegion(RegionIndex,ObserverIndex);
 	}
+
+	// TODO: Reconsider the usage of this function
+	TriggerOutpostGenerationForAdjacentChunks(NewChunk);
 }
 
 void UMRoadManager::AddNavMeshToRegion(const FIntPoint& RegionIndex)
@@ -393,7 +396,7 @@ void UMRoadManager::TriggerOutpostGenerationForAdjacentChunks(const FIntPoint& C
 			const FIntPoint ChunkToProcess = {CurrentChunk.X + x, CurrentChunk.Y + y};
 			if (const auto ChunkMetadata = GridOfChunks.Find(ChunkToProcess); ChunkMetadata && ChunkMetadata->OutpostGenerator && !ChunkMetadata->OutpostGenerator->IsGenerated())
 			{
-				//ChunkMetadata.OutpostGenerator->Generate();
+				ChunkMetadata->OutpostGenerator->Generate();
 			}
 		}
 	}
@@ -431,8 +434,8 @@ void UMRoadManager::GenerateConnectionsBetweenChunksWithinRegion(const FIntPoint
 		{
 			if (FMath::RandRange(0.f, 1.f) < ConnectionChance)
 			{
-				SpawnOutpostGenerator(ChunkIndexes[i]);
-				SpawnOutpostGenerator(ChunkIndexes[i+1]);
+				//SpawnOutpostGenerator(ChunkIndexes[i]); Disabled for testing. Re-enable when finished with temp village
+				//SpawnOutpostGenerator(ChunkIndexes[i+1]);
 				ConnectTwoChunks(ChunkIndexes[i], ChunkIndexes[i+1]);
 			}
 		}
@@ -481,7 +484,7 @@ bool UMRoadManager::LoadConnectionsBetweenChunksWithinRegion(const FIntPoint& Re
 				Chunk.bConnectedOrIgnored = LoadedChunk->bConnectedOrIgnored;
 				if (IsUidValid(LoadedChunk->OutpostUid))
 				{
-					Chunk.OutpostGenerator = Cast<AMOutpostGenerator>(AMGameMode::GetSaveManager(this)->LoadMActorAndClearSD(LoadedChunk->OutpostUid, pWorldGenerator));
+					Chunk.OutpostGenerator = Cast<AMOutpostGenerator>(AMGameMode::GetSaveManager(this)->LoadMActorAndClearSD(LoadedChunk->OutpostUid));
 					check(Chunk.OutpostGenerator);
 				}
 			}

@@ -25,7 +25,7 @@ class UMSaveManager : public UObject
 {
 	GENERATED_BODY()
 
-public:
+public: // TODO: Stop using WorldGenerator as a parameter. It's accessible from the AMGameMode
 
 	FMUid GenerateUid();
 	FMUid FindMUidByUniqueID(FName UniqueID) const;
@@ -47,17 +47,18 @@ public:
 
 	bool IsLoaded() const;
 
-	AMActor* LoadMActorAndClearSD(const FMUid& Uid, AMWorldGenerator* WorldGenerator);
-	AMCharacter* LoadMCharacterAndClearSD(const FMUid& Uid, AMWorldGenerator* WorldGenerator);
+	AMActor* LoadMActorAndClearSD(const FMUid& Uid);
+	AMCharacter* LoadMCharacterAndClearSD(const FMUid& Uid);
+
+	static TMap<FString, FComponentSaveData> GetSaveDataForComponents(const AActor* Actor);
 
 private:
-	AMActor* LoadMActor_Internal(const FMActorSaveData& MActorSD, AMWorldGenerator* WorldGenerator);
-	AMCharacter* LoadMCharacter_Internal(const FMCharacterSaveData& MCharacterSD, AMWorldGenerator* WorldGenerator);
+	AMActor* LoadMActor_Internal(const FMActorSaveData& MActorSD);
+	AMCharacter* LoadMCharacter_Internal(const FMCharacterSaveData& MCharacterSD);
 
 	void ClearMActorSD(const FMUid& Uid, const FIntPoint& BlockIndex);
 	void ClearMCharacterSD(const FMUid& Uid, const FIntPoint& BlockIndex);
 
-	TMap<FString, FComponentSaveData> GetSaveDataForComponents(AActor* Actor);
 	void LoadDataForComponents(AActor* Actor, const TMap<FString, FComponentSaveData>& ComponentsSD);
 
 	FTimerHandle AutoSavesTimer;

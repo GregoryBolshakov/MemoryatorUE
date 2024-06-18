@@ -22,6 +22,10 @@ public:
 
 protected:
 
+	virtual FMActorSaveData GetSaveData() const override;
+
+	virtual void BeginLoadFromSD(const FMActorSaveData& MActorSD) override;
+
 	UPROPERTY()
 	AMOutpostGenerator* OwnerOutpost;
 };

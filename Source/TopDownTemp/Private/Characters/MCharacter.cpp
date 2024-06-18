@@ -174,6 +174,38 @@ void AMCharacter::PostInitializeComponents()
 	}
 }
 
+FMCharacterSaveData AMCharacter::GetSaveData() const
+{
+	// Start from the base and compose structs upwards
+	FActorSaveData ActorSaveData = {
+		GetClass(),
+		GetActorLocation(),
+		GetActorRotation(),
+		AMGameMode::GetMetadataManager(this)->Find(FName(GetName()))->Uid,
+		UMSaveManager::GetSaveDataForComponents(this)
+	};
+	FMCharacterSaveData MCharacterSD{
+		ActorSaveData,
+		GetSpeciesName(),
+		GetStatsModelComponent()->GetHealth(),
+	};
+	// Save inventory if the AMCharacter has it
+	if (InventoryComponent)
+	{
+		MCharacterSD.InventoryContents = InventoryComponent->GetItemCopies(false);
+	}
+	// Save house if the AMCharacter has it
+	if (House)
+	{
+		if (const auto* HouseMetadata = AMGameMode::GetMetadataManager(this)->Find(FName(House->GetName())))
+		{
+			MCharacterSD.HouseUid = HouseMetadata->Uid;
+		}
+	}
+
+	return MCharacterSD;
+}
+
 void AMCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -275,16 +307,13 @@ void AMCharacter::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)
 	InitialiseInventory(MCharacterSD.InventoryContents);
 
 	//Load house
-	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
+	if (const auto SaveManager = AMGameMode::GetSaveManager(this))
 	{
-		if (const auto SaveManager = AMGameMode::GetSaveManager(this))
+		if (IsUidValid(MCharacterSD.HouseUid))
 		{
-			if (IsUidValid(MCharacterSD.HouseUid))
+			if (const auto HouseActor = Cast<AMOutpostHouse>(SaveManager->LoadMActorAndClearSD(MCharacterSD.HouseUid)))
 			{
-				if (const auto HouseActor = Cast<AMOutpostHouse>(SaveManager->LoadMActorAndClearSD(MCharacterSD.HouseUid, WorldGenerator)))
-				{
-					HouseActor->MoveResidentIn(this);
-				}
+				HouseActor->MoveResidentIn(this);
 			}
 		}
 	}

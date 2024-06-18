@@ -44,18 +44,6 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 	const auto RoadManager = AMGameMode::GetRoadManager(this);
 	const auto PlayerChunk = RoadManager->GetChunkIndexByBlock(PlayerBlock);
 
-	if (!RoadManager->GetOutpostGenerator(PlayerChunk)) // temp for testing
-	{
-		pWorld->GetTimerManager().SetTimer(tempTimer, [this, PlayerChunk]()
-		{
-			const auto RoadManager = AMGameMode::GetRoadManager(this);
-			const auto VillageClass = RoadManager->GetOutpostBPClasses().Find("Village")->Get();
-			const auto VillageGenerator = RoadManager->SpawnOutpostGeneratorForDebugging(PlayerChunk, VillageClass);
-			VillageGenerator->Generate();
-			// UpdateNavigationMesh(); // TODO: Support this if needed
-		}, 0.3f, false);
-	}
-
 	RoadManager->AddObserverToRegionZone(PlayerChunk, ObserverIndex);
 
 	//temp
@@ -77,6 +65,18 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 	for (const auto BlockInRadius : BlocksInRadius)
 	{
 		LoadOrGenerateBlock(BlockInRadius, false, ObserverIndex);
+	}
+
+	if (!RoadManager->GetOutpostGenerator(PlayerChunk)) // temp for testing
+	{
+		pWorld->GetTimerManager().SetTimer(tempTimer, [this, PlayerChunk]()
+		{
+			const auto RoadManager = AMGameMode::GetRoadManager(this);
+			const auto VillageClass = RoadManager->GetOutpostBPClasses().Find("Village")->Get();
+			const auto VillageGenerator = RoadManager->SpawnOutpostGeneratorForDebugging(PlayerChunk, VillageClass);
+			VillageGenerator->Generate();
+			// UpdateNavigationMesh(); // TODO: Support this if needed
+		}, 0.3f, false);
 	}
 
 	/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
@@ -167,7 +167,7 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 	else // Load character from SaveManager using the UniqueId
 	{
 		AddObserverToZone(SaveManager->GetMCharacterBlock(Uid), MPlayerController->ObserverIndex);
-		pPlayer = SaveManager->LoadMCharacterAndClearSD(Uid, this);
+		pPlayer = SaveManager->LoadMCharacterAndClearSD(Uid);
 
 		// Undo the forced disabling caused by SaveManager.
 		// (We are not like Rust and inactive players don't come with loaded block,

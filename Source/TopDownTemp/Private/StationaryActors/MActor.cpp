@@ -39,6 +39,30 @@ void AMActor::InitialiseInventory(const TArray<FItem>& IN_Items) const
 	InventoryComponent->Initialize(IN_Items.Num(), IN_Items);
 }
 
+FMActorSaveData AMActor::GetSaveData() const
+{
+	FActorSaveData ActorSaveData = {
+		GetClass(),
+		GetActorLocation(),
+		GetActorRotation(),
+		AMGameMode::GetMetadataManager(this)->Find(FName(GetName()))->Uid,
+		UMSaveManager::GetSaveDataForComponents(this) // TODO: Refactor this
+	};
+
+	FMActorSaveData MActorSD{
+		ActorSaveData,
+		GetAppearanceID(),
+		GetIsRandomizedAppearance()
+	};
+	// Save inventory if the AMActor has it
+	if (InventoryComponent)
+	{
+		MActorSD.InventoryContents = InventoryComponent->GetItemCopies(false);
+	}
+
+	return MActorSD;
+}
+
 void AMActor::BeginLoadFromSD(const FMActorSaveData& MActorSD)
 {
 }

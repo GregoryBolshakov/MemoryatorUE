@@ -49,6 +49,10 @@ public:
 		return DynamicMaterials;
 	}
 
+	/** Start from the base and compose structs upwards (FActorSaveData -> might add more in between -> FMActorSaveData).\n
+	 * Must always call Super::GetSaveData(). */
+	virtual FMActorSaveData GetSaveData() const;
+
 	virtual void BeginLoadFromSD(const FMActorSaveData& MActorSD);
 
 protected:

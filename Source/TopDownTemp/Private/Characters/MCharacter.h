@@ -76,6 +76,10 @@ public:
 
 	virtual void PostInitializeComponents() override;
 
+	/** Start from the base (FActorSaveData -> might add more in between -> FMCharacterSaveData).\n
+	 * Must always call Super::GetSaveData(). */
+	virtual FMCharacterSaveData GetSaveData() const;
+
 	/** Loading actor: Actor has just constructed but not finalized (Components are not available).*/
 	virtual void BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD);
 	// TODO: We might need EndLoadFromSD() but so far there's no use cases
