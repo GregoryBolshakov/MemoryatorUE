@@ -148,7 +148,7 @@ bool UMSaveManager::TryLoadBlock(const FIntPoint& BlockIndex, AMWorldGenerator* 
 	BlockMetadata->ConstantActorsCount = BlockSD->ConstantActorsCount;
 	BlockMetadata->Biome = BlockSD->PCGVariables.Biome;
 	//TODO: For static terrain generation we're relying on PCG determinism, be careful
-	WorldGenerator->GetBlockGenerator()->SpawnActorsSpecifically(BlockIndex, WorldGenerator, BlockSD->PCGVariables);
+	WorldGenerator->GetBlockGenerator()->SpawnActorsSpecifically(BlockIndex, WorldGenerator, BlockSD);
 
 	// Load MActors and clear save data
 	while (!BlockSD->SavedMActors.IsEmpty())

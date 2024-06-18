@@ -35,11 +35,8 @@ void UMBlockGenerator::SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGe
 	}
 }
 
-//TODO: Try to get rid of this and have only one but flexible SpawnActors() function
-void UMBlockGenerator::SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator,
-	const FPCGVariables& PCGVariables)
+void UMBlockGenerator::SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, const FBlockSaveData* BlockSD)
 {
-	//TODO: Catch up with the SpawnActorsRandomly. haven't update for a long time
 	if (!IsValid(pWorldGenerator) || !GroundBlockBPClass)
 	{
 		check(false);
@@ -49,20 +46,17 @@ void UMBlockGenerator::SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWor
 	FActorSpawnParameters BlockSpawnParameters;
 	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	FOnSpawnActorStarted OnSpawnActorStarted;
-	OnSpawnActorStarted.AddLambda([this, PCGVariables](AActor* Actor)
+	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters, false))
 	{
-		if (const auto BlockActor = Cast<AMGroundBlock>(Actor))
+		if (const auto PCGComponent = Cast<UPCGComponent>(GroundBlock->GetComponentByClass(UPCGComponent::StaticClass())))
 		{
-			BlockActor->PCGVariables = PCGVariables;
+			GroundBlock->PCGVariables = BlockSD->PCGVariables;
+			PCGComponent->SetGraph(BlockSD->PCGVariables.Graph.Get());
+			PCGComponent->Generate(false);
 		}
-	});
-
-	if (auto* GroundBlock = pWorldGenerator->SpawnActor<AMGroundBlock>(GroundBlockBPClass.Get(), pWorldGenerator->GetGroundBlockLocation(BlockIndex), FRotator::ZeroRotator, BlockSpawnParameters, false, OnSpawnActorStarted))
-	{
-		GroundBlock->UpdateBiome(PCGVariables.Biome);
-		const auto BlockMetadata = AMGameMode::GetMetadataManager(this)->FindOrAddBlock(BlockIndex);
-		BlockMetadata->pGroundBlock = GroundBlock;
+		GroundBlock->UpdateBiome(BlockSD->PCGVariables.Biome);
+		// If you add any additional logic, make sure to duplicate it for AMGroundBlock::OnPCGVariablesReplicated
+		AMGameMode::GetMetadataManager(this)->FindBlock(BlockIndex)->pGroundBlock = GroundBlock;
 	}
 }
 

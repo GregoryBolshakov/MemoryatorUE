@@ -5,6 +5,7 @@
 #include "MBlockGenerator.generated.h"
 
 struct FPCGVariables;
+struct FBlockSaveData;
 class AMWorldGenerator;
 class AMGroundBlock;
 class AMActor;
@@ -57,7 +58,9 @@ public:
 
 	void SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, UBlockMetadata* BlockMetadata, const FName& PresetName = {});
 
-	void SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, const FPCGVariables& PCGVariables);
+	/** The same as SpawnActorsRandomly() but used when loading the game.\n
+	 * Keep it up to date if changing SpawnActorsRandomly() */
+	void SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWorldGenerator* pWorldGenerator, const FBlockSaveData* BlockSD);
 
 	/** Calculate values for PCG based on the Preset */
 	void SetPCGVariablesByPreset(AMGroundBlock* BlockActor, const FName PresetName, EBiome Biome, UPCGGraphInterface* Graph);
