@@ -309,9 +309,8 @@ AMCharacter* UMSaveManager::LoadMCharacter_Internal(const FMCharacterSaveData& M
 	});
 
 	const auto& ActorSD = MCharacterSD.ActorSaveData;
-	// TODO: Fix skewed AttackPuddleComponent, PerimeterOutlineComponent, etc. when loading ActorSD.Rotation
 	auto* WorldGenerator = AMGameMode::GetWorldGenerator(this);
-	if (const auto MCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, /*ActorSD.Rotation*/ FRotator::ZeroRotator, Params, true, OnSpawnActorStarted, ActorSD.Uid))
+	if (const auto MCharacter = WorldGenerator->SpawnActor<AMCharacter>(ActorSD.FinalClass, ActorSD.Location, ActorSD.Rotation, Params, true, OnSpawnActorStarted, ActorSD.Uid))
 	{
 		// TODO: MCharacter->EndLoadFromSD(); if have use cases for EndLoadFromSD
 		if (!ActorSD.Components.IsEmpty())

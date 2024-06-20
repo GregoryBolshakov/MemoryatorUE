@@ -157,7 +157,7 @@ void AMMemoryator::UpdateClosestEnemy()
 
 	if (StateModelComponent->GetIsDashing()) // check for any action that shouldn't rotate character towards enemy
 	{
-		PuddleComponent->SetHiddenInGame(true);
+		//PuddleComponent->SetHiddenInGame(true); // TODO: Redesign the puddle
 		return;
 	}
 
@@ -197,7 +197,7 @@ void AMMemoryator::UpdateClosestEnemy()
 	{
 		const auto VectorToEnemy = ClosestEnemy->GetActorLocation() - CharacterLocation;
 		SetForcedGazeVector(VectorToEnemy);
-		PuddleComponent->SetHiddenInGame(false);
+		//PuddleComponent->SetHiddenInGame(false); // TODO: Think of the design for this later (in multiplayer)
 
 		if (VectorToEnemy.Size2D() <= StatsModelComponent->GetFightRangePlusRadius(GetRadius()) + ClosestEnemyRadius && !StateModelComponent->GetIsFighting())
 		{
@@ -207,7 +207,7 @@ void AMMemoryator::UpdateClosestEnemy()
 	else
 	{
 		SetForcedGazeVector(FVector::ZeroVector);
-		PuddleComponent->SetHiddenInGame(true);
+		//PuddleComponent->SetHiddenInGame(true);
 		if (bEnemyWasValid && // Enemy was valid but has just become invalid
 			StateModelComponent->GetIsMoving()) 
 		{

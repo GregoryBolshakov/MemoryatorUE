@@ -21,28 +21,29 @@ UMAttackPuddleComponent::UMAttackPuddleComponent()
 
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
-
-#ifdef WITH_EDITOR
-	SetVisibleFlag(false);
-#endif
 }
 
 void UMAttackPuddleComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+// Set visible to true since it's not by default. Because we don't want it to get a lot of attention in the Blueprint Editor
+// But also don't want to force-hide it for BP exclusively because it will confuse one when designing.
+#ifdef WITH_EDITOR
+	if (!IsTemplate()) // Blueprint editor simulation check
+	{
+		SetVisibility(true);
+		pPerimeterOutline->SetVisibility(true);
+	}
+#else
+	SetVisibility(true);
+	pPerimeterOutline->SetVisibility(true);
+#endif
+
 	if (DynamicMaterialInterface)
 	{
 		DynamicMaterial = CreateDynamicMaterialInstance(0, DynamicMaterialInterface);
-
-#ifdef WITH_EDITOR
-		if (!bHiddenInGame)
-		{
-			SetVisibleFlag(true);
-		}
-		pPerimeterOutline->SetVisibleFlag(true);
 	}
-#endif
 }
 
 void UMAttackPuddleComponent::SetLength(float IN_Length)
@@ -51,18 +52,20 @@ void UMAttackPuddleComponent::SetLength(float IN_Length)
 	if (!SourceSprite || !DynamicMaterialInterface)
 		return;
 
-	const auto PuddleBounds = CalcBounds(GetComponentTransform());
-	auto PuddleScale = GetComponentScale();
-	PuddleScale.X *= IN_Length / PuddleBounds.BoxExtent.X;
-	PuddleScale.Z *= IN_Length / PuddleBounds.BoxExtent.Z;
+	auto LocalBounds = GetLocalBounds(); // Get local since they are not rotated
+
+	auto PuddleScale = FVector::OneVector;
+	PuddleScale.X *= IN_Length / LocalBounds.BoxExtent.X;
+	PuddleScale.Z *= IN_Length / LocalBounds.BoxExtent.Z;
 	SetWorldScale3D(PuddleScale);
 
 	// Configure perimeter outline size
 	if (const auto OwnerCharacter = Cast<AMCharacter>(GetOwner()))
 	{
-		auto PerimeterOutlineScale = pPerimeterOutline->GetComponentScale();
-		PerimeterOutlineScale.X *= OwnerCharacter->GetRadius() / pPerimeterOutline->Bounds.BoxExtent.X;
-		PerimeterOutlineScale.Z *= OwnerCharacter->GetRadius() / pPerimeterOutline->Bounds.BoxExtent.Z;
+		auto PerimeterOutlineLocalBounds = pPerimeterOutline->GetLocalBounds();
+		auto PerimeterOutlineScale = FVector::OneVector;
+		PerimeterOutlineScale.X *= OwnerCharacter->GetRadius() / PerimeterOutlineLocalBounds.BoxExtent.X;
+		PerimeterOutlineScale.Z *= OwnerCharacter->GetRadius() / PerimeterOutlineLocalBounds.BoxExtent.Z;
 		pPerimeterOutline->SetWorldScale3D(PerimeterOutlineScale);
 	}
 }
