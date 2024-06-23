@@ -40,6 +40,10 @@ private:
 
 	virtual void PostInitProperties() override;
 
+	/** Screen side widget with drop available to pick up.\n
+	 * We never destroy it but only hide/show. Two main reasons for that:\n
+	 * 1. Drag-n-drop might happen after widget is destroyed and won't be resolved;
+	 * 2. Avoid overhead of creating and destroying widgets */
 	UPROPERTY()
 	UMPickUpBarWidget* PickUpBarWidget;
 

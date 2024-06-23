@@ -11,10 +11,6 @@ UMInventoryComponent::UMInventoryComponent(const FObjectInitializer& ObjectIniti
 
 void UMInventoryComponent::Initialize(int IN_SlotsNumber, const TArray<FItem>& StartingItems)
 {
-	for (auto Slot : Slots)
-	{
-		Slot.OnSlotChangedDelegate.Unbind();
-	}
 	Slots.Empty();
 	Slots.AddDefaulted(IN_SlotsNumber);
 	for (const auto& Item : StartingItems)
@@ -297,7 +293,7 @@ void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 			Slot.Item.Quantity += QuantityToAdd;
 			ItemLeft.Quantity -= QuantityToAdd;
 
-			Slot.OnSlotChangedDelegate.ExecuteIfBound(Slot.Item.ID, Slot.Item.Quantity);
+			Slot.OnSlotChangedDelegate.Broadcast(Slot.Item.ID, Slot.Item.Quantity);
 		}
 
 		if (ItemLeft.Quantity == 0)
@@ -318,7 +314,7 @@ void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 				Slot.Item.Quantity += QuantityToAdd;
 				ItemLeft.Quantity -= QuantityToAdd;
 
-				Slot.OnSlotChangedDelegate.ExecuteIfBound(Slot.Item.ID, Slot.Item.Quantity);
+				Slot.OnSlotChangedDelegate.Broadcast(Slot.Item.ID, Slot.Item.Quantity);
 			}
 
 			if (ItemLeft.Quantity == 0)
@@ -372,7 +368,7 @@ FItem UMInventoryComponent::StoreItemToSpecificSlot(int SlotNumberInArray, const
 
 	Slots[SlotNumberInArray].Item.ID = ItemToStore.ID;
 	Slots[SlotNumberInArray].Item.Quantity += QuantityToStore;
-	Slots[SlotNumberInArray].OnSlotChangedDelegate.ExecuteIfBound(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
+	Slots[SlotNumberInArray].OnSlotChangedDelegate.Broadcast(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
 
 	auto ItemToReturn = ItemToStore;
 	ItemToReturn.Quantity -= QuantityToStore;
@@ -396,7 +392,8 @@ FItem UMInventoryComponent::TakeItemFromSpecificSlot(int SlotNumberInArray, int 
 
 	Slots[SlotNumberInArray].Item.Quantity -= QuantityToTake;
 
-	Slots[SlotNumberInArray].OnSlotChangedDelegate.ExecuteIfBound(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
+	check(Slots[SlotNumberInArray].OnSlotChangedDelegate.IsBound());
+	Slots[SlotNumberInArray].OnSlotChangedDelegate.Broadcast(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
 
 	OnAnySlotChangedDelegate.Broadcast();
 
@@ -469,7 +466,7 @@ void UMInventoryComponent::RemoveItem(FItem ItemToRemove)
 			Slots[i].Item.Quantity -= QuantityToTake;
 			ItemToRemove.Quantity -= QuantityToTake;
 
-			Slots[i].OnSlotChangedDelegate.ExecuteIfBound(Slots[i].Item.ID, Slots[i].Item.Quantity);
+			Slots[i].OnSlotChangedDelegate.Broadcast(Slots[i].Item.ID, Slots[i].Item.Quantity);
 			OnAnySlotChangedDelegate.Broadcast();
 
 			if (ItemToRemove.Quantity == 0)
@@ -492,7 +489,7 @@ void UMInventoryComponent::SwapItems(FItem& A, int SlotNumberInArray)
 		OnAnySlotChangedDelegate.Broadcast();
 	}
 
-	Slots[SlotNumberInArray].OnSlotChangedDelegate.ExecuteIfBound(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
+	Slots[SlotNumberInArray].OnSlotChangedDelegate.Broadcast(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
 }
 
 void UMInventoryComponent::Empty()
@@ -501,7 +498,7 @@ void UMInventoryComponent::Empty()
 	for (int i = 0; i < Slots.Num(); ++i)
 	{
 		Slots[i].Item = {0, 0};
-		Slots[i].OnSlotChangedDelegate.ExecuteIfBound(0, 0);
+		Slots[i].OnSlotChangedDelegate.Broadcast(0, 0);
 		OnAnySlotChangedDelegate.Broadcast();
 	}
 }

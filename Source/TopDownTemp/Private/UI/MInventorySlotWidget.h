@@ -17,6 +17,8 @@ class TOPDOWNTEMP_API UMInventorySlotWidget : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 
+	bool IsDraggingAWidget() const { return IsValid(DraggedWidget); }
+
 	void SetNumberInArray(int IN_NumberInArray) { NumberInArray = IN_NumberInArray; }
 
 	UFUNCTION(BlueprintCallable, Category=UMInventorySlotWidget)
@@ -42,6 +44,11 @@ protected:
 	/** The copy of the item. Is needed when we stack or swap with dragged item */
 	UPROPERTY(BlueprintReadWrite)
 	FItem StoredItem;
+
+	/** The currently dragged widget. Need it to know if it safe to remove the current widget from the pickup bar or not.
+	 * Since OnDrop(), OnDragCancelled(), etc. are handled by the initiator (this widget). */
+	UPROPERTY(BlueprintReadWrite)
+	UUserWidget* DraggedWidget;
 
 	/** A pointer for easier access of World Generator's Drop Manager */
 	UPROPERTY(BlueprintReadOnly)

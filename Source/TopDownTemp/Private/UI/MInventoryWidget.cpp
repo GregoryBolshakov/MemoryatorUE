@@ -16,9 +16,10 @@ void UMInventoryWidget::NativeDestruct()
 	{
 		if (const auto InventoryComponent = pPlayerCharacter->GetInventoryComponent())
 		{
+			// Unbind all bindings. It might be wrong, but looks right for now
 			for (auto& ItemSlot : InventoryComponent->GetSlots())
 			{
-				ItemSlot.OnSlotChangedDelegate.Unbind();
+				ItemSlot.OnSlotChangedDelegate.Clear();
 			}
 		}
 	}
@@ -61,7 +62,8 @@ void UMInventoryWidget::CreateItemSlotWidgets(UUserWidget* pOwner, UMInventoryCo
 		SlotWidget->SetIsLocked(Slot.CheckFlag(FSlot::ESlotFlags::Locked));
 		SlotWidget->SetIsSecret(Slot.CheckFlag(FSlot::ESlotFlags::Secret));
 		SlotWidget->SetIsPreviewOnly(Slot.CheckFlag(FSlot::ESlotFlags::PreviewOnly));
-		Slot.OnSlotChangedDelegate.BindDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
+		Slot.OnSlotChangedDelegate.RemoveDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
+		Slot.OnSlotChangedDelegate.AddDynamic(SlotWidget, &UMInventorySlotWidget::OnChangedData);
 
 		const auto IconWidget = Cast<UImage>(SlotWidget->GetWidgetFromName(TEXT("ItemIcon")));
 		const auto QuantityTextWidget = Cast<URichTextBlock>(SlotWidget->GetWidgetFromName(TEXT("QuantityTextBlock")));

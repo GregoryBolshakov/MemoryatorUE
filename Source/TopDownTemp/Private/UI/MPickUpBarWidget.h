@@ -18,7 +18,10 @@ public:
 	void CreateSlots(TSet<UMInventoryComponent*>& InventoriesToRepresent);
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void CloseWidget();
+	void Show();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void Hide();
 
 protected:
 

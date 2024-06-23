@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "MInventoryComponent.generated.h"
 
-DECLARE_DYNAMIC_DELEGATE_TwoParams(FOnSlotChanged, int, NewItemID, int, NewQuantity);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSlotChanged, int, NewItemID, int, NewQuantity);
 DECLARE_MULTICAST_DELEGATE(FOnAnySlotChanged);
 
 USTRUCT(BlueprintType)

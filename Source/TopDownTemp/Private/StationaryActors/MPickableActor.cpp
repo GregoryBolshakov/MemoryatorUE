@@ -37,12 +37,12 @@ void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)
 	if (InventoryComponent->GetItemCopies().IsEmpty())
 		return;
 
-	if (const auto pWorld = GetWorld(); pDropManager)
+	if (const auto pWorld = GetWorld())
 	{
 		if (const auto pPlayerPawn = UGameplayStatics::GetPlayerPawn(pWorld, 0);
 			pPlayerPawn && pPlayerPawn == OtherActor)
 		{
-			pDropManager->AddInventory(InventoryComponent);
+			AMGameMode::GetDropManager(this)->AddInventory(InventoryComponent);
 		}
 	}
 }
@@ -51,12 +51,12 @@ void AMPickableActor::NotifyActorEndOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorEndOverlap(OtherActor);
 
-	if (const auto pWorld = GetWorld(); pDropManager)
+	if (const auto pWorld = GetWorld())
 	{
 		if (const auto pPlayerPawn = UGameplayStatics::GetPlayerPawn(pWorld, 0);
 			pPlayerPawn && pPlayerPawn == OtherActor)
 		{
-			pDropManager->RemoveInventory(InventoryComponent);
+			AMGameMode::GetDropManager(this)->RemoveInventory(InventoryComponent);
 		}
 	}
 }
@@ -67,9 +67,9 @@ void AMPickableActor::BeginPlay()
 	Super::BeginPlay();
 
 	// NotifyActorBeginOverlap doesn't trigger when actor just spawned
-	GetWorld()->GetTimerManager().SetTimer(CollisionTimerHandle, [this]
+	/*GetWorld()->GetTimerManager().SetTimer(CollisionTimerHandle, [this]
 	{
-		if (const auto pWorld = GetWorld(); pDropManager)
+		if (const auto pWorld = GetWorld())
 		{
 			if (const auto pPlayerPawn = UGameplayStatics::GetPlayerPawn(pWorld, 0))
 			{
@@ -79,23 +79,18 @@ void AMPickableActor::BeginPlay()
 				}
 			}
 		}
-	}, 0.1f, false); // Who knows why collisions need some time after actor's BeginPlay to be set up
+	}, 0.1f, false); // Who knows why collisions need some time after actor's BeginPlay to be set up*/
 }
 
 void AMPickableActor::OnItemChanged(int NewItemID, int NewQuantity)
 {
-	if (!pDropManager)
-	{
-		check(false);
-		return;
-	}
-
 	if (InventoryComponent->GetItemCopies().IsEmpty() && bDisappearIfEmptyInventory)
 	{
 		PickedUpCompletelyDelegate.Broadcast(GetClass());
-		pDropManager->RemoveInventory(InventoryComponent);
+		AMGameMode::GetDropManager(this)->RemoveInventory(InventoryComponent);
 		Destroy();
+		return;
 	}
 
-	pDropManager->Update();
+	AMGameMode::GetDropManager(this)->Update();
 }

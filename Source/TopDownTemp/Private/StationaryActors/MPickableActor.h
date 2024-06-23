@@ -38,8 +38,4 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = AMPickableItem)
 	bool bDisappearIfEmptyInventory;
-
-	/** A pointer for easier access of World Generator's Drop Manager */
-	UPROPERTY()
-	UMDropManager* pDropManager;
 };

@@ -30,13 +30,17 @@ void UMDropManager::AddInventory(UMInventoryComponent* Inventory)
 
 	if (InventoriesToRepresent.IsEmpty())
 	{
-		PickUpBarWidget = Cast<UMPickUpBarWidget>(CreateWidget(GetWorld()->GetFirstPlayerController(), PickUpBarWidgetBPClass));
-		if (!PickUpBarWidget)
+		if (PickUpBarWidget)
 		{
-			check(false);
-			return;
+			PickUpBarWidget->Show();
 		}
-		PickUpBarWidget->AddToPlayerScreen();
+		else
+		{
+			PickUpBarWidget = Cast<UMPickUpBarWidget>(CreateWidget(GetWorld()->GetFirstPlayerController(), PickUpBarWidgetBPClass));
+			check(PickUpBarWidget);
+			PickUpBarWidget->AddToPlayerScreen();
+		}
+		
 	}
 
 	InventoriesToRepresent.Add(Inventory);
@@ -60,7 +64,7 @@ void UMDropManager::RemoveInventory(UMInventoryComponent* Inventory)
 	}
 	else
 	{
-		PickUpBarWidget->CloseWidget();
+		PickUpBarWidget->Hide();
 	}
 }
 

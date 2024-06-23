@@ -26,7 +26,18 @@ void UMPickUpBarWidget::CreateSlots(TSet<UMInventoryComponent*>& InventoriesToRe
 	}
 
 	// Empty the list of items to create them form scratch
-	pItemSlotsWrapBox->ClearChildren();
+	for ( int32 ChildIndex = pItemSlotsWrapBox->GetChildrenCount() - 1; ChildIndex >= 0; ChildIndex-- )
+	{
+		if (const auto InventorySlotWidget = Cast<UMInventorySlotWidget>(pItemSlotsWrapBox->GetChildAt(ChildIndex)))
+		{
+			if (InventorySlotWidget->IsDraggingAWidget())
+			{
+				InventorySlotWidget->SetVisibility(ESlateVisibility::Collapsed);
+				continue; // TODO: Also swap with the first item to boost the loop
+			}
+		}
+		pItemSlotsWrapBox->RemoveChildAt(ChildIndex);
+	}
 
 	// Create slot widgets for all the items in the listed inventories
 	for (const auto& InventoryComponent : InventoriesToRepresent)
@@ -36,14 +47,8 @@ void UMPickUpBarWidget::CreateSlots(TSet<UMInventoryComponent*>& InventoriesToRe
 		{
 			for (auto& ItemSlot : InventoryComponent->GetSlots())
 			{
-				if (!ItemSlot.OnSlotChangedDelegate.IsBoundToObject(InventoryOwner))
-				{
-					ItemSlot.OnSlotChangedDelegate.BindDynamic(InventoryOwner, &AMPickableActor::OnItemChanged);
-				}
-				else
-				{
-					check(false);
-				}
+				ItemSlot.OnSlotChangedDelegate.RemoveDynamic(InventoryOwner, &AMPickableActor::OnItemChanged);
+				ItemSlot.OnSlotChangedDelegate.AddDynamic(InventoryOwner, &AMPickableActor::OnItemChanged);
 			}
 		}
 	}
@@ -61,10 +66,7 @@ void UMPickUpBarWidget::NativeDestruct()
 			{
 				for (auto& ItemSlot : Inventory->GetSlots())
 				{
-					if (!ItemSlot.OnSlotChangedDelegate.IsBoundToObject(InventoryOwner))
-					{
-						ItemSlot.OnSlotChangedDelegate.Unbind();
-					}
+					ItemSlot.OnSlotChangedDelegate.RemoveDynamic(InventoryOwner, &AMPickableActor::OnItemChanged);
 				}
 			}
 		}

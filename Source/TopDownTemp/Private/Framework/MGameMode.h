@@ -28,6 +28,7 @@ public:
 	UMMetadataManager* GetMetadataManager() const { return MetadataManager; }
 
 	static inline UMDropManager* GetDropManager(const UObject* Caller);
+	UFUNCTION(BlueprintCallable)
 	UMDropManager* GetDropManager() const { return DropManager; }
 
 	static inline UMReputationManager* GetReputationManager(const UObject* Caller);
