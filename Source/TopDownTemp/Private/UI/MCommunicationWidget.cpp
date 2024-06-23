@@ -24,17 +24,6 @@ void UMCommunicationWidget::NativeDestruct()
 {
 	Super::NativeDestruct();
 
-	if (const auto pPlayerCharacter = Cast<AMCharacter>(GetOwningPlayerPawn()))
-	{
-		if (const auto InventoryComponent = pPlayerCharacter->GetInventoryComponent())
-		{
-			for (auto& ItemSlot : InventoryComponent->GetSlots())
-			{
-				ItemSlot.OnSlotChangedDelegate.Unbind();
-			}
-		}
-	}
-
 	if (const auto CommunicationManager = AMGameMode::GetCommunicationManager(this))
 	{
 			CommunicationManager->StopSpeaking();
