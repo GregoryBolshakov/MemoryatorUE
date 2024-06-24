@@ -1093,6 +1093,9 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const FVector& Locat
 	if (!pWorld)
 		return nullptr;
 
+	FVector LocationFixedZ = Location;
+	LocationFixedZ.Z = ToSpawnHeight;
+
 	const auto DefaultBounds = GetDefaultBounds(Class, pWorld);
 	const auto BoundsRadius = FMath::Max(DefaultBounds.BoxExtent.X, DefaultBounds.BoxExtent.Y);
 
@@ -1103,6 +1106,12 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const FVector& Locat
 	TArray<float> AnglesToTry;
 	const auto StartAngle = FMath::FRandRange(0.f, 360.f);
 
+	// Spawn actor only once to save performance. Use it for any spatial checks
+	FActorSpawnParameters AlwaysSpawnParameters = SpawnParameters;
+	AlwaysSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	const auto Actor = SpawnActor<AActor>(Class, LocationFixedZ, Rotation, AlwaysSpawnParameters, true, OnSpawnActorStarted);
+	check(Actor);
+
 	for (int AngleIndex = 0; AngleIndex < TriesNumber; ++AngleIndex)
 	{
 		const float AngleToTry = StartAngle + 360.f * AngleIndex / TriesNumber;
@@ -1112,14 +1121,17 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const FVector& Locat
 				0.f
 			);
 
-		FVector SpawnPosition = Location + SpawnPositionOffset;
-		SpawnPosition.Z = ToSpawnHeight;
+		FVector SpawnPosition = LocationFixedZ + SpawnPositionOffset;
 
-		if (const auto Actor = SpawnActor<AActor>(Class, SpawnPosition, Rotation, SpawnParameters, true, OnSpawnActorStarted))
+		if (SpawnParameters.SpawnCollisionHandlingOverride == ESpawnActorCollisionHandlingMethod::AlwaysSpawn ||
+			!GetWorld()->EncroachingBlockingGeometry(Actor, SpawnPosition, Rotation))
 		{
+			Actor->SetActorLocation(SpawnPosition);
 			return Actor;
 		}
 	}
+
+	Actor->Destroy();
 
 	if (ToSpawnRadius >= 1000.f) // dummy check
 	{
@@ -1128,5 +1140,5 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const FVector& Locat
 	}
 
 	// If check is failed, consider incrementing ToSpawnRadius
-	return SpawnActorInRadius(Class, Location, Rotation, SpawnParameters, ToSpawnRadius + BoundsRadius * 2.f, ToSpawnHeight, OnSpawnActorStarted);
+	return SpawnActorInRadius(Class, LocationFixedZ, Rotation, SpawnParameters, ToSpawnRadius + BoundsRadius * 2.f, ToSpawnHeight, OnSpawnActorStarted);
 }
