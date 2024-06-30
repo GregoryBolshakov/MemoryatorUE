@@ -67,7 +67,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 		LoadOrGenerateBlock(BlockInRadius, false, ObserverIndex);
 	}
 
-	if (!RoadManager->GetOutpostGenerator(PlayerChunk)) // temp for testing
+	/*if (!RoadManager->GetOutpostGenerator(PlayerChunk)) // temp for testing
 	{
 		pWorld->GetTimerManager().SetTimer(tempTimer, [this, PlayerChunk]()
 		{
@@ -77,7 +77,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 			VillageGenerator->Generate();
 			// UpdateNavigationMesh(); // TODO: Support this if needed
 		}, 0.3f, false);
-	}
+	}*/
 
 	/*EmptyBlock({PlayerBlockIndex.X, PlayerBlockIndex.Y}, true);
 	BlockGenerator->SpawnActors({PlayerBlockIndex.X, PlayerBlockIndex.Y}, this, EBiome::BirchGrove, "TestBlock");*/
