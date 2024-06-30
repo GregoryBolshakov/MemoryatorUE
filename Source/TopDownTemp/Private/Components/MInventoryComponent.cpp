@@ -1,5 +1,6 @@
 #include "MInventoryComponent.h"
 
+#include "Net/UnrealNetwork.h"
 #include "Framework/MGameInstance.h"
 #include "Framework/MGameMode.h"
 #include "Managers/MDropManager.h"
@@ -509,4 +510,11 @@ void UMInventoryComponent::SetFlagToAllSlots(FSlot::ESlotFlags Flag)
 	{
 		Slot.SetFlag(Flag);
 	}
+}
+
+void UMInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UMInventoryComponent, Slots);
 }

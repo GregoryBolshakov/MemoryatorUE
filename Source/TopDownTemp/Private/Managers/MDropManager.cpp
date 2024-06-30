@@ -4,6 +4,8 @@
 #include "MWorldGenerator.h"
 #include "Characters/MCharacter.h"
 #include "Components/MInventoryComponent.h"
+#include "Controllers/MHUDController.h"
+#include "Controllers/MPlayerController.h"
 #include "Framework/MGameInstance.h"
 #include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
@@ -23,7 +25,7 @@ UMDropManager::UMDropManager(const FObjectInitializer& ObjectInitializer) : Supe
 	}
 }
 
-void UMDropManager::AddInventory(UMInventoryComponent* Inventory)
+void UMDropManager::AddInventory(UMInventoryComponent* Inventory, AMPlayerController* PlayerController)
 {
 	if (Inventory->GetSlots().IsEmpty() || !GetWorld() || !GetWorld()->GetFirstPlayerController())
 		return;
@@ -36,6 +38,7 @@ void UMDropManager::AddInventory(UMInventoryComponent* Inventory)
 		}
 		else
 		{
+			//PlayerController->Client_ReceiveHUDCommand(FHUDCommand(EHUDCommandType::CreateWidget, "PickUpBar"));
 			PickUpBarWidget = Cast<UMPickUpBarWidget>(CreateWidget(GetWorld()->GetFirstPlayerController(), PickUpBarWidgetBPClass));
 			check(PickUpBarWidget);
 			PickUpBarWidget->AddToPlayerScreen();
@@ -48,7 +51,7 @@ void UMDropManager::AddInventory(UMInventoryComponent* Inventory)
 	PickUpBarWidget->CreateSlots(InventoriesToRepresent);
 }
 
-void UMDropManager::RemoveInventory(UMInventoryComponent* Inventory)
+void UMDropManager::RemoveInventory(UMInventoryComponent* Inventory, AMPlayerController* PlayerController)
 {
 	InventoriesToRepresent.Remove(Inventory);
 

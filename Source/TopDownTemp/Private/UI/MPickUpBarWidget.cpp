@@ -10,20 +10,10 @@
 #include "Components/WrapBox.h"
 #include "Framework/MGameMode.h"
 
-void UMPickUpBarWidget::CreateSlots(TSet<UMInventoryComponent*>& InventoriesToRepresent)
+void UMPickUpBarWidget::CreateSlots(const TSet<UMInventoryComponent*>& InventoriesToRepresent)
 {
 	if (!pItemSlotsWrapBox)
 		return;
-
-	// Remove empty inventories from the list
-	for (auto It = InventoriesToRepresent.CreateIterator(); It; ++It)
-	{
-		const auto Inventory = *It;
-		if (Inventory->GetSlots().IsEmpty())
-		{
-			It.RemoveCurrent();
-		}
-	}
 
 	// Empty the list of items to create them form scratch
 	for ( int32 ChildIndex = pItemSlotsWrapBox->GetChildrenCount() - 1; ChildIndex >= 0; ChildIndex-- )
@@ -42,6 +32,9 @@ void UMPickUpBarWidget::CreateSlots(TSet<UMInventoryComponent*>& InventoriesToRe
 	// Create slot widgets for all the items in the listed inventories
 	for (const auto& InventoryComponent : InventoriesToRepresent)
 	{
+		if (InventoryComponent->GetSlots().IsEmpty())
+			continue;
+
 		UMInventoryWidget::CreateItemSlotWidgets(this, InventoryComponent, pItemSlotsWrapBox);
 		if (const auto InventoryOwner = Cast<AMPickableActor>(InventoryComponent->GetOwner()))
 		{

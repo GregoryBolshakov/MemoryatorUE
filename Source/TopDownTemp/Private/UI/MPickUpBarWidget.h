@@ -14,8 +14,8 @@ class TOPDOWNTEMP_API UMPickUpBarWidget : public UUserWidget
 
 public:
 
-	UFUNCTION()
-	void CreateSlots(TSet<UMInventoryComponent*>& InventoriesToRepresent);
+	UFUNCTION(BlueprintCallable)
+	void CreateSlots(const TSet<UMInventoryComponent*>& InventoriesToRepresent);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void Show();

@@ -6,6 +6,7 @@
 #include "Characters/MMemoryator.h"
 #include "Managers/MWorldGenerator.h"
 #include "Components/CapsuleComponent.h"
+#include "Controllers/MPlayerController.h"
 #include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -33,6 +34,8 @@ void AMPickableActor::PostInitializeComponents()
 void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
+	if (!HasAuthority())
+		return;
 
 	if (InventoryComponent->GetItemCopies().IsEmpty())
 		return;
@@ -42,7 +45,8 @@ void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)
 		if (const auto pPlayerPawn = UGameplayStatics::GetPlayerPawn(pWorld, 0);
 			pPlayerPawn && pPlayerPawn == OtherActor)
 		{
-			AMGameMode::GetDropManager(this)->AddInventory(InventoryComponent);
+			auto* MPlayerController = Cast<AMPlayerController>(pPlayerPawn->GetController());
+			AMGameMode::GetDropManager(this)->AddInventory(InventoryComponent, MPlayerController);
 		}
 	}
 }
@@ -50,13 +54,16 @@ void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)
 void AMPickableActor::NotifyActorEndOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorEndOverlap(OtherActor);
+	if (!HasAuthority())
+		return;
 
 	if (const auto pWorld = GetWorld())
 	{
 		if (const auto pPlayerPawn = UGameplayStatics::GetPlayerPawn(pWorld, 0);
 			pPlayerPawn && pPlayerPawn == OtherActor)
 		{
-			AMGameMode::GetDropManager(this)->RemoveInventory(InventoryComponent);
+			auto* MPlayerController = Cast<AMPlayerController>(pPlayerPawn->GetController());
+			AMGameMode::GetDropManager(this)->RemoveInventory(InventoryComponent, MPlayerController);
 		}
 	}
 }
@@ -84,10 +91,14 @@ void AMPickableActor::BeginPlay()
 
 void AMPickableActor::OnItemChanged(int NewItemID, int NewQuantity)
 {
+	if (!HasAuthority())
+		return;
 	if (InventoryComponent->GetItemCopies().IsEmpty() && bDisappearIfEmptyInventory)
 	{
 		PickedUpCompletelyDelegate.Broadcast(GetClass());
-		AMGameMode::GetDropManager(this)->RemoveInventory(InventoryComponent);
+
+		auto* MPlayerController = Cast<AMPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+		AMGameMode::GetDropManager(this)->RemoveInventory(InventoryComponent, MPlayerController);
 		Destroy();
 		return;
 	}

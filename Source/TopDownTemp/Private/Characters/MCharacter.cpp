@@ -41,6 +41,8 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	AbilitySystemComponent->SetNetAddressable();
 
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("InventoryrComponent"));
+	InventoryComponent->SetIsReplicated(true);
+	InventoryComponent->SetNetAddressable();
 
 	CommunicationComponent = CreateDefaultSubobject<UMCommunicationComponent>(TEXT("CommunicationComponent"));
 

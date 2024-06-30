@@ -4,6 +4,7 @@
 #include "Components/MInventoryComponent.h"
 #include "MDropManager.generated.h"
 
+class AMPlayerController;
 class UMPickUpBarWidget;
 class UMInventoryComponent;
 class UUserWidget;
@@ -17,11 +18,11 @@ class UMDropManager : public UObject //TODO: Rename to ItemManager or whatever..
 
 public:
 
-	/** Is called by pickable items to add their inventories to the MPickUpBarWidget */
-	void AddInventory(UMInventoryComponent* Inventory);
+	/** Is called by pickable items to add their inventories to the MPickUpBarWidget for a specific player HUD. */
+	void AddInventory(UMInventoryComponent* Inventory, AMPlayerController* PlayerController);
 
-	/** Is called by pickable items to remove their inventories to the MPickUpBarWidget */
-	void RemoveInventory(UMInventoryComponent* Inventory);
+	/** Is called by pickable items to remove their inventories from the MPickUpBarWidget of a specific player HUD. */
+	void RemoveInventory(UMInventoryComponent* Inventory, AMPlayerController* PlayerController);
 
 	/** Updates the list of the listed inventories in the MPickUpBarWidget */
 	void Update();
