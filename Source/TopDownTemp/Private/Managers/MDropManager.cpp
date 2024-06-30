@@ -4,7 +4,6 @@
 #include "MWorldGenerator.h"
 #include "Characters/MCharacter.h"
 #include "Components/MInventoryComponent.h"
-#include "Controllers/MHUDController.h"
 #include "Controllers/MPlayerController.h"
 #include "Framework/MGameInstance.h"
 #include "Framework/MGameMode.h"
