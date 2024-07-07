@@ -6,6 +6,7 @@
 #include "Managers/MWorldGeneratorTypes.h"
 #include "MActor.generated.h"
 
+class UMInventoryComponent;
 struct FMActorSaveData;
 
 USTRUCT(BlueprintType)
@@ -38,10 +39,18 @@ public:
 	 *  But we are still not immune from incorrect calls if the pointer to a MActor or MCharacter is of type AActor */
 	bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = true);
 
+	UMInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+
+	UFUNCTION(BlueprintCallable)
+	FMUid GetUid() const { return Uid; }
+
 	int GetAppearanceID() const { return AppearanceID; }
 	bool GetIsRandomizedAppearance() const { return IsRandomizedAppearance; }
 
-	void InitialiseInventory(const TArray<struct FItem>& IN_Items) const;
+	void SetUid(const FMUid& _Uid) { Uid = _Uid; }
+
+	UFUNCTION(BlueprintCallable)
+	void InitialiseInventory(const TArray<struct FItem>& IN_Items);
 
 	UFUNCTION(BlueprintCallable)
 	const TMap<UStaticMeshComponent*, FArrayMaterialInstanceDynamicWrapper>& GetDynamicMaterials() const
@@ -58,6 +67,8 @@ public:
 protected:
 
 	virtual void PostInitializeComponents() override;
+
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void RandomizeAppearanceID();
@@ -88,6 +99,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	class UMInventoryComponent* InventoryComponent;
+
+	// I don't like having it both here and in the metadata. But client needs it to do requests
+	UPROPERTY(Replicated)
+	FMUid Uid;
 
 	/** Objects like trees/plants/mushrooms/stones/etc. may have different appearances. If true, the type will be picked randomly */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)

@@ -22,7 +22,10 @@ void AMDropActor::BeginPlay()
 
 	if (InventorySlots.Num() != 1 || InventorySlots[0].Item.ID <= 0 || InventorySlots[0].Item.Quantity <= 0)
 	{
-		check(false);
+		if (HasAuthority())
+		{
+			check(false);
+		} // Otherwise inventory hasn't replicated yet, it's alright
 		return;
 	}
 

@@ -3,9 +3,6 @@
 #include "CoreMinimal.h"
 #include "MInventoryComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSlotChanged, int, NewItemID, int, NewQuantity);
-DECLARE_MULTICAST_DELEGATE(FOnAnySlotChanged);
-
 USTRUCT(BlueprintType)
 struct FItem
 {
@@ -23,6 +20,10 @@ struct FItem
 	bool operator !=(const FItem& Other) const { return !(*this == Other); }
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSlotChanged, int, NewItemID, int, NewQuantity);
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTakeItemFromSpecificSlot, const FItem&, ItemToStore);
+DECLARE_MULTICAST_DELEGATE(FOnAnySlotChanged);
+
 USTRUCT(BlueprintType)
 struct FSlot
 {
@@ -30,6 +31,8 @@ struct FSlot
 
 	UPROPERTY()
 	FItem Item;
+
+	/** Server only */
 	FOnSlotChanged OnSlotChangedDelegate;
 
 	enum class ESlotFlags : uint8 {
@@ -67,7 +70,10 @@ public:
 
 	void Initialize(int IN_SlotsNumber, const TArray<FItem>& StartingItems);
 
-	TArray<FItem> GetItemCopies(bool bSkipEmpty = true);
+	TArray<FItem> GetItemCopies(bool bSkipEmpty = true) const;
+
+	UFUNCTION(BlueprintCallable)
+	FItem GetItemCopy(int SlotNumberInArray) const;
 
 	static int GetTotallPrice(const TArray<FSlot>& Slots, const UObject* WorldContextObject);
 
@@ -75,6 +81,8 @@ public:
 	//TArray<FItem> GetMaximumItemsForPrice(int Price);
 
 	TArray<FSlot>& GetSlots() { return Slots; }
+
+	const TArray<FSlot>& GetSlotsConst() const { return Slots; }
 
 	static void SortSlots(TArray<FSlot>& IN_Slots, const UObject* WorldContextObject);
 
@@ -87,11 +95,21 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StoreItem(const FItem& ItemToStore);
 
-	UFUNCTION(BlueprintCallable)
-	FItem StoreItemToSpecificSlot(int SlotNumberInArray, const FItem& ItemToStore);
+	/** Server only. Is called by local player controller via Server RPC */
+	UFUNCTION()
+	void DropDraggedOnTheGround(FItem& DraggedItem);
 
-	UFUNCTION(BlueprintCallable)
-	FItem TakeItemFromSpecificSlot(int SlotNumberInArray, int Quantity);
+	/** Server only. Is called by local player controller via Server RPC */
+	UFUNCTION()
+	void StoreDraggedToAnySlot(FItem& DraggedItem);
+
+	/** Server only. Is called by local player controller via Server RPC */
+	UFUNCTION()
+	void StoreDraggedToSpecificSlot(int SlotNumberInArray, FItem& DraggedItem);
+
+	/** Server only. Is called by local player controller via Server RPC */
+	UFUNCTION()
+	FItem DragItemFromSpecificSlot(int SlotNumberInArray, int Quantity);
 
 	// The function is needed because we need to be sure there are enough items before pulling items out of different slots in TakeItem
 	/** Check if there exist enough quantity of items with the given ID */
@@ -116,6 +134,9 @@ protected:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	UPROPERTY(Replicated)
+	UFUNCTION()
+	void OnRep_Slots();
+
+	UPROPERTY(ReplicatedUsing=OnRep_Slots)
 	TArray<FSlot> Slots;
 };

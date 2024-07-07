@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/MInventoryComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Managers/SaveManager/MUid.h"
 #include "MPlayerController.generated.h"
 
+class UMDropControllerComponent;
 class AMCharacter;
 class AMActor;
 class UCurveFloat;
@@ -45,6 +48,9 @@ class AMPlayerController : public APlayerController
 	GENERATED_UCLASS_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
+	UMDropControllerComponent* GetDropControllerComponent() const { return DropControllerComponent; }
+
 	bool IsMovingByAI() const;
 
 	void StopAIMovement();
@@ -61,6 +67,25 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void MakeFloatingNumber(const FVector& Location, int Value, EFloatingNumberType Type);
+
+	//TODO: Move to a separate class. Likely MDropControllerComponent
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_TryDropDraggedOnTheGround();
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_TryStoreDraggedToAnySlot(FMUid InventoryOwnerActorUid);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_TryStoreDraggedToSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_TryDragItemFromSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray, int Quantity);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_TrySwapDraggedWithSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray);
+
+	UPROPERTY()
+	FItem DraggedItem;
 
 protected:
 	virtual void AcknowledgePossession(APawn* P) override;
@@ -93,6 +118,10 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, Category="Camera Occlusion|Components")
 	class UCapsuleComponent* ActiveCapsuleComponent;
+
+	/** Responsible for visualising and interacting with drop nearby. Uses only replicated data. Is not authoritative. */
+	UPROPERTY()
+	UMDropControllerComponent* DropControllerComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera Occlusion")
 	bool IsOcclusionEnabled = true;

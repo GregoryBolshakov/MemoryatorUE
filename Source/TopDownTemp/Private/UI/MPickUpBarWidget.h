@@ -14,8 +14,7 @@ class TOPDOWNTEMP_API UMPickUpBarWidget : public UUserWidget
 
 public:
 
-	UFUNCTION(BlueprintCallable)
-	void CreateSlots(const TSet<UMInventoryComponent*>& InventoriesToRepresent);
+	void CreateSlots(const TSet<const UMInventoryComponent*>& InventoriesToRepresent);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void Show();
@@ -24,9 +23,6 @@ public:
 	void Hide();
 
 protected:
-
-	virtual void NativeDestruct() override;
-
 	UPROPERTY(EditDefaultsOnly, Category=MPickUpBarWidget, meta=(AllowPrivateAccess=true))
 	TSubclassOf<UUserWidget> ItemSlotWidgetBPClass;
 

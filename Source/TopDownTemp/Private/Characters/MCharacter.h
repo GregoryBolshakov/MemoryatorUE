@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "MCharacterSpecificTypes.h"
+#include "Managers/SaveManager/MUid.h"
 #include "MCharacter.generated.h"
 
 class UM2DRepresentationComponent;
@@ -54,6 +55,9 @@ public:
 
 	UAbilitySystemComponent* GetAbilitySystemComponent() const;
 
+	UFUNCTION(BlueprintCallable)
+	FMUid GetUid() const { return Uid; }
+
 	FName GetSpeciesName() const { return SpeciesName; }
 
 	FORCEINLINE const TMap<TSubclassOf<APawn>, ERelationType>& GetRelationshipMap() const { return RelationshipMap; }
@@ -62,7 +66,10 @@ public:
 
 	AMOutpostHouse* GetHouse() const { return House; }
 
-	void InitialiseInventory(const TArray<struct FItem>& IN_Items) const;
+	void SetUid(const FMUid& _Uid) { Uid = _Uid; }
+
+	UFUNCTION(BlueprintCallable)
+	void InitialiseInventory(const TArray<struct FItem>& IN_Items);
 
 	UFUNCTION(BlueprintCallable)
 	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
@@ -135,6 +142,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	class UPaperSpriteComponent* PerimeterOutlineComponent;
+
+	// I don't like having it both here and in the metadata. But client needs it to do requests
+	UPROPERTY(Replicated)
+	FMUid Uid;
 
 	UPROPERTY()
 	FName SpeciesName;

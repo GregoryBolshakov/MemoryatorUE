@@ -1,8 +1,10 @@
 #include "MInventoryComponent.h"
 
+#include "Controllers/MPlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "Framework/MGameInstance.h"
 #include "Framework/MGameMode.h"
+#include "Managers/MDropControllerComponent.h"
 #include "Managers/MDropManager.h"
 
 UMInventoryComponent::UMInventoryComponent(const FObjectInitializer& ObjectInitializer)
@@ -22,7 +24,7 @@ void UMInventoryComponent::Initialize(int IN_SlotsNumber, const TArray<FItem>& S
 	}
 }
 
-TArray<FItem> UMInventoryComponent::GetItemCopies(bool bSkipEmpty)
+TArray<FItem> UMInventoryComponent::GetItemCopies(bool bSkipEmpty) const
 {
 	TArray<FItem> Result;
 	for (const auto& Slot : Slots)
@@ -33,6 +35,16 @@ TArray<FItem> UMInventoryComponent::GetItemCopies(bool bSkipEmpty)
 		}
 	}
 	return Result;
+}
+
+FItem UMInventoryComponent::GetItemCopy(int SlotNumberInArray) const
+{
+	if (Slots.Num() > SlotNumberInArray)
+	{
+		return Slots[SlotNumberInArray].Item;
+	}
+	check(false);
+	return {};
 }
 
 UMItemsDataAsset* GetItemsDataAsset(const UObject* WorldContextObject)
@@ -335,51 +347,157 @@ void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 	// Item doesn't fit in the inventory, drop it on the ground
 	if (const auto DropManager = AMGameMode::GetDropManager(this))
 	{
-		DropManager->SpawnPickableItem(ItemLeft);
+		DropManager->SpawnPickableItem(GetOwner(), ItemLeft);
 	}
 }
 
-FItem UMInventoryComponent::StoreItemToSpecificSlot(int SlotNumberInArray, const FItem& ItemToStore)
+void UMInventoryComponent::DropDraggedOnTheGround(FItem& DraggedItem)
 {
-	// Validity checks---------------
-	if (Slots.Num() <= SlotNumberInArray || ItemToStore.Quantity <= 0 || ItemToStore.ID <= 0)
-		return ItemToStore;
+	if (const auto DropManager = AMGameMode::GetDropManager(this))
+	{
+		DropManager->SpawnPickableItem(GetOwner(), DraggedItem);
+		DraggedItem = {0, 0};
+	}
+}
 
-	if (Slots[SlotNumberInArray].Item.Quantity > 0 && Slots[SlotNumberInArray].Item.ID != ItemToStore.ID)
-		return ItemToStore;
+void UMInventoryComponent::StoreDraggedToAnySlot(FItem& DraggedItem)
+{
+	const int PrevQuantity = DraggedItem.Quantity;
+
+	const auto pWorld = GetWorld();
+	if (!IsValid(pWorld)) { check(false); return; }
 
 	const auto pMGameInstance = GetWorld()->GetGameInstance<UMGameInstance>();
-    if (!IsValid(pMGameInstance) || !pMGameInstance->ItemsDataAsset)
-    	return ItemToStore;
-    
-    const auto ItemsData = pMGameInstance->ItemsDataAsset->ItemsData;
-    if (ItemToStore.ID >= ItemsData.Num() || ItemToStore.ID <= 0) // ID valid check
-    {
-    	check(false);
-    	return ItemToStore;
-    }
+	if (!IsValid(pMGameInstance) || !pMGameInstance->ItemsDataAsset)
+		return;
 
-	const auto MaxStack = ItemsData[ItemToStore.ID].MaxStack;
-	const auto QuantityToStore = FMath::Min(ItemToStore.Quantity, MaxStack - Slots[SlotNumberInArray].Item.Quantity);
+	const auto ItemsData = pMGameInstance->ItemsDataAsset->ItemsData;
+	if (DraggedItem.ID >= ItemsData.Num() || DraggedItem.ID <= 0) // ID valid check
+	{
+		check(false);
+		return;
+	}
+
+	// We consider any slot as empty if its Quantity is 0, no matter what ID it has
+
+	for (auto& Slot : Slots)
+	{
+		if (Slot.Item.ID >= ItemsData.Num())
+		{
+			check(false);
+			continue;
+		}
+		// Search for not empty and not full slots with same ID to stack
+		if (Slot.Item.ID == DraggedItem.ID && Slot.Item.Quantity < ItemsData[DraggedItem.ID].MaxStack && Slot.Item.Quantity != 0)
+		{
+			const int QuantityToAdd = FMath::Min(DraggedItem.Quantity, ItemsData[DraggedItem.ID].MaxStack - Slot.Item.Quantity);
+			Slot.Item.Quantity += QuantityToAdd;
+			DraggedItem.Quantity -= QuantityToAdd;
+
+			Slot.OnSlotChangedDelegate.Broadcast(Slot.Item.ID, Slot.Item.Quantity);
+		}
+
+		if (DraggedItem.Quantity == 0)
+		{
+			break;
+		}
+	}
+
+	if (DraggedItem.Quantity > 0)
+	{
+		for (auto& Slot : Slots)
+		{
+			// Search for empty slots
+			if (Slot.Item.Quantity == 0)
+			{
+				const int QuantityToAdd = FMath::Min(DraggedItem.Quantity, ItemsData[DraggedItem.ID].MaxStack);
+				Slot.Item.ID = DraggedItem.ID;
+				Slot.Item.Quantity += QuantityToAdd;
+				DraggedItem.Quantity -= QuantityToAdd;
+
+				Slot.OnSlotChangedDelegate.Broadcast(Slot.Item.ID, Slot.Item.Quantity);
+			}
+
+			if (DraggedItem.Quantity == 0)
+			{
+				break;
+			}
+		}
+	}
+
+	if (PrevQuantity != DraggedItem.Quantity)
+	{
+		OnAnySlotChangedDelegate.Broadcast();
+	}
+	if (DraggedItem.Quantity == 0)
+		return;
+
+	// Item doesn't fit in the inventory, drop it on the ground
+	DropDraggedOnTheGround(DraggedItem);
+}
+
+void UMInventoryComponent::StoreDraggedToSpecificSlot(int SlotNumberInArray, FItem& DraggedItem)
+{
+	// TODO: If couldn't store, return it to the previous slot. It not possible drop on the ground (or store to player inventory, not sure)
+
+
+	// Invalid slot number or invalid DraggedItem
+	if (Slots.Num() <= SlotNumberInArray || DraggedItem.Quantity <= 0 || DraggedItem.ID <= 0)
+	{
+		check(false);
+		StoreDraggedToAnySlot(DraggedItem);
+		return;
+	}
+
+	// Slot is taken by an item with different ID
+	if (Slots[SlotNumberInArray].Item.Quantity > 0 && Slots[SlotNumberInArray].Item.ID != DraggedItem.ID)
+	{
+		StoreDraggedToAnySlot(DraggedItem);
+		return;
+	}
+
+	// Invalid Game Instance
+	const auto pMGameInstance = GetWorld()->GetGameInstance<UMGameInstance>();
+	if (!IsValid(pMGameInstance) || !pMGameInstance->ItemsDataAsset)
+	{
+		return;
+	}
+
+	// Couldn't find the item data
+	const auto ItemsData = pMGameInstance->ItemsDataAsset->ItemsData;
+	if (DraggedItem.ID >= ItemsData.Num() || DraggedItem.ID <= 0) // ID valid check
+	{
+		check(false);
+		return;
+	}
+
+	// Slot is valid to put the item in
+	const auto MaxStack = ItemsData[DraggedItem.ID].MaxStack;
+	const auto QuantityToStore = FMath::Min(DraggedItem.Quantity, MaxStack - Slots[SlotNumberInArray].Item.Quantity);
 	check(QuantityToStore >= 0);
 
-	if (QuantityToStore == 0)
-		return ItemToStore;
+	if (QuantityToStore == 0) // Slot was already full or got 0 capacity
+	{
+		StoreDraggedToAnySlot(DraggedItem);
+		return;
+	}
 	//-------------------------------
 
-	Slots[SlotNumberInArray].Item.ID = ItemToStore.ID;
+	Slots[SlotNumberInArray].Item.ID = DraggedItem.ID;
 	Slots[SlotNumberInArray].Item.Quantity += QuantityToStore;
 	Slots[SlotNumberInArray].OnSlotChangedDelegate.Broadcast(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
 
-	auto ItemToReturn = ItemToStore;
-	ItemToReturn.Quantity -= QuantityToStore;
+	DraggedItem.Quantity -= QuantityToStore;
 
 	OnAnySlotChangedDelegate.Broadcast();
 
-	return ItemToReturn;
+	if (DraggedItem.Quantity > 0)
+	{
+		StoreDraggedToAnySlot(DraggedItem);
+	}
 }
 
-FItem UMInventoryComponent::TakeItemFromSpecificSlot(int SlotNumberInArray, int Quantity)
+FItem UMInventoryComponent::DragItemFromSpecificSlot(int SlotNumberInArray, int Quantity)
 {
 	//TODO: Should be replicated and do validation
 
@@ -393,7 +511,6 @@ FItem UMInventoryComponent::TakeItemFromSpecificSlot(int SlotNumberInArray, int 
 
 	Slots[SlotNumberInArray].Item.Quantity -= QuantityToTake;
 
-	check(Slots[SlotNumberInArray].OnSlotChangedDelegate.IsBound());
 	Slots[SlotNumberInArray].OnSlotChangedDelegate.Broadcast(Slots[SlotNumberInArray].Item.ID, Slots[SlotNumberInArray].Item.Quantity);
 
 	OnAnySlotChangedDelegate.Broadcast();
@@ -401,6 +518,11 @@ FItem UMInventoryComponent::TakeItemFromSpecificSlot(int SlotNumberInArray, int 
 	check(QuantityToTake != 0);
 	return {Slots[SlotNumberInArray].Item.ID, QuantityToTake};
 }
+
+/*void UMInventoryComponent::Client_OnTakeItemFromSpecificSlot_Implementation(const FItem& ItemToStore)
+{
+	OnTakeItemFromSpecificSlotDelegate.Broadcast(ItemToStore);
+}*/
 
 bool UMInventoryComponent::DoesContainEnough(FItem ItemToCheck)
 {
@@ -517,4 +639,29 @@ void UMInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UMInventoryComponent, Slots);
+}
+
+void UMInventoryComponent::OnRep_Slots()
+{
+	// TODO: Use a delegate instead of direct accessing AMPlayerController
+	if (auto* MPlayerController = Cast<AMPlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
+	{
+		if (auto* DropController = MPlayerController->GetDropControllerComponent())
+		{
+			if (auto* PlayerMCharacter = Cast<AMCharacter>(MPlayerController->GetPawn()))
+			{
+				if (PlayerMCharacter->GetInventoryComponent() == this)
+				{
+					// If the inventory is part of Inventory widget, re-create the entire widget contents
+					DropController->UpdateInventoryWidget();
+					return;
+				}
+			}
+			if (DropController->ContainsPickUpInventory(this))
+			{
+				// If the inventory is part of PickUpBar widget, re-create the entire widget contents
+				DropController->UpdatePickUpBar();
+			}
+		}
+	}
 }

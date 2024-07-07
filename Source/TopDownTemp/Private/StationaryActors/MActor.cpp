@@ -8,6 +8,7 @@
 #include "Framework/MGameMode.h"
 #include "Managers/MMetadataManager.h"
 #include "Managers/MWorldGenerator.h"
+#include "Net/UnrealNetwork.h"
 
 AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -34,7 +35,7 @@ bool AMActor::Destroy(bool bNetForce, bool bShouldModifyLevel)
 	return false;
 }
 
-void AMActor::InitialiseInventory(const TArray<FItem>& IN_Items) const
+void AMActor::InitialiseInventory(const TArray<FItem>& IN_Items)
 {
 	InventoryComponent->Initialize(IN_Items.Num(), IN_Items);
 }
@@ -84,6 +85,13 @@ void AMActor::PostInitializeComponents()
 	}
 
 	CreateDynamicMaterials();
+}
+
+void AMActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AMActor, Uid);
 }
 
 void AMActor::CreateDynamicMaterials()

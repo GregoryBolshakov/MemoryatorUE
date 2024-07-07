@@ -122,7 +122,7 @@ UAbilitySystemComponent* AMCharacter::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-void AMCharacter::InitialiseInventory(const TArray<FItem>& IN_Items) const
+void AMCharacter::InitialiseInventory(const TArray<FItem>& IN_Items)
 {
 	InventoryComponent->Initialize(IN_Items.Num(), IN_Items);
 }
@@ -212,6 +212,7 @@ void AMCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(AMCharacter, Uid);
 	DOREPLIFETIME(AMCharacter, LastNonZeroVelocity);
 	DOREPLIFETIME(AMCharacter, ForcedGazeVector);
 }

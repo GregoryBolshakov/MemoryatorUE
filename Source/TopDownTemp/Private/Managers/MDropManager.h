@@ -4,6 +4,7 @@
 #include "Components/MInventoryComponent.h"
 #include "MDropManager.generated.h"
 
+class UMInventoryWidget;
 class AMPlayerController;
 class UMPickUpBarWidget;
 class UMInventoryComponent;
@@ -24,11 +25,9 @@ public:
 	/** Is called by pickable items to remove their inventories from the MPickUpBarWidget of a specific player HUD. */
 	void RemoveInventory(UMInventoryComponent* Inventory, AMPlayerController* PlayerController);
 
-	/** Updates the list of the listed inventories in the MPickUpBarWidget */
-	void Update();
-
+	/** Spawns a AMPickableActor near the Owner with one item in the inventory */
 	UFUNCTION(BlueprintCallable)
-	void SpawnPickableItem(const FItem& Item);
+	void SpawnPickableItem(const AActor* Owner, const FItem& Item);
 
 	UFUNCTION()
 	void GiveBundleToPlayer(const FBundle& Bundle);
@@ -36,6 +35,8 @@ public:
 	const TSet<UMInventoryComponent*>& GetInventoriesToRepresent() { return InventoriesToRepresent; }
 
 	static TSubclassOf<UUserWidget> gItemSlotWidgetBPClass;
+	static TSubclassOf<UMPickUpBarWidget> gPickUpBarWidgetBPClass;
+	static TSubclassOf<UMInventoryWidget> gInventoryWidgetBPClass;
 
 private:
 
@@ -48,16 +49,23 @@ private:
 	UPROPERTY()
 	UMPickUpBarWidget* PickUpBarWidget;
 
-	UPROPERTY(EditDefaultsOnly, Category=UMDropManager)
-	TSubclassOf<UUserWidget> PickUpBarWidgetBPClass;
+	UPROPERTY()
+	TSet<UMInventoryComponent*> InventoriesToRepresent;
+	/** Inventories belong to different actors. We store those actors' names.
+	 * It is needed for replication. */
+	//UPROPERTY()
+	//TArray<FName> InventoriesOwnerNames;
+
+	UPROPERTY(EditDefaultsOnly, Category=MInventoryWidgetSettings)
+	TSubclassOf<UUserWidget> ItemSlotWidgetBPClass;
 
 	UPROPERTY(EditDefaultsOnly, Category=UMDropManager)
 	TSubclassOf<AMPickableActor> AMPickableItemBPClass;
 
-	UPROPERTY()
-	TSet<UMInventoryComponent*> InventoriesToRepresent;
-
-	UPROPERTY(EditDefaultsOnly, Category=MInventoryWidgetSettings)
-	TSubclassOf<UUserWidget> ItemSlotWidgetBPClass;
+	UPROPERTY(EditDefaultsOnly, Category=UMDropManager)
+	TSubclassOf<UUserWidget> PickUpBarWidgetBPClass;
+	
+	UPROPERTY(EditDefaultsOnly, Category=UMDropManager)
+	TSubclassOf<UUserWidget> InventoryWidgetBPClass;
 };
 

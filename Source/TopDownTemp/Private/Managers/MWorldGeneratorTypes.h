@@ -206,7 +206,7 @@ public:
 	/** Saved actors might depend on other saved actors when loading. They use this ID.\n
 	*   Provides the overall uniqueness of actors in the world
 	*   Grants total uniqueness across different game launches */
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	FMUid Uid;
 
 	FIntPoint GroundBlockIndex;

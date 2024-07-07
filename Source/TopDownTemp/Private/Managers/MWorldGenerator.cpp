@@ -198,6 +198,8 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 		PlayerMetadata->OnChunkChangedDelegate.AddDynamic(AMGameMode::GetRoadManager(this), &UMRoadManager::OnPlayerChangedChunk);
 	}
 
+	AMGameMode::GetDropManager(this)->SpawnPickableItem(pPlayer, {4, 5}); // temp
+
 	//TODO: Make sure connecting player doesn't get stuck in terrain which might appear while he is away
 }
 
@@ -944,6 +946,15 @@ void AMWorldGenerator::EnrollActorToGrid(AActor* Actor, const FMUid& Uid)
 
 	// Store actor metadata
 	MetadataManager->Add(FName(Actor->GetName()), Actor, UidChecked, GroundBlockIndex);
+
+	if (auto* MActor = Cast<AMActor>(Actor))
+	{
+		MActor->SetUid(UidChecked);
+	} else
+	if (auto* MCharacter = Cast<AMCharacter>(Actor))
+	{
+		MCharacter->SetUid(UidChecked);
+	}
 
 	// If was spawned on a disabled block, disable the actor (unless the actor has to be always enabled)
 	if (const auto IsActiveCheckerComponent = Cast<UMIsActiveCheckerComponent>(Actor->GetComponentByClass(UMIsActiveCheckerComponent::StaticClass())))

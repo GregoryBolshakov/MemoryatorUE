@@ -9,6 +9,7 @@
 #include "Controllers/MPlayerController.h"
 #include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "Managers/MDropControllerComponent.h"
 
 AMPickableActor::AMPickableActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -34,8 +35,6 @@ void AMPickableActor::PostInitializeComponents()
 void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorBeginOverlap(OtherActor);
-	if (!HasAuthority())
-		return;
 
 	if (InventoryComponent->GetItemCopies().IsEmpty())
 		return;
@@ -46,7 +45,8 @@ void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)
 			pPlayerPawn && pPlayerPawn == OtherActor)
 		{
 			auto* MPlayerController = Cast<AMPlayerController>(pPlayerPawn->GetController());
-			AMGameMode::GetDropManager(this)->AddInventory(InventoryComponent, MPlayerController);
+			//AMGameMode::GetDropManager(this)->AddInventory(InventoryComponent, MPlayerController);
+			MPlayerController->GetDropControllerComponent()->AddInventoryForPickUp(InventoryComponent);
 		}
 	}
 }
@@ -54,8 +54,6 @@ void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)
 void AMPickableActor::NotifyActorEndOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorEndOverlap(OtherActor);
-	if (!HasAuthority())
-		return;
 
 	if (const auto pWorld = GetWorld())
 	{
@@ -63,7 +61,7 @@ void AMPickableActor::NotifyActorEndOverlap(AActor* OtherActor)
 			pPlayerPawn && pPlayerPawn == OtherActor)
 		{
 			auto* MPlayerController = Cast<AMPlayerController>(pPlayerPawn->GetController());
-			AMGameMode::GetDropManager(this)->RemoveInventory(InventoryComponent, MPlayerController);
+			MPlayerController->GetDropControllerComponent()->RemoveInventoryForPickUp(InventoryComponent);
 		}
 	}
 }
@@ -74,7 +72,7 @@ void AMPickableActor::BeginPlay()
 	Super::BeginPlay();
 
 	// NotifyActorBeginOverlap doesn't trigger when actor just spawned
-	/*GetWorld()->GetTimerManager().SetTimer(CollisionTimerHandle, [this]
+	GetWorld()->GetTimerManager().SetTimer(CollisionTimerHandle, [this]
 	{
 		if (const auto pWorld = GetWorld())
 		{
@@ -86,22 +84,17 @@ void AMPickableActor::BeginPlay()
 				}
 			}
 		}
-	}, 0.1f, false); // Who knows why collisions need some time after actor's BeginPlay to be set up*/
+	}, 0.1f, false); // Who knows why collisions need some time after actor's BeginPlay to be set up
 }
 
 void AMPickableActor::OnItemChanged(int NewItemID, int NewQuantity)
 {
-	if (!HasAuthority())
-		return;
+	auto* MPlayerController = Cast<AMPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
+
 	if (InventoryComponent->GetItemCopies().IsEmpty() && bDisappearIfEmptyInventory)
 	{
 		PickedUpCompletelyDelegate.Broadcast(GetClass());
-
-		auto* MPlayerController = Cast<AMPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-		AMGameMode::GetDropManager(this)->RemoveInventory(InventoryComponent, MPlayerController);
+		MPlayerController->GetDropControllerComponent()->RemoveInventoryForPickUp(InventoryComponent);
 		Destroy();
-		return;
 	}
-
-	AMGameMode::GetDropManager(this)->Update();
 }

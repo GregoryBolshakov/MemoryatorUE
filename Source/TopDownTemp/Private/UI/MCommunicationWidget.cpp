@@ -55,17 +55,18 @@ void UMCommunicationWidget::CreateItemSlotWidgets()
 	const auto InventoryToOffer = CommunicationManager->GetInventoryToOffer(); // Place player can put their items to offer
 	if (!InventoryToOffer) return;
 
-	UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToOffer, pMyItemSlotsWrapBox);
+	// TODO: Support it. Temporary disabled due to multiplayer refactoring
+	//UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToOffer, pMyItemSlotsWrapBox);
 
 	const auto InterlocutorInventory = InterlocutorCharacter->GetInventoryComponent();
 	if (!InterlocutorInventory) return;
 
-	UMInventoryWidget::CreateItemSlotWidgets(this, InterlocutorInventory, pTheirItemSlotsWrapBox);
+	//UMInventoryWidget::CreateItemSlotWidgets(this, InterlocutorInventory, pTheirItemSlotsWrapBox);
 
 	const auto InventoryToReward = CommunicationManager->GetInventoryToReward();
 	if (!InventoryToReward) return;
 
-	UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
+	//UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
 }
 
 void UMCommunicationWidget::ReCreateRewardItemSlotWidgets()
@@ -75,7 +76,8 @@ void UMCommunicationWidget::ReCreateRewardItemSlotWidgets()
 		if (const auto InventoryToReward = CommunicationManager->GetInventoryToReward())
 		{
 			pRewardItemSlotsWrapBox->ClearChildren();
-			UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
+			// TODO: Support it. Temporary disabled due to multiplayer refactoring
+			//UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
 
 			// Enable/Disable TakeAllButton depending on the slots locked state
 			bool bHasAnyUnlocked = false;

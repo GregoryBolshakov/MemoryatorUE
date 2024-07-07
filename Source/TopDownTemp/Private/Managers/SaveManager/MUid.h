@@ -6,7 +6,7 @@
 /** Saved actors might depend on other saved actors when loading. They use this ID.\n
 *   Provides the overall uniqueness of actors in the world
 *   Grants total uniqueness across different game launches */
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FMUid
 {
 	GENERATED_BODY()

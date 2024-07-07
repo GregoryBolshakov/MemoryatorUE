@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Managers/MDropControllerComponent.h"
 #include "MInventoryWidget.generated.h"
 
 class AMPickableActor;
@@ -17,8 +18,17 @@ public:
 	virtual void NativeDestruct() override;
 
 	UFUNCTION(BlueprintCallable)
-	static void CreateItemSlotWidgets(UUserWidget* pOwner, UMInventoryComponent* pInventoryComponent,
-	                                  UWrapBox* pItemSlotsWrapBox);
+	void CreateSlots(const UMInventoryComponent* InventoryComponent);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void Show();
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void Hide();
+
+	UFUNCTION(BlueprintCallable)
+	static void CreateItemSlotWidgets(UUserWidget* pOwner, const UMInventoryComponent* pInventoryComponent,
+									  UWrapBox* pItemSlotsWrapBox);
 
 protected:
 	UPROPERTY(BlueprintReadWrite, Category=MInventoryWidgetSettings)

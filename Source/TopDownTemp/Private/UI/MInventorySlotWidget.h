@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/MInventoryComponent.h"
+#include "Managers/SaveManager/MUid.h"
 #include "MInventorySlotWidget.generated.h"
 
 class UMInventoryWidget;
@@ -22,7 +23,7 @@ public:
 	void SetNumberInArray(int IN_NumberInArray) { NumberInArray = IN_NumberInArray; }
 
 	UFUNCTION(BlueprintCallable, Category=UMInventorySlotWidget)
-	void SetOwnerInventory(UMInventoryComponent* IN_OwnerInventory) { OwnerInventory = IN_OwnerInventory; }
+	void SetOwnerInventory(const UMInventoryComponent* IN_OwnerInventory) { OwnerInventory = IN_OwnerInventory; }
 
 	void SetStoredItem(const FItem& IN_Item) { StoredItem = IN_Item; }
 
@@ -34,12 +35,15 @@ public:
 	void SetIsPreviewOnly(bool IN_IsPreviewOnly) { IsPreviewOnly = IN_IsPreviewOnly; }
 
 protected:
+	UFUNCTION(BlueprintCallable, Category=UMInventorySlotWidget)
+	FMUid GetOwnerInventoryActorUid() const;
+
 	/** Number of the slot (container) in the wrap box, it doesn't change even if we swap items! */
 	UPROPERTY(BlueprintReadOnly, Category=UMInventorySlotWidget, meta=(AllowPrivateAccess=true))
 	int NumberInArray;
 
 	UPROPERTY(BlueprintReadOnly, Category=UMInventorySlotWidget, meta=(AllowPrivateAccess=true))
-	UMInventoryComponent* OwnerInventory;
+	const UMInventoryComponent* OwnerInventory;
 
 	/** The copy of the item. Is needed when we stack or swap with dragged item */
 	UPROPERTY(BlueprintReadWrite)

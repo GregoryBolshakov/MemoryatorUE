@@ -37,7 +37,6 @@ void UMDropManager::AddInventory(UMInventoryComponent* Inventory, AMPlayerContro
 		}
 		else
 		{
-			//PlayerController->Client_ReceiveHUDCommand(FHUDCommand(EHUDCommandType::CreateWidget, "PickUpBar"));
 			PickUpBarWidget = Cast<UMPickUpBarWidget>(CreateWidget(GetWorld()->GetFirstPlayerController(), PickUpBarWidgetBPClass));
 			check(PickUpBarWidget);
 			PickUpBarWidget->AddToPlayerScreen();
@@ -46,8 +45,6 @@ void UMDropManager::AddInventory(UMInventoryComponent* Inventory, AMPlayerContro
 	}
 
 	InventoriesToRepresent.Add(Inventory);
-
-	PickUpBarWidget->CreateSlots(InventoriesToRepresent);
 }
 
 void UMDropManager::RemoveInventory(UMInventoryComponent* Inventory, AMPlayerController* PlayerController)
@@ -60,25 +57,13 @@ void UMDropManager::RemoveInventory(UMInventoryComponent* Inventory, AMPlayerCon
 		return;
 	}
 
-	if (!InventoriesToRepresent.IsEmpty())
-	{
-		PickUpBarWidget->CreateSlots(InventoriesToRepresent);
-	}
-	else
+	if (InventoriesToRepresent.IsEmpty())
 	{
 		PickUpBarWidget->Hide();
 	}
 }
 
-void UMDropManager::Update()
-{
-	if (!InventoriesToRepresent.IsEmpty() && PickUpBarWidget)
-	{
-		PickUpBarWidget->CreateSlots(InventoriesToRepresent);
-	}
-}
-
-void UMDropManager::SpawnPickableItem(const FItem& Item)
+void UMDropManager::SpawnPickableItem(const AActor* Owner, const FItem& Item) //TODO: Support multiple players, currently using only the first local one
 {
 	check(Item.Quantity != 0);
 	const auto pWorld = GetWorld();
@@ -87,9 +72,7 @@ void UMDropManager::SpawnPickableItem(const FItem& Item)
 
 	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
-		const auto pPlayer = UGameplayStatics::GetPlayerPawn(this, 0);
-		if (!pPlayer) { check(false); return; }
-		const auto PlayerLocation = pPlayer->GetActorLocation();
+		const auto OwnerLocation = Owner->GetActorLocation();
 
 		FOnActorSpawned OnActorSpawned;
 		OnActorSpawned.AddLambda([Item](AActor* Actor)
@@ -97,9 +80,13 @@ void UMDropManager::SpawnPickableItem(const FItem& Item)
 			if (const auto PickableActor = Cast<AMPickableActor>(Actor))
 			{
 				PickableActor->InitialiseInventory({Item});
+
+				// Bind the single slot to OnChanged delegate
+				auto& Slot = PickableActor->GetInventoryComponent()->GetSlots()[0];
+				Slot.OnSlotChangedDelegate.AddDynamic(PickableActor, &AMPickableActor::OnItemChanged);
 			}
 		});
-		WorldGenerator->SpawnActorInRadius<AMPickableActor>(AMPickableItemBPClass, PlayerLocation, FRotator::ZeroRotator, {}, 25.f, 0.f, OnActorSpawned);
+		WorldGenerator->SpawnActorInRadius<AMPickableActor>(AMPickableItemBPClass, OwnerLocation, FRotator::ZeroRotator, {}, 25.f, 0.f, OnActorSpawned);
 	}
 }
 
@@ -118,10 +105,14 @@ void UMDropManager::GiveBundleToPlayer(const FBundle& Bundle)
 }
 
 TSubclassOf<UUserWidget> UMDropManager::gItemSlotWidgetBPClass = nullptr;
+TSubclassOf<UMPickUpBarWidget> UMDropManager::gPickUpBarWidgetBPClass = nullptr;
+TSubclassOf<UMInventoryWidget> UMDropManager::gInventoryWidgetBPClass = nullptr;
 
 void UMDropManager::PostInitProperties()
 {
 	UObject::PostInitProperties();
 
 	UMDropManager::gItemSlotWidgetBPClass = ItemSlotWidgetBPClass;
+	UMDropManager::gPickUpBarWidgetBPClass = PickUpBarWidgetBPClass;
+	UMDropManager::gInventoryWidgetBPClass = InventoryWidgetBPClass;
 }
