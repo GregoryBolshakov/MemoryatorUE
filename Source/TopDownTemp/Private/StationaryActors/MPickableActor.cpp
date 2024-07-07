@@ -9,7 +9,7 @@
 #include "Controllers/MPlayerController.h"
 #include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
-#include "Managers/MDropControllerComponent.h"
+#include "Managers/MInventoryControllerComponent.h"
 
 AMPickableActor::AMPickableActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -46,7 +46,7 @@ void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)
 		{
 			auto* MPlayerController = Cast<AMPlayerController>(pPlayerPawn->GetController());
 			//AMGameMode::GetDropManager(this)->AddInventory(InventoryComponent, MPlayerController);
-			MPlayerController->GetDropControllerComponent()->AddInventoryForPickUp(InventoryComponent);
+			MPlayerController->GetInventoryControllerComponent()->AddInventoryForPickUp(InventoryComponent);
 		}
 	}
 }
@@ -61,7 +61,7 @@ void AMPickableActor::NotifyActorEndOverlap(AActor* OtherActor)
 			pPlayerPawn && pPlayerPawn == OtherActor)
 		{
 			auto* MPlayerController = Cast<AMPlayerController>(pPlayerPawn->GetController());
-			MPlayerController->GetDropControllerComponent()->RemoveInventoryForPickUp(InventoryComponent);
+			MPlayerController->GetInventoryControllerComponent()->RemoveInventoryForPickUp(InventoryComponent);
 		}
 	}
 }
@@ -94,7 +94,7 @@ void AMPickableActor::OnItemChanged(int NewItemID, int NewQuantity)
 	if (InventoryComponent->GetItemCopies().IsEmpty() && bDisappearIfEmptyInventory)
 	{
 		PickedUpCompletelyDelegate.Broadcast(GetClass());
-		MPlayerController->GetDropControllerComponent()->RemoveInventoryForPickUp(InventoryComponent);
+		MPlayerController->GetInventoryControllerComponent()->RemoveInventoryForPickUp(InventoryComponent);
 		Destroy();
 	}
 }

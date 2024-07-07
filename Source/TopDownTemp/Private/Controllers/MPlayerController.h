@@ -8,7 +8,7 @@
 #include "Managers/SaveManager/MUid.h"
 #include "MPlayerController.generated.h"
 
-class UMDropControllerComponent;
+class UMInventoryControllerComponent;
 class AMCharacter;
 class AMActor;
 class UCurveFloat;
@@ -49,7 +49,7 @@ class AMPlayerController : public APlayerController
 
 public:
 	UFUNCTION(BlueprintCallable)
-	UMDropControllerComponent* GetDropControllerComponent() const { return DropControllerComponent; }
+	UMInventoryControllerComponent* GetInventoryControllerComponent() const { return InventoryControllerComponent; }
 
 	bool IsMovingByAI() const;
 
@@ -67,25 +67,6 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void MakeFloatingNumber(const FVector& Location, int Value, EFloatingNumberType Type);
-
-	//TODO: Move to a separate class. Likely MDropControllerComponent
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_TryDropDraggedOnTheGround();
-
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_TryStoreDraggedToAnySlot(FMUid InventoryOwnerActorUid);
-
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_TryStoreDraggedToSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray);
-
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_TryDragItemFromSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray, int Quantity);
-
-	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_TrySwapDraggedWithSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray);
-
-	UPROPERTY()
-	FItem DraggedItem;
 
 protected:
 	virtual void AcknowledgePossession(APawn* P) override;
@@ -119,9 +100,9 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category="Camera Occlusion|Components")
 	class UCapsuleComponent* ActiveCapsuleComponent;
 
-	/** Responsible for visualising and interacting with drop nearby. Uses only replicated data. Is not authoritative. */
+	/** Component for managing loot, dragging/dropping items. */
 	UPROPERTY()
-	UMDropControllerComponent* DropControllerComponent;
+	UMInventoryControllerComponent* InventoryControllerComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Camera Occlusion")
 	bool IsOcclusionEnabled = true;

@@ -20,7 +20,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
 #include "Framework/MGameMode.h"
-#include "Managers/MDropControllerComponent.h"
+#include "Managers/MInventoryControllerComponent.h"
 #include "StationaryActors/MActor.h"
 
 AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializer) :
@@ -38,100 +38,9 @@ AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializ
 		PathFollowingComponent->Initialize();
 	}
 
-	DropControllerComponent = CreateDefaultSubobject<UMDropControllerComponent>(TEXT("DropControllerComponent"));
+	InventoryControllerComponent = CreateDefaultSubobject<UMInventoryControllerComponent>(TEXT("InventoryControllerComponent"));
 
 	ConsoleCommandsManager = CreateDefaultSubobject<UMConsoleCommandsManager>(TEXT("ConsoleCommandsManager"));
-}
-
-
-void AMPlayerController::Server_TryDropDraggedOnTheGround_Implementation()
-{
-	if (auto* MCharacter = Cast<AMCharacter>(GetPawn()))
-	{
-		if (auto* MyInventory = MCharacter->GetInventoryComponent())
-		{
-			MyInventory->DropDraggedOnTheGround(DraggedItem);
-		}
-	}
-}
-
-void AMPlayerController::Server_TryStoreDraggedToAnySlot_Implementation(FMUid InventoryOwnerActorUid)
-{
-	if (!IsUidValid(InventoryOwnerActorUid)) // Drop dragged on the ground if the owner isn't set
-	{
-		if (auto* MCharacter = Cast<AMCharacter>(GetPawn()))
-		{
-			if (auto* MyInventory = MCharacter->GetInventoryComponent())
-			{
-				MyInventory->DropDraggedOnTheGround(DraggedItem);
-				return;
-			}
-		}
-	}
-	if (auto* InventoryOwnerMetadata = AMGameMode::GetMetadataManager(this)->Find(InventoryOwnerActorUid))
-	{
-		if (auto* Inventory = InventoryOwnerMetadata->Actor->GetComponentByClass<UMInventoryComponent>())
-		{
-			Inventory->StoreDraggedToAnySlot(DraggedItem);
-			return;
-		}
-	}
-	check(false);
-}
-
-void AMPlayerController::Server_TryStoreDraggedToSpecificSlot_Implementation(FMUid InventoryOwnerActorUid, int SlotNumberInArray)
-{
-	if (DraggedItem.Quantity == 0) // An example of that is right after Server_TrySwapDraggedWithSpecificSlot
-		return;
-
-	if (!IsUidValid(InventoryOwnerActorUid)) // Drop dragged on the ground if the owner isn't set
-	{
-		if (auto* MCharacter = Cast<AMCharacter>(GetPawn()))
-		{
-			if (auto* MyInventory = MCharacter->GetInventoryComponent())
-			{
-				MyInventory->DropDraggedOnTheGround(DraggedItem);
-				return;
-			}
-		}
-	}
-	if (auto* InventoryOwnerMetadata = AMGameMode::GetMetadataManager(this)->Find(InventoryOwnerActorUid))
-	{
-		if (auto* Inventory = InventoryOwnerMetadata->Actor->GetComponentByClass<UMInventoryComponent>())
-		{
-			Inventory->StoreDraggedToSpecificSlot(SlotNumberInArray, DraggedItem);
-			return;
-		}
-	}
-	check(false);
-}
-
-void AMPlayerController::Server_TryDragItemFromSpecificSlot_Implementation(FMUid InventoryOwnerActorUid, int SlotNumberInArray, int Quantity)
-{
-	check(DraggedItem.Quantity == 0);
-	if (auto* InventoryOwnerMetadata = AMGameMode::GetMetadataManager(this)->Find(InventoryOwnerActorUid))
-	{
-		if (auto* Inventory = InventoryOwnerMetadata->Actor->GetComponentByClass<UMInventoryComponent>())
-		{
-			DraggedItem = Inventory->DragItemFromSpecificSlot(SlotNumberInArray, Quantity);
-			return;
-		}
-	}
-	check(false);
-}
-
-void AMPlayerController::Server_TrySwapDraggedWithSpecificSlot_Implementation(FMUid InventoryOwnerActorUid, int SlotNumberInArray)
-{
-	check(DraggedItem.Quantity != 0);
-	if (auto* InventoryOwnerMetadata = AMGameMode::GetMetadataManager(this)->Find(InventoryOwnerActorUid))
-	{
-		if (auto* Inventory = InventoryOwnerMetadata->Actor->GetComponentByClass<UMInventoryComponent>())
-		{
-			Inventory->SwapItems(DraggedItem, SlotNumberInArray);
-			return;
-		}
-	}
-	check(false);
 }
 
 void AMPlayerController::AcknowledgePossession(APawn* P)

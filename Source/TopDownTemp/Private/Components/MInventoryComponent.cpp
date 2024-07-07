@@ -4,7 +4,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Framework/MGameInstance.h"
 #include "Framework/MGameMode.h"
-#include "Managers/MDropControllerComponent.h"
+#include "Managers/MInventoryControllerComponent.h"
 #include "Managers/MDropManager.h"
 
 UMInventoryComponent::UMInventoryComponent(const FObjectInitializer& ObjectInitializer)
@@ -646,7 +646,7 @@ void UMInventoryComponent::OnRep_Slots()
 	// TODO: Use a delegate instead of direct accessing AMPlayerController
 	if (auto* MPlayerController = Cast<AMPlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
 	{
-		if (auto* DropController = MPlayerController->GetDropControllerComponent())
+		if (auto* DropController = MPlayerController->GetInventoryControllerComponent())
 		{
 			if (auto* PlayerMCharacter = Cast<AMCharacter>(MPlayerController->GetPawn()))
 			{

@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/MInventoryComponent.h"
-#include "MDropControllerComponent.generated.h"
+#include "MInventoryControllerComponent.generated.h"
 
 class UMInventoryWidget;
 class AMPlayerController;
@@ -20,13 +20,28 @@ struct FSlotsWrapper
 	TArray<FSlot> Slots;
 };
 
-/** An extension for MPlayerController for managing loot, dragging/dropping items. */
+/** Component for MPlayerController for managing loot, dragging/dropping items. Handles PickUpBar and Inventory widgets */
 UCLASS(Blueprintable)
-class UMDropControllerComponent : public UActorComponent
+class UMInventoryControllerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_TryDropDraggedOnTheGround();
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_TryStoreDraggedToAnySlot(FMUid InventoryOwnerActorUid);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_TryStoreDraggedToSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_TryDragItemFromSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray, int Quantity);
+
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_TrySwapDraggedWithSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray);
+
 	void AddInventoryForPickUp(const UMInventoryComponent* ReplicatedInventory);
 
 	void RemoveInventoryForPickUp(const UMInventoryComponent* ReplicatedInventory);
@@ -45,6 +60,11 @@ public:
 	TSet<const UMInventoryComponent*> InventoriesToRepresent;
 
 private:
+	inline UMInventoryComponent* GetMyInventory() const;
+
+	UPROPERTY()
+	FItem DraggedItem;
+
 	/** Inventory widget. Never destroy it but only hide/show. */
 	UPROPERTY()
 	UMInventoryWidget* InventoryWidget;
