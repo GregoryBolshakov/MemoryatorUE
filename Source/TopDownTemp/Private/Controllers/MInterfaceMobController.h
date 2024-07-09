@@ -4,8 +4,8 @@
 class UWorld;
 class AMCharacter;
 
-UENUM()
-enum class EMobBehaviors
+UENUM(BlueprintType)
+enum class EMobBehaviors : uint8
 {
 	Idle = 0,
 	Walk,

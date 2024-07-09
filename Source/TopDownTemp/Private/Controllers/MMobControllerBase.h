@@ -36,7 +36,7 @@ protected:
 	/** Helper function to get RelationshipMap value for the current local player. */
 	ERelationType GetRelationshipWithPlayer();
 
-	UPROPERTY(VisibleAnywhere, Category = BehaviorParameters, meta=(AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = BehaviorParameters, meta=(AllowPrivateAccess = true))
 	EMobBehaviors CurrentBehavior = EMobBehaviors::Idle;
 
 	FOnMoveCompleted OnMoveCompletedDelegate;

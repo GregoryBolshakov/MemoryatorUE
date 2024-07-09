@@ -4,6 +4,8 @@
 #include "Components/MInventoryComponent.h"
 #include "MInventoryControllerComponent.generated.h"
 
+//TODO: Move to proper folder
+
 class UMInventoryWidget;
 class AMPlayerController;
 class UMPickUpBarWidget;

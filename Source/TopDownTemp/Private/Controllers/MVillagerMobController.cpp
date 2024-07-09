@@ -42,7 +42,7 @@ void AMVillagerMobController::PreTick(float DeltaSeconds, const UWorld& World, A
 					{
 						EnemiesNearby.Add(Name, DynamicActor);
 						// Run if we see an enemy. There is no need to run away if we're already hiding
-						if (DistanceToActor <= MyCharacter.GetStatsModelComponent()->GetSightRange() && CurrentBehavior != EMobBehaviors::Hide)
+						if (DistanceToActor <= MyCharacter.GetStatsModelComponent()->GetSightRange() && CurrentBehavior != EMobBehaviors::Hide && CurrentBehavior != EMobBehaviors::Retreat)
 						{
 							SetRetreatBehavior(World, MyCharacter);
 							break;
