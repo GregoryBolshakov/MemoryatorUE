@@ -115,7 +115,7 @@ void AMVillagerMobController::DoWalkBehavior(const UWorld& World, AMCharacter& M
 
 void AMVillagerMobController::DoRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter)
 {
-	//TODO: Add a logic to do during chase (shouts, effects, etc.)etChaseBehavior(World, MyCharacter);
+	//TODO: Add a logic to do during chase (shouts, effects, etc.)
 }
 
 void AMVillagerMobController::DoHideBehavior(const UWorld& World, AMCharacter& MyCharacter)
@@ -126,6 +126,12 @@ void AMVillagerMobController::DoHideBehavior(const UWorld& World, AMCharacter& M
 		Disembark(MyCharacter);
 		SetIdleBehavior(&World, &MyCharacter);
 	}
+}
+
+void AMVillagerMobController::DoCommunicationBehavior(const UWorld& World, AMCharacter& MyCharacter)
+{
+	Super::DoCommunicationBehavior(World, MyCharacter);
+	//TODO: Add some logic to do during communication (gestures, greetings, emotions, etc.)
 }
 
 void AMVillagerMobController::SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter)
@@ -215,6 +221,12 @@ void AMVillagerMobController::SetHideBehavior(const UWorld& World, AMCharacter& 
 	CurrentBehavior = EMobBehaviors::Hide;
 
 	OnBehaviorChanged(MyCharacter);
+}
+
+void AMVillagerMobController::SetCommunicationBehavior(const UWorld& World, AMCharacter& MyCharacter)
+{
+	Super::SetCommunicationBehavior(World, MyCharacter);
+	
 }
 
 void AMVillagerMobController::OnBehaviorChanged(AMCharacter& MyCharacter)

@@ -56,6 +56,8 @@ protected:
 
 	virtual void DoHideBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
+	virtual void DoCommunicationBehavior(const UWorld& World, AMCharacter& MyCharacter) {} 
+
 	UFUNCTION(BlueprintCallable)
 	virtual void SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter) {}
 
@@ -68,6 +70,8 @@ protected:
 	virtual void SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
 
 	virtual void SetHideBehavior(const UWorld& World, AMCharacter& MyCharacter) {}
+
+	virtual void SetCommunicationBehavior(const UWorld& World, AMCharacter& MyCharacter) {} 
 
 	/** Logic to do in transition between behaviors */
 	virtual void OnBehaviorChanged(AMCharacter& MyCharacter) {}

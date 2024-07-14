@@ -27,6 +27,8 @@ private:
 
 	virtual void DoHideBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
+	virtual void DoCommunicationBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
+
 	virtual void SetIdleBehavior(const UWorld* World, AMCharacter* MyCharacter) override;
 
 	virtual void SetWalkBehavior(const UWorld& World, AMCharacter& MyCharacter, const FVector& DestinationPoint) override;
@@ -34,6 +36,8 @@ private:
 	virtual void SetRetreatBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
 	virtual void SetHideBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
+
+	virtual void SetCommunicationBehavior(const UWorld& World, AMCharacter& MyCharacter) override;
 
 	virtual void OnBehaviorChanged(AMCharacter& MyCharacter) override;
 
