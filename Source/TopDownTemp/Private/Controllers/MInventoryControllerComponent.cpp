@@ -1,6 +1,6 @@
 #include "MInventoryControllerComponent.h"
 
-#include "MDropManager.h"
+#include "Managers/MDropManager.h"
 #include "Characters/MCharacter.h"
 #include "Controllers/MPlayerController.h"
 #include "Framework/MGameMode.h"

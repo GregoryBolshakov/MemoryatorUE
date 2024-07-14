@@ -134,6 +134,17 @@ void AMCharacter::Tick(float DeltaSeconds)
 	if (StateModelComponent->GetIsDirty() && HasAuthority())
 	{
 		StateModelComponent->CleanDirty();
+		if (auto* SkeletalMesh = GetComponentByClass<USkeletalMeshComponent>())
+		{
+			if (auto* AnimInstance = SkeletalMesh->GetAnimInstance())
+			{
+				if (StateModelComponent->GetIsTurningRight())
+				{
+					auto test = 1;
+				}
+				AnimInstance->UpdateAnimation(0, false);
+			}
+		}
 		UpdateAnimation();
 	}
 	if (StatsModelComponent->GetIsDirty() && HasAuthority())
@@ -149,11 +160,11 @@ void AMCharacter::Tick(float DeltaSeconds)
 
 	if (abs(UM2DRepresentationBlueprintLibrary::GetDeflectionAngle(GazeDirection, GetVelocity())) > 90.f)
 	{
-		OnReverseMovementStartedDelegate.Broadcast();
+		StateModelComponent->SetIsReversing(true);
 	}
 	else
 	{
-		OnReverseMovementStoppedDelegate.Broadcast();
+		StateModelComponent->SetIsReversing(false);
 	}
 
 	if (FaceCameraComponent)

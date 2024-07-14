@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Managers/MInventoryControllerComponent.h"
+#include "Controllers/MInventoryControllerComponent.h"
 #include "MInventoryWidget.generated.h"
 
 class AMPickableActor;

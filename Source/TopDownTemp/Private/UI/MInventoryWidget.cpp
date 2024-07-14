@@ -8,7 +8,7 @@
 #include "Components/WrapBox.h"
 #include "Components/MInventoryComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Managers/MInventoryControllerComponent.h"
+#include "Controllers/MInventoryControllerComponent.h"
 
 void UMInventoryWidget::NativeDestruct()
 {

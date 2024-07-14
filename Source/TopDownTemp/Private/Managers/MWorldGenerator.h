@@ -98,10 +98,6 @@ public:
 
 	FIntPoint GetGroundBlockIndex(FVector Position) const;
 
-	/** Is more reliable than manually using player via UGameplayStatics,
-	 * because player controller might be invalid during game shutdown */
-	FIntPoint GetPlayerGroundBlockIndex() const;
-
 	FVector GetGroundBlockLocation(FIntPoint BlockIndex);
 
 	/** Lists all the blocks lying on the perimeter of the circle with the given coordinates and radius */ //TODO: Use Bresenham's Circle Algorithm for better performance

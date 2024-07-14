@@ -4,7 +4,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Framework/MGameInstance.h"
 #include "Framework/MGameMode.h"
-#include "Managers/MInventoryControllerComponent.h"
+#include "Controllers/MInventoryControllerComponent.h"
 #include "Managers/MDropManager.h"
 
 UMInventoryComponent::UMInventoryComponent(const FObjectInitializer& ObjectInitializer)

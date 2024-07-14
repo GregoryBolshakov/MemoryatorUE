@@ -20,7 +20,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/DamageEvents.h"
 #include "Framework/MGameMode.h"
-#include "Managers/MInventoryControllerComponent.h"
+#include "Controllers/MInventoryControllerComponent.h"
 #include "StationaryActors/MActor.h"
 
 AMPlayerController::AMPlayerController(const FObjectInitializer& ObjectInitializer) :

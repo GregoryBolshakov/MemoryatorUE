@@ -19,10 +19,7 @@
 #include "Components/MStatsModelComponent.h"
 #include "Framework/MGameMode.h"
 
-AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) :
-	Super(
-		ObjectInitializer.DoNotCreateDefaultSubobject(TEXT("CharacterMesh0"))
-		 )
+AMMemoryator::AMMemoryator(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	// Create a camera boom...
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));

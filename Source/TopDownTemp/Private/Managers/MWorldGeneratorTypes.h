@@ -31,6 +31,7 @@ struct FBiomeDelimiter
 	EBiome Biome;
 };
 
+// I'm not sure about marking this with USTRUCT()
 USTRUCT()
 struct FObserverFlags
 {

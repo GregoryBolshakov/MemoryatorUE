@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Characters/MCharacter.h"
 #include "Components/MInventoryComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Managers/SaveManager/MUid.h"
@@ -50,6 +51,8 @@ class AMPlayerController : public APlayerController
 public:
 	UFUNCTION(BlueprintCallable)
 	UMInventoryControllerComponent* GetInventoryControllerComponent() const { return InventoryControllerComponent; }
+
+	UClass* GetToSpawnPlayerClass() const { return ToSpawnPlayerClass; }
 
 	bool IsMovingByAI() const;
 
@@ -141,6 +144,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	UFUNCTION(BlueprintCallable)
+	AMCharacter* GetMCharacter() { return Cast<AMCharacter>(GetPawn()); }
+
 private:
 	/** True if the controlled character should navigate to the mouse cursor. */
 	uint32 bMoveToMouseCursor : 1;
@@ -151,6 +157,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly)
 	class UMConsoleCommandsManager* ConsoleCommandsManager;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AMCharacter> ToSpawnPlayerClass;
 
 	// Begin PlayerController interface
 	virtual void PlayerTick(float DeltaTime) override;

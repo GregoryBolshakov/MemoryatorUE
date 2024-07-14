@@ -20,8 +20,6 @@ class UMAttackPuddleComponent;
 class AMOutpostHouse;
 struct FMCharacterSaveData;
 class UMBuffManagerComponent;
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStarted);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReverseMovementStopped);
 
 UCLASS(Blueprintable)
 class AMCharacter : public ACharacter
@@ -159,11 +157,6 @@ protected:
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	FVector ForcedGazeVector;
-
-	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent")
-	FOnReverseMovementStarted OnReverseMovementStartedDelegate;
-	UPROPERTY(BlueprintAssignable, Category = "MRotatableFlipbookComponent")
-	FOnReverseMovementStopped OnReverseMovementStoppedDelegate;
 
 	//TODO: create a separate entity to store this. Now it needs to be set for each ancestor (it's bad).
 	UPROPERTY(EditDefaultsOnly, Category=MBuffManagerComponent)

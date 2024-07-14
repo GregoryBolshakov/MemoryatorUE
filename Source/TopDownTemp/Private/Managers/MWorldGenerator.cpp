@@ -141,7 +141,7 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 	APawn* pPlayer = nullptr;
 	if (!IsUidValid(Uid)) // First time a player with such UniqueID is logging in. Spawn a pawn for them and generate a Uid for it.
 	{
-		if (const auto PlayerClass = ToSpawnActorClasses.Find("Player")) // TODO: There might be different classes for players, aka different races and whatnot
+		if (const auto PlayerClass = MPlayerController->GetToSpawnPlayerClass()) // TODO: There might be different classes for players, aka different races and whatnot
 		{
 			// Default position for new players might be set from CVars
 			const auto* CVarDefaultSpawnLocationX = IConsoleManager::Get().FindConsoleVariable(TEXT("Player.DefaultSpawnLocationX"));
@@ -158,7 +158,7 @@ void AMWorldGenerator::ProcessConnectingPlayer(APlayerController* NewPlayer)
 			SpawnParams.Name = FName(UniqueID);
 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn; //TODO: Fix obscured locations
 			// If not using AlwaysSpawn, character might be silently shifted to another block which will cause numerous problems for the whole system.
-			pPlayer = SpawnActor<AMCharacter>(*PlayerClass, PlayerDefaultSpawnLocation, FRotator::ZeroRotator, SpawnParams, true);
+			pPlayer = SpawnActor<AMCharacter>(PlayerClass, PlayerDefaultSpawnLocation, FRotator::ZeroRotator, SpawnParams, true);
 
 			const auto* Metadata = AMGameMode::GetMetadataManager(this)->Find(UniqueID);
 			SaveManager->AddMUidByUniqueID(UniqueID, Metadata->Uid); // Uid was generated when spawning new AMCharacter, map it to the UniqueID
@@ -642,16 +642,6 @@ void AMWorldGenerator::OnTickGenerateBlocks()
 			return;
 		}
 	}
-}
-
-FIntPoint AMWorldGenerator::GetPlayerGroundBlockIndex() const
-{
-	if (const auto pPlayerMetadata = AMGameMode::GetMetadataManager(this)->Find("Player"))
-	{
-		return GetGroundBlockIndex(pPlayerMetadata->Actor->GetActorLocation());
-	}
-	check(false);
-	return {};
 }
 
 FVector AMWorldGenerator::GetGroundBlockSize() const

@@ -9,7 +9,7 @@
 #include "Controllers/MPlayerController.h"
 #include "Framework/MGameMode.h"
 #include "Kismet/GameplayStatics.h"
-#include "Managers/MInventoryControllerComponent.h"
+#include "Controllers/MInventoryControllerComponent.h"
 
 AMPickableActor::AMPickableActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
