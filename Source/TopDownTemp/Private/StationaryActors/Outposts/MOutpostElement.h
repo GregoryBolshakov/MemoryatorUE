@@ -16,6 +16,7 @@ class AMOutpostElement : public AMActor
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
 	const AMOutpostGenerator* GetOwnerOutpost() const { return OwnerOutpost; }
 
 	void SetOwnerOutpost(AMOutpostGenerator* Outpost) { OwnerOutpost = Outpost; }

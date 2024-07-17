@@ -22,6 +22,9 @@ public:
 
 	void MoveResidentOut(AMCharacter* OldResident);
 
+	UFUNCTION(BlueprintCallable)
+	FVector GetEntryPoint() const;
+
 protected:
 
 	UPROPERTY()

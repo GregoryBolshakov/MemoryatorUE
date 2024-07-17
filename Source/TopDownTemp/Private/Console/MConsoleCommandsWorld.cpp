@@ -46,6 +46,13 @@ static TAutoConsoleVariable<FString> CVarToSpawnPeasantMan(
 		ECVF_ReadOnly
 	);
 
+static TAutoConsoleVariable<FString> CVarToSpawnTestMob(
+		TEXT("r.TestMob"),
+		FString("TestMob"),
+		TEXT("Defines the TSubclassOf of the mob with given name"),
+		ECVF_ReadOnly
+	);
+
 UMConsoleCommandsWorld::UMConsoleCommandsWorld()
 {
 }

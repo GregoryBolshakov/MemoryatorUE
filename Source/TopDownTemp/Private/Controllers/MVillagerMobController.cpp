@@ -181,7 +181,8 @@ void AMVillagerMobController::SetRetreatBehavior(const UWorld& World, AMCharacte
 
 	if (const auto House = MyCharacter.GetHouse())
 	{
-		if (const auto EntryPointComponent = Cast<USceneComponent>(House->GetDefaultSubobjectByName(TEXT("EntryPoint"))))
+		//if (const auto EntryPointComponent = Cast<USceneComponent>(House->GetDefaultSubobjectByName(TEXT("EntryPoint"))))
+		const auto EntryPoint = House->GetEntryPoint();
 		{
 			OnMoveCompletedDelegate.Unbind();
 			StopMovement();
@@ -205,7 +206,8 @@ void AMVillagerMobController::SetRetreatBehavior(const UWorld& World, AMCharacte
 
 			FVector MyCharacterOrigin, MyCharacterBoxExtent;
 			MyCharacter.GetActorBounds(true, MyCharacterOrigin, MyCharacterBoxExtent, true);
-			MoveToLocation(EntryPointComponent->GetComponentLocation(), /*MyCharacterBoxExtent.Size2D()*/ 20.f); //TODO: remove this workaround
+			//MoveToLocation(EntryPointComponent->GetComponentLocation(), /*MyCharacterBoxExtent.Size2D()*/ 20.f); //TODO: remove this workaround
+			MoveToLocation(EntryPoint, /*MyCharacterBoxExtent.Size2D()*/ 20.f); //TODO: remove this workaround
 		}
 
 		OnBehaviorChanged(MyCharacter);

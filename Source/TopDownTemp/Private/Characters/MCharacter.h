@@ -62,6 +62,7 @@ public:
 
 	FVector GetLastNonZeroVelocity() const { return LastNonZeroVelocity; }
 
+	UFUNCTION(BlueprintCallable)
 	AMOutpostHouse* GetHouse() const { return House; }
 
 	void SetUid(const FMUid& _Uid) { Uid = _Uid; }

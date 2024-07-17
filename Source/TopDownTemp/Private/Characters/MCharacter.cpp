@@ -246,6 +246,9 @@ void AMCharacter::BeginPlay()
 		AttackPuddleComponent->SetLength(StatsModelComponent->GetFightRangePlusRadius(GetRadius()));
 		AttackPuddleComponent->SetAngle(StatsModelComponent->GetMeleeSpread());
 	}
+
+	GetCharacterMovement()->MaxWalkSpeed = StatsModelComponent->GetWalkSpeed();
+	//TODO: Fix the issue when the stat is updated but movement component is not
 }
 
 void AMCharacter::AddCharacterAbilities()

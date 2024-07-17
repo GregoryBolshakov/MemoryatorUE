@@ -37,3 +37,18 @@ void AMOutpostHouse::MoveResidentOut(AMCharacter* OldResident)
 	OldResident->OnMovedOut();
 	Residents.Remove(FName(OldResident->GetName()));
 }
+
+FVector AMOutpostHouse::GetEntryPoint() const
+{
+	TArray<USceneComponent*> ChildComponents;
+	GetComponents(ChildComponents);
+	for (const auto* ChildComponent : ChildComponents)
+	{
+		if (ChildComponent->GetFName() == FName("EntryPoint"))
+		{
+			return ChildComponent->GetComponentLocation(); // TODO: Gather an array of entry points instead
+		}
+	}
+	check(false);
+	return FVector::Zero();
+}
