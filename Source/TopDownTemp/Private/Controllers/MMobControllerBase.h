@@ -32,9 +32,8 @@ protected:
 
 	bool IsPlayerSpeakingToMe(); //TODO: Move to the AMCommunicationManager
 
-	// TODO: Stop using this as there may be multiple players with different relationships.
-	/** Helper function to get RelationshipMap value for the current local player. */
-	ERelationType GetRelationshipWithPlayer();
+	/** Helper function to get controlled pawn's attitude to the current local player. */
+	ETeamAttitude::Type GetAttitudeToPlayer() const;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = BehaviorParameters, meta=(AllowPrivateAccess = true))
 	EMobBehaviors CurrentBehavior = EMobBehaviors::Idle;

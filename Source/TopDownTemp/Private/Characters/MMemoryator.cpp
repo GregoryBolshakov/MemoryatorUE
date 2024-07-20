@@ -131,8 +131,8 @@ void AMMemoryator::SetDynamicActorsNearby()
 					// Split dynamic actors by role
 
 					// Check if the actor is an enemy
-					if (const auto Relationship = RelationshipMap.Find(DynamicActor->GetClass());
-						Relationship && *Relationship == ERelationType::Enemy)
+					if (const auto Relationship = CustomAttitudes.Find(DynamicActor->GetClass());
+						Relationship && *Relationship == ETeamAttitude::Type::Hostile)
 					{
 						EnemiesNearby.Add(Name, DynamicActor);
 					}
@@ -293,7 +293,7 @@ void AMMemoryator::NotifyActorBeginOverlap(AActor* OtherActor)
 
 	if (const auto MPlayerController = Cast<AMPlayerController>(Controller))
 	{
-		if (const auto Relation = RelationshipMap.Find(OtherActor->GetClass()); Relation && *Relation == ERelationType::Enemy)
+		if (const auto Relation = CustomAttitudes.Find(OtherActor->GetClass()); Relation && *Relation == ETeamAttitude::Type::Hostile)
 		{
 			AttackPuddleComponent->ActorsWithin.Add(*OtherActor->GetName(), OtherActor);
 		}

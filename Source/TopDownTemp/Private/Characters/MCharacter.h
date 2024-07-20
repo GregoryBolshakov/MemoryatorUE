@@ -4,7 +4,12 @@
 #include "GameFramework/Character.h"
 #include "MCharacterSpecificTypes.h"
 #include "Managers/SaveManager/MUid.h"
+#include "AI/MTeamIds.h"
+#include "GenericTeamAgentInterface.h"
 #include "MCharacter.generated.h"
+
+/** Called when the character moves into a house (or any other kind of place to live) */
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnMovedInDelegate, const AMOutpostHouse* NewHouse);
 
 class UM2DRepresentationComponent;
 class UMStateModelComponent;
@@ -58,7 +63,12 @@ public:
 
 	FName GetSpeciesName() const { return SpeciesName; }
 
-	FORCEINLINE const TMap<TSubclassOf<APawn>, ERelationType>& GetRelationshipMap() const { return RelationshipMap; }
+	/** Should be used only by controllers in overridden UGenericTeamAgentInterface functions.
+	 * Otherwise, use FGenericTeamId::GetAttitude() */
+	const TMap<TSubclassOf<APawn>, TEnumAsByte<ETeamAttitude::Type>>& GetCustomAttitudes() const { return CustomAttitudes; }
+
+	/** Should be used only by controllers in overridden UGenericTeamAgentInterface::GetGenericTeamId() */
+	FGenericTeamId GetTeamID() const { return GetTeamIdByEnum(TeamID); }
 
 	FVector GetLastNonZeroVelocity() const { return LastNonZeroVelocity; }
 
@@ -73,7 +83,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetForcedGazeVector(FVector Vector) { ForcedGazeVector = Vector; }
 
-	void OnMovedIn(AMOutpostHouse* NewHouse) { House = NewHouse; }
+	void OnMovedIn(AMOutpostHouse* NewHouse);
 
 	void OnMovedOut() { House = nullptr; }
 
@@ -94,6 +104,8 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Animation")
 	void UpdateAnimation(); // TODO: Move to protected;
+
+	FOnMovedInDelegate OnMovedInDelegate;
 
 protected:
 	void UpdateLastNonZeroDirection();
@@ -149,9 +161,14 @@ protected:
 	UPROPERTY()
 	FName SpeciesName;
 
-	/** Stores relationship with other pawns. Neutral if not listed */
-	UPROPERTY(EditAnywhere, Category = BehaviorParameters, meta=(AllowPrivateAccess = true))
-	TMap<TSubclassOf<APawn>, ERelationType> RelationshipMap;
+	/** We store TeamId on actors instead of controllers due to the overall design of the game.\n
+	 * Normally, CustomAttitudes map has higher priority. TeamID is used only when there's no mapping. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Affiliation)
+	EMTeamID TeamID;
+
+	/** Stores custom attitudes to other pawns. Neutral if not listed */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Affiliation)
+	TMap<TSubclassOf<APawn>, TEnumAsByte<ETeamAttitude::Type>> CustomAttitudes;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);

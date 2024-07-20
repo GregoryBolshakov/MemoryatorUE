@@ -37,8 +37,7 @@ void AMVillagerMobController::PreTick(float DeltaSeconds, const UWorld& World, A
 					// Split dynamic actors by role
 
 					// Check if the actor is an enemy
-					if (const auto Relationship = MyCharacter.GetRelationshipMap().Find(DynamicActor->GetClass());
-						Relationship && *Relationship == ERelationType::Enemy)
+					if (FGenericTeamId::GetAttitude(&MyCharacter, DynamicActor) == ETeamAttitude::Type::Hostile)
 					{
 						EnemiesNearby.Add(Name, DynamicActor);
 						// Run if we see an enemy. There is no need to run away if we're already hiding

@@ -54,6 +54,30 @@ void AMPlayerController::AcknowledgePossession(APawn* P)
 	}
 }
 
+FGenericTeamId AMPlayerController::GetGenericTeamId() const
+{
+	if (const auto* MCharacter = Cast<AMCharacter>(GetPawn()))
+	{
+		return MCharacter->GetTeamID();
+	}
+	return GetTeamIdByEnum(EMTeamID::None);
+}
+
+ETeamAttitude::Type AMPlayerController::GetTeamAttitudeTowards(const AActor& Other) const
+{
+	if (const auto* MyMCharacter = Cast<AMCharacter>(GetPawn()))
+	{
+		// First check custom attitudes
+		if (const auto* Attitude = MyMCharacter->GetCustomAttitudes().Find(Other.GetClass()))
+		{
+			return *Attitude;
+		}
+		// If not present, follow the general team-based rules set by AMCommunicationManager::CustomTeamAttitudeSolver
+		return IGenericTeamAgentInterface::GetTeamAttitudeTowards(Other);
+	}
+	return ETeamAttitude::Type::Neutral;
+}
+
 void AMPlayerController::BeginPlay()
 {
 	Super::BeginPlay();

@@ -7,6 +7,7 @@
 #include "Components/MInventoryComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Managers/SaveManager/MUid.h"
+#include "GenericTeamAgentInterface.h"
 #include "MPlayerController.generated.h"
 
 class UMInventoryControllerComponent;
@@ -44,7 +45,7 @@ public:
 };
 
 UCLASS()
-class AMPlayerController : public APlayerController
+class AMPlayerController : public APlayerController, public IGenericTeamAgentInterface
 {
 	GENERATED_UCLASS_BODY()
 
@@ -74,8 +75,11 @@ public:
 protected:
 	virtual void AcknowledgePossession(APawn* P) override;
 
-// Occlusion
-protected:
+protected: // UGenericTeamAgentInterface
+	virtual FGenericTeamId GetGenericTeamId() const override;
+	virtual ETeamAttitude::Type GetTeamAttitudeTowards(const AActor& Other) const override;
+
+protected: // Occlusion
 	UPROPERTY(EditDefaultsOnly, Category="Camera Occlusion|Occlusion")
 	float OccludedOpacity = 0.5f;
 
@@ -140,8 +144,7 @@ public:
 	UPROPERTY()
 	uint8 ObserverIndex = -1;
 
-	// Other
-protected:
+protected: // Other
 	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintCallable)

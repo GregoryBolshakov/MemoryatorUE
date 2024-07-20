@@ -40,6 +40,7 @@ void AMGameMode::BeginPlay()
 	}
 
 	InitializeManagers();
+
 	while (!ConnectionQueue.IsEmpty())
 	{
 		APlayerController* PlayerController;

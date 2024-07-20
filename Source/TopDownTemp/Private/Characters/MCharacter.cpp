@@ -127,6 +127,12 @@ void AMCharacter::InitialiseInventory(const TArray<FItem>& IN_Items)
 	InventoryComponent->Initialize(IN_Items.Num(), IN_Items);
 }
 
+void AMCharacter::OnMovedIn(AMOutpostHouse* NewHouse)
+{
+	House = NewHouse;
+	OnMovedInDelegate.Broadcast(NewHouse);
+}
+
 void AMCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);

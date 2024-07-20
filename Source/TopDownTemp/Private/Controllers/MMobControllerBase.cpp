@@ -35,7 +35,7 @@ void AMMobControllerBase::Tick(float DeltaSeconds)
 	if (CurrentBehavior == EMobBehaviors::Idle)
 	{
 		// Communication check
-		if (IsPlayerSpeakingToMe() && GetRelationshipWithPlayer() != ERelationType::Enemy)
+		if (IsPlayerSpeakingToMe() && GetAttitudeToPlayer() != ETeamAttitude::Hostile)
 		{
 			SetIdleBehavior(pWorld, MyCharacter); // To reset all possible idle timers
 			return; // If the mob is having a conversation with player, do nothing and keep standing
@@ -46,7 +46,7 @@ void AMMobControllerBase::Tick(float DeltaSeconds)
 	if (CurrentBehavior == EMobBehaviors::Walk)
 	{
 		// Communication check
-		if (IsPlayerSpeakingToMe() && GetRelationshipWithPlayer() != ERelationType::Enemy)
+		if (IsPlayerSpeakingToMe() && GetAttitudeToPlayer() != ETeamAttitude::Hostile)
 		{
 			SetIdleBehavior(pWorld, MyCharacter); // To reset all possible idle timers
 			return; // If the mob is having a conversation with player, do nothing and keep standing
@@ -122,19 +122,16 @@ bool AMMobControllerBase::IsPlayerSpeakingToMe()
 	return false;
 }
 
-ERelationType AMMobControllerBase::GetRelationshipWithPlayer()
+ETeamAttitude::Type AMMobControllerBase::GetAttitudeToPlayer() const
 {
 	const auto pWorld = GetWorld();
 	const auto MyMCharacter = Cast<AMCharacter>(GetPawn());
-	if (!pWorld || !MyMCharacter) { check(false); return ERelationType::Neutral; }
+	if (!pWorld || !MyMCharacter) { check(false); return ETeamAttitude::Type::Neutral; }
 
 	if (const auto PlayerCharacter = UGameplayStatics::GetPlayerCharacter(pWorld, 0))
 	{
-		if (const auto RelationshipWithPlayer = MyMCharacter->GetRelationshipMap().Find(PlayerCharacter->GetClass()))
-		{
-			return *RelationshipWithPlayer;
-		}
+		return FGenericTeamId::GetAttitude(GetPawn(), PlayerCharacter);
 	}
 	check(false);
-	return ERelationType::Neutral;
+	return ETeamAttitude::Type::Neutral;
 }
