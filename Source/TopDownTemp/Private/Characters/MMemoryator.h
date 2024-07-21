@@ -47,7 +47,7 @@ protected:
 private:
 	void HandleCursor() const;
 
-	void HandleMovementState();
+	void HandleMovementState(); // TODO: Support for all MCharacters to automate IsMoving state
 
 	virtual void BeginPlay() override;
 

@@ -19,6 +19,9 @@ public:
 	void CleanDirty() { IsDirty = false; }
 
 	UFUNCTION(BlueprintCallable)
+	bool GetIsCommunicating() const { return IsCommunicating; }
+	
+	UFUNCTION(BlueprintCallable)
 	bool GetIsDashing() const { return IsDashing; }
 
 	UFUNCTION(BlueprintCallable)
@@ -43,7 +46,10 @@ public:
 	bool GetIsTurningRight() const { return IsTurningRight; }
 
 	UFUNCTION(BlueprintCallable)
-	inline void SetIsDashing(bool bIsDashing);
+	inline void SetIsCommunicating(bool IN_IsCommunicating);
+
+	UFUNCTION(BlueprintCallable)
+	inline void SetIsDashing(bool IN_IsDashing);
 
 	UFUNCTION(BlueprintCallable)
 	inline void SetIsFighting(bool IN_IsFighting);
@@ -74,6 +80,8 @@ protected:
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty)
 	bool IsDirty = true;
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere)
+	bool IsCommunicating = false;
+	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere)
 	bool IsDashing = false;
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere)
 	bool IsDying = false;
@@ -99,6 +107,7 @@ protected:
 		Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 		DOREPLIFETIME(UMStateModelComponent, IsDirty);
+		DOREPLIFETIME(UMStateModelComponent, IsCommunicating);
 		DOREPLIFETIME(UMStateModelComponent, IsDashing);
 		DOREPLIFETIME(UMStateModelComponent, IsDying);
 		DOREPLIFETIME(UMStateModelComponent, IsFighting);

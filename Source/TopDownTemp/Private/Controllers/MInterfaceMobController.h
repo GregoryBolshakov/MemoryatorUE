@@ -16,6 +16,7 @@ enum class EMobBehaviors : uint8
 	Guard,
 	Retreat,
 	Hide,
+	Communicate,
 };
 
 // Class needed to support InterfaceCast<class IInterfaceDriver>(Object)

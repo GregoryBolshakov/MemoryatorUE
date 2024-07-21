@@ -2,6 +2,15 @@
 
 #include "MStateModelComponent.h"
 
+inline void UMStateModelComponent::SetIsCommunicating(bool IN_IsCommunicating)
+{
+	if (IsCommunicating != IN_IsCommunicating)
+	{
+		IsCommunicating = IN_IsCommunicating;
+		IsDirty = true;
+	}
+}
+
 inline void UMStateModelComponent::SetIsDashing(bool IN_IsDashing)
 {
 	if (IsDashing != IN_IsDashing)
