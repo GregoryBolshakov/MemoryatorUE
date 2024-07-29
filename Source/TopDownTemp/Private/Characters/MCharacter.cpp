@@ -144,12 +144,9 @@ void AMCharacter::Tick(float DeltaSeconds)
 		{
 			if (auto* AnimInstance = SkeletalMesh->GetAnimInstance())
 			{
-				if (StateModelComponent->GetIsTurningRight())
-				{
-					auto test = 1;
-				}
 				AnimInstance->UpdateAnimation(0, false);
 			}
+			OnStateModelUpdatedDelegate.Broadcast(StateModelComponent);
 		}
 		UpdateAnimation();
 	}
@@ -158,7 +155,6 @@ void AMCharacter::Tick(float DeltaSeconds)
 		StatsModelComponent->CleanDirty();
 	}
 
-	//TODO: Clean up the code below this. This is legacy logic related to M2DRepresentationComponent
 	UpdateLastNonZeroDirection();
 
 	auto GazeDirection = ForcedGazeVector.IsZero() ? LastNonZeroVelocity : ForcedGazeVector;
@@ -173,7 +169,15 @@ void AMCharacter::Tick(float DeltaSeconds)
 		StateModelComponent->SetIsReversing(false);
 	}
 
-	if (FaceCameraComponent)
+	if (GetController()->GetClass()->IsChildOf<APlayerController>())
+	{
+		GetMesh()->SetWorldRotation(UM2DRepresentationBlueprintLibrary::GetRotationTowardVector(GazeDirection));
+	}
+	else
+	{
+		SetActorRotation(UM2DRepresentationBlueprintLibrary::GetRotationTowardVector(GazeDirection));
+	}
+	if (FaceCameraComponent) //TODO: This logic is related to M2DRepresentationComponent, might be legacy
 	{
 		FaceCameraComponent->SetMeshByGazeAndVelocity(GazeDirection, GetVelocity());
 	}

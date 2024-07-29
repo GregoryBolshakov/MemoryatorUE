@@ -9,7 +9,7 @@ AMMobControllerBase::AMMobControllerBase(const FObjectInitializer& ObjectInitial
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickInterval = 0.5f;
+	//PrimaryActorTick.TickInterval = 0.5f; // TODO: Lower tick rate basing on distance/whatnot
 }
 
 void AMMobControllerBase::Tick(float DeltaSeconds)

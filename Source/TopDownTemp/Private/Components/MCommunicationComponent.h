@@ -6,6 +6,8 @@
 
 class UMPriceCoefficientsSet;
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnInterlocutorChanged, AMCharacter* Interlocutor);
+
 UCLASS(BlueprintType)
 class TOPDOWNTEMP_API UMCommunicationComponent : public UActorComponent
 {
@@ -14,9 +16,11 @@ class TOPDOWNTEMP_API UMCommunicationComponent : public UActorComponent
 public:
 	const AMCharacter* GetInterlocutorCharacter() const { return InterlocutorCharacter; }
 
-	void SetInterlocutorCharacter(AMCharacter* Interlocutor) {  InterlocutorCharacter = Interlocutor; }
+	FORCEINLINE void SetInterlocutorCharacter(AMCharacter* Interlocutor);
 
 	void StopSpeaking();
+
+	FOnInterlocutorChanged OnInterlocutorChangedDelegate;
 
 protected:
 

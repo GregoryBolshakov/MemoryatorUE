@@ -5,6 +5,7 @@
 #include "MInterfaceMobController.h"
 #include "MNPCController.generated.h"
 
+class UMStateModelComponent;
 class UAIPerceptionComponent;
 
 //~=============================================================================
@@ -26,11 +27,22 @@ protected:
 	virtual void OnPossess(APawn* InPawn) override;
 	void OnUnPossess() override;
 
+	UFUNCTION()
+	void CopyStateVariablesToBlackboard(const UMStateModelComponent* StateModel);
+
 	UFUNCTION(BlueprintCallable)
 	void Embark();
+
+	/** Triggers by rotating, i.e. DeltaRotation is non zero */
+	void OnTurnAround() const;
 
 private:
 	virtual void Tick(float DeltaSeconds) override;
 
 	bool bEmbarked = false;
+
+	FRotator LastRotation;
+
+	// Every time rotation changes, calculate the delta from previous frame
+	FRotator RotationDelta;
 };

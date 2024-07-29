@@ -2,7 +2,9 @@
 #include "AI/MTeamIDs.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Characters/MCharacter.h"
+#include "Components/MCommunicationComponent.h"
 #include "Components/MIsActiveCheckerComponent.h"
+#include "Components/MStateModelComponent.h"
 
 #include "Perception/AIPerceptionComponent.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"
@@ -13,7 +15,7 @@ AMNPCController::AMNPCController(const FObjectInitializer& ObjectInitializer) : 
 	// All NPCs ticks reduced to half a second by default
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickInterval = 0.5f;
+	//PrimaryActorTick.TickInterval = 0.5f; // TODO: Lower tick rate basing on distance/whatnot
 }
 
 FGenericTeamId AMNPCController::GetGenericTeamId() const
@@ -46,6 +48,8 @@ void AMNPCController::OnPossess(APawn* InPawn)
 
 	if (auto* MCharacter = Cast<AMCharacter>(InPawn))
 	{
+		// Currently state data isn't used in trees, but it's going to be useful at some point
+		MCharacter->OnStateModelUpdatedDelegate.AddUObject(this, &AMNPCController::CopyStateVariablesToBlackboard);
 		MCharacter->OnMovedInDelegate.AddLambda([this](const AMOutpostHouse* NewHouse)
 		{
 			if (NewHouse)
@@ -58,6 +62,11 @@ void AMNPCController::OnPossess(APawn* InPawn)
 				}
 			}
 		});
+		MCharacter->GetCommunicationComponent()->OnInterlocutorChangedDelegate.AddLambda([this](AMCharacter* Interlocutor)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Interlocutor is set"));
+			Blackboard->SetValueAsObject(TEXT("Interlocutor"), Interlocutor);
+		});
 	}
 }
 
@@ -66,8 +75,15 @@ void AMNPCController::OnUnPossess()
 	if (auto* MCharacter = Cast<AMCharacter>(GetPawn()))
 	{
 		MCharacter->OnMovedInDelegate.RemoveAll(this);
+		MCharacter->OnStateModelUpdatedDelegate.RemoveAll(this);
 	}
 	Super::OnUnPossess();
+}
+
+void AMNPCController::CopyStateVariablesToBlackboard(const UMStateModelComponent* StateModel)
+{
+	GetBlackboardComponent()->SetValueAsBool(TEXT("IsCommunicating"), StateModel->GetIsCommunicating());
+	// TODO: Copy more when needed
 }
 
 void AMNPCController::Embark()
@@ -80,7 +96,29 @@ void AMNPCController::Embark()
 	bEmbarked = true;
 }
 
+void AMNPCController::OnTurnAround() const
+{
+	const auto* MyCharacter = Cast<AMCharacter>(GetPawn());
+	auto* StateModel = MyCharacter->GetStateModelComponent();
+	if (RotationDelta.Yaw >= 5.f)
+	{
+		StateModel->SetIsTurningRight(true);
+		StateModel->SetIsTurningLeft(false);
+	}
+	if (RotationDelta.Yaw <= -5.f)
+	{
+		StateModel->SetIsTurningRight(false);
+		StateModel->SetIsTurningLeft(true);
+	}
+}
+
 void AMNPCController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	if (GetPawn() && GetPawn()->GetActorRotation() != LastRotation)
+	{
+		RotationDelta = GetPawn()->GetActorRotation() - LastRotation;
+		OnTurnAround();
+		LastRotation = GetPawn()->GetActorRotation();
+	}
 }

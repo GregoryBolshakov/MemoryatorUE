@@ -7,6 +7,8 @@
 #include "Components/MInventoryComponent.h"
 #include "Components/MStatsModelComponent.h"
 #include "GenericTeamAgentInterface.h"
+#include "Components/MCommunicationComponent.h"
+#include "Components/MStateModelComponent.h"
 
 AMCommunicationManager::AMCommunicationManager()
 {
@@ -34,7 +36,11 @@ void AMCommunicationManager::SpeakTo(AMCharacter* IN_InterlocutorCharacter)
 		CommunicationWidget = nullptr;
 	}
 
+	// TODO: Refactor using only CommunicationComponent
 	InterlocutorCharacter = IN_InterlocutorCharacter;
+	InterlocutorCharacter->GetCommunicationComponent()->SetInterlocutorCharacter(PlayerCharacter);
+	PlayerCharacter->GetStateModelComponent()->SetIsCommunicating(true);
+	InterlocutorCharacter->GetStateModelComponent()->SetIsCommunicating(true);
 	GenerateInventoryToReward();
 	InventoryToOffer->OnAnySlotChangedDelegate.AddLambda([this]
 	{
@@ -60,7 +66,20 @@ void AMCommunicationManager::StopSpeaking()
 		CommunicationWidget->Close();
 		CommunicationWidget = nullptr;
 	}
-	InterlocutorCharacter = nullptr;
+
+	// TODO: Refactor using only CommunicationComponent
+	if (InterlocutorCharacter)
+	{
+		InterlocutorCharacter->GetCommunicationComponent()->SetInterlocutorCharacter(nullptr);
+		InterlocutorCharacter->GetStateModelComponent()->SetIsCommunicating(false);
+		InterlocutorCharacter = nullptr;
+	}
+
+	if (const auto PlayerCharacter = Cast<AMCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
+	{
+		PlayerCharacter->GetStateModelComponent()->SetIsCommunicating(false);
+	}
+
 	ReturnAllPlayerItems();
 }
 

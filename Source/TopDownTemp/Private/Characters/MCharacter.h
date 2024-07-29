@@ -8,9 +8,6 @@
 #include "GenericTeamAgentInterface.h"
 #include "MCharacter.generated.h"
 
-/** Called when the character moves into a house (or any other kind of place to live) */
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnMovedInDelegate, const AMOutpostHouse* NewHouse);
-
 class UM2DRepresentationComponent;
 class UMStateModelComponent;
 class UMStatsModelComponent;
@@ -25,6 +22,10 @@ class UMAttackPuddleComponent;
 class AMOutpostHouse;
 struct FMCharacterSaveData;
 class UMBuffManagerComponent;
+
+/** Called when the character moves into a house (or any other kind of place to live) */
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnMovedInDelegate, const AMOutpostHouse* NewHouse);
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnStateModelUpdated, const UMStateModelComponent* StateModel);
 
 UCLASS(Blueprintable)
 class AMCharacter : public ACharacter
@@ -102,10 +103,12 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+	/** Outdated function used for paper sprites */
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Animation")
 	void UpdateAnimation(); // TODO: Move to protected;
 
 	FOnMovedInDelegate OnMovedInDelegate;
+	FOnStateModelUpdated OnStateModelUpdatedDelegate;
 
 protected:
 	void UpdateLastNonZeroDirection();
