@@ -6,6 +6,38 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStateDirty);
 
+/** A copy of all state data used by animation graphs or other thread-safe entities. */
+USTRUCT(BlueprintType)
+struct FStateModelCopy
+{
+	GENERATED_BODY()
+	// When adding new fields, don't forget add it here
+	UPROPERTY(BlueprintReadOnly)
+	bool IsDirty = true;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsCommunicating = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsDashing = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsDying = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsFighting = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsMoving = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsPicking = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsReversing = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsSprinting = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsTakingDamage = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsTurningLeft = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsTurningRight = false;
+};
+
 /** Component that stores and replicates all boolean states e.g. IsDashing, IsTakingDamage, IsDying, etc.\n
  * Supposed to be attached to AMCharacter or AMActor */
 // TODO: Supposedly will be using GAS attributes instead
@@ -17,6 +49,8 @@ class UMStateModelComponent : public UActorComponent
 public:
 	bool GetIsDirty() const { return IsDirty; }
 	void CleanDirty() { IsDirty = false; }
+
+	// When adding new fields, don't forget add it here
 
 	UFUNCTION(BlueprintCallable)
 	bool GetIsCommunicating() const { return IsCommunicating; }
@@ -75,6 +109,9 @@ public:
 	UPROPERTY()
 	FOnStateDirty OnDirtyDelegate;
 
+	UFUNCTION(BlueprintCallable)
+	FStateModelCopy GetCopy();
+
 protected:
 	// TODO: Figure out why making all properties using OnRep fixes the bug with inconsistent updates for client
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty)
@@ -106,6 +143,7 @@ protected:
 	{
 		Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+		// When adding new fields, don't forget add it here
 		DOREPLIFETIME(UMStateModelComponent, IsDirty);
 		DOREPLIFETIME(UMStateModelComponent, IsCommunicating);
 		DOREPLIFETIME(UMStateModelComponent, IsDashing);

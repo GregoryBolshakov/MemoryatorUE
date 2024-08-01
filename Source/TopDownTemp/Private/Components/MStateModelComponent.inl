@@ -82,3 +82,22 @@ inline void UMStateModelComponent::SetIsTurningRight(bool IN_IsTurningRight)
 		IsDirty = true;
 	}
 }
+
+inline FStateModelCopy UMStateModelComponent::GetCopy()
+{
+	FStateModelCopy Result;
+
+	Result.IsCommunicating = IsCommunicating;
+	Result.IsDashing = IsDashing;
+	Result.IsDying = IsDying;
+	Result.IsFighting = IsFighting;
+	Result.IsMoving = IsMoving;
+	Result.IsPicking = IsPicking;
+	Result.IsReversing = IsReversing;
+	Result.IsSprinting = IsSprinting;
+	Result.IsTakingDamage = IsTakingDamage;
+	Result.IsTurningLeft = IsTurningLeft;
+	Result.IsTurningRight = IsTurningRight;
+
+	return Result;
+}

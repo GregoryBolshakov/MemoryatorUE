@@ -100,12 +100,12 @@ void AMNPCController::OnTurnAround() const
 {
 	const auto* MyCharacter = Cast<AMCharacter>(GetPawn());
 	auto* StateModel = MyCharacter->GetStateModelComponent();
-	if (RotationDelta.Yaw >= 5.f)
+	if (RotationDelta.Yaw >= 3.f)
 	{
 		StateModel->SetIsTurningRight(true);
 		StateModel->SetIsTurningLeft(false);
-	}
-	if (RotationDelta.Yaw <= -5.f)
+	} else
+	if (RotationDelta.Yaw <= -3.f)
 	{
 		StateModel->SetIsTurningRight(false);
 		StateModel->SetIsTurningLeft(true);
@@ -120,5 +120,12 @@ void AMNPCController::Tick(float DeltaSeconds)
 		RotationDelta = GetPawn()->GetActorRotation() - LastRotation;
 		OnTurnAround();
 		LastRotation = GetPawn()->GetActorRotation();
+	}
+	else
+	{
+		const auto* MyCharacter = Cast<AMCharacter>(GetPawn());
+		auto* StateModel = MyCharacter->GetStateModelComponent();
+		StateModel->SetIsTurningRight(false);
+		StateModel->SetIsTurningLeft(false);
 	}
 }

@@ -173,11 +173,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Affiliation)
 	TMap<TSubclassOf<APawn>, TEnumAsByte<ETeamAttitude::Type>> CustomAttitudes;
 
+	/** Currently of no use. But keep it for later. */
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FVector LastNonZeroVelocity = FVector(1.f, 0.f, 0.f);
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly)
 	FVector ForcedGazeVector;
+
+	/** The actual gaze (rotation). If Forced one isn't zero, use it; Otherwise if current Velocity isn't zero, use it; Otherwise remain the same. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FVector CurrentGazeVector;
 
 	//TODO: create a separate entity to store this. Now it needs to be set for each ancestor (it's bad).
 	UPROPERTY(EditDefaultsOnly, Category=MBuffManagerComponent)

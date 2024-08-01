@@ -157,10 +157,10 @@ void AMCharacter::Tick(float DeltaSeconds)
 
 	UpdateLastNonZeroDirection();
 
-	auto GazeDirection = ForcedGazeVector.IsZero() ? LastNonZeroVelocity : ForcedGazeVector;
-	GazeDirection.Z = 0;
+	CurrentGazeVector = ForcedGazeVector.IsZero() ? (GetVelocity().IsZero() ? CurrentGazeVector : GetVelocity()) : ForcedGazeVector;
+	CurrentGazeVector.Z = 0;
 
-	if (abs(UM2DRepresentationBlueprintLibrary::GetDeflectionAngle(GazeDirection, GetVelocity())) > 90.f)
+	if (abs(UM2DRepresentationBlueprintLibrary::GetDeflectionAngle(CurrentGazeVector, GetVelocity())) > 90.f)
 	{
 		StateModelComponent->SetIsReversing(true);
 	}
@@ -171,15 +171,15 @@ void AMCharacter::Tick(float DeltaSeconds)
 
 	if (GetController()->GetClass()->IsChildOf<APlayerController>())
 	{
-		GetMesh()->SetWorldRotation(UM2DRepresentationBlueprintLibrary::GetRotationTowardVector(GazeDirection));
+		GetMesh()->SetWorldRotation(UM2DRepresentationBlueprintLibrary::GetRotationTowardVector(CurrentGazeVector));
 	}
 	else
 	{
-		SetActorRotation(UM2DRepresentationBlueprintLibrary::GetRotationTowardVector(GazeDirection));
+		SetActorRotation(UM2DRepresentationBlueprintLibrary::GetRotationTowardVector(CurrentGazeVector));
 	}
 	if (FaceCameraComponent) //TODO: This logic is related to M2DRepresentationComponent, might be legacy
 	{
-		FaceCameraComponent->SetMeshByGazeAndVelocity(GazeDirection, GetVelocity());
+		FaceCameraComponent->SetMeshByGazeAndVelocity(CurrentGazeVector, GetVelocity());
 	}
 }
 
