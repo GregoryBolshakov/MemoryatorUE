@@ -11,7 +11,7 @@ USTRUCT(BlueprintType)
 struct FStateModelCopy
 {
 	GENERATED_BODY()
-	// When adding new fields, don't forget add it here
+	// When adding new fields, don't forget to add it here
 	UPROPERTY(BlueprintReadOnly)
 	bool IsDirty = true;
 	UPROPERTY(BlueprintReadOnly)

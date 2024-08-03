@@ -19,6 +19,7 @@ class UMAbilitySystemComponent;
 class UMGameplayAbility;
 class UMCommunicationComponent;
 class UMAttackPuddleComponent;
+class UAnimMontage;
 class AMOutpostHouse;
 struct FMCharacterSaveData;
 class UMBuffManagerComponent;
@@ -33,7 +34,6 @@ class AMCharacter : public ACharacter
 	GENERATED_UCLASS_BODY()
 
 public:
-
 	/** Use AMWorldGenerator::RemoveFromGrid instead */
 	//bool Destroy(bool bNetForce = false, bool bShouldModifyLevel = true ) = delete;
 
@@ -106,6 +106,9 @@ public:
 	/** Outdated function used for paper sprites */
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Animation")
 	void UpdateAnimation(); // TODO: Move to protected;
+
+	UFUNCTION(BlueprintCallable)
+	void PlayAnimMontageMultiplayer(UAnimMontage* AnimMontage);
 
 	FOnMovedInDelegate OnMovedInDelegate;
 	FOnStateModelUpdated OnStateModelUpdatedDelegate;
@@ -208,5 +211,15 @@ protected:
 	// Default abilities for this Character. They will be removed on Character death and re-given if Character respawns.
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Abilities")
 	TArray<TSubclassOf<UMGameplayAbility>> CharacterAbilities;
+
+// Montages
+private:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayMontage(UAnimMontage* AnimMontage);
+
+	UFUNCTION(Server, Reliable)
+	void Server_PlayMontage(UAnimMontage* AnimMontage);
+
+	void PlayMontageImpl(UAnimMontage* AnimMontage);
 };
 

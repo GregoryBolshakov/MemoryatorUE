@@ -169,7 +169,7 @@ void AMCharacter::Tick(float DeltaSeconds)
 		StateModelComponent->SetIsReversing(false);
 	}
 
-	if (GetController()->GetClass()->IsChildOf<APlayerController>())
+	if (IsPlayerControlled())
 	{
 		GetMesh()->SetWorldRotation(UM2DRepresentationBlueprintLibrary::GetRotationTowardVector(CurrentGazeVector));
 	}
@@ -238,6 +238,15 @@ void AMCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	DOREPLIFETIME(AMCharacter, ForcedGazeVector);
 }
 
+void AMCharacter::PlayAnimMontageMultiplayer(UAnimMontage* AnimMontage)
+{
+	Multicast_PlayMontage(AnimMontage);
+	if (!HasAuthority())
+	{
+		Server_PlayMontage(AnimMontage); // A client triggered the montage, server needs to see it as well
+	}
+}
+
 void AMCharacter::UpdateLastNonZeroDirection()
 {
 	if (const auto CurrentVelocity = GetVelocity();
@@ -275,6 +284,17 @@ void AMCharacter::AddCharacterAbilities()
 	}
 
 	AbilitySystemComponent->bCharacterAbilitiesGiven = true;
+}
+
+void AMCharacter::PlayMontageImpl(UAnimMontage* AnimMontage)
+{
+	if (const auto * AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		if (!StateModelComponent->GetIsDashing() && !AnimInstance->Montage_IsPlaying(AnimMontage))
+		{
+			PlayAnimMontage(AnimMontage);
+		}
+	}
 }
 
 float AMCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -327,6 +347,16 @@ void AMCharacter::PossessedBy(AController* NewController)
 
 	// ASC MixedMode replication requires that the ASC Owner's Owner be the Controller.
 	SetOwner(NewController);
+}
+
+void AMCharacter::Server_PlayMontage_Implementation(UAnimMontage* AnimMontage)
+{
+	PlayMontageImpl(AnimMontage);
+}
+
+void AMCharacter::Multicast_PlayMontage_Implementation(UAnimMontage* AnimMontage)
+{
+	PlayMontageImpl(AnimMontage);
 }
 
 void AMCharacter::BeginLoadFromSD(const FMCharacterSaveData& MCharacterSD)
