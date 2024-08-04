@@ -112,7 +112,8 @@ void AMVillageGenerator::Generate()
 		{
 			// Previous implementation was such: If cannot place an actor, then stop and don't build the rest.
 
-			TestingBuildingActor->Destroy();  // Used AActor's version and it's OK, because Gaps were spawned not as a part of the Grid System
+			TestingBuildingActor->Destroy(); // Used plain AActor::Destroy(), and it's OK, because spawned building didn't get EnrollActorToGrid() called
+
 			//One of possible solutions to develop generation. It hasn't been proved yet and the binary search isn't suitable for it.
 			// The idea is to keep increasing the radius of generation each time we couldn't fit an actor.
 			// Obviously, the order of the actors is important, because trying to place a big one will result in an increase
@@ -134,13 +135,8 @@ void AMVillageGenerator::Generate()
 	}
 	for (const auto& Key : KeysToRemove)
 	{
-		if (const auto MActor = Cast<AMActor>(BuildingMap[Key]))
-		{
-			MActor->AActor::Destroy(); // Intentionally use AActor's version because Gaps were spawned not as a part of the Grid System
-			BuildingMap.Remove(Key);
-		}
-		else
-			check(false);
+		BuildingMap[Key]->Destroy(); // We use plain AActor::Destroy() because Gaps were spawned not as a part of the Grid System
+		BuildingMap.Remove(Key);
 	}
 }
 
