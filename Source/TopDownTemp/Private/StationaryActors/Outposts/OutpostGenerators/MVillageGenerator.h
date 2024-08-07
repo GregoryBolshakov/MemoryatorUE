@@ -6,41 +6,10 @@
 
 #include "MVillageGenerator.generated.h"
 
+class AMOutpostElement;
 DECLARE_LOG_CATEGORY_EXTERN(LogVillageGenerator, Log, All);
 
 class AMOutpostHouse;
-
-/** Describes all the data can be configured for one particular kind of villagers */
-USTRUCT(BlueprintType)
-struct FToSpawnVillagerMetadata
-{
-	GENERATED_BODY()
-
-	UPROPERTY(Category = VillagerSettings, EditAnywhere, BlueprintReadWrite)
-	int MinNumberOfInstances;
-
-	UPROPERTY(Category = VillagerSettings, EditAnywhere, BlueprintReadWrite)
-	int MaxNumberOfInstances;
-};
-
-/** Describes all the data can be configured for one particular kind of buildings */
-USTRUCT(BlueprintType)
-struct FToSpawnBuildingMetadata
-{
-	GENERATED_BODY()
-
-	UPROPERTY(Category = BuildingSettings, EditAnywhere, BlueprintReadWrite)
-	TSubclassOf<AActor> ToSpawnClass;
-
-	UPROPERTY(Category = BuildingSettings, EditAnywhere, BlueprintReadWrite, meta=(DisplayThumbnail = true))
-	TMap<TSubclassOf<AActor>, FToSpawnVillagerMetadata> ToSpawnVillagerMetadataMap;
-
-	UPROPERTY(Category = BuildingSettings, EditAnywhere, BlueprintReadWrite)
-	int MinNumberOfInstances;
-
-	UPROPERTY(Category = BuildingSettings, EditAnywhere, BlueprintReadWrite)
-	int MaxNumberOfInstances;
-};
 
 //TODO: Consider creation of a parent class representing any composite structure
 /**
@@ -52,29 +21,22 @@ class TOPDOWNTEMP_API AMVillageGenerator : public AMOutpostGenerator
 	GENERATED_UCLASS_BODY()
 
 public:
-
 	virtual void Generate() override;
 
 protected:
+	UPROPERTY(Category=VillageSettings, EditDefaultsOnly, BlueprintReadOnly) 
+	float HousesCircleRadius = 1500.f;
 
-	void DetermineAllBuildingsNumberOfInstances();
+	UPROPERTY(Category=VillageSettings, EditDefaultsOnly, BlueprintReadOnly) 
+	float StallsCircleRadius = 500.f;
 
-	void ShiftBuildingRandomly(const AActor* Building) const;
+	/** Array of UMHouseDataForGeneration* describing the main circle of houses */
+	UPROPERTY(Category=VillageSettings, EditDefaultsOnly, BlueprintReadOnly, Instanced)
+	TArray<UMElementDataForGeneration*> HousesData;
 
-	bool TryToPlaceBuilding(AActor& BuildingActor, int& BuildingIndex, float& DistanceFromCenter, FName BuildingClassName, const FToSpawnBuildingMetadata& BuildingMetadata);
+	UPROPERTY(Category=VillageSettings, EditDefaultsOnly, BlueprintReadOnly, Instanced)
+	TArray<UMElementDataForGeneration*> StallsData;
 
-	void PopulateResidentsInHouse(AMOutpostHouse* HouseActor, const FToSpawnBuildingMetadata* BuildingMetadata);
-
-	TOptional<FVector> FindLocationForBuilding(const AActor& BuildingActor, int BuildingIndex, float DistanceFromCenter) const;
-
-	UPROPERTY(Category=VillageSettings, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true")) 
-	float TownSquareRadius;
-
-	UPROPERTY(Category=VillageCettings, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", DisplayThumbnail))
-	TMap<FName, FToSpawnBuildingMetadata> ToSpawnBuildingMetadataMap;
-
+private:
 	TMap<FName, int> RequiredNumberOfInstances;
-
-	UPROPERTY()
-	TMap<FName, AActor*> BuildingMap;
 };
