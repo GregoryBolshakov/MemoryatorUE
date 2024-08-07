@@ -31,24 +31,23 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 
 	float DistanceFromCenter = CircleRadius;
 
-	// The Village has a circle shape with a hollow at the bottom.
-	// The Main Building is at the top point.
-	// We randomly place other buildings along the left and right semicircles
+	// The generation goes on a circle perimeter.
+	// We place the elements one by one from top to bottom, starting with the left semicircle and then alternating
 	//
-	//        [MAIN]
-	//     []        [] Other buildings
-	//   []           [] ...
-	//   []           [] ...
+	//        [1st]
+	//   [3rd]      [2nd]
+	// [5th]         [4th] ...
+	//   []          []  ...
 	//    []        []   ...
 	//
 	//
-	//  In order to find the closest eligible position where the building does not intersect with already placed we
-	//  perform a binary search. The start (left) position is the bottom point of the circle or the position corresponding to the angle PI
+	// We do a binary searchIn to find the closest eligible position so the building does not intersect already placed.
 
-	// Generate buildings in the given amount
+	// Index for "even-odd" check to know which semicircle to go
 	int BuildingIndex = 0;
 
-	// Number of each element required to be built. Is going to get elements removed, can't rely on indexes, use pointers.
+	// Number of each element required to be built. Its elements are going to be being removed.
+	// Use pointers as keys to access metadata.
 	TMap<const UMElementDataForGeneration*, int> ElementsCountData;
 	for (auto& Data : ElementsData)
 	{
@@ -69,9 +68,8 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 		const int32 RandomIndex = FMath::RandRange(0, RemainedIndexes.Num() - 1);
 		const auto* BuildingMetadata = RemainedIndexes[RandomIndex];
 
-		// The temporary actor to find the position for the building
+		// A temporary actor to "try on" a position for the building
 		const auto TestingBuildingActor = World->SpawnActor<AMOutpostElement>(BuildingMetadata->ToSpawnClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
-
 		if (!TestingBuildingActor)
 		{
 			check(false);
@@ -81,8 +79,12 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 		ShiftBuildingRandomly(TestingBuildingActor);
 
 		// We try to find a location to fit the building
-		if (TryToPlaceBuilding(*TestingBuildingActor, BuildingIndex, DistanceFromCenter))
+		if (const auto Location = FindLocationForBuilding(*TestingBuildingActor, BuildingIndex, DistanceFromCenter); Location.IsSet())
 		{
+			TestingBuildingActor->SetActorLocation(Location.GetValue());
+			BuildingMap.Add(FName(TestingBuildingActor->GetName()), TestingBuildingActor);
+			++BuildingIndex;
+
 			--ElementsCountData[BuildingMetadata];
 			if (ElementsCountData[BuildingMetadata] == 0)
 			{
@@ -105,9 +107,9 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 		}
 		else
 		{
-			// Previous implementation was such: If cannot place an actor, then stop and don't build the rest.
-
 			TestingBuildingActor->AActor::Destroy(); // Used plain AActor::Destroy(), and it's OK, because spawned building didn't get EnrollActorToGrid() called
+
+			// Previous implementation was such: If cannot place an actor, then stop and don't build the rest.
 
 			//One of possible solutions to develop generation. It hasn't been proved yet and the binary search isn't suitable for it.
 			// The idea is to keep increasing the radius of generation each time we couldn't fit an actor.
@@ -173,21 +175,6 @@ void AMOutpostGenerator::ShiftBuildingRandomly(const AActor* Building)
 			0.f);
 		BuildingMeshComponent->SetRelativeLocation(BuildingMeshComponent->GetRelativeLocation() + RandomOffset);
 	}
-}
-
-//эту функцию сложно менять. Она предполагала что количество домов посчитано заранее и она вычетает конкретный дом после размещения.
-//Скорее всего придется посчитать количество заранее.
-bool AMOutpostGenerator::TryToPlaceBuilding(AMOutpostElement& BuildingActor, int& BuildingIndex, float& DistanceFromCenter)
-{
-	if (const auto Location = FindLocationForBuilding(BuildingActor, BuildingIndex, DistanceFromCenter); Location.IsSet())
-	{
-		BuildingActor.SetActorLocation(Location.GetValue());
-		BuildingMap.Add(*BuildingActor.GetName(), &BuildingActor);
-		++BuildingIndex;
-
-		return true;
-	}
-	return false;
 }
 
 TOptional<FVector> AMOutpostGenerator::FindLocationForBuilding(const AMOutpostElement& BuildingActor, int BuildingIndex,

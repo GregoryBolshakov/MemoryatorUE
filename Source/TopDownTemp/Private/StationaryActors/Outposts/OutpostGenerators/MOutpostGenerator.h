@@ -86,9 +86,6 @@ protected:
 
 	static void ShiftBuildingRandomly(const AActor* Building); // TODO: Refactor old function
 
-	// TODO: Refactor old function
-	bool TryToPlaceBuilding(AMOutpostElement& BuildingActor, int& BuildingIndex, float& DistanceFromCenter);
-
 	TOptional<FVector> FindLocationForBuilding(const AMOutpostElement& BuildingActor, int BuildingIndex, float DistanceFromCenter) const;
 
 	void PopulateResidentsInHouse(AMOutpostHouse* HouseActor, const UMHouseDataForGeneration* BuildingMetadata);
