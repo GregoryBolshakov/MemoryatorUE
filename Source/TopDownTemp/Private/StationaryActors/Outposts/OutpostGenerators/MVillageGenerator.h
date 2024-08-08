@@ -28,7 +28,7 @@ protected:
 	float HousesCircleRadius = 1500.f;
 
 	UPROPERTY(Category=VillageSettings, EditDefaultsOnly, BlueprintReadOnly) 
-	float StallsCircleRadius = 500.f;
+	float StallsCircleRadius = 700.f;
 
 	/** Array of UMHouseDataForGeneration* describing the main circle of houses */
 	UPROPERTY(Category=VillageSettings, EditDefaultsOnly, BlueprintReadOnly, Instanced)

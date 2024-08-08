@@ -92,9 +92,9 @@ protected:
 
 	bool bGenerated = false;
 
-	// TODO: Rename or remove. This is a vague variable
+	/** Outpost bounds */ // TODO: This variable is a bit vague, need some strict requirements
 	UPROPERTY(EditDefaultsOnly)
-	float Radius = 1500.f;
+	float Radius = 1750.f;
 
 	//TODO: Consider tracking other outpost elements
 	TMap<FName, AMOutpostHouse*> Houses;
