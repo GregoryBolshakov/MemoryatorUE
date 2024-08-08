@@ -84,20 +84,22 @@ protected:
 
 	void BeginLoadFromSD(const FMActorSaveData& MActorSD) override;
 
-	static void ShiftBuildingRandomly(const AActor* Building); // TODO: Refactor old function
+	static void ShiftElementRandomly(const AActor* Element); // TODO: Refactor old function
 
-	TOptional<FVector> FindLocationForBuilding(const AMOutpostElement& BuildingActor, int BuildingIndex, float DistanceFromCenter) const;
+	TOptional<FVector> FindLocationOnCircle(const AMOutpostElement& TestingElementActor, int ElementIndex, FVector Center, float CircleRadius) const;
 
-	void PopulateResidentsInHouse(AMOutpostHouse* HouseActor, const UMHouseDataForGeneration* BuildingMetadata);
+	void PopulateResidentsInHouse(AMOutpostHouse* HouseActor, const UMHouseDataForGeneration* HouseData);
 
 	bool bGenerated = false;
 
+	// TODO: Rename or remove. This is a vague variable
 	UPROPERTY(EditDefaultsOnly)
 	float Radius = 1500.f;
 
 	//TODO: Consider tracking other outpost elements
 	TMap<FName, AMOutpostHouse*> Houses;
 
+	/** All elements of the outpost. */
 	UPROPERTY()
-	TMap<FName, AMOutpostElement*> BuildingMap;
+	TMap<FName, AMOutpostElement*> ElementsMap;
 };

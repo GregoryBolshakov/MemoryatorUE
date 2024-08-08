@@ -25,11 +25,9 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 	const FVector TopPoint = GetPointOnCircle(Center, CircleRadius, 0.f);
 
 	const auto BlockSize = WorldGenerator->GetGroundBlockSize();
-	const auto PCGGraphVillage = WorldGenerator->GetBlockGenerator()->GetGraph("Village");
+	const auto PCGGraphVillage = WorldGenerator->GetBlockGenerator()->GetGraph("Village"); // TODO: make a parameter
 	// Here we should clean all the blocks we are about to cover
 	WorldGenerator->RegenerateArea(Center, FMath::CeilToInt(CircleRadius / FMath::Min(BlockSize.X, BlockSize.Y)), PCGGraphVillage); //TODO: Increase the area somehow! for now I don't know how to calculate it
-
-	float DistanceFromCenter = CircleRadius;
 
 	// The generation goes on a circle perimeter.
 	// We place the elements one by one from top to bottom, starting with the left semicircle and then alternating
@@ -41,10 +39,10 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 	//    []        []   ...
 	//
 	//
-	// We do a binary searchIn to find the closest eligible position so the building does not intersect already placed.
+	// We do a binary searchIn to find the closest eligible position so the element does not intersect already placed.
 
 	// Index for "even-odd" check to know which semicircle to go
-	int BuildingIndex = 0;
+	int ElementIndex = 0;
 
 	// Number of each element required to be built. Its elements are going to be being removed.
 	// Use pointers as keys to access metadata.
@@ -62,43 +60,44 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 		FActorSpawnParameters SpawnParameters;
 		SpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-		// The class of the new building is random
+		// The class of the new element is random
 		TArray<const UMElementDataForGeneration*> RemainedIndexes;
 		ElementsCountData.GetKeys(RemainedIndexes);
 		const int32 RandomIndex = FMath::RandRange(0, RemainedIndexes.Num() - 1);
-		const auto* BuildingMetadata = RemainedIndexes[RandomIndex];
+		const auto* ElementData = RemainedIndexes[RandomIndex];
 
-		// A temporary actor to "try on" a position for the building
-		const auto TestingBuildingActor = World->SpawnActor<AMOutpostElement>(BuildingMetadata->ToSpawnClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
-		if (!TestingBuildingActor)
+		// A temporary actor to "try on" a position for the element
+		const auto TestingElementActor = World->SpawnActor<AMOutpostElement>(ElementData->ToSpawnClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
+		if (!TestingElementActor)
 		{
 			check(false);
 			return;
 		}
 
-		ShiftBuildingRandomly(TestingBuildingActor);
+		ShiftElementRandomly(TestingElementActor);
 
-		// We try to find a location to fit the building
-		if (const auto Location = FindLocationForBuilding(*TestingBuildingActor, BuildingIndex, DistanceFromCenter); Location.IsSet())
+		// We try to find a location to fit the element
+		if (const auto Location = FindLocationOnCircle(*TestingElementActor, ElementIndex, Center, CircleRadius); Location.IsSet())
 		{
-			TestingBuildingActor->SetActorLocation(Location.GetValue());
-			BuildingMap.Add(FName(TestingBuildingActor->GetName()), TestingBuildingActor);
-			++BuildingIndex;
+			TestingElementActor->SetActorLocation(Location.GetValue());
+			ElementsMap.Add(FName(TestingElementActor->GetName()), TestingElementActor);
+			++ElementIndex;
 
-			--ElementsCountData[BuildingMetadata];
-			if (ElementsCountData[BuildingMetadata] == 0)
+			--ElementsCountData[ElementData];
+			if (ElementsCountData[ElementData] == 0)
 			{
-				ElementsCountData.Remove(BuildingMetadata);
+				ElementsCountData.Remove(ElementData);
 			}
 
-			if (!BuildingMetadata->ToSpawnClass->IsChildOf(AMGap::StaticClass())) // They are supposed to be deleted
+			// Enroll element to the grid and do some custom post-spawn things like populating residents
+			if (!ElementData->ToSpawnClass->IsChildOf(AMGap::StaticClass())) // Skip gaps since they are going to be deleted
 			{
-				WorldGenerator->EnrollActorToGrid(TestingBuildingActor);
-				if (auto* OutpostHouse = Cast<AMOutpostHouse>(TestingBuildingActor))
+				WorldGenerator->EnrollActorToGrid(TestingElementActor);
+				if (auto* OutpostHouse = Cast<AMOutpostHouse>(TestingElementActor))
 				{
 					OutpostHouse->SetOwnerOutpost(this);
 					Houses.Add(FName(OutpostHouse->GetName()), OutpostHouse);
-					if (const auto* HouseMetadata = Cast<UMHouseDataForGeneration>(BuildingMetadata))
+					if (const auto* HouseMetadata = Cast<UMHouseDataForGeneration>(ElementData))
 					{
 						PopulateResidentsInHouse(OutpostHouse, HouseMetadata);
 					}
@@ -107,7 +106,7 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 		}
 		else
 		{
-			TestingBuildingActor->AActor::Destroy(); // Used plain AActor::Destroy(), and it's OK, because spawned building didn't get EnrollActorToGrid() called
+			TestingElementActor->AActor::Destroy(); // Used plain AActor::Destroy(), and it's OK, because spawned element didn't get EnrollActorToGrid() called
 
 			// Previous implementation was such: If cannot place an actor, then stop and don't build the rest.
 
@@ -116,14 +115,14 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 			// Obviously, the order of the actors is important, because trying to place a big one will result in an increase
 			// in the generation radius, although there may still be unplaced small ones that could fit.
 			// But the village should have a chaotic structure, so for now this is acceptable.
-			DistanceFromCenter += 500.f; // TODO: Add a parameter for this
+			CircleRadius += 500.f; // TODO: Add a parameter for this
 			// TODO: Ensure this doesn't cause endless loop
 		}
 	}
 
 	// Remove all spawned Gap actors
 	TArray<FName> KeysToRemove;
-	for (auto It = BuildingMap.CreateIterator(); It; ++It)
+	for (auto It = ElementsMap.CreateIterator(); It; ++It)
 	{
 		if (It.Value()->GetClass()->IsChildOf(AMGap::StaticClass()))
 		{
@@ -132,8 +131,8 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 	}
 	for (const auto& Key : KeysToRemove)
 	{
-		BuildingMap[Key]->AActor::Destroy(); // We use plain AActor::Destroy() because Gaps were spawned not as a part of the Grid System
-		BuildingMap.Remove(Key);
+		ElementsMap[Key]->AActor::Destroy(); // We use plain AActor::Destroy() because Gaps were spawned not as a part of the Grid System
+		ElementsMap.Remove(Key);
 	}
 }
 
@@ -151,49 +150,48 @@ void AMOutpostGenerator::BeginLoadFromSD(const FMActorSaveData& MActorSD)
 	bGenerated = MActorSD.ActorSaveData.MiscBool.FindChecked("Generated");
 }
 
-void AMOutpostGenerator::ShiftBuildingRandomly(const AActor* Building)
+void AMOutpostGenerator::ShiftElementRandomly(const AActor* Element)
 {
-	if (const auto BuildingMeshComponents = Building->GetComponentsByTag(UStaticMeshComponent::StaticClass(), "BuildingMesh"); !BuildingMeshComponents.IsEmpty())
+	// TODO: Rename tag "BuildingMesh" to something generic
+	if (const auto MeshComponent = Cast<UStaticMeshComponent>(Element->FindComponentByTag(UStaticMeshComponent::StaticClass(), "BuildingMesh")))
 	{
-		const auto BuildingMeshComponent = Cast<UStaticMeshComponent>(BuildingMeshComponents[0]);
 		const auto RandomRotation = FRotator(0.f, FMath::RandRange(0.f, 360.f), 0.f);
-		BuildingMeshComponent->SetRelativeRotation(RandomRotation);
+		MeshComponent->SetRelativeRotation(RandomRotation);
 
-		const auto BuildingBounds = BuildingMeshComponent->Bounds;
+		const auto MeshBounds = MeshComponent->Bounds;
 		FBoxSphereBounds RandomOffsetBounds;
-		Building->GetActorBounds(true, RandomOffsetBounds.Origin, RandomOffsetBounds.BoxExtent, true);
+		Element->GetActorBounds(true, RandomOffsetBounds.Origin, RandomOffsetBounds.BoxExtent, true);
 
-		const auto BuildingLowerBound = BuildingBounds.Origin - BuildingBounds.BoxExtent;
-		const auto BuildingUpperBound = BuildingBounds.Origin + BuildingBounds.BoxExtent;
+		const auto MeshLowerBound = MeshBounds.Origin - MeshBounds.BoxExtent;
+		const auto MeshUpperBound = MeshBounds.Origin + MeshBounds.BoxExtent;
 
 		const auto RandomOffsetLowerBound = RandomOffsetBounds.Origin - RandomOffsetBounds.BoxExtent;
 		const auto RandomOffsetUpperBound = RandomOffsetBounds.Origin + RandomOffsetBounds.BoxExtent;
 
 		const FVector RandomOffset = FVector(
-			FMath::RandRange(RandomOffsetLowerBound.X - BuildingLowerBound.X, RandomOffsetUpperBound.X - BuildingUpperBound.X),
-			FMath::RandRange(RandomOffsetLowerBound.Y - BuildingLowerBound.Y, RandomOffsetUpperBound.Y - BuildingUpperBound.Y),
+			FMath::RandRange(RandomOffsetLowerBound.X - MeshLowerBound.X, RandomOffsetUpperBound.X - MeshUpperBound.X),
+			FMath::RandRange(RandomOffsetLowerBound.Y - MeshLowerBound.Y, RandomOffsetUpperBound.Y - MeshUpperBound.Y),
 			0.f);
-		BuildingMeshComponent->SetRelativeLocation(BuildingMeshComponent->GetRelativeLocation() + RandomOffset);
+		MeshComponent->SetRelativeLocation(MeshComponent->GetRelativeLocation() + RandomOffset);
 	}
 }
 
-TOptional<FVector> AMOutpostGenerator::FindLocationForBuilding(const AMOutpostElement& BuildingActor, int BuildingIndex,
-	float DistanceFromCenter) const
+TOptional<FVector> AMOutpostGenerator::FindLocationOnCircle(const AMOutpostElement& TestingElementActor, int ElementIndex,
+	FVector Center, float CircleRadius) const
 {
 	constexpr int PrecisionStepsNumber = 7; // It's impossible to know when exactly to stop
 	TOptional<FVector> LastValidPosition;
-	const FVector CenterPosition = GetTransform().GetLocation();
 
 	// Bounds of the binary search 
-	float BottomPointAngle = PI * pow(-1, BuildingIndex - 1); // Decide whether we go on the left or right semicircle
+	float BottomPointAngle = PI * pow(-1, ElementIndex - 1); // Decide whether we go on the left or right semicircle
 	float TopPointAngle = 0.f;
 
 	for (int SearchStep = 0; SearchStep < PrecisionStepsNumber; ++SearchStep)
 	{
 		const auto Mid = (BottomPointAngle + TopPointAngle) / 2.f;
 
-		const auto Location = GetPointOnCircle(CenterPosition, DistanceFromCenter, Mid);
-		const bool bIsEncroaching = GetWorld()->EncroachingBlockingGeometry(&BuildingActor, Location, FRotator::ZeroRotator);
+		const auto Location = GetPointOnCircle(Center, CircleRadius, Mid);
+		const bool bIsEncroaching = GetWorld()->EncroachingBlockingGeometry(&TestingElementActor, Location, FRotator::ZeroRotator);
 		if (!bIsEncroaching)
 		{
 			BottomPointAngle = Mid;
@@ -222,7 +220,7 @@ TOptional<FVector> AMOutpostGenerator::FindLocationForBuilding(const AMOutpostEl
 }
 
 void AMOutpostGenerator::PopulateResidentsInHouse(AMOutpostHouse* HouseActor,
-	const UMHouseDataForGeneration* BuildingMetadata)
+	const UMHouseDataForGeneration* HouseData)
 {
 	const auto WorldGenerator = AMGameMode::GetWorldGenerator(this);
 	if (!IsValid(WorldGenerator))
@@ -233,7 +231,7 @@ void AMOutpostGenerator::PopulateResidentsInHouse(AMOutpostHouse* HouseActor,
 	{
 		const auto EntryPoint = EntryPointComponent->GetComponentTransform().GetLocation();
 
-		for (const auto& [VillagerClass, ToSpawnVillagerMetadata] : BuildingMetadata->ResidentsDataMap)
+		for (const auto& [VillagerClass, ToSpawnVillagerMetadata] : HouseData->ResidentsDataMap)
 		{
 			const int RequiredVillagersNumber = ToSpawnVillagerMetadata->GetRandomCount();
 			for (int i = 0; i < RequiredVillagersNumber; ++i)
