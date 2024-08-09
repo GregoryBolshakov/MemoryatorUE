@@ -17,6 +17,8 @@ enum class EShiftOptions : uint8
 	RandomRotateAndMove,
 	// When call GenerateOnCirclePerimeter() there is a center of the circle. This is not necessarily the outpost's center
 	RotateToLocalCenter,
+	// Does the same as RotateToLocalCenter, but with a slight error for randomness effect
+	RotateToLocalCenterSloppy,
 };
 
 /** Stores the Min-Max range for the number of entities */

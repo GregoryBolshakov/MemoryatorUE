@@ -160,12 +160,18 @@ void AMOutpostGenerator::ProcessShiftOptions(AMOutpostElement* Element, const UM
 		RotateAndMoveMeshRandomly(Element);
 		break;
 	case EShiftOptions::RotateToLocalCenter:
+	case EShiftOptions::RotateToLocalCenterSloppy:
 		if (!LocalCenter.IsSet())
 		{
 			check(false);
 			break;
 		}
 		RotateMeshToPoint(Element, LocalCenter.GetValue());
+		if (Data->ShiftOptions == EShiftOptions::RotateToLocalCenterSloppy)
+		{
+			// Add a little random rotation
+			Element->AddActorLocalRotation(FRotator(0.f, FMath::RandRange(-20.f, 20.f), 0.f));
+		}
 		break;
 	default:
 		break;
