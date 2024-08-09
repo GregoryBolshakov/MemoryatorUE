@@ -7,6 +7,7 @@
 #include "StationaryActors/Outposts/MGap.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"
 #include "Characters/MCharacter.h" // TODO: Remove this when refactor usage of PopulateResidentsInHouse
+#include "Helpers/M2DRepresentationBlueprintLibrary.h"
 
 DEFINE_LOG_CATEGORY(LogOutpostGenerator);
 
@@ -74,8 +75,6 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 			return;
 		}
 
-		ShiftElementRandomly(TestingElementActor);
-
 		// We try to find a location to fit the element
 		if (const auto Location = FindLocationOnCircle(*TestingElementActor, ElementIndex, Center, CircleRadius); Location.IsSet())
 		{
@@ -92,7 +91,10 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 			// Enroll element to the grid and do some custom post-spawn things like populating residents
 			if (!ElementData->ToSpawnClass->IsChildOf(AMGap::StaticClass())) // Skip gaps since they are going to be deleted
 			{
+				ProcessShiftOptions(TestingElementActor, ElementData, Center);
+
 				WorldGenerator->EnrollActorToGrid(TestingElementActor);
+
 				if (auto* OutpostHouse = Cast<AMOutpostHouse>(TestingElementActor))
 				{
 					OutpostHouse->SetOwnerOutpost(this);
@@ -150,7 +152,27 @@ void AMOutpostGenerator::BeginLoadFromSD(const FMActorSaveData& MActorSD)
 	bGenerated = MActorSD.ActorSaveData.MiscBool.FindChecked("Generated");
 }
 
-void AMOutpostGenerator::ShiftElementRandomly(const AActor* Element)
+void AMOutpostGenerator::ProcessShiftOptions(AMOutpostElement* Element, const UMElementDataForGeneration* Data, TOptional<FVector> LocalCenter)
+{
+	switch (Data->ShiftOptions)
+	{
+	case EShiftOptions::RandomRotateAndMove:
+		RotateAndMoveMeshRandomly(Element);
+		break;
+	case EShiftOptions::RotateToLocalCenter:
+		if (!LocalCenter.IsSet())
+		{
+			check(false);
+			break;
+		}
+		RotateMeshToPoint(Element, LocalCenter.GetValue());
+		break;
+	default:
+		break;
+	}
+}
+
+void AMOutpostGenerator::RotateAndMoveMeshRandomly(const AMOutpostElement* Element)
 {
 	// TODO: Rename tag "BuildingMesh" to something generic
 	if (const auto MeshComponent = Cast<UStaticMeshComponent>(Element->FindComponentByTag(UStaticMeshComponent::StaticClass(), "BuildingMesh")))
@@ -176,8 +198,18 @@ void AMOutpostGenerator::ShiftElementRandomly(const AActor* Element)
 	}
 }
 
+void AMOutpostGenerator::RotateMeshToPoint(const AMOutpostElement* Element, const FVector& Point)
+{
+	// TODO: Rename tag "BuildingMesh" to something generic
+	if (const auto MeshComponent = Cast<UStaticMeshComponent>(Element->FindComponentByTag(UStaticMeshComponent::StaticClass(), "BuildingMesh")))
+	{
+		const auto Location = Element->GetActorLocation();
+		MeshComponent->SetRelativeRotation(UM2DRepresentationBlueprintLibrary::GetRotationTowardPoint(Location, Point));
+	}
+}
+
 TOptional<FVector> AMOutpostGenerator::FindLocationOnCircle(const AMOutpostElement& TestingElementActor, int ElementIndex,
-	FVector Center, float CircleRadius) const
+                                                            FVector Center, float CircleRadius) const
 {
 	constexpr int PrecisionStepsNumber = 7; // It's impossible to know when exactly to stop
 	TOptional<FVector> LastValidPosition;

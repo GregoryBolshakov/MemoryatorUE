@@ -10,6 +10,15 @@ class AMOutpostHouse;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogOutpostGenerator, Log, All);
 
+UENUM(BlueprintType)
+enum class EShiftOptions : uint8
+{
+	None = 0,
+	RandomRotateAndMove,
+	// When call GenerateOnCirclePerimeter() there is a center of the circle. This is not necessarily the outpost's center
+	RotateToLocalCenter,
+};
+
 /** Stores the Min-Max range for the number of entities */
 UCLASS(BlueprintType, EditInlineNew)
 class UMCountData : public UObject
@@ -43,6 +52,9 @@ class UMElementDataForGeneration : public UMCountData
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<AActor> ToSpawnClass;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	EShiftOptions ShiftOptions;
 };
 
 /** Describes all the data can be configured for one particular kind of house */
@@ -84,7 +96,12 @@ protected:
 
 	void BeginLoadFromSD(const FMActorSaveData& MActorSD) override;
 
-	static void ShiftElementRandomly(const AActor* Element); // TODO: Refactor old function
+	// TODO: Don't like the use of TOptional arguments, refactor this
+	static void ProcessShiftOptions(AMOutpostElement* Element, const UMElementDataForGeneration* Data, TOptional<FVector> LocalCenter = {});
+
+	static void RotateAndMoveMeshRandomly(const AMOutpostElement* Element); // TODO: Refactor old function
+
+	static void RotateMeshToPoint(const AMOutpostElement* Element, const FVector& Point);
 
 	TOptional<FVector> FindLocationOnCircle(const AMOutpostElement& TestingElementActor, int ElementIndex, FVector Center, float CircleRadius) const;
 

@@ -18,6 +18,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category=M2DRepresentation)
 	static FRotator GetRotationTowardVector(const FVector& DirectionVector);
+
+	UFUNCTION(BlueprintCallable, Category=M2DRepresentation)
+	static FRotator GetRotationTowardPoint(const FVector& OriginPoint, const FVector& DestinationPoint);
 };
 
 inline float UM2DRepresentationBlueprintLibrary::GetCameraDeflectionAngle(const UObject* WorldContextObject,
@@ -60,4 +63,9 @@ inline float UM2DRepresentationBlueprintLibrary::GetDeflectionAngle(FVector Vect
 inline FRotator UM2DRepresentationBlueprintLibrary::GetRotationTowardVector(const FVector& DirectionVector)
 {
 	return FRotationMatrix::MakeFromX(DirectionVector).Rotator();
+}
+
+inline FRotator UM2DRepresentationBlueprintLibrary::GetRotationTowardPoint(const FVector& OriginPoint, const FVector& DestinationPoint)
+{
+	return GetRotationTowardVector(DestinationPoint - OriginPoint);
 }
