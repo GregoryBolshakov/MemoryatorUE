@@ -108,7 +108,7 @@ public:
 
 	int GetActiveZoneRadius() const { return ActiveZoneRadius; }
 
-	TSubclassOf<AActor> GetActorClassToSpawn(FName Name);
+	TSubclassOf<AActor> GetActorClassToSpawn(FName Name) const;
 
 	void SetupInputComponent();
 

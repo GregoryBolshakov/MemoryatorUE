@@ -152,6 +152,57 @@ void UMRoadManager::ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& B
 	AddConnection(BlockA, BlockB, RoadSplineActor);
 }
 
+void UMRoadManager::AddPointsOnCircleToSpline(float Radius, int32 PointsNumber, AMRoadSplineActor* RoadSplineActor)
+{
+	auto* SplineComponent = RoadSplineActor->GetSplineComponent();
+	if (SplineComponent == nullptr || PointsNumber <= 0)
+	{
+		return;
+	}
+
+	SplineComponent->ClearSplinePoints(); // Clear existing points if needed
+
+	for (int32 i = 0; i < PointsNumber; i++)
+	{
+		// Calculate the angle for the current point
+		float Angle = 360.0f / PointsNumber * i;
+
+		// Convert the angle to radians
+		float Radians = FMath::DegreesToRadians(Angle);
+
+		// Calculate the X and Y positions on the circle
+		FVector PointPosition;
+		PointPosition.X = Radius * FMath::Cos(Radians);
+		PointPosition.Y = Radius * FMath::Sin(Radians);
+		PointPosition.Z = 0.0f;  // Assuming the circle is on the XY plane
+
+		// Add random deviation to X and Y coordinates // TODO: Make it customizable
+		PointPosition.X += FMath::RandRange(-100.0f, 100.0f);
+		PointPosition.Y += FMath::RandRange(-100.0f, 100.0f);
+
+		// Add the calculated point to the spline
+		SplineComponent->AddSplinePoint(PointPosition, ESplineCoordinateSpace::Local);
+	}
+
+	// Manually close the loop by adding the first point again at the end
+	const auto FirstPoint = SplineComponent->GetSplinePointAt(0, ESplineCoordinateSpace::World);
+	SplineComponent->AddSplinePoint(FirstPoint.Position, ESplineCoordinateSpace::Local);
+
+	// Update the spline
+	SplineComponent->UpdateSpline();
+
+	// TODO: Generalize points replication. It's used in multiple places
+	/** Set manually replicated point positions. Spline component doesn't replicate any of its properties. */
+	TArray<FVector> PointsForReplication;
+	const int32 PointsCount = RoadSplineActor->GetSplineComponent()->GetNumberOfSplinePoints();
+	for (int32 i = 0; i < PointsCount; ++i)
+	{
+		FVector PointLocation = RoadSplineActor->GetSplineComponent()->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::World);
+		PointsForReplication.Add(PointLocation);
+	}
+	RoadSplineActor->SetPointsForReplication(PointsForReplication);
+}
+
 const TSet<FIntPoint> UMRoadManager::GetAdjacentRegions(const FIntPoint& ChunkIndex) const
 {
 	TSet<FIntPoint> Result;

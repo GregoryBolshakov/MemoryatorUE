@@ -31,6 +31,10 @@ void UMBlockGenerator::SpawnActorsRandomly(const FIntPoint BlockIndex, AMWorldGe
 		}
 		GroundBlock->UpdateBiome(BlockMetadata->Biome);
 		// If you add any additional logic, make sure to duplicate it for AMGroundBlock::OnPCGVariablesReplicated
+		if (IsValid(BlockMetadata->pGroundBlock))
+		{
+			BlockMetadata->pGroundBlock->Destroy();
+		}
 		BlockMetadata->pGroundBlock = GroundBlock;
 	}
 }
@@ -42,6 +46,7 @@ void UMBlockGenerator::SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWor
 		check(false);
 		return;
 	}
+	auto* BlockMetadata = AMGameMode::GetMetadataManager(this)->FindBlock(BlockIndex);
 
 	FActorSpawnParameters BlockSpawnParameters;
 	BlockSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -56,7 +61,11 @@ void UMBlockGenerator::SpawnActorsSpecifically(const FIntPoint BlockIndex, AMWor
 		}
 		GroundBlock->UpdateBiome(BlockSD->PCGVariables.Biome);
 		// If you add any additional logic, make sure to duplicate it for AMGroundBlock::OnPCGVariablesReplicated
-		AMGameMode::GetMetadataManager(this)->FindBlock(BlockIndex)->pGroundBlock = GroundBlock;
+		if (IsValid(BlockMetadata->pGroundBlock))
+		{
+			BlockMetadata->pGroundBlock->Destroy();
+		}
+		BlockMetadata->pGroundBlock = GroundBlock;
 	}
 }
 

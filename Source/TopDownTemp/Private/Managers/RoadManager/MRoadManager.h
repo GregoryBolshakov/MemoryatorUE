@@ -28,6 +28,8 @@ public:
 
 	void ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& BlockB, const ERoadType RoadType = ERoadType::Trail);
 
+	static void AddPointsOnCircleToSpline(float Radius, int32 PointsNumber, AMRoadSplineActor* RoadSplineActor);
+
 	const TSet<FIntPoint> GetAdjacentRegions(const FIntPoint& ChunkIndex) const;
 
 	/** Set the observer flag for the current region and all adjacent regions to the chunk.
@@ -91,6 +93,7 @@ protected: // Road connections
 
 	//TODO: RemoveConnection() ...
 
+	// TODO: This function acts as Get or Add. Don't like it. Should serve only one purpose.
 	/** Finds a road actor connecting two given blocks. Their order does not matter. */
 	const AMRoadSplineActor* GetRoadActor(const FIntPoint& BlockA, const FIntPoint& BlockB, ERoadType RoadType);
 

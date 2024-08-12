@@ -801,10 +801,9 @@ TSet<FIntPoint> AMWorldGenerator::GetBlocksInRadius(int CenterX, int CenterY, in
 	return InternalSquares;
 }
 
-TSubclassOf<AActor> AMWorldGenerator::GetActorClassToSpawn(FName Name)
+TSubclassOf<AActor> AMWorldGenerator::GetActorClassToSpawn(FName Name) const
 {
-	const auto Result = ToSpawnActorClasses.Find(Name);
-	if (Result)
+	if (const auto* Result = ToSpawnActorClasses.Find(Name))
 		return *Result;
 	return nullptr;
 }
