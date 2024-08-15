@@ -93,7 +93,8 @@ public:
 
 protected:
 	// TODO: Add an option to keep existing actors. E.g. stalls circle may overlap houses circle but we don't want them to be cleared.
-	void GenerateOnCirclePerimeter(FVector Center, float CircleRadius, const TArray<UMElementDataForGeneration*>& ElementsData);
+	// TODO: VERY IMPORTANT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	void GenerateOnCirclePerimeter(FVector Center, float CircleRadius, const TArray<UMElementDataForGeneration*>& ElementsData, float RadiusIncrementStep = 500.f);
 
 	FMActorSaveData GetSaveData() const override;
 

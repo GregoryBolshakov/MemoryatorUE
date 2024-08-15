@@ -12,7 +12,7 @@
 DEFINE_LOG_CATEGORY(LogOutpostGenerator);
 
 void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleRadius,
-	const TArray<UMElementDataForGeneration*>& ElementsData)
+	const TArray<UMElementDataForGeneration*>& ElementsData, float RadiusIncrementStep)
 {
 	UWorld* World = GetWorld();
 	const auto WorldGenerator = AMGameMode::GetWorldGenerator(this);
@@ -28,6 +28,8 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 	const auto BlockSize = WorldGenerator->GetGroundBlockSize();
 	const auto PCGGraphVillage = WorldGenerator->GetBlockGenerator()->GetGraph("Village"); // TODO: make a parameter
 	// Here we should clean all the blocks we are about to cover
+	// TODO: Add an option to keep existing actors. E.g. stalls circle may overlap houses circle but we don't want them to be cleared.
+	// TODO: VERY IMPORTANT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	WorldGenerator->RegenerateArea(Center, FMath::CeilToInt(CircleRadius / FMath::Min(BlockSize.X, BlockSize.Y)), PCGGraphVillage); //TODO: Increase the area somehow! for now I don't know how to calculate it
 
 	// The generation goes on a circle perimeter.
@@ -117,7 +119,7 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 			// Obviously, the order of the actors is important, because trying to place a big one will result in an increase
 			// in the generation radius, although there may still be unplaced small ones that could fit.
 			// But the village should have a chaotic structure, so for now this is acceptable.
-			CircleRadius += 500.f; // TODO: Add a parameter for this
+			CircleRadius += RadiusIncrementStep; // TODO: Add a parameter for this
 			// TODO: Ensure this doesn't cause endless loop
 		}
 	}

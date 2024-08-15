@@ -28,7 +28,9 @@ public:
 
 	void ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& BlockB, const ERoadType RoadType = ERoadType::Trail);
 
-	static void AddPointsOnCircleToSpline(float Radius, int32 PointsNumber, AMRoadSplineActor* RoadSplineActor);
+	AMRoadSplineActor* CreateCircleRoadSpline(const FVector& Center, float Radius, int32 PointsNumber, const ERoadType RoadType);
+
+	AMRoadSplineActor* CreateRoadSpline(const FVector& PointA, const FVector& PointB, int32 PointsNumberInBetween, const ERoadType RoadType);
 
 	const TSet<FIntPoint> GetAdjacentRegions(const FIntPoint& ChunkIndex) const;
 

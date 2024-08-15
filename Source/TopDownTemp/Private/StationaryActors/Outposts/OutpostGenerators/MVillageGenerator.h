@@ -23,6 +23,7 @@ class TOPDOWNTEMP_API AMVillageGenerator : public AMOutpostGenerator
 public:
 	virtual void Generate() override;
 
+// Data for generation
 protected:
 	UPROPERTY(Category=VillageSettings, EditDefaultsOnly, BlueprintReadOnly) 
 	float HousesCircleRadius = 1500.f;
@@ -36,6 +37,11 @@ protected:
 
 	UPROPERTY(Category=VillageSettings, EditDefaultsOnly, BlueprintReadOnly, Instanced)
 	TArray<UMElementDataForGeneration*> StallsData;
+
+// Existing elements
+protected:
+	UPROPERTY()
+	AMRoadSplineActor* StallsRoadSpline = nullptr;
 
 private:
 	TMap<FName, int> RequiredNumberOfInstances;

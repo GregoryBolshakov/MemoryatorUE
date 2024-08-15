@@ -152,12 +152,20 @@ void UMRoadManager::ConnectTwoBlocks(const FIntPoint& BlockA, const FIntPoint& B
 	AddConnection(BlockA, BlockB, RoadSplineActor);
 }
 
-void UMRoadManager::AddPointsOnCircleToSpline(float Radius, int32 PointsNumber, AMRoadSplineActor* RoadSplineActor)
+AMRoadSplineActor* UMRoadManager::CreateCircleRoadSpline(const FVector& Center, float Radius, int32 PointsNumber, const ERoadType RoadType)
 {
+	const auto* WorldGenerator = AMGameMode::GetWorldGenerator(this);
+
+	auto* RoadSplineActor = GetWorld()->SpawnActor<AMRoadSplineActor>(
+		WorldGenerator->GetActorClassToSpawn("RoadSpline"),
+		Center,
+		FRotator::ZeroRotator,
+		{}
+	);
 	auto* SplineComponent = RoadSplineActor->GetSplineComponent();
 	if (SplineComponent == nullptr || PointsNumber <= 0)
 	{
-		return;
+		return nullptr;
 	}
 
 	SplineComponent->ClearSplinePoints(); // Clear existing points if needed
@@ -201,6 +209,70 @@ void UMRoadManager::AddPointsOnCircleToSpline(float Radius, int32 PointsNumber, 
 		PointsForReplication.Add(PointLocation);
 	}
 	RoadSplineActor->SetPointsForReplication(PointsForReplication);
+
+	RoadSplineActor->SetRoadType(RoadType);
+
+	return RoadSplineActor;
+}
+
+AMRoadSplineActor* UMRoadManager::CreateRoadSpline(const FVector& PointA, const FVector& PointB,
+	int32 PointsNumberInBetween, const ERoadType RoadType)
+{
+	FVector PointAFlat = {PointA.X, PointA.Y, 0.f};
+	FVector PointBFlat = {PointB.X, PointB.Y, 0.f};
+
+	const auto* WorldGenerator = AMGameMode::GetWorldGenerator(this);
+	auto* RoadSplineActor = GetWorld()->SpawnActor<AMRoadSplineActor>(
+		WorldGenerator->GetActorClassToSpawn("RoadSpline"),
+		PointAFlat,
+		FRotator::ZeroRotator,
+		{}
+	);
+	RoadSplineActor->SetRoadType(RoadType);
+
+	auto* SplineComponent = RoadSplineActor->GetSplineComponent();
+
+	SplineComponent->RemoveSplinePoint(1);
+
+	// Calculate the direction vector from PointA to PointB
+	FVector Direction = (PointBFlat - PointAFlat).GetSafeNormal();
+	float Distance = FVector::Distance(PointAFlat, PointBFlat);
+
+	// Calculate the distance between each point
+	float StepDistance = Distance / (PointsNumberInBetween + 1);
+
+	// Populate the spline with points between PointA and PointB
+	for (int32 i = 1; i <= PointsNumberInBetween; ++i)
+	{
+		// Calculate the position of each intermediate point
+		FVector IntermediatePoint = PointAFlat + Direction * StepDistance * i;
+
+		// Add random deviation to X and Y coordinates // TODO: Make it customizable
+		IntermediatePoint.X += FMath::RandRange(-50.0f, 50.0f);
+		IntermediatePoint.Y += FMath::RandRange(-50.0f, 50.0f);
+		
+		// Add the point to the spline
+		SplineComponent->AddSplinePoint(IntermediatePoint, ESplineCoordinateSpace::World, false);
+	}
+
+	// Finally, add the endpoint (PointB)
+	SplineComponent->AddSplinePoint(PointBFlat, ESplineCoordinateSpace::World, false);
+
+	// Update the spline to apply the changes
+	SplineComponent->UpdateSpline();
+
+	// TODO: Generalize points replication. It's used in multiple places
+	/** Set manually replicated point positions. Spline component doesn't replicate any of its properties. */
+	TArray<FVector> PointsForReplication;
+	const int32 PointsCount = RoadSplineActor->GetSplineComponent()->GetNumberOfSplinePoints();
+	for (int32 i = 0; i < PointsCount; ++i)
+	{
+		FVector PointLocation = RoadSplineActor->GetSplineComponent()->GetLocationAtSplinePoint(i, ESplineCoordinateSpace::World);
+		PointsForReplication.Add(PointLocation);
+	}
+	RoadSplineActor->SetPointsForReplication(PointsForReplication);
+
+	return RoadSplineActor;
 }
 
 const TSet<FIntPoint> UMRoadManager::GetAdjacentRegions(const FIntPoint& ChunkIndex) const
