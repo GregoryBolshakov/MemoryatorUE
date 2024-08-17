@@ -7,6 +7,7 @@
 
 class AMOutpostElement;
 class AMOutpostHouse;
+class AMOutpostStall;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogOutpostGenerator, Log, All);
 
@@ -91,6 +92,8 @@ public:
 		return { CircleCenter.X + Radius * cos(Angle), CircleCenter.Y + Radius * sin(Angle), 0.f };
 	}
 
+	const TMap<FName, AMOutpostStall*>& GetStalls() const { return Stalls; }
+
 protected:
 	// TODO: Add an option to keep existing actors. E.g. stalls circle may overlap houses circle but we don't want them to be cleared.
 	// TODO: VERY IMPORTANT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -117,8 +120,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float Radius = 1750.f;
 
-	//TODO: Consider tracking other outpost elements
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TMap<FName, AMOutpostHouse*> Houses;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TMap<FName, AMOutpostStall*> Stalls;
 
 	/** All elements of the outpost. */
 	UPROPERTY()

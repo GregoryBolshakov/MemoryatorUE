@@ -5,6 +5,8 @@
 #include "MInterfaceMobController.h"
 #include "MNPCController.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRetreat);
+
 class UMStateModelComponent;
 class UAIPerceptionComponent;
 
@@ -18,6 +20,8 @@ class TOPDOWNTEMP_API AMNPCController : public AAIController
 	GENERATED_UCLASS_BODY()
 
 public:
+	UPROPERTY(BlueprintCallable)
+	FOnRetreat OnRetreatDelegate;
 
 protected: // IGenericTeamAgentInterface
 	virtual FGenericTeamId GetGenericTeamId() const override;
@@ -33,13 +37,18 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void Embark();
 
+	UFUNCTION(BlueprintCallable)
+	void Disembark();
+
 	/** Triggers by rotating, i.e. DeltaRotation is non zero */
 	void OnTurnAround() const;
 
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bEmbarked = false;
+
 private:
 	virtual void Tick(float DeltaSeconds) override;
-
-	bool bEmbarked = false;
 
 	FRotator LastRotation;
 

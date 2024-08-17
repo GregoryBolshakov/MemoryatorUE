@@ -8,6 +8,7 @@
 #include "StationaryActors/Outposts/MOutpostHouse.h"
 #include "Characters/MCharacter.h" // TODO: Remove this when refactor usage of PopulateResidentsInHouse
 #include "Helpers/M2DRepresentationBlueprintLibrary.h"
+#include "StationaryActors/Outposts/MOutpostStall.h"
 
 DEFINE_LOG_CATEGORY(LogOutpostGenerator);
 
@@ -97,14 +98,18 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 
 				WorldGenerator->EnrollActorToGrid(TestingElementActor);
 
+				TestingElementActor->SetOwnerOutpost(this);
 				if (auto* OutpostHouse = Cast<AMOutpostHouse>(TestingElementActor))
 				{
-					OutpostHouse->SetOwnerOutpost(this);
 					Houses.Add(FName(OutpostHouse->GetName()), OutpostHouse);
 					if (const auto* HouseMetadata = Cast<UMHouseDataForGeneration>(ElementData))
 					{
 						PopulateResidentsInHouse(OutpostHouse, HouseMetadata);
 					}
+				} else
+				if (auto* OutpostStall = Cast<AMOutpostStall>(TestingElementActor))
+				{
+					Stalls.Add(FName(OutpostStall->GetName()), OutpostStall);
 				}
 			}
 		}

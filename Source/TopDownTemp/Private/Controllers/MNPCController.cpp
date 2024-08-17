@@ -96,6 +96,16 @@ void AMNPCController::Embark()
 	bEmbarked = true;
 }
 
+void AMNPCController::Disembark()
+{
+	if (const auto ActiveCheckerComponent = Cast<AMCharacter>(GetPawn())->GetIsActiveCheckerComponent())
+	{
+		ActiveCheckerComponent->SetAlwaysDisabled(false);
+		ActiveCheckerComponent->EnableOwner();
+	}
+	bEmbarked = false;
+}
+
 void AMNPCController::OnTurnAround() const
 {
 	const auto* MyCharacter = Cast<AMCharacter>(GetPawn());

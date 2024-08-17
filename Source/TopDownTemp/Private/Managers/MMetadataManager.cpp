@@ -39,6 +39,10 @@ void UMMetadataManager::Remove(FName Name)
 {
 	if (const auto* Metadata = Find(Name))
 	{
+		if (!Metadata->Actor)
+		{
+			return; // Actor was manually deleted in the editor
+		}
 		if (auto* BlockMetadata = FindBlock(Metadata->GroundBlockIndex))
 		{
 			// Remove actor metadata from block
