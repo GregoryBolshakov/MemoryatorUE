@@ -25,6 +25,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FVector GetEntryPoint() const;
 
+	/** Returns the location of the scene component point named TrailPoint. If not present, returns the EntryPoint. */
+	UFUNCTION(BlueprintCallable)
+	FVector GetTrailPoint() const;
+
 protected:
 
 	UPROPERTY()

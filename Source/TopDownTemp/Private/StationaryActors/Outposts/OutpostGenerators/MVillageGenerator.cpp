@@ -35,7 +35,7 @@ void AMVillageGenerator::Generate()
 	// Create roads from each house entrance to the closest point on the stalls' road circle
 	for (const auto& [Name, House] : Houses)
 	{
-		const FVector EntryPoint = House->GetEntryPoint();
+		const FVector EntryPoint = House->GetTrailPoint();
 
 		const auto* SplineComponent = StallsRoadSpline->GetSplineComponent();
 		// Get the input key (a float representing the distance along the spline) corresponding to the closest point

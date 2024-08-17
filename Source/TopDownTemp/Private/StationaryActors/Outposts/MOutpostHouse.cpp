@@ -52,3 +52,17 @@ FVector AMOutpostHouse::GetEntryPoint() const
 	check(false);
 	return FVector::Zero();
 }
+
+FVector AMOutpostHouse::GetTrailPoint() const
+{
+	TArray<USceneComponent*> ChildComponents;
+	GetComponents(ChildComponents);
+	for (const auto* ChildComponent : ChildComponents)
+	{
+		if (ChildComponent->GetFName() == FName("TrailPoint"))
+		{
+			return ChildComponent->GetComponentLocation(); // TODO: Gather an array of entry points instead
+		}
+	}
+	return GetEntryPoint();
+}
