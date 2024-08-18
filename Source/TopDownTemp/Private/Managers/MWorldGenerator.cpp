@@ -72,7 +72,7 @@ void AMWorldGenerator::InitSurroundingArea(const FIntPoint& PlayerBlock, const u
 		pWorld->GetTimerManager().SetTimer(tempTimer, [this, PlayerChunk]()
 		{
 			const auto RoadManager = AMGameMode::GetRoadManager(this);
-			const auto VillageClass = RoadManager->GetOutpostBPClasses().Find("Village")->Get();
+			const auto VillageClass = RoadManager->GetOutpostBPClasses().Find("BanditCamp")->Get();
 			const auto VillageGenerator = RoadManager->SpawnOutpostGeneratorForDebugging(PlayerChunk, VillageClass);
 			VillageGenerator->Generate();
 			// UpdateNavigationMesh(); // TODO: Support this if needed
