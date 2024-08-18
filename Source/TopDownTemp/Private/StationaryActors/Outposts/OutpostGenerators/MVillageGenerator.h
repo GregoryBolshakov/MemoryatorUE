@@ -46,7 +46,4 @@ protected:
 protected:
 	UPROPERTY()
 	AMRoadSplineActor* StallsRoadSpline = nullptr;
-
-private:
-	TMap<FName, int> RequiredNumberOfInstances;
 };

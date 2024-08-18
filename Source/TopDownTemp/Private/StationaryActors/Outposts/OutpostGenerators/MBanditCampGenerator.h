@@ -24,7 +24,14 @@ public:
 
 // Data for generation
 protected:
+	UPROPERTY(Category=BanditCampSettings, EditDefaultsOnly, BlueprintReadOnly) 
+	float CartsCircleRadius = 1000.f;
+
+	/** Carts are bandit houses. Array of UMHouseDataForGeneration* describing the main circle of carts */
+	UPROPERTY(Category=BanditCampSettings, EditDefaultsOnly, BlueprintReadOnly, Instanced)
+	TArray<UMElementDataForGeneration*> CartsData;
+
 	/** An element standing in the center of the camp */
-	UPROPERTY(Category=VillageSettings, EditDefaultsOnly, BlueprintReadOnly, Instanced)
+	UPROPERTY(Category=BanditCampSettings, EditDefaultsOnly, BlueprintReadOnly, Instanced)
 	UMElementDataForGeneration* CenterElement = nullptr;
 };

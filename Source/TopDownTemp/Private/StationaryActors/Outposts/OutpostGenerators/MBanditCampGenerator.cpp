@@ -14,4 +14,6 @@ void AMBanditCampGenerator::Generate()
 	Super::Generate();
 
 	SpawnOutpostElementAtLocation(CenterElement, GetActorLocation());
+
+	GenerateOnCirclePerimeter(GetActorLocation(), CartsCircleRadius, CartsData);
 }
