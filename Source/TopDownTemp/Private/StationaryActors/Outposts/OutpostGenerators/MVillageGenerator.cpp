@@ -25,12 +25,14 @@ void AMVillageGenerator::Generate()
 	Super::Generate();
 
 	auto* RoadManager = AMGameMode::GetRoadManager(this);
+	auto* WorldGenerator = AMGameMode::GetWorldGenerator(this);
 
 	// The road circle in the center of the village. Stalls are going to be around it.
 	// StallsCircleRadius * 0.xf because we want the road to be an inner circle for the stalls
 	StallsRoadSpline = RoadManager->CreateCircleRoadSpline(GetActorLocation(), StallsCircleRadius * 0.75f, 12, ERoadType::Trail);
 
 	GenerateOnCirclePerimeter(GetActorLocation(), HousesCircleRadius, HousesData);
+	SpawnOutpostElementAtLocation(CenterElement, GetActorLocation());
 
 	// Create roads from each house entrance to the closest point on the stalls' road circle
 	for (const auto& [Name, House] : Houses)

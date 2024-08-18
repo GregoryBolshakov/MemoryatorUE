@@ -38,6 +38,10 @@ protected:
 	UPROPERTY(Category=VillageSettings, EditDefaultsOnly, BlueprintReadOnly, Instanced)
 	TArray<UMElementDataForGeneration*> StallsData;
 
+	/** An element standing in the center of the stalls circle */
+	UPROPERTY(Category=VillageSettings, EditDefaultsOnly, BlueprintReadOnly, Instanced)
+	UMElementDataForGeneration* CenterElement;
+
 // Existing elements
 protected:
 	UPROPERTY()

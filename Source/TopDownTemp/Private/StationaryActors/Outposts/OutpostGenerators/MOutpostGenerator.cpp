@@ -70,19 +70,19 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 		const int32 RandomIndex = FMath::RandRange(0, RemainedIndexes.Num() - 1);
 		const auto* ElementData = RemainedIndexes[RandomIndex];
 
-		// A temporary actor to "try on" a position for the element
-		const auto TestingElementActor = World->SpawnActor<AMOutpostElement>(ElementData->ToSpawnClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
-		if (!TestingElementActor)
+		// A dummy actor to "try on" a position for the element. If position fits, start treating it as a full-fledged one
+		const auto DummyActor = World->SpawnActor<AMOutpostElement>(ElementData->ToSpawnClass.Get(), TopPoint, FRotator::ZeroRotator, SpawnParameters);
+		if (!DummyActor)
 		{
 			check(false);
 			return;
 		}
 
 		// We try to find a location to fit the element
-		if (const auto Location = FindLocationOnCircle(*TestingElementActor, ElementIndex, Center, CircleRadius); Location.IsSet())
+		if (const auto Location = FindLocationOnCircle(*DummyActor, ElementIndex, Center, CircleRadius); Location.IsSet())
 		{
-			TestingElementActor->SetActorLocation(Location.GetValue());
-			ElementsMap.Add(FName(TestingElementActor->GetName()), TestingElementActor);
+			DummyActor->SetActorLocation(Location.GetValue());
+			ElementsMap.Add(FName(DummyActor->GetName()), DummyActor);
 			++ElementIndex;
 
 			--ElementsCountData[ElementData];
@@ -91,31 +91,11 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 				ElementsCountData.Remove(ElementData);
 			}
 
-			// Enroll element to the grid and do some custom post-spawn things like populating residents
-			if (!ElementData->ToSpawnClass->IsChildOf(AMGap::StaticClass())) // Skip gaps since they are going to be deleted
-			{
-				ProcessShiftOptions(TestingElementActor, ElementData, Center);
-
-				WorldGenerator->EnrollActorToGrid(TestingElementActor);
-
-				TestingElementActor->SetOwnerOutpost(this);
-				if (auto* OutpostHouse = Cast<AMOutpostHouse>(TestingElementActor))
-				{
-					Houses.Add(FName(OutpostHouse->GetName()), OutpostHouse);
-					if (const auto* HouseMetadata = Cast<UMHouseDataForGeneration>(ElementData))
-					{
-						PopulateResidentsInHouse(OutpostHouse, HouseMetadata);
-					}
-				} else
-				if (auto* OutpostStall = Cast<AMOutpostStall>(TestingElementActor))
-				{
-					Stalls.Add(FName(OutpostStall->GetName()), OutpostStall);
-				}
-			}
+			PostSpawnOutpostElement(DummyActor, ElementData, Center);
 		}
 		else
 		{
-			TestingElementActor->AActor::Destroy(); // Used plain AActor::Destroy(), and it's OK, because spawned element didn't get EnrollActorToGrid() called
+			DummyActor->AActor::Destroy(); // Used plain AActor::Destroy(), and it's OK, because spawned element didn't get EnrollActorToGrid() called
 
 			// Previous implementation was such: If cannot place an actor, then stop and don't build the rest.
 
@@ -142,6 +122,36 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 	{
 		ElementsMap[Key]->AActor::Destroy(); // We use plain AActor::Destroy() because Gaps were spawned not as a part of the Grid System
 		ElementsMap.Remove(Key);
+	}
+}
+
+void AMOutpostGenerator::SpawnOutpostElementAtLocation(const UMElementDataForGeneration* Data, const FVector& Location)
+{
+	auto* WorldGenerator = AMGameMode::GetWorldGenerator(this);
+	auto* Element = WorldGenerator->SpawnActor<AMOutpostElement>(Data->ToSpawnClass, GetActorLocation(), FRotator::ZeroRotator);
+	PostSpawnOutpostElement(Element, Data);
+}
+
+void AMOutpostGenerator::PostSpawnOutpostElement(AMOutpostElement* OutpostElement, const UMElementDataForGeneration* Data, const FVector& LocalCenter)
+{
+	// Do custom post-spawn things like shift processing, populating residents, etc.
+	if (!OutpostElement->GetClass()->IsChildOf(AMGap::StaticClass())) // Skip gaps since they are going to be deleted
+	{
+		ProcessShiftOptions(OutpostElement, Data, LocalCenter);
+
+		OutpostElement->SetOwnerOutpost(this);
+		if (auto* OutpostHouse = Cast<AMOutpostHouse>(OutpostElement))
+		{
+			Houses.Add(FName(OutpostHouse->GetName()), OutpostHouse);
+			if (const auto* HouseMetadata = Cast<UMHouseDataForGeneration>(Data))
+			{
+				PopulateResidentsInHouse(OutpostHouse, HouseMetadata);
+			}
+		} else
+		if (auto* OutpostStall = Cast<AMOutpostStall>(OutpostElement))
+		{
+			Stalls.Add(FName(OutpostStall->GetName()), OutpostStall);
+		}
 	}
 }
 

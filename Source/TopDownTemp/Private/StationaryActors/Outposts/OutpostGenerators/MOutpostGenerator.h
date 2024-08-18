@@ -99,6 +99,11 @@ protected:
 	// TODO: VERY IMPORTANT!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	void GenerateOnCirclePerimeter(FVector Center, float CircleRadius, const TArray<UMElementDataForGeneration*>& ElementsData, float RadiusIncrementStep = 500.f);
 
+	void SpawnOutpostElementAtLocation(const UMElementDataForGeneration* Data, const FVector& Location);
+
+	// TODO: Instead of LocalCenter, use something more generalized, like Context, with optional fields.
+	void PostSpawnOutpostElement(AMOutpostElement* OutpostElement, const UMElementDataForGeneration* Data, const FVector& LocalCenter = {});
+
 	FMActorSaveData GetSaveData() const override;
 
 	void BeginLoadFromSD(const FMActorSaveData& MActorSD) override;
