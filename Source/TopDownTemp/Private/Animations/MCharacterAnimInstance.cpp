@@ -1,6 +1,7 @@
 #include "MCharacterAnimInstance.h"
 
 #include "Characters/MCharacter.h"
+#include "Components/MStateModelComponent.h"
 #include "Components/MStatsModelComponent.h"
 #include "GameFramework/PawnMovementComponent.h"
 
@@ -24,6 +25,8 @@ void UMCharacterAnimInstance::PreUpdateAnimation(float DeltaSeconds)
 
 	if (const auto* MCharacter = Cast<AMCharacter>(TryGetPawnOwner()))
 	{
+		StateModelCopy = MCharacter->GetStateModelComponent()->GetCopy();
+
 		SpeedXY = MCharacter->GetVelocity().Size2D();
 
 		// Calculate MovementGridLevel

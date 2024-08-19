@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Animation/AnimInstance.h"
+#include "Components/MStateModelComponent.h"
 #include "MCharacterAnimInstance.generated.h"
 
 UCLASS(Blueprintable)
@@ -20,6 +21,9 @@ protected:
 
 	UPROPERTY()
 	float SprintSpeedRequirement = 750.f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	FStateModelCopy StateModelCopy;
 
 private:
 	virtual void NativeBeginPlay() override;
