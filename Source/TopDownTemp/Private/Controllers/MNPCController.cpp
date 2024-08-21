@@ -8,6 +8,7 @@
 
 #include "Perception/AIPerceptionComponent.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"
+#include "StationaryActors/Outposts/MOutpostOccupiable.h"
 #include "StationaryActors/Outposts/OutpostGenerators/MOutpostGenerator.h"
 
 AMNPCController::AMNPCController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -84,6 +85,19 @@ void AMNPCController::CopyStateVariablesToBlackboard(const UMStateModelComponent
 {
 	GetBlackboardComponent()->SetValueAsBool(TEXT("IsCommunicating"), StateModel->GetIsCommunicating());
 	// TODO: Copy more when needed
+}
+
+void AMNPCController::StopOccupying()
+{
+	auto* BlackboardComp = GetBlackboardComponent();
+
+	// Make it so Occupiable element no longer keeps track of the occupant
+	auto* Occupiable = Cast<AMOutpostOccupiable>(BlackboardComp->GetValueAsObject("Occupiable"));
+	check(Occupiable);
+	Occupiable->OnOccupantRemoved(Cast<AMCharacter>(GetPawn()));
+
+	BlackboardComp->SetValueAsObject("Occupiable", nullptr);
+	BlackboardComp->ClearValue("OccupiableLocation");
 }
 
 void AMNPCController::Embark()

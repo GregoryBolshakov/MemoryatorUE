@@ -92,6 +92,8 @@ public:
 		return { CircleCenter.X + Radius * cos(Angle), CircleCenter.Y + Radius * sin(Angle), 0.f };
 	}
 
+	const TArray<AMOutpostElement*>& GetElements() const { return Elements; }
+
 	const TMap<FName, AMOutpostStall*>& GetStalls() const { return Stalls; }
 
 protected:
@@ -133,5 +135,5 @@ protected:
 
 	/** All elements of the outpost. */
 	UPROPERTY()
-	TMap<FName, AMOutpostElement*> ElementsMap;
+	TArray<AMOutpostElement*> Elements;
 };

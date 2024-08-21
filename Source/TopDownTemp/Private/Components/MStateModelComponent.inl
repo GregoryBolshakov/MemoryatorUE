@@ -47,6 +47,15 @@ inline void UMStateModelComponent::SetIsReversing(bool IN_IsReversing)
 	}
 }
 
+inline void UMStateModelComponent::SetIsSitting(bool IN_IsSitting)
+{
+	if (IsSitting != IN_IsSitting)
+	{
+		IsSitting = IN_IsSitting;
+		IsDirty = true;
+	}
+}
+
 inline void UMStateModelComponent::SetIsSprinting(bool IN_IsSprinting)
 {
 	if (IsSprinting != IN_IsSprinting)
@@ -94,6 +103,7 @@ inline FStateModelCopy UMStateModelComponent::GetCopy()
 	Result.IsMoving = IsMoving;
 	Result.IsPicking = IsPicking;
 	Result.IsReversing = IsReversing;
+	Result.IsSitting = IsSitting;
 	Result.IsSprinting = IsSprinting;
 	Result.IsTakingDamage = IsTakingDamage;
 	Result.IsTurningLeft = IsTurningLeft;

@@ -29,6 +29,8 @@ struct FStateModelCopy
 	UPROPERTY(BlueprintReadOnly)
 	bool IsReversing = false;
 	UPROPERTY(BlueprintReadOnly)
+	bool IsSitting = false;
+	UPROPERTY(BlueprintReadOnly)
 	bool IsSprinting = false;
 	UPROPERTY(BlueprintReadOnly)
 	bool IsTakingDamage = false;
@@ -68,6 +70,9 @@ public:
 	bool GetIsReversing() const { return IsReversing; }
 
 	UFUNCTION(BlueprintCallable)
+	bool GetIsSitting() const { return IsSitting; }
+
+	UFUNCTION(BlueprintCallable)
 	bool GetIsSprinting() const { return IsSprinting; }
 
 	UFUNCTION(BlueprintCallable)
@@ -93,6 +98,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	inline void SetIsReversing(bool IN_IsReversing);
+
+	UFUNCTION(BlueprintCallable)
+	inline void SetIsSitting(bool IN_IsSitting);
 
 	UFUNCTION(BlueprintCallable)
 	inline void SetIsSprinting(bool IN_IsSprinting);
@@ -131,6 +139,8 @@ protected:
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere)
 	bool IsReversing = false;
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere)
+	bool IsSitting = false;
+	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere)
 	bool IsSprinting = false;
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, VisibleAnywhere)
 	bool IsTakingDamage = false;
@@ -152,6 +162,7 @@ protected:
 		DOREPLIFETIME(UMStateModelComponent, IsMoving);
 		DOREPLIFETIME(UMStateModelComponent, IsPicking);
 		DOREPLIFETIME(UMStateModelComponent, IsReversing);
+		DOREPLIFETIME(UMStateModelComponent, IsSitting);
 		DOREPLIFETIME(UMStateModelComponent, IsSprinting);
 		DOREPLIFETIME(UMStateModelComponent, IsTakingDamage);
 		DOREPLIFETIME(UMStateModelComponent, IsTurningLeft);

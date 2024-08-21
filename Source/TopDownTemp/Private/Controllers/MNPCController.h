@@ -20,6 +20,9 @@ class TOPDOWNTEMP_API AMNPCController : public AAIController
 	GENERATED_UCLASS_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable)
+	void StopOccupying();
+
 	UPROPERTY(BlueprintCallable)
 	FOnRetreat OnRetreatDelegate;
 

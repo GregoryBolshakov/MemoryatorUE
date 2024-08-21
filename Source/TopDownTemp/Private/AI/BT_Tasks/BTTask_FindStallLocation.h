@@ -9,7 +9,7 @@
 #include "StationaryActors/Outposts/MOutpostHouse.h"
 #include "StationaryActors/Outposts/MOutpostStall.h"
 #include "StationaryActors/Outposts/OutpostGenerators/MOutpostGenerator.h"
-#include "BTService_FindStallLocation.generated.h"
+#include "BTTask_FindStallLocation.generated.h"
 
 UCLASS()
 class UBTTask_FindStallLocation : public UBTTaskNode

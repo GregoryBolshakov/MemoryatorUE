@@ -82,7 +82,7 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 		if (const auto Location = FindLocationOnCircle(*DummyActor, ElementIndex, Center, CircleRadius); Location.IsSet())
 		{
 			DummyActor->SetActorLocation(Location.GetValue());
-			ElementsMap.Add(FName(DummyActor->GetName()), DummyActor);
+			AMGameMode::GetWorldGenerator(this)->EnrollActorToGrid(DummyActor);
 			++ElementIndex;
 
 			--ElementsCountData[ElementData];
@@ -110,31 +110,29 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 	}
 
 	// Remove all spawned Gap actors
-	TArray<FName> KeysToRemove;
-	for (auto It = ElementsMap.CreateIterator(); It; ++It)
+	for (int i = Elements.Num() - 1; i >= 0 ; --i)
 	{
-		if (It.Value()->GetClass()->IsChildOf(AMGap::StaticClass()))
+		if (Elements[i]->GetClass()->IsChildOf(AMGap::StaticClass()))
 		{
-			KeysToRemove.Add(It->Key);
+			Elements[i]->AActor::Destroy(); // We use plain AActor::Destroy() because Gaps were spawned not as a part of the Grid System
+			Elements.RemoveAt(i);
 		}
-	}
-	for (const auto& Key : KeysToRemove)
-	{
-		ElementsMap[Key]->AActor::Destroy(); // We use plain AActor::Destroy() because Gaps were spawned not as a part of the Grid System
-		ElementsMap.Remove(Key);
 	}
 }
 
 void AMOutpostGenerator::SpawnOutpostElementAtLocation(const UMElementDataForGeneration* Data, const FVector& Location)
 {
 	auto* WorldGenerator = AMGameMode::GetWorldGenerator(this);
-	auto* Element = WorldGenerator->SpawnActor<AMOutpostElement>(Data->ToSpawnClass, GetActorLocation(), FRotator::ZeroRotator);
+	auto* Element = WorldGenerator->SpawnActor<AMOutpostElement>(Data->ToSpawnClass, Location, FRotator::ZeroRotator);
 	PostSpawnOutpostElement(Element, Data);
 }
 
 void AMOutpostGenerator::PostSpawnOutpostElement(AMOutpostElement* OutpostElement, const UMElementDataForGeneration* Data, const FVector& LocalCenter)
 {
 	// Do custom post-spawn things like shift processing, populating residents, etc.
+
+	Elements.Add(OutpostElement);
+
 	if (!OutpostElement->GetClass()->IsChildOf(AMGap::StaticClass())) // Skip gaps since they are going to be deleted
 	{
 		ProcessShiftOptions(OutpostElement, Data, LocalCenter);
