@@ -172,7 +172,7 @@ void AMOutpostGenerator::ProcessShiftOptions(AMOutpostElement* Element, const UM
 	switch (Data->ShiftOptions)
 	{
 	case EShiftOptions::RandomRotateAndMove:
-		RotateAndMoveMeshRandomly(Element);
+		Element->RotateAndMoveContentRandomly();
 		break;
 	case EShiftOptions::RotateToLocalCenter:
 	case EShiftOptions::RotateToLocalCenterSloppy:
@@ -181,7 +181,7 @@ void AMOutpostGenerator::ProcessShiftOptions(AMOutpostElement* Element, const UM
 			check(false);
 			break;
 		}
-		RotateMeshToPoint(Element, LocalCenter.GetValue());
+		Element->RotateContentToPoint(LocalCenter.GetValue());
 		if (Data->ShiftOptions == EShiftOptions::RotateToLocalCenterSloppy)
 		{
 			// Add a little random rotation
@@ -190,42 +190,6 @@ void AMOutpostGenerator::ProcessShiftOptions(AMOutpostElement* Element, const UM
 		break;
 	default:
 		break;
-	}
-}
-
-void AMOutpostGenerator::RotateAndMoveMeshRandomly(const AMOutpostElement* Element)
-{
-	// TODO: Rename tag "BuildingMesh" to something generic
-	if (const auto MeshComponent = Cast<UStaticMeshComponent>(Element->FindComponentByTag(UStaticMeshComponent::StaticClass(), "BuildingMesh")))
-	{
-		const auto RandomRotation = FRotator(0.f, FMath::RandRange(0.f, 360.f), 0.f);
-		MeshComponent->SetRelativeRotation(RandomRotation);
-
-		const auto MeshBounds = MeshComponent->Bounds;
-		FBoxSphereBounds RandomOffsetBounds;
-		Element->GetActorBounds(true, RandomOffsetBounds.Origin, RandomOffsetBounds.BoxExtent, true);
-
-		const auto MeshLowerBound = MeshBounds.Origin - MeshBounds.BoxExtent;
-		const auto MeshUpperBound = MeshBounds.Origin + MeshBounds.BoxExtent;
-
-		const auto RandomOffsetLowerBound = RandomOffsetBounds.Origin - RandomOffsetBounds.BoxExtent;
-		const auto RandomOffsetUpperBound = RandomOffsetBounds.Origin + RandomOffsetBounds.BoxExtent;
-
-		const FVector RandomOffset = FVector(
-			FMath::RandRange(RandomOffsetLowerBound.X - MeshLowerBound.X, RandomOffsetUpperBound.X - MeshUpperBound.X),
-			FMath::RandRange(RandomOffsetLowerBound.Y - MeshLowerBound.Y, RandomOffsetUpperBound.Y - MeshUpperBound.Y),
-			0.f);
-		MeshComponent->SetRelativeLocation(MeshComponent->GetRelativeLocation() + RandomOffset);
-	}
-}
-
-void AMOutpostGenerator::RotateMeshToPoint(const AMOutpostElement* Element, const FVector& Point)
-{
-	// TODO: Rename tag "BuildingMesh" to something generic
-	if (const auto MeshComponent = Cast<UStaticMeshComponent>(Element->FindComponentByTag(UStaticMeshComponent::StaticClass(), "BuildingMesh")))
-	{
-		const auto Location = Element->GetActorLocation();
-		MeshComponent->SetRelativeRotation(UM2DRepresentationBlueprintLibrary::GetRotationTowardPoint(Location, Point));
 	}
 }
 

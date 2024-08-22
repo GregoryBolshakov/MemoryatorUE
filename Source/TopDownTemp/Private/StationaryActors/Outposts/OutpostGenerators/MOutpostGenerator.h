@@ -113,10 +113,6 @@ protected:
 	// TODO: Don't like the use of TOptional arguments, refactor this
 	static void ProcessShiftOptions(AMOutpostElement* Element, const UMElementDataForGeneration* Data, TOptional<FVector> LocalCenter = {});
 
-	static void RotateAndMoveMeshRandomly(const AMOutpostElement* Element); // TODO: Refactor old function
-
-	static void RotateMeshToPoint(const AMOutpostElement* Element, const FVector& Point);
-
 	TOptional<FVector> FindLocationOnCircle(const AMOutpostElement& TestingElementActor, int ElementIndex, FVector Center, float CircleRadius) const;
 
 	void PopulateResidentsInHouse(AMOutpostHouse* HouseActor, const UMHouseDataForGeneration* HouseData);

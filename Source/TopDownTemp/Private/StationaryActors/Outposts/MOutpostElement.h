@@ -4,6 +4,7 @@
 #include "StationaryActors/MActor.h"
 #include "MOutpostElement.generated.h"
 
+class UBoxComponent;
 class AMOutpostGenerator;
 
 //~=============================================================================
@@ -13,13 +14,17 @@ class AMOutpostGenerator;
 UCLASS(Blueprintable)
 class AMOutpostElement : public AMActor
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 
 public:
 	UFUNCTION(BlueprintCallable)
 	const AMOutpostGenerator* GetOwnerOutpost() const { return OwnerOutpost; }
 
 	void SetOwnerOutpost(AMOutpostGenerator* Outpost) { OwnerOutpost = Outpost; }
+
+	void RotateContentToPoint(const FVector& Point) const;
+
+	void RotateAndMoveContentRandomly() const;
 
 protected:
 
@@ -29,4 +34,7 @@ protected:
 
 	UPROPERTY()
 	AMOutpostGenerator* OwnerOutpost;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UBoxComponent* ScopeForShifting;
 };
