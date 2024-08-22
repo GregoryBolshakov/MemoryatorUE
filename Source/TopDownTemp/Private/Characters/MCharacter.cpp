@@ -247,6 +247,14 @@ void AMCharacter::PlayAnimMontageMultiplayer(UAnimMontage* AnimMontage)
 	}
 }
 
+void AMCharacter::PlayAnimMontageByNameMultiplayer(FName AnimMontageName)
+{
+	if (auto* Montage = MontagesByName.Find(AnimMontageName))
+	{
+		PlayAnimMontageMultiplayer(*Montage);
+	}
+}
+
 void AMCharacter::UpdateLastNonZeroDirection()
 {
 	if (const auto CurrentVelocity = GetVelocity();

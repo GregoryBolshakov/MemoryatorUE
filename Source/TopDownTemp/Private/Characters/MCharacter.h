@@ -110,6 +110,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void PlayAnimMontageMultiplayer(UAnimMontage* AnimMontage);
 
+	UFUNCTION(BlueprintCallable)
+	void PlayAnimMontageByNameMultiplayer(FName AnimMontageName);
+
 	FOnMovedInDelegate OnMovedInDelegate;
 	FOnStateModelUpdated OnStateModelUpdatedDelegate;
 
@@ -193,6 +196,9 @@ protected:
 
 	UPROPERTY()
 	AMOutpostHouse* House;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TMap<FName, UAnimMontage*> MontagesByName;
 
 // Ability system
 public:
