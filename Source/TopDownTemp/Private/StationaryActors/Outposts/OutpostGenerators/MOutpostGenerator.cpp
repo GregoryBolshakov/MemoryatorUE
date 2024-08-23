@@ -82,7 +82,6 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 		if (const auto Location = FindLocationOnCircle(*DummyActor, ElementIndex, Center, CircleRadius); Location.IsSet())
 		{
 			DummyActor->SetActorLocation(Location.GetValue());
-			AMGameMode::GetWorldGenerator(this)->EnrollActorToGrid(DummyActor);
 			++ElementIndex;
 
 			--ElementsCountData[ElementData];
@@ -91,7 +90,11 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 				ElementsCountData.Remove(ElementData);
 			}
 
-			PostSpawnOutpostElement(DummyActor, ElementData, Center);
+			if (!DummyActor->GetClass()->IsChildOf(AMGap::StaticClass())) // Skip gaps since they are going to be deleted
+			{
+				AMGameMode::GetWorldGenerator(this)->EnrollActorToGrid(DummyActor);
+				PostSpawnOutpostElement(DummyActor, ElementData, Center);
+			}
 		}
 		else
 		{

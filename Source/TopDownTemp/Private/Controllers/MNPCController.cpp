@@ -94,7 +94,10 @@ void AMNPCController::StopOccupying()
 	// Make it so Occupiable element no longer keeps track of the occupant
 	auto* Occupiable = Cast<AMOutpostOccupiable>(BlackboardComp->GetValueAsObject("Occupiable"));
 	check(Occupiable);
-	Occupiable->OnOccupantRemoved(Cast<AMCharacter>(GetPawn()));
+	if (Occupiable)
+	{
+		Occupiable->OnOccupantRemoved(Cast<AMCharacter>(GetPawn()));
+	}
 
 	BlackboardComp->SetValueAsObject("Occupiable", nullptr);
 	BlackboardComp->ClearValue("OccupiableLocation");
