@@ -126,8 +126,11 @@ void AMOutpostGenerator::GenerateOnCirclePerimeter(FVector Center, float CircleR
 void AMOutpostGenerator::SpawnOutpostElementAtLocation(const UMElementDataForGeneration* Data, const FVector& Location)
 {
 	auto* WorldGenerator = AMGameMode::GetWorldGenerator(this);
-	auto* Element = WorldGenerator->SpawnActor<AMOutpostElement>(Data->ToSpawnClass, Location, FRotator::ZeroRotator);
-	PostSpawnOutpostElement(Element, Data);
+	if (Data->ToSpawnClass)
+	{
+		auto* Element = WorldGenerator->SpawnActor<AMOutpostElement>(Data->ToSpawnClass, Location, FRotator::ZeroRotator);
+		PostSpawnOutpostElement(Element, Data);
+	}
 }
 
 void AMOutpostGenerator::PostSpawnOutpostElement(AMOutpostElement* OutpostElement, const UMElementDataForGeneration* Data, const FVector& LocalCenter)
