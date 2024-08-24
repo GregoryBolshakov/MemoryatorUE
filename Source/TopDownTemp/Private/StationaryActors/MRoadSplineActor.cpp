@@ -11,6 +11,7 @@ AMRoadSplineActor::AMRoadSplineActor(const FObjectInitializer& ObjectInitializer
 
 void AMRoadSplineActor::SetRoadType(const ERoadType IN_RoadType)
 {
+	check(HasAuthority());
 	SplineComponent->ComponentTags.Add(GetRoadPCGTag(IN_RoadType));
 	RoadType = IN_RoadType;
 }
@@ -38,9 +39,15 @@ void AMRoadSplineActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AMRoadSplineActor, ReplicatedPoints);
+	DOREPLIFETIME(AMRoadSplineActor, RoadType);
 }
 
 void AMRoadSplineActor::OnPointsReplicated()
 {
 	SplineComponent->SetSplinePoints(ReplicatedPoints, ESplineCoordinateSpace::World);
+}
+
+void AMRoadSplineActor::OnRoadTypeSet()
+{
+	SplineComponent->ComponentTags.Add(GetRoadPCGTag(RoadType));
 }

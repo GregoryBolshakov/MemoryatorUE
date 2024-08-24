@@ -18,6 +18,7 @@ public:
 
 	/** Adds a corresponding tag that PCG will use to determine the road type.\n
 	 * Should be called only once! */ //TODO: Make it possible to call multiple times
+	UFUNCTION()
 	void SetRoadType(const ERoadType IN_RoadType);
 
 	USplineComponent* GetSplineComponent() const { return SplineComponent; }
@@ -34,6 +35,10 @@ protected:
 	UFUNCTION()
 	void OnPointsReplicated();
 
+	/** Tags don't replicate by default. Here we combine the replication of RoadType and the corresponding tag */
+	UFUNCTION()
+	void OnRoadTypeSet();
+
 	UPROPERTY(EditAnywhere)
 	USplineComponent* SplineComponent;
 
@@ -41,6 +46,7 @@ protected:
 	UPROPERTY(ReplicatedUsing=OnPointsReplicated)
 	TArray<FVector> ReplicatedPoints;
 
+	UPROPERTY(ReplicatedUsing=OnRoadTypeSet)
 	ERoadType RoadType;
 };
 
