@@ -2,6 +2,7 @@
 
 #include "Components/PrimitiveComponent.h"
 #include "StationaryActors/Outposts/MOutpostHouse.h"
+#include "Particles/ParticleSystemComponent.h"
 
 UMIsActiveCheckerComponent::UMIsActiveCheckerComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -25,7 +26,7 @@ void UMIsActiveCheckerComponent::DisableOwner()
 
 	bActorWasHiddenInGame = pOwner->IsHidden();
 	pOwner->SetActorHiddenInGame(true);
-	bActorHadTickEnabled = pOwner->PrimaryActorTick.bCanEverTick;
+	bActorHadTickEnabled = pOwner->IsActorTickEnabled();
 	pOwner->SetActorTickEnabled(false);
 	bWasActorReplicated = pOwner->GetIsReplicated();
 	pOwner->SetReplicates(false);
@@ -39,9 +40,8 @@ void UMIsActiveCheckerComponent::DisableOwner()
 		if (Component == this)
 			continue;
 
-		FDisabledComponentInfo ComponentData{ Component, static_cast<bool>(Component->PrimaryComponentTick.bCanEverTick) };
-		Component->PrimaryComponentTick.bCanEverTick = false;
-		Component->PrimaryComponentTick.UnRegisterTickFunction();
+		FDisabledComponentInfo ComponentData{ Component, Component->IsComponentTickEnabled() };
+		ComponentData.Component->SetComponentTickEnabled(false);
 
 		if (bAffectCollisions)
 		{
@@ -100,17 +100,10 @@ void UMIsActiveCheckerComponent::EnableOwner()
 			check(false);
 			continue;
 		}
-		if (Data.bCanEverTick)
+
+		if (Data.IsComponentTickEnabled)
 		{
-			Data.Component->PrimaryComponentTick.bCanEverTick = true;
-
-			// Register tick function
-			if (Data.Component->SetupActorComponentTickFunction(&Data.Component->PrimaryComponentTick))
-			{
-				Data.Component->PrimaryComponentTick.Target = Data.Component;
-			}
-
-			Data.Component->PrimaryComponentTick.SetTickFunctionEnable(true);
+			Data.Component->SetComponentTickEnabled(true);
 		}
 		if (bAffectCollisions)
 		{

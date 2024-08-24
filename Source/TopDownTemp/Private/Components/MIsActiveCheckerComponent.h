@@ -16,7 +16,7 @@ public:
 	UPROPERTY()
 	UActorComponent* Component;
 
-	bool bCanEverTick = false;
+	bool IsComponentTickEnabled = false;
 
 	TOptional<ECollisionEnabled::Type> CollisionType;
 };
