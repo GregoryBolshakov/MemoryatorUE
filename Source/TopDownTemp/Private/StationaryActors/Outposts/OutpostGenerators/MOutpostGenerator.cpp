@@ -177,6 +177,9 @@ void AMOutpostGenerator::ProcessShiftOptions(AMOutpostElement* Element, const UM
 {
 	switch (Data->ShiftOptions)
 	{
+	case EShiftOptions::RandomRotate:
+		Element->RotateContentRandomly();
+		break;
 	case EShiftOptions::RandomRotateAndMove:
 		Element->RotateAndMoveContentRandomly();
 		break;

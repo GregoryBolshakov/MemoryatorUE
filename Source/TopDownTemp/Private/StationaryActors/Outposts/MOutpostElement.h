@@ -24,6 +24,7 @@ public:
 
 	void RotateContentToPoint(const FVector& Point) const;
 
+	void RotateContentRandomly() const;
 	void RotateAndMoveContentRandomly() const;
 
 protected:

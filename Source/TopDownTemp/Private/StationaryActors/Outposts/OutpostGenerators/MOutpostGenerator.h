@@ -15,6 +15,7 @@ UENUM(BlueprintType)
 enum class EShiftOptions : uint8
 {
 	None = 0,
+	RandomRotate,
 	RandomRotateAndMove,
 	// When call GenerateOnCirclePerimeter() there is a center of the circle. This is not necessarily the outpost's center
 	RotateToLocalCenter,

@@ -27,6 +27,17 @@ void AMOutpostElement::RotateContentToPoint(const FVector& Point) const
 	}
 }
 
+void AMOutpostElement::RotateContentRandomly() const
+{
+	TArray<USceneComponent*> AffectedChildren;
+	ScopeForShifting->GetChildrenComponents(false, AffectedChildren);
+	for (auto* AffectedChild : AffectedChildren)
+	{
+		const auto RandomRotation = FRotator(0.f, FMath::RandRange(0.f, 360.f), 0.f);
+		AffectedChild->SetRelativeRotation(RandomRotation);
+	}
+}
+
 void AMOutpostElement::RotateAndMoveContentRandomly() const
 {
 	TArray<USceneComponent*> AffectedChildren;
