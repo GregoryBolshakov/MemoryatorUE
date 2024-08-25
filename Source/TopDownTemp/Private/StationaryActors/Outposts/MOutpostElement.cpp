@@ -23,7 +23,8 @@ void AMOutpostElement::RotateContentToPoint(const FVector& Point) const
 	for (auto* AffectedChild : AffectedChildren)
 	{
 		const auto Location = AffectedChild->GetComponentLocation();
-		AffectedChild->SetRelativeRotation(UM2DRepresentationBlueprintLibrary::GetRotationTowardPoint(Location, Point));
+		const FRotator NewRotation(0.f, UM2DRepresentationBlueprintLibrary::GetRotationTowardPoint(Location, Point).Yaw, 0.f );
+		AffectedChild->SetRelativeRotation(NewRotation);
 	}
 }
 
