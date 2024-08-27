@@ -58,6 +58,16 @@ private:
 	ESlotFlags Flags = ESlotFlags::None;
 };
 
+/** AMActor may have multiple inventories. Drag-n-drop works via RPC calls and can't access neither the recipient,
+ * nor specific inventory components.\n This is why we specify actor using Uid, and inventory type with this enum.*/
+UENUM(BlueprintType)
+enum class EInventoryType : uint8
+{
+	Main = 0,
+	ToOffer,
+	ToReward, // Inventory controller shouldn't modify that one by design.
+};
+
 
 //TODO: Add additional checks for IsLocked in c++ functions. Now there are only some in the slot widget blueprint
 /** A character's inventory component. Store items, support put-in, get-out and sort logic */
@@ -82,6 +92,8 @@ public:
 
 	TArray<FSlot>& GetSlots() { return Slots; }
 
+	const TArray<FSlot>& GetSlots() const { return Slots; }
+
 	const TArray<FSlot>& GetSlotsConst() const { return Slots; }
 
 	static void SortSlots(TArray<FSlot>& IN_Slots, const UObject* WorldContextObject);
@@ -97,7 +109,7 @@ public:
 
 	/** Server only. Is called by local player controller via Server RPC */
 	UFUNCTION()
-	void DropDraggedOnTheGround(FItem& DraggedItem);
+	void DropDraggedOnTheGround(FItem& DraggedItem); // TODO: Make it DropManager's function instead.
 
 	/** Server only. Is called by local player controller via Server RPC */
 	UFUNCTION()
@@ -129,6 +141,9 @@ public:
 	void SetFlagToAllSlots(FSlot::ESlotFlags Flag);
 
 	FOnAnySlotChanged OnAnySlotChangedDelegate;
+
+	UPROPERTY(BlueprintReadOnly)
+	EInventoryType InventoryType;
 
 protected:
 

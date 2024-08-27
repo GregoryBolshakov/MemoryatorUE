@@ -19,14 +19,11 @@ public:
 
 	virtual void NativeDestruct() override;
 
+	UFUNCTION(BlueprintCallable)
+	void CreateSlots(const UMInventoryComponent* InventoryToOffer, const UMInventoryComponent* InventoryToReward);
+
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void Close();
-
-	UFUNCTION(BlueprintCallable)
-	void CreateItemSlotWidgets();
-
-	UFUNCTION()
-	void ReCreateRewardItemSlotWidgets();
 
 protected:
 

@@ -4,6 +4,7 @@
 #include "Components/MInventoryComponent.h"
 #include "MDropManager.generated.h"
 
+class UMCommunicationWidget;
 class UMInventoryWidget;
 class AMPlayerController;
 class UMPickUpBarWidget;
@@ -37,6 +38,7 @@ public:
 	static TSubclassOf<UUserWidget> gItemSlotWidgetBPClass;
 	static TSubclassOf<UMPickUpBarWidget> gPickUpBarWidgetBPClass;
 	static TSubclassOf<UMInventoryWidget> gInventoryWidgetBPClass;
+	static TSubclassOf<UMCommunicationWidget> gCommunicationWidgetBPClass;
 
 private:
 
@@ -64,8 +66,11 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category=UMDropManager)
 	TSubclassOf<UUserWidget> PickUpBarWidgetBPClass;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category=UMDropManager)
 	TSubclassOf<UUserWidget> InventoryWidgetBPClass;
+
+	UPROPERTY(EditDefaultsOnly, Category=UMDropManager)
+	TSubclassOf<UUserWidget> CommunicationWidgetBPClass;
 };
 

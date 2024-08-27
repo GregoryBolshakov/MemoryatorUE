@@ -45,6 +45,10 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	InventoryComponent->SetNetAddressable();
 
 	CommunicationComponent = CreateDefaultSubobject<UMCommunicationComponent>(TEXT("CommunicationComponent"));
+	InventoryToOffer = CreateDefaultSubobject<UMInventoryComponent>("InventoryToOffer");
+	InventoryToOffer->InventoryType = EInventoryType::ToOffer;
+	InventoryToReward = CreateDefaultSubobject<UMInventoryComponent>("InventoryToReward");
+	InventoryToReward->InventoryType = EInventoryType::ToReward;
 
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));
 	IsActiveCheckerComponent->OnDisabledDelegate.BindUObject(this, &AMCharacter::OnDisabled);
@@ -115,6 +119,20 @@ float AMCharacter::GetRadius() const
 	}
 	check(false);
 	return 0.f;
+}
+
+UMInventoryComponent* AMCharacter::GetInventoryByType(EInventoryType InventoryType) const
+{
+	switch (InventoryType)
+	{
+	case EInventoryType::Main:
+	default:
+		return InventoryComponent;
+	case EInventoryType::ToOffer:
+		return InventoryToOffer;
+	case EInventoryType::ToReward:
+		return InventoryToReward;
+	}
 }
 
 UAbilitySystemComponent* AMCharacter::GetAbilitySystemComponent() const
@@ -276,6 +294,8 @@ void AMCharacter::BeginPlay()
 
 	GetCharacterMovement()->MaxWalkSpeed = StatsModelComponent->GetWalkSpeed();
 	//TODO: Fix the issue when the stat is updated but movement component is not
+
+	InventoryToOffer->Initialize(8, {});
 }
 
 void AMCharacter::AddCharacterAbilities()

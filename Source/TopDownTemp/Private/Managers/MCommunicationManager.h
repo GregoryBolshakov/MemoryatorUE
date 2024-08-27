@@ -1,10 +1,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/MInventoryComponent.h"
 #include "MCommunicationManager.generated.h"
 
 class UMInventoryComponent;
 class AMCharacter;
+class UMCommunicationWidget;
 
 //TODO: Consider implementing conversations between mobs as well. If is doesn't make any sense, make this UObject
 UCLASS(Blueprintable, BlueprintType)
@@ -22,13 +24,9 @@ public:
 
 	AMCharacter* GetInterlocutorCharacter() const { return InterlocutorCharacter; }
 
-	UMInventoryComponent* GetInventoryToOffer() const { return InventoryToOffer; }
-
-	UMInventoryComponent* GetInventoryToReward() const { return InventoryToReward; }
-
 	/** Take all unlocked items from the reward inventory. Give all items from the offer inventory */
 	UFUNCTION(BlueprintCallable)
-	void MakeADeal();
+	void MakeADeal(UMInventoryComponent* InventoryToOffer, UMInventoryComponent* InventoryToReward);
 
 protected:
 
@@ -36,25 +34,12 @@ protected:
 
 	virtual void Tick(float DeltaSeconds) override;
 
-	void GenerateInventoryToReward();
+	void GenerateInventoryToReward(const UMInventoryComponent* InventoryToOffer, UMInventoryComponent* InventoryToReward);
 
-	void ReturnAllPlayerItems();
+	/** Returns all items in InventoryToOffer back to player's inventory without making any deal. */
+	void CancelOffer(UMInventoryComponent* InventoryToOffer) const;
 
 	UPROPERTY()
 	AMCharacter* InterlocutorCharacter;
-
-	UPROPERTY()
-	class UMCommunicationWidget* CommunicationWidget;
-
-	UPROPERTY(EditDefaultsOnly, Category = MCommunicationManager)
-	TSubclassOf<UMCommunicationWidget> CommunicationWidgetBPClass;
-
-	/** Temporary inventory with empty slots player uses to offer their items to an interlocutor */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCommunicationManager)
-	UMInventoryComponent* InventoryToOffer;
-
-	/** Temporary inventory. Source of reward items which don't belong to a mob but can be given out */
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCommunicationManager)
-	UMInventoryComponent* InventoryToReward;
 };
 

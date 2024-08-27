@@ -351,6 +351,7 @@ void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 	}
 }
 
+// TODO: Make it DropManager's function instead.
 void UMInventoryComponent::DropDraggedOnTheGround(FItem& DraggedItem)
 {
 	if (const auto DropManager = AMGameMode::GetDropManager(this))
@@ -646,21 +647,33 @@ void UMInventoryComponent::OnRep_Slots()
 	// TODO: Use a delegate instead of direct accessing AMPlayerController
 	if (auto* MPlayerController = Cast<AMPlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
 	{
-		if (auto* DropController = MPlayerController->GetInventoryControllerComponent())
+		if (auto* InventoryController = MPlayerController->GetInventoryControllerComponent())
 		{
 			if (auto* PlayerMCharacter = Cast<AMCharacter>(MPlayerController->GetPawn()))
 			{
 				if (PlayerMCharacter->GetInventoryComponent() == this)
 				{
 					// If the inventory is part of Inventory widget, re-create the entire widget contents
-					DropController->UpdateInventoryWidget();
+					InventoryController->UpdateInventoryWidget();
+					return;
+				}
+				if (PlayerMCharacter->GetInventoryToOfferComponent() == this)
+				{
+					// If the inventory is InventoryToOffer, re-create the entire communication widget contents
+					InventoryController->UpdateCommunicationWidget();
+					return;
+				}
+				if (PlayerMCharacter->GetInventoryToRewardComponent() == this)
+				{
+					// If the inventory is InventoryToReward, re-create the entire communication widget contents
+					InventoryController->UpdateCommunicationWidget();
 					return;
 				}
 			}
-			if (DropController->ContainsPickUpInventory(this))
+			if (InventoryController->ContainsPickUpInventory(this))
 			{
 				// If the inventory is part of PickUpBar widget, re-create the entire widget contents
-				DropController->UpdatePickUpBar();
+				InventoryController->UpdatePickUpBar();
 			}
 		}
 	}

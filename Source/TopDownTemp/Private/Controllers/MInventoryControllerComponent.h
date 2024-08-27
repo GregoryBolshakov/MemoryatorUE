@@ -6,6 +6,7 @@
 
 //TODO: Move to proper folder
 
+class UMCommunicationWidget;
 class UMInventoryWidget;
 class AMPlayerController;
 class UMPickUpBarWidget;
@@ -30,19 +31,19 @@ class UMInventoryControllerComponent : public UActorComponent
 
 public:
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_TryDropDraggedOnTheGround();
+	void Server_TryDropDraggedOnTheGround(const EInventoryType InventoryType);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_TryStoreDraggedToAnySlot(FMUid InventoryOwnerActorUid);
+	void Server_TryStoreDraggedToAnySlot(FMUid InventoryOwnerActorUid, const EInventoryType InventoryType);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_TryStoreDraggedToSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray);
+	void Server_TryStoreDraggedToSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray, const EInventoryType InventoryType);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_TryDragItemFromSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray, int Quantity);
+	void Server_TryDragItemFromSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray, int Quantity, const EInventoryType InventoryType);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_TrySwapDraggedWithSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray);
+	void Server_TrySwapDraggedWithSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray, const EInventoryType InventoryType);
 
 	void AddInventoryForPickUp(const UMInventoryComponent* ReplicatedInventory);
 
@@ -52,17 +53,25 @@ public:
 
 	void UpdateInventoryWidget() const;
 
+	void UpdateCommunicationWidget() const;
+
 	bool ContainsPickUpInventory(const UMInventoryComponent* ReplicatedInventory) const { return InventoriesToRepresent.Contains(ReplicatedInventory); }
 
 	UFUNCTION(BlueprintCallable)
 	void CreateOrShowInventoryWidget();
+
+	UFUNCTION()
+	void CreateCommunicationWidget();
+
+	UFUNCTION()
+	void CloseCommunicationWidget() const;
 
 	/** A set of replicated inventories player is in contact with. */
 	UPROPERTY()
 	TSet<const UMInventoryComponent*> InventoriesToRepresent;
 
 private:
-	inline UMInventoryComponent* GetMyInventory() const;
+	inline UMInventoryComponent* GetMyInventory(EInventoryType InventoryType) const;
 
 	UPROPERTY()
 	FItem DraggedItem;
@@ -70,6 +79,10 @@ private:
 	/** Inventory widget. Never destroy it but only hide/show. */
 	UPROPERTY()
 	UMInventoryWidget* InventoryWidget;
+
+	/** Communication widget. Always create/destroy it instead of show/hide. */
+	UPROPERTY()
+	UMCommunicationWidget* CommunicationWidget;
 
 	/** Screen-side widget with drop available to pick up.\n
 	 * We never destroy it but only hide/show. Two main reasons for that:\n

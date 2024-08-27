@@ -8,6 +8,7 @@
 #include "GenericTeamAgentInterface.h"
 #include "MCharacter.generated.h"
 
+enum class EInventoryType : uint8;
 class UM2DRepresentationComponent;
 class UMStateModelComponent;
 class UMStatsModelComponent;
@@ -51,7 +52,10 @@ public:
 
 	UMIsActiveCheckerComponent* GetIsActiveCheckerComponent() const { return IsActiveCheckerComponent; }
 
+	UMInventoryComponent* GetInventoryByType(EInventoryType InventoryType) const;
 	UMInventoryComponent* GetInventoryComponent() const { return InventoryComponent; }
+	UMInventoryComponent* GetInventoryToOfferComponent() const { return InventoryToOffer; }
+	UMInventoryComponent* GetInventoryToRewardComponent() const { return InventoryToReward; }
 
 	UMAttackPuddleComponent* GetAttackPuddleComponent() const { return AttackPuddleComponent; }
 
@@ -149,6 +153,15 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UMCommunicationComponent* CommunicationComponent;
+
+	/** Helper inventory with empty slots player uses to offer their items to an interlocutor */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCommunicationManager)
+	UMInventoryComponent* InventoryToOffer;
+
+	// TODO: May remove this. Using interlocutor's CommunicationInventoryToOffer should be sufficient.
+	/** Helper inventory. Source of reward items which don't belong to a mob but can be given out */
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCommunicationManager)
+	UMInventoryComponent* InventoryToReward;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UMIsActiveCheckerComponent* IsActiveCheckerComponent;

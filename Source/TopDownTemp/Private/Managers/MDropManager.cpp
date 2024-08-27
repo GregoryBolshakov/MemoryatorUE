@@ -107,6 +107,7 @@ void UMDropManager::GiveBundleToPlayer(const FBundle& Bundle)
 TSubclassOf<UUserWidget> UMDropManager::gItemSlotWidgetBPClass = nullptr;
 TSubclassOf<UMPickUpBarWidget> UMDropManager::gPickUpBarWidgetBPClass = nullptr;
 TSubclassOf<UMInventoryWidget> UMDropManager::gInventoryWidgetBPClass = nullptr;
+TSubclassOf<UMCommunicationWidget> UMDropManager::gCommunicationWidgetBPClass = nullptr;
 
 void UMDropManager::PostInitProperties()
 {
@@ -115,4 +116,5 @@ void UMDropManager::PostInitProperties()
 	UMDropManager::gItemSlotWidgetBPClass = ItemSlotWidgetBPClass;
 	UMDropManager::gPickUpBarWidgetBPClass = PickUpBarWidgetBPClass;
 	UMDropManager::gInventoryWidgetBPClass = InventoryWidgetBPClass;
+	UMDropManager::gCommunicationWidgetBPClass = CommunicationWidgetBPClass;
 }

@@ -9,12 +9,11 @@
 #include "GenericTeamAgentInterface.h"
 #include "Components/MCommunicationComponent.h"
 #include "Components/MStateModelComponent.h"
+#include "Controllers/MInventoryControllerComponent.h"
+#include "Controllers/MPlayerController.h"
 
 AMCommunicationManager::AMCommunicationManager()
 {
-	InventoryToOffer = CreateDefaultSubobject<UMInventoryComponent>("InventoryToOffer");
-	InventoryToReward = CreateDefaultSubobject<UMInventoryComponent>("InventoryToReward");
-
 	//TODO: Either turn tick off when not speaking or disable the whole actor with MIsActiveCheckerComponent
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
@@ -29,43 +28,34 @@ void AMCommunicationManager::SpeakTo(AMCharacter* IN_InterlocutorCharacter)
 	if (FVector::Dist(PlayerCharacter->GetActorLocation(), IN_InterlocutorCharacter->GetActorLocation()) > SpeakingRange)
 		return;
 
-	// Remove the communication screen widget from previous conversation if it was present
-	if (CommunicationWidget && IN_InterlocutorCharacter != InterlocutorCharacter)
-	{
-		CommunicationWidget->RemoveFromParent(); // Remove widget instantly on purpose, don't need the hide animation overlapping the opening animation
-		CommunicationWidget = nullptr;
-	}
+	auto* PlayerController = Cast<AMPlayerController>(PlayerCharacter->GetController()); check(PlayerController);
+	auto* InventoryController = PlayerController->GetInventoryControllerComponent(); check(InventoryController);
+
+	InventoryController->CloseCommunicationWidget();
 
 	// TODO: Refactor using only CommunicationComponent
 	InterlocutorCharacter = IN_InterlocutorCharacter;
 	InterlocutorCharacter->GetCommunicationComponent()->SetInterlocutorCharacter(PlayerCharacter);
 	PlayerCharacter->GetStateModelComponent()->SetIsCommunicating(true);
 	InterlocutorCharacter->GetStateModelComponent()->SetIsCommunicating(true);
-	GenerateInventoryToReward();
-	InventoryToOffer->OnAnySlotChangedDelegate.AddLambda([this]
+	GenerateInventoryToReward(PlayerCharacter->GetInventoryToOfferComponent(), PlayerCharacter->GetInventoryToRewardComponent());
+	PlayerCharacter->GetInventoryToOfferComponent()->OnAnySlotChangedDelegate.AddLambda([this, PlayerCharacter]
 	{
-		GenerateInventoryToReward();
-		if (CommunicationWidget)
-		{
-			CommunicationWidget->ReCreateRewardItemSlotWidgets();
-		}
+		GenerateInventoryToReward(PlayerCharacter->GetInventoryToOfferComponent(), PlayerCharacter->GetInventoryToRewardComponent());
 	});
 
-	// Create the communication screen widget
-	if (!CommunicationWidget)
-	{
-		CommunicationWidget = CreateWidget<UMCommunicationWidget>(GetWorld()->GetFirstPlayerController(), CommunicationWidgetBPClass);
-		CommunicationWidget->AddToPlayerScreen();
-	}
+	InventoryController->CreateCommunicationWidget();
 }
 
 void AMCommunicationManager::StopSpeaking()
 {
-	if (CommunicationWidget)
-	{
-		CommunicationWidget->Close();
-		CommunicationWidget = nullptr;
-	}
+	const auto PlayerCharacter = Cast<AMCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	if (!IsValid(PlayerCharacter))
+		return;
+	auto* PlayerController = Cast<AMPlayerController>(PlayerCharacter->GetController()); check(PlayerController);
+	auto* InventoryController = PlayerController->GetInventoryControllerComponent(); check(InventoryController);
+
+	InventoryController->CloseCommunicationWidget();
 
 	// TODO: Refactor using only CommunicationComponent
 	if (InterlocutorCharacter)
@@ -75,12 +65,8 @@ void AMCommunicationManager::StopSpeaking()
 		InterlocutorCharacter = nullptr;
 	}
 
-	if (const auto PlayerCharacter = Cast<AMCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
-	{
-		PlayerCharacter->GetStateModelComponent()->SetIsCommunicating(false);
-	}
-
-	ReturnAllPlayerItems();
+	PlayerCharacter->GetStateModelComponent()->SetIsCommunicating(false);
+	CancelOffer(PlayerCharacter->GetInventoryToOfferComponent());
 }
 
 namespace
@@ -109,8 +95,6 @@ void AMCommunicationManager::BeginPlay()
 	Super::BeginPlay();
 
 	FGenericTeamId::SetAttitudeSolver(CustomTeamAttitudeSolver);
-
-	InventoryToOffer->Initialize(8, {});
 }
 
 void AMCommunicationManager::Tick(float DeltaSeconds)
@@ -131,7 +115,7 @@ void AMCommunicationManager::Tick(float DeltaSeconds)
 	}
 }
 
-void AMCommunicationManager::GenerateInventoryToReward()
+void AMCommunicationManager::GenerateInventoryToReward(const UMInventoryComponent* InventoryToOffer, UMInventoryComponent* InventoryToReward)
 {
 	InventoryToReward->Empty();
 	InventoryToReward->Initialize(0, {});
@@ -140,7 +124,7 @@ void AMCommunicationManager::GenerateInventoryToReward()
 
 	if (InventoryToOffer->GetSlots().IsEmpty())
 	{
-		//TODO: Check if quest is complete and offer some reward, etc. 
+		//TODO: Check if quest is complete and offer some reward, etc.
 	}
 	else
 	{
@@ -167,7 +151,7 @@ void AMCommunicationManager::GenerateInventoryToReward()
 	}
 }
 
-void AMCommunicationManager::ReturnAllPlayerItems()
+void AMCommunicationManager::CancelOffer(UMInventoryComponent* InventoryToOffer) const
 {
 	if (const auto World = GetWorld())
 	{
@@ -188,7 +172,7 @@ void AMCommunicationManager::ReturnAllPlayerItems()
 	}
 }
 
-void AMCommunicationManager::MakeADeal()
+void AMCommunicationManager::MakeADeal(UMInventoryComponent* InventoryToOffer, UMInventoryComponent* InventoryToReward)
 {
 	auto InterlocutorInventory = InterlocutorCharacter->GetInventoryComponent();
 	if (!InterlocutorInventory) { check(false); return; }

@@ -16,7 +16,8 @@ void UMCommunicationWidget::NativeConstruct()
 	Super::NativeConstruct();
 	if (const auto CommunicationManager = AMGameMode::GetCommunicationManager(this))
 	{
-		pTakeAllButton->OnClicked.AddDynamic(CommunicationManager, &AMCommunicationManager::MakeADeal);
+		// TODO: Finish refactoring. MInventoryControllerComponent should call MakeADeal, maybe
+		//pTakeAllButton->OnClicked.AddDynamic(CommunicationManager, &AMCommunicationManager::MakeADeal);
 	}
 }
 
@@ -31,15 +32,15 @@ void UMCommunicationWidget::NativeDestruct()
 	}
 }
 
-void UMCommunicationWidget::CreateItemSlotWidgets()
+void UMCommunicationWidget::CreateSlots(const UMInventoryComponent* InventoryToOffer, const UMInventoryComponent* InventoryToReward)
 {
-	if (!ItemSlotWidgetBPClass || !pMyItemSlotsWrapBox || !pTheirItemSlotsWrapBox || !pRewardItemSlotsWrapBox)
+	if (!ItemSlotWidgetBPClass || !pMyItemSlotsWrapBox || !pTheirItemSlotsWrapBox || !pRewardItemSlotsWrapBox || !InventoryToOffer || !InventoryToReward)
 	{
 		check(false);
 		return;
 	}
 
-	const auto pWorld = GetWorld();
+	const auto* pWorld = GetWorld();
 	if (!pWorld) { check(false); return; }
 
 	const AMCommunicationManager* CommunicationManager = AMGameMode::GetCommunicationManager(this);
@@ -52,56 +53,12 @@ void UMCommunicationWidget::CreateItemSlotWidgets()
 		}
 	}
 
-	const auto InventoryToOffer = CommunicationManager->GetInventoryToOffer(); // Place player can put their items to offer
-	if (!InventoryToOffer) return;
+	UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToOffer, pMyItemSlotsWrapBox);
 
-	// TODO: Support it. Temporary disabled due to multiplayer refactoring
-	//UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToOffer, pMyItemSlotsWrapBox);
-
-	const auto InterlocutorInventory = InterlocutorCharacter->GetInventoryComponent();
+	const auto* InterlocutorInventory = InterlocutorCharacter->GetInventoryComponent();
 	if (!InterlocutorInventory) return;
 
-	//UMInventoryWidget::CreateItemSlotWidgets(this, InterlocutorInventory, pTheirItemSlotsWrapBox);
+	UMInventoryWidget::CreateItemSlotWidgets(this, InterlocutorInventory, pTheirItemSlotsWrapBox);
 
-	const auto InventoryToReward = CommunicationManager->GetInventoryToReward();
-	if (!InventoryToReward) return;
-
-	//UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
-}
-
-void UMCommunicationWidget::ReCreateRewardItemSlotWidgets()
-{
-	if (const auto CommunicationManager = AMGameMode::GetCommunicationManager(this))
-	{
-		if (const auto InventoryToReward = CommunicationManager->GetInventoryToReward())
-		{
-			pRewardItemSlotsWrapBox->ClearChildren();
-			// TODO: Support it. Temporary disabled due to multiplayer refactoring
-			//UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
-
-			// Enable/Disable TakeAllButton depending on the slots locked state
-			bool bHasAnyUnlocked = false;
-			for (const auto ItemSlot : InventoryToReward->GetSlots())
-			{
-				if (!ItemSlot.CheckFlag(FSlot::ESlotFlags::Locked)) // At least one slot isn't locked
-				{
-					bHasAnyUnlocked = true;
-					if (pTakeAllButton)
-					{
-						pTakeAllButton->SetVisibility(ESlateVisibility::Visible);
-						pTakeAllButton->SetIsEnabled(true);
-					}
-					break;
-				}
-			}
-			if (!bHasAnyUnlocked && pTakeAllButton)
-			{
-				pTakeAllButton->SetVisibility(ESlateVisibility::Hidden);
-				pTakeAllButton->SetIsEnabled(false);
-			}
-
-			return;
-		}
-	}
-	check(false);
+	UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
 }
