@@ -9,27 +9,17 @@
 #include "UI/MInventoryWidget.h"
 #include "Managers/MWorldGenerator.h"
 #include "Components/Button.h"
+#include "Components/MCommunicationComponent.h"
 #include "Framework/MGameMode.h"
 
-void UMCommunicationWidget::NativeConstruct()
-{
-	Super::NativeConstruct();
-	if (const auto CommunicationManager = AMGameMode::GetCommunicationManager(this))
-	{
-		// TODO: Finish refactoring. MInventoryControllerComponent should call MakeADeal, maybe
-		//pTakeAllButton->OnClicked.AddDynamic(CommunicationManager, &AMCommunicationManager::MakeADeal);
-	}
-}
+// So far we don't support cross mob communication, and the widget belongs to Player.
+// But it is very likely we will start supporting it.
 
 void UMCommunicationWidget::NativeDestruct()
 {
 	Super::NativeDestruct();
 
-	if (const auto CommunicationManager = AMGameMode::GetCommunicationManager(this))
-	{
-			CommunicationManager->StopSpeaking();
-			pTakeAllButton->OnClicked.RemoveAll(CommunicationManager);
-	}
+	// TODO: Unbind delegate bindings if any
 }
 
 void UMCommunicationWidget::CreateSlots(const UMInventoryComponent* InventoryToOffer, const UMInventoryComponent* InventoryToReward)
@@ -40,25 +30,21 @@ void UMCommunicationWidget::CreateSlots(const UMInventoryComponent* InventoryToO
 		return;
 	}
 
-	const auto* pWorld = GetWorld();
-	if (!pWorld) { check(false); return; }
-
-	const AMCommunicationManager* CommunicationManager = AMGameMode::GetCommunicationManager(this);
-	const AMCharacter* InterlocutorCharacter = nullptr;
-	if (CommunicationManager)
+	if (auto* PlayerCharacter = Cast<AMCharacter>(GetOwningPlayerPawn()))
 	{
-		if (InterlocutorCharacter = CommunicationManager->GetInterlocutorCharacter(); !InterlocutorCharacter)
+		if (auto* CommunicationComponent = PlayerCharacter->GetCommunicationComponent())
 		{
-			return;
+			if (const auto* InterlocutorCharacter = CommunicationComponent->GetInterlocutorCharacter())
+			{
+				UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToOffer, pMyItemSlotsWrapBox);
+
+				const auto* InterlocutorInventory = InterlocutorCharacter->GetInventoryComponent();
+				if (!InterlocutorInventory) return;
+
+				UMInventoryWidget::CreateItemSlotWidgets(this, InterlocutorInventory, pTheirItemSlotsWrapBox);
+
+				UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
+			}
 		}
 	}
-
-	UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToOffer, pMyItemSlotsWrapBox);
-
-	const auto* InterlocutorInventory = InterlocutorCharacter->GetInventoryComponent();
-	if (!InterlocutorInventory) return;
-
-	UMInventoryWidget::CreateItemSlotWidgets(this, InterlocutorInventory, pTheirItemSlotsWrapBox);
-
-	UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
 }

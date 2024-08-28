@@ -158,7 +158,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCommunicationManager)
 	UMInventoryComponent* InventoryToOffer;
 
-	// TODO: May remove this. Using interlocutor's CommunicationInventoryToOffer should be sufficient.
 	/** Helper inventory. Source of reward items which don't belong to a mob but can be given out */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = MCommunicationManager)
 	UMInventoryComponent* InventoryToReward;

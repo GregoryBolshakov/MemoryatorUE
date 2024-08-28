@@ -14,14 +14,13 @@ class TOPDOWNTEMP_API UMCommunicationWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-
-	virtual void NativeConstruct() override;
-
+	/** Only for unbinding delegates */
 	virtual void NativeDestruct() override;
 
 	UFUNCTION(BlueprintCallable)
 	void CreateSlots(const UMInventoryComponent* InventoryToOffer, const UMInventoryComponent* InventoryToReward);
 
+	/** Only plays an animation and removes from parent. Nothing else. */
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void Close();
 

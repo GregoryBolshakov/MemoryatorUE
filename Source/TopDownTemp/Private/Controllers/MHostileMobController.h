@@ -1,15 +1,15 @@
 #pragma once
 
-#include "MMobControllerBase.h"
-#include "MHostileMobController.generated.h"
+//#include "MMobControllerBase.h"
+//#include "MHostileMobController.generated.h"
 
-class AMOutpostHouse;
+/*class AMOutpostHouse;
 class AMCharacter;
 
 //~=============================================================================
-/**
- * Manages a hostile NPC's behavior in the game. Should be refactored in the future, currently needed for prototyping
- */
+//
+// Manages a hostile NPC's behavior in the game. Should be refactored in the future, currently needed for prototyping
+//
 UCLASS(Blueprintable)
 class TOPDOWNTEMP_API AMHostileMobController : public AMMobControllerBase
 {
@@ -42,4 +42,4 @@ private:
 
 	UPROPERTY()
 	APawn* Victim;
-};
+};*/

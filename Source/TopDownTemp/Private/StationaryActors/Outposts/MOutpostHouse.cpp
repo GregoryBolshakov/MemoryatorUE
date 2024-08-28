@@ -1,6 +1,5 @@
 #include "MOutpostHouse.h"
 #include "Characters/MCharacter.h"
-#include "Controllers/MMobControllerBase.h"
 
 bool AMOutpostHouse::MoveResidentIn(AMCharacter* NewResident)
 {

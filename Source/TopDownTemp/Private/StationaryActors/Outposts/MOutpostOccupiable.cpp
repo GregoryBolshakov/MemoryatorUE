@@ -2,7 +2,6 @@
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Characters/MCharacter.h"
-#include "Controllers/MMobControllerBase.h"
 #include "Controllers/MNPCController.h"
 
 AMCharacter* AMOutpostOccupiable::GetAnyOccupant() const

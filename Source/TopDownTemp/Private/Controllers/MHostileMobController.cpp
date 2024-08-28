@@ -1,6 +1,6 @@
 #include "MHostileMobController.h"
 
-#include "Components/M2DRepresentationComponent.h"
+/*#include "Components/M2DRepresentationComponent.h"
 #include "Components/MAttackPuddleComponent.h"
 #include "Characters/MMemoryator.h"
 #include "Characters/MMob.h"
@@ -285,5 +285,4 @@ void AMHostileMobController::OnHit()
 			}
 		}
 	}
-}
-
+}*/

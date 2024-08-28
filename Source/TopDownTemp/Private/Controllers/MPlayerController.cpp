@@ -8,12 +8,12 @@
 #include "Characters/MMemoryator.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Managers/MConsoleCommandsManager.h"
-#include "MInterfaceMobController.h"
 #include "Camera/CameraComponent.h"
 #include "Characters/MMob.h"
 #include "Components/MStateModelComponent.h"
 #include "Managers/MWorldGenerator.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/MCommunicationComponent.h"
 #include "Components/MStatsModelComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -356,9 +356,9 @@ void AMPlayerController::OnLeftMouseClick()
 		AMMob* ClickedMob = Cast<AMMob>(HitResult.GetActor());
 		if (ClickedMob)
 		{
-			if (const auto CommunicationManager = AMGameMode::GetCommunicationManager(this))
+			if (const auto CommunicationComponent = GetPawn()->GetComponentByClass<UMCommunicationComponent>())
 			{
-				CommunicationManager->SpeakTo(ClickedMob);
+				CommunicationComponent->SpeakTo(ClickedMob);
 			}
 		}
 	}

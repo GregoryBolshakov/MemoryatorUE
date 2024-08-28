@@ -2,13 +2,27 @@
 
 #include "AIController.h"
 #include "Characters/MCharacterSpecificTypes.h"
-#include "MInterfaceMobController.h"
 #include "MNPCController.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnRetreat);
 
 class UMStateModelComponent;
 class UAIPerceptionComponent;
+
+UENUM(BlueprintType)
+enum class EMobBehaviors : uint8
+{
+	Idle = 0,
+	Walk,
+	Chase,
+	Fight,
+	Follow,
+	Speak,
+	Guard,
+	Retreat,
+	Hide,
+	Communicate,
+};
 
 //~=============================================================================
 /**
