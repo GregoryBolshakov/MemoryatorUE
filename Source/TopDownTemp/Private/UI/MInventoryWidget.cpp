@@ -23,18 +23,7 @@ void UMInventoryWidget::CreateSlots(const UMInventoryComponent* InventoryCompone
 		return;
 
 	// Empty the list of items to create them form scratch
-	for ( int32 ChildIndex = pItemSlotsWrapBox->GetChildrenCount() - 1; ChildIndex >= 0; ChildIndex-- )
-	{
-		if (const auto InventorySlotWidget = Cast<UMInventorySlotWidget>(pItemSlotsWrapBox->GetChildAt(ChildIndex)))
-		{
-			if (InventorySlotWidget->IsDraggingAWidget())
-			{
-				InventorySlotWidget->SetVisibility(ESlateVisibility::Collapsed);
-				continue; // TODO: Also swap with the first item to boost the loop
-			}
-		}
-		pItemSlotsWrapBox->RemoveChildAt(ChildIndex);
-	}
+	RemoveItemSlotWidgets(pItemSlotsWrapBox);
 
 	CreateItemSlotWidgets(this, InventoryComponent, pItemSlotsWrapBox);
 }
@@ -60,6 +49,12 @@ void UMInventoryWidget::CreateItemSlotWidgets(UUserWidget* pOwner, const UMInven
 	for (int Index = 0; Index < pInventoryComponent->GetSlotsConst().Num(); ++Index)
 	{
 		const auto& Slot = pInventoryComponent->GetSlotsConst()[Index];
+
+		if (Slot.CheckFlag(FSlot::ESlotFlags::Secret) && Slot.Item.Quantity == 0)
+		{
+			continue; // Don't create a widget for a secret slot if it's empty
+		}
+
 		const auto SlotWidget = CreateWidget<UMInventorySlotWidget>(pOwner, UMDropManager::gItemSlotWidgetBPClass);
 		if (!SlotWidget)
 		{
@@ -111,5 +106,22 @@ void UMInventoryWidget::CreateItemSlotWidgets(UUserWidget* pOwner, const UMInven
 			}
 		}
 		pItemSlotsWrapBox->AddChild(SlotWidget);
+	}
+}
+
+void UMInventoryWidget::RemoveItemSlotWidgets(UWrapBox* ItemSlotsWrapBox)
+{
+	// Empty the list of items to create them form scratch
+	for ( int32 ChildIndex = ItemSlotsWrapBox->GetChildrenCount() - 1; ChildIndex >= 0; ChildIndex-- )
+	{
+		if (const auto InventorySlotWidget = Cast<UMInventorySlotWidget>(ItemSlotsWrapBox->GetChildAt(ChildIndex)))
+		{
+			if (InventorySlotWidget->IsDraggingAWidget())
+			{
+				InventorySlotWidget->SetVisibility(ESlateVisibility::Collapsed);
+				continue; // TODO: Also swap with the first item to boost the loop
+			}
+		}
+		ItemSlotsWrapBox->RemoveChildAt(ChildIndex);
 	}
 }

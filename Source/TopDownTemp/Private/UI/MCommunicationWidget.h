@@ -14,6 +14,7 @@ class TOPDOWNTEMP_API UMCommunicationWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	virtual void NativeConstruct() override;
 	/** Only for unbinding delegates */
 	virtual void NativeDestruct() override;
 
@@ -25,6 +26,9 @@ public:
 	void Close();
 
 protected:
+
+	UFUNCTION()
+	void OnTakeAllClicked();
 
 	UPROPERTY(EditDefaultsOnly, Category=MInventoryWidgetSettings)
 	TSubclassOf<UUserWidget> ItemSlotWidgetBPClass;

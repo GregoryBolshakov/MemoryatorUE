@@ -30,6 +30,9 @@ public:
 	static void CreateItemSlotWidgets(UUserWidget* pOwner, const UMInventoryComponent* pInventoryComponent,
 									  UWrapBox* pItemSlotsWrapBox);
 
+	UFUNCTION()
+	static void RemoveItemSlotWidgets(UWrapBox* ItemSlotsWrapBox);
+
 protected:
 	UPROPERTY(BlueprintReadWrite, Category=MInventoryWidgetSettings)
 	UWrapBox* pItemSlotsWrapBox;

@@ -14,6 +14,8 @@ class TOPDOWNTEMP_API UMCommunicationComponent : public UActorComponent
 	GENERATED_BODY()
 
 public:
+	UMCommunicationComponent();
+
 	const AMCharacter* GetInterlocutorCharacter() const { return InterlocutorCharacter; }
 
 	FORCEINLINE void SetInterlocutorCharacter(AMCharacter* Interlocutor);
@@ -45,5 +47,5 @@ protected:
 	FPriceCoefficientsSet PriceCoefficientsSet;
 
 	UPROPERTY()
-	AMCharacter* InterlocutorCharacter;
+	AMCharacter* InterlocutorCharacter = nullptr;
 };

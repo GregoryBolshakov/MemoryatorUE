@@ -6,6 +6,12 @@
 #include "Controllers/MPlayerController.h"
 #include "Framework/MGameMode.h"
 
+UMCommunicationComponent::UMCommunicationComponent()
+{
+	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bStartWithTickEnabled = true;
+}
+
 void UMCommunicationComponent::SetInterlocutorCharacter(AMCharacter* Interlocutor)
 {
 	if (auto* MCharacter = Cast<AMCharacter>(GetOwner()))
@@ -38,9 +44,16 @@ void UMCommunicationComponent::SpeakTo(AMCharacter* IN_InterlocutorCharacter)
 
 	GenerateInventoryToReward(OwnerCharacter->GetInventoryToOfferComponent(), OwnerCharacter->GetInventoryToRewardComponent());
 	// TODO: Remove delegate bindings on StopSpeaking
-	OwnerCharacter->GetInventoryToOfferComponent()->OnAnySlotChangedDelegate.AddLambda([this, OwnerCharacter]
+	OwnerCharacter->GetInventoryToOfferComponent()->OnAnySlotChangedDelegate.AddLambda([this, OwnerCharacter, PlayerController]
 	{
 		GenerateInventoryToReward(OwnerCharacter->GetInventoryToOfferComponent(), OwnerCharacter->GetInventoryToRewardComponent());
+		if (PlayerController)
+		{
+			if (auto* InventoryController = PlayerController->GetInventoryControllerComponent())
+			{
+				InventoryController->UpdateCommunicationWidget();
+			}
+		}
 	});
 
 	InventoryController->CreateCommunicationWidget();
@@ -51,19 +64,24 @@ void UMCommunicationComponent::StopSpeaking()
 	const auto OwnerCharacter = Cast<AMCharacter>(GetOwner());
 	if (!IsValid(OwnerCharacter))
 		return;
-	auto* PlayerController = Cast<AMPlayerController>(OwnerCharacter->GetController()); check(PlayerController);
-	auto* InventoryController = PlayerController->GetInventoryControllerComponent(); check(InventoryController);
 
-	InventoryController->CloseCommunicationWidget();
-
-	// TODO: Refactor using only CommunicationComponent
-	if (InterlocutorCharacter)
+	// It may also be a non-player AMCharacter. TODO: Handle this when refactoring for generic communication widget
+	if (auto* PlayerController = Cast<AMPlayerController>(OwnerCharacter->GetController()))
 	{
-		InterlocutorCharacter->GetCommunicationComponent()->SetInterlocutorCharacter(nullptr);
-		SetInterlocutorCharacter(nullptr);
-	}
+		if (auto* InventoryController = PlayerController->GetInventoryControllerComponent())
+		{
+			InventoryController->CloseCommunicationWidget();
 
-	CancelOffer(OwnerCharacter->GetInventoryToOfferComponent());
+			// TODO: Refactor using only CommunicationComponent
+			if (InterlocutorCharacter)
+			{
+				InterlocutorCharacter->GetCommunicationComponent()->SetInterlocutorCharacter(nullptr);
+				SetInterlocutorCharacter(nullptr);
+			}
+
+			CancelOffer(OwnerCharacter->GetInventoryToOfferComponent());
+		}
+	}
 }
 
 void UMCommunicationComponent::GenerateInventoryToReward(const UMInventoryComponent* InventoryToOffer, UMInventoryComponent* InventoryToReward) const

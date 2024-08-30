@@ -37,9 +37,9 @@ struct FSlot
 
 	enum class ESlotFlags : uint8 {
 		None = 0x00,
-		Locked = 0x01,
-		Secret = 0x02,
-		PreviewOnly = 0x04
+		Locked = 0x01, // Not used so far
+		Secret = 0x02, // E.g. when trading with a mob, you can see their inventory, but not know the exact items.
+		PreviewOnly = 0x04 // Items are not allowed to interact with.
 	};
 
 	void SetFlag(ESlotFlags flag) {

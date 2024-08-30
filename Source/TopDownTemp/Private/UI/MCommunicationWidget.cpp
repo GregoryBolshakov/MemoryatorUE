@@ -15,6 +15,13 @@
 // So far we don't support cross mob communication, and the widget belongs to Player.
 // But it is very likely we will start supporting it.
 
+void UMCommunicationWidget::NativeConstruct()
+{
+	Super::NativeConstruct();
+
+	pTakeAllButton->OnClicked.AddDynamic(this, &UMCommunicationWidget::OnTakeAllClicked);
+}
+
 void UMCommunicationWidget::NativeDestruct()
 {
 	Super::NativeDestruct();
@@ -30,6 +37,11 @@ void UMCommunicationWidget::CreateSlots(const UMInventoryComponent* InventoryToO
 		return;
 	}
 
+	// Empty the lists of items to create them form scratch
+	UMInventoryWidget::RemoveItemSlotWidgets(pMyItemSlotsWrapBox);
+	UMInventoryWidget::RemoveItemSlotWidgets(pTheirItemSlotsWrapBox);
+	UMInventoryWidget::RemoveItemSlotWidgets(pRewardItemSlotsWrapBox);
+
 	if (auto* PlayerCharacter = Cast<AMCharacter>(GetOwningPlayerPawn()))
 	{
 		if (auto* CommunicationComponent = PlayerCharacter->GetCommunicationComponent())
@@ -44,7 +56,21 @@ void UMCommunicationWidget::CreateSlots(const UMInventoryComponent* InventoryToO
 				UMInventoryWidget::CreateItemSlotWidgets(this, InterlocutorInventory, pTheirItemSlotsWrapBox);
 
 				UMInventoryWidget::CreateItemSlotWidgets(this, InventoryToReward, pRewardItemSlotsWrapBox);
+
+				const bool RewardIsEmpty = InventoryToReward->GetSlots().IsEmpty();
+				pTakeAllButton->SetVisibility(RewardIsEmpty ? ESlateVisibility::Hidden : ESlateVisibility::Visible);
 			}
+		}
+	}
+}
+
+void UMCommunicationWidget::OnTakeAllClicked()
+{
+	if (auto* PlayerCharacter = Cast<AMCharacter>(GetOwningPlayerPawn()))
+	{
+		if (auto* CommunicationComponent = PlayerCharacter->GetCommunicationComponent())
+		{
+			CommunicationComponent->MakeADeal(PlayerCharacter->GetInventoryToOfferComponent(), PlayerCharacter->GetInventoryToRewardComponent());
 		}
 	}
 }
