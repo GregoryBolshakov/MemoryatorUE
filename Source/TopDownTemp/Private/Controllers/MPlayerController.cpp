@@ -358,7 +358,7 @@ void AMPlayerController::OnLeftMouseClick()
 		{
 			if (const auto CommunicationComponent = GetPawn()->GetComponentByClass<UMCommunicationComponent>())
 			{
-				CommunicationComponent->SpeakTo(ClickedMob);
+				CommunicationComponent->Server_TalkToCharacter(ClickedMob);
 			}
 		}
 	}

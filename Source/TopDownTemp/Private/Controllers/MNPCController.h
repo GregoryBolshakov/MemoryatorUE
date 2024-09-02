@@ -17,7 +17,7 @@ enum class EMobBehaviors : uint8
 	Chase,
 	Fight,
 	Follow,
-	Speak,
+	Talk,
 	Guard,
 	Retreat,
 	Hide,

@@ -640,6 +640,7 @@ void UMInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(UMInventoryComponent, Slots);
+	DOREPLIFETIME(UMInventoryComponent, InventoryType);
 }
 
 void UMInventoryComponent::OnRep_Slots()
@@ -660,13 +661,13 @@ void UMInventoryComponent::OnRep_Slots()
 				if (PlayerMCharacter->GetInventoryToOfferComponent() == this)
 				{
 					// If the inventory is InventoryToOffer, re-create the entire communication widget contents
-					InventoryController->UpdateCommunicationWidget();
+					InventoryController->Client_UpdateCommunicationWidget();
 					return;
 				}
 				if (PlayerMCharacter->GetInventoryToRewardComponent() == this)
 				{
 					// If the inventory is InventoryToReward, re-create the entire communication widget contents
-					InventoryController->UpdateCommunicationWidget();
+					InventoryController->Client_UpdateCommunicationWidget();
 					return;
 				}
 			}

@@ -94,7 +94,6 @@ void AMPickableActor::OnItemChanged(int NewItemID, int NewQuantity)
 	if (InventoryComponent->GetItemCopies().IsEmpty() && bDisappearIfEmptyInventory)
 	{
 		PickedUpCompletelyDelegate.Broadcast(GetClass());
-		MPlayerController->GetInventoryControllerComponent()->RemoveInventoryForPickUp(InventoryComponent);
 		Destroy();
 	}
 }

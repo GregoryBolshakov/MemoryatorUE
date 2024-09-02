@@ -45,9 +45,15 @@ AMCharacter::AMCharacter(const FObjectInitializer& ObjectInitializer)
 	InventoryComponent->SetNetAddressable();
 
 	CommunicationComponent = CreateDefaultSubobject<UMCommunicationComponent>(TEXT("CommunicationComponent"));
+	CommunicationComponent->SetIsReplicated(true);
+	CommunicationComponent->SetNetAddressable();
 	InventoryToOffer = CreateDefaultSubobject<UMInventoryComponent>("InventoryToOffer");
+	InventoryToOffer->SetIsReplicated(true);
+	InventoryToOffer->SetNetAddressable();
 	InventoryToOffer->InventoryType = EInventoryType::ToOffer;
 	InventoryToReward = CreateDefaultSubobject<UMInventoryComponent>("InventoryToReward");
+	InventoryToReward->SetIsReplicated(true);
+	InventoryToReward->SetNetAddressable();
 	InventoryToReward->InventoryType = EInventoryType::ToReward;
 
 	IsActiveCheckerComponent = CreateDefaultSubobject<UMIsActiveCheckerComponent>(TEXT("IsActiveChecker"));

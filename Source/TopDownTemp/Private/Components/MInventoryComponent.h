@@ -142,7 +142,7 @@ public:
 
 	FOnAnySlotChanged OnAnySlotChangedDelegate;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Replicated)
 	EInventoryType InventoryType;
 
 protected:

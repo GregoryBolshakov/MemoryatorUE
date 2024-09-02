@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/MInventoryComponent.h"
+#include "UI/MCommunicationWidget.h"
 #include "MInventoryControllerComponent.generated.h"
 
 //TODO: Move to proper folder
@@ -53,19 +54,21 @@ public:
 
 	void UpdateInventoryWidget() const;
 
-	void UpdateCommunicationWidget() const;
+	UFUNCTION(Client, Reliable)
+	void Client_UpdateCommunicationWidget() const;
 
 	bool ContainsPickUpInventory(const UMInventoryComponent* ReplicatedInventory) const { return InventoriesToRepresent.Contains(ReplicatedInventory); }
 
 	UFUNCTION(BlueprintCallable)
 	void CreateOrShowInventoryWidget();
 
-	UFUNCTION()
-	void CreateCommunicationWidget();
+	UFUNCTION(Client, Reliable)
+	void Client_CreateCommunicationWidget();
 
-	UFUNCTION()
-	void CloseCommunicationWidget() const;
+	UFUNCTION(Client, Reliable)
+	void Client_CloseCommunicationWidget();
 
+	// TODO: Make it clearer. They are not really replicated. It seems like they get set on both sides independently
 	/** A set of replicated inventories player is in contact with. */
 	UPROPERTY()
 	TSet<const UMInventoryComponent*> InventoriesToRepresent;
@@ -73,6 +76,7 @@ public:
 private:
 	inline UMInventoryComponent* GetMyInventory(EInventoryType InventoryType) const;
 
+	/** Server only */
 	UPROPERTY()
 	FItem DraggedItem;
 

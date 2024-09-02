@@ -25,25 +25,31 @@ void UMCommunicationComponent::SetInterlocutorCharacter(AMCharacter* Interlocuto
 	}
 }
 
-void UMCommunicationComponent::SpeakTo(AMCharacter* IN_InterlocutorCharacter)
+void UMCommunicationComponent::Server_TalkToCharacter_Implementation(AMCharacter* IN_InterlocutorCharacter)
 {
+	// Do nothing if already talking to the interlocutor
+	if (InterlocutorCharacter && InterlocutorCharacter == IN_InterlocutorCharacter)
+	{
+		return;
+	}
+
 	const auto OwnerCharacter = Cast<AMCharacter>(GetOwner());
 	if (!IsValid(OwnerCharacter) || !IsValid(IN_InterlocutorCharacter)) { check(false); return; }
 
-	const float SpeakingRange = OwnerCharacter->GetStatsModelComponent()->GetSpeakingRange();
-	if (FVector::Dist(OwnerCharacter->GetActorLocation(), IN_InterlocutorCharacter->GetActorLocation()) > SpeakingRange)
+	const float TalkingRange = OwnerCharacter->GetStatsModelComponent()->GetTalkingRange();
+	if (FVector::Dist(OwnerCharacter->GetActorLocation(), IN_InterlocutorCharacter->GetActorLocation()) > TalkingRange)
 		return;
 
 	auto* PlayerController = Cast<AMPlayerController>(OwnerCharacter->GetController()); check(PlayerController);
 	auto* InventoryController = PlayerController->GetInventoryControllerComponent(); check(InventoryController);
 
-	InventoryController->CloseCommunicationWidget();
+	InventoryController->Client_CloseCommunicationWidget();
 
 	IN_InterlocutorCharacter->GetCommunicationComponent()->SetInterlocutorCharacter(OwnerCharacter);
 	SetInterlocutorCharacter(IN_InterlocutorCharacter);
 
 	GenerateInventoryToReward(OwnerCharacter->GetInventoryToOfferComponent(), OwnerCharacter->GetInventoryToRewardComponent());
-	// TODO: Remove delegate bindings on StopSpeaking
+	// TODO: Remove delegate bindings on StopTalking
 	OwnerCharacter->GetInventoryToOfferComponent()->OnAnySlotChangedDelegate.AddLambda([this, OwnerCharacter, PlayerController]
 	{
 		GenerateInventoryToReward(OwnerCharacter->GetInventoryToOfferComponent(), OwnerCharacter->GetInventoryToRewardComponent());
@@ -51,15 +57,15 @@ void UMCommunicationComponent::SpeakTo(AMCharacter* IN_InterlocutorCharacter)
 		{
 			if (auto* InventoryController = PlayerController->GetInventoryControllerComponent())
 			{
-				InventoryController->UpdateCommunicationWidget();
+				InventoryController->Client_UpdateCommunicationWidget();
 			}
 		}
 	});
 
-	InventoryController->CreateCommunicationWidget();
+	InventoryController->Client_CreateCommunicationWidget();
 }
 
-void UMCommunicationComponent::StopSpeaking()
+void UMCommunicationComponent::Server_StopTalking_Implementation()
 {
 	const auto OwnerCharacter = Cast<AMCharacter>(GetOwner());
 	if (!IsValid(OwnerCharacter))
@@ -70,7 +76,7 @@ void UMCommunicationComponent::StopSpeaking()
 	{
 		if (auto* InventoryController = PlayerController->GetInventoryControllerComponent())
 		{
-			InventoryController->CloseCommunicationWidget();
+			InventoryController->Client_CloseCommunicationWidget();
 
 			// TODO: Refactor using only CommunicationComponent
 			if (InterlocutorCharacter)
@@ -79,7 +85,7 @@ void UMCommunicationComponent::StopSpeaking()
 				SetInterlocutorCharacter(nullptr);
 			}
 
-			CancelOffer(OwnerCharacter->GetInventoryToOfferComponent());
+			Server_CancelOffer(OwnerCharacter->GetInventoryToOfferComponent());
 		}
 	}
 }
@@ -120,7 +126,7 @@ void UMCommunicationComponent::GenerateInventoryToReward(const UMInventoryCompon
 	}
 }
 
-void UMCommunicationComponent::MakeADeal(UMInventoryComponent* InventoryToOffer,
+void UMCommunicationComponent::Server_MakeADeal_Implementation(UMInventoryComponent* InventoryToOffer,
 	UMInventoryComponent* InventoryToReward)
 {
 	auto InterlocutorInventory = InterlocutorCharacter->GetInventoryComponent();
@@ -129,9 +135,9 @@ void UMCommunicationComponent::MakeADeal(UMInventoryComponent* InventoryToOffer,
 	// Player takes all unlocked items from the reward inventory
 	if (const auto World = GetWorld())
 	{
-		if (const auto PlayerCharacter = Cast<AMCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0)))
+		if (const auto OwnerCharacter = Cast<AMCharacter>(GetOwner()))
 		{
-			if (const auto PlayerInventory = PlayerCharacter->GetInventoryComponent())
+			if (const auto PlayerInventory = OwnerCharacter->GetInventoryComponent())
 			{
 				for (const auto& Slot : InventoryToReward->GetSlots())
 				{
@@ -159,22 +165,19 @@ void UMCommunicationComponent::MakeADeal(UMInventoryComponent* InventoryToOffer,
 	InventoryToOffer->Empty();
 }
 
-void UMCommunicationComponent::CancelOffer(UMInventoryComponent* InventoryToOffer) const
+void UMCommunicationComponent::Server_CancelOffer_Implementation(UMInventoryComponent* InventoryToOffer) const
 {
-	if (const auto World = GetWorld())
+	if (const auto OwnerCharacter = Cast<AMCharacter>(GetOwner()))
 	{
-		if (const auto PlayerCharacter = Cast<AMCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0)))
+		if (const auto OwnerInventory = OwnerCharacter->GetInventoryComponent())
 		{
-			if (const auto PlayerInventory = PlayerCharacter->GetInventoryComponent())
+			// Return all the items to the owner inventory. If doesn't fit, spawn as a drop
+			for (auto& ItemSlot : InventoryToOffer->GetSlots())
 			{
-				// Return all the items to the player inventory. If doesn't fit, spawn as a drop
-				for (auto& ItemSlot : InventoryToOffer->GetSlots())
-				{
-					if (ItemSlot.Item.Quantity <= 0)
-						continue;
-					PlayerInventory->StoreItem(ItemSlot.Item);
-					ItemSlot.Item = {0, 0};
-				}
+				if (ItemSlot.Item.Quantity <= 0)
+					continue;
+				OwnerInventory->StoreItem(ItemSlot.Item);
+				ItemSlot.Item = {0, 0};
 			}
 		}
 	}
@@ -190,11 +193,18 @@ void UMCommunicationComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	{
 		if (const auto OwnerCharacter = Cast<AMCharacter>(GetOwner()))
 		{
-			const float SpeakingRange = OwnerCharacter->GetStatsModelComponent()->GetSpeakingRange();
-			if (FVector::Dist(OwnerCharacter->GetActorLocation(), InterlocutorCharacter->GetActorLocation()) > SpeakingRange)
+			const float TalkingRange = OwnerCharacter->GetStatsModelComponent()->GetTalkingRange();
+			if (FVector::Dist(OwnerCharacter->GetActorLocation(), InterlocutorCharacter->GetActorLocation()) > TalkingRange)
 			{
-				StopSpeaking();
+				Server_StopTalking();
 			}
 		}
 	}
+}
+
+void UMCommunicationComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UMCommunicationComponent, InterlocutorCharacter);
 }

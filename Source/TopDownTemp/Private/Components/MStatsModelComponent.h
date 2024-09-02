@@ -58,7 +58,7 @@ public:
 	float GetSprintSpeed() const { return SprintSpeed; }
 	
 	UFUNCTION(BlueprintCallable)
-	float GetSpeakingRange() const { return SpeakingRange; }
+	float GetTalkingRange() const { return TalkingRange; }
 
 	UFUNCTION(BlueprintCallable)
 	float GetStrength() const { return Strength; }
@@ -88,7 +88,7 @@ public:
 	inline void SetSightRange(float IN_SightRange);
 
 	UFUNCTION(BlueprintCallable)
-	inline void SetSpeakingRange(float IN_SpeakingRange);
+	inline void SetTalkingRange(float IN_TalkingRange);
 
 	UFUNCTION(BlueprintCallable)
 	inline void SetSprintSpeed(float IN_SprintSpeed);
@@ -124,7 +124,7 @@ protected:
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, EditDefaultsOnly, BlueprintReadWrite, Category = Stats)
 	float SightRange = 1500.f;
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, EditDefaultsOnly, BlueprintReadWrite, Category = Stats)
-	float SpeakingRange = 300.f;
+	float TalkingRange = 300.f;
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, EditDefaultsOnly, BlueprintReadWrite, Category = Stats)
 	float SprintSpeed = 650.f;
 	UPROPERTY(ReplicatedUsing=OnRep_IsDirty, EditDefaultsOnly, BlueprintReadWrite, Category = Stats)
@@ -145,7 +145,7 @@ protected:
 		DOREPLIFETIME(UMStatsModelComponent, MeleeSpread);
 		DOREPLIFETIME(UMStatsModelComponent, RetreatRange);
 		DOREPLIFETIME(UMStatsModelComponent, SightRange);
-		DOREPLIFETIME(UMStatsModelComponent, SpeakingRange);
+		DOREPLIFETIME(UMStatsModelComponent, TalkingRange);
 		DOREPLIFETIME(UMStatsModelComponent, SprintSpeed);
 		DOREPLIFETIME(UMStatsModelComponent, Strength);
 		DOREPLIFETIME(UMStatsModelComponent, TimeBeforeSprint);

@@ -178,7 +178,7 @@ void UMInventoryControllerComponent::UpdateInventoryWidget() const
 	}
 }
 
-void UMInventoryControllerComponent::UpdateCommunicationWidget() const
+void UMInventoryControllerComponent::Client_UpdateCommunicationWidget_Implementation() const
 {
 	if (const auto* PlayerController = Cast<APlayerController>(GetOwner()))
 	{
@@ -212,19 +212,24 @@ void UMInventoryControllerComponent::CreateOrShowInventoryWidget()
 	}
 }
 
-void UMInventoryControllerComponent::CreateCommunicationWidget()
+void UMInventoryControllerComponent::Client_CreateCommunicationWidget_Implementation()
 {
-	auto* Controller = Cast<APlayerController>(GetOwner());
-	CommunicationWidget = CreateWidget<UMCommunicationWidget>(Controller, UMDropManager::gCommunicationWidgetBPClass, TEXT("CommunicationWidget"));
-	CommunicationWidget->AddToPlayerScreen();
-	UpdateCommunicationWidget();
+	// Create the widget only if it's not created
+	if (!CommunicationWidget)
+	{
+		auto* Controller = Cast<APlayerController>(GetOwner());
+		CommunicationWidget = CreateWidget<UMCommunicationWidget>(Controller, UMDropManager::gCommunicationWidgetBPClass, TEXT("CommunicationWidget"));
+		CommunicationWidget->AddToPlayerScreen();
+		Client_UpdateCommunicationWidget();
+	}
 }
 
-void UMInventoryControllerComponent::CloseCommunicationWidget() const
+void UMInventoryControllerComponent::Client_CloseCommunicationWidget_Implementation()
 {
 	if (CommunicationWidget)
 	{
 		CommunicationWidget->Close();
+		CommunicationWidget = nullptr;
 	}
 }
 

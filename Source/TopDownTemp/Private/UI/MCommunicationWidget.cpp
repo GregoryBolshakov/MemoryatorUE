@@ -70,7 +70,7 @@ void UMCommunicationWidget::OnTakeAllClicked()
 	{
 		if (auto* CommunicationComponent = PlayerCharacter->GetCommunicationComponent())
 		{
-			CommunicationComponent->MakeADeal(PlayerCharacter->GetInventoryToOfferComponent(), PlayerCharacter->GetInventoryToRewardComponent());
+			CommunicationComponent->Server_MakeADeal(PlayerCharacter->GetInventoryToOfferComponent(), PlayerCharacter->GetInventoryToRewardComponent());
 		}
 	}
 }

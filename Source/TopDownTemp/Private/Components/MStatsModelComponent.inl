@@ -56,11 +56,11 @@ inline void UMStatsModelComponent::SetSightRange(float IN_SightRange)
 	}
 }
 
-inline void UMStatsModelComponent::SetSpeakingRange(float IN_SpeakingRange)
+inline void UMStatsModelComponent::SetTalkingRange(float IN_TalkingRange)
 {
-	if (SpeakingRange != IN_SpeakingRange)
+	if (TalkingRange != IN_TalkingRange)
 	{
-		SpeakingRange = IN_SpeakingRange;
+		TalkingRange = IN_TalkingRange;
 		IsDirty = true;
 	}
 }

@@ -20,20 +20,21 @@ public:
 
 	FORCEINLINE void SetInterlocutorCharacter(AMCharacter* Interlocutor);
 
-	void SpeakTo(AMCharacter* IN_InterlocutorCharacter);
+	UFUNCTION(Server, Reliable)
+	void Server_TalkToCharacter(AMCharacter* IN_InterlocutorCharacter);
 
-	UFUNCTION(BlueprintCallable)
-	void StopSpeaking();
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_StopTalking();
 
 	void GenerateInventoryToReward(const UMInventoryComponent* InventoryToOffer, UMInventoryComponent* InventoryToReward) const;
 
 	/** Take all unlocked items from the reward inventory. Give all items from the offer inventory */
-	UFUNCTION(BlueprintCallable)
-	void MakeADeal(UMInventoryComponent* InventoryToOffer, UMInventoryComponent* InventoryToReward);
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_MakeADeal(UMInventoryComponent* InventoryToOffer, UMInventoryComponent* InventoryToReward);
 
-	// TODO: Use additional parameter for InventoryToReturn or something
 	/** Returns all items in InventoryToOffer back to player's inventory without making any deal. */
-	void CancelOffer(UMInventoryComponent* InventoryToOffer) const;
+	UFUNCTION(Server, Reliable)
+	void Server_CancelOffer(UMInventoryComponent* InventoryToOffer) const;
 
 	FOnInterlocutorChanged OnInterlocutorChangedDelegate;
 
@@ -41,11 +42,13 @@ protected:
 
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	/** Any character can adjust the coefficients and is not obliged to use only the default ones for their type.
 	 * this is due to their ability to improve or reflect their attitude towards another character (negative or positive, trusting or fearful)
 	 */
 	FPriceCoefficientsSet PriceCoefficientsSet;
 
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	AMCharacter* InterlocutorCharacter = nullptr;
 };
