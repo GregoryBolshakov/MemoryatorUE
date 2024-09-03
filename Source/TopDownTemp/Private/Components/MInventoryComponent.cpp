@@ -674,7 +674,7 @@ void UMInventoryComponent::OnRep_Slots()
 			if (InventoryController->ContainsPickUpInventory(this))
 			{
 				// If the inventory is part of PickUpBar widget, re-create the entire widget contents
-				InventoryController->UpdatePickUpBar();
+				InventoryController->Client_UpdatePickUpBar();
 			}
 		}
 	}

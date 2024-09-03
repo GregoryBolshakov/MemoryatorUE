@@ -23,6 +23,8 @@ AMActor::AMActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInit
 	FaceCameraComponent->SetupAttachment(RootComponent);
 
 	InventoryComponent = CreateDefaultSubobject<UMInventoryComponent>(TEXT("Inventory"));
+	InventoryComponent->SetIsReplicated(true);
+	InventoryComponent->SetNetAddressable();
 }
 
 bool AMActor::Destroy(bool bNetForce, bool bShouldModifyLevel)
@@ -38,6 +40,7 @@ bool AMActor::Destroy(bool bNetForce, bool bShouldModifyLevel)
 void AMActor::InitialiseInventory(const TArray<FItem>& IN_Items)
 {
 	InventoryComponent->Initialize(IN_Items.Num(), IN_Items);
+	ForceNetUpdate();
 }
 
 FMActorSaveData AMActor::GetSaveData() const

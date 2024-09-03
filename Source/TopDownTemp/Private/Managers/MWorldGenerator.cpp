@@ -1089,6 +1089,13 @@ FBoxSphereBounds AMWorldGenerator::GetDefaultBounds(UClass* IN_ActorClass, UObje
 
 AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const FVector& Location, const FRotator& Rotation, const FActorSpawnParameters& SpawnParameters, const float ToSpawnRadius, const float ToSpawnHeight, const FOnSpawnActorStarted& OnSpawnActorStarted)
 {
+	return SpawnActorInRadiusRecursive(Class, Location, Rotation, SpawnParameters, ToSpawnRadius, ToSpawnHeight, OnSpawnActorStarted, nullptr);
+}
+
+AActor* AMWorldGenerator::SpawnActorInRadiusRecursive(UClass* Class, const FVector& Location, const FRotator& Rotation,
+	const FActorSpawnParameters& SpawnParameters, float ToSpawnRadius, const float ToSpawnHeight,
+	const FOnSpawnActorStarted& OnSpawnActorStarted, AActor* ActorBeingSpawned)
+{
 	const auto pWorld = GetWorld();
 	if (!pWorld)
 		return nullptr;
@@ -1109,8 +1116,11 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const FVector& Locat
 	// Spawn actor only once to save performance. Use it for any spatial checks
 	FActorSpawnParameters AlwaysSpawnParameters = SpawnParameters;
 	AlwaysSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	const auto Actor = SpawnActor<AActor>(Class, LocationFixedZ, Rotation, AlwaysSpawnParameters, true, OnSpawnActorStarted);
-	check(Actor);
+	if (!IsValid(ActorBeingSpawned))
+	{
+		ActorBeingSpawned = SpawnActor<AActor>(Class, LocationFixedZ, Rotation, AlwaysSpawnParameters, true, OnSpawnActorStarted);
+	}
+	check(ActorBeingSpawned);
 
 	for (int AngleIndex = 0; AngleIndex < TriesNumber; ++AngleIndex)
 	{
@@ -1124,14 +1134,12 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const FVector& Locat
 		FVector SpawnPosition = LocationFixedZ + SpawnPositionOffset;
 
 		if (SpawnParameters.SpawnCollisionHandlingOverride == ESpawnActorCollisionHandlingMethod::AlwaysSpawn ||
-			!GetWorld()->EncroachingBlockingGeometry(Actor, SpawnPosition, Rotation))
+			!GetWorld()->EncroachingBlockingGeometry(ActorBeingSpawned, SpawnPosition, Rotation))
 		{
-			Actor->SetActorLocation(SpawnPosition);
-			return Actor;
+			ActorBeingSpawned->SetActorLocation(SpawnPosition);
+			return ActorBeingSpawned;
 		}
 	}
-
-	Actor->Destroy();
 
 	if (ToSpawnRadius >= 1000.f) // dummy check
 	{
@@ -1140,5 +1148,5 @@ AActor* AMWorldGenerator::SpawnActorInRadius(UClass* Class, const FVector& Locat
 	}
 
 	// If check is failed, consider incrementing ToSpawnRadius
-	return SpawnActorInRadius(Class, LocationFixedZ, Rotation, SpawnParameters, ToSpawnRadius + BoundsRadius * 2.f, ToSpawnHeight, OnSpawnActorStarted);
+	return SpawnActorInRadiusRecursive(Class, LocationFixedZ, Rotation, SpawnParameters, ToSpawnRadius + BoundsRadius * 2.f, ToSpawnHeight, OnSpawnActorStarted, ActorBeingSpawned);
 }

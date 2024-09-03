@@ -46,11 +46,14 @@ public:
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void Server_TrySwapDraggedWithSpecificSlot(FMUid InventoryOwnerActorUid, int SlotNumberInArray, const EInventoryType InventoryType);
 
-	void AddInventoryForPickUp(const UMInventoryComponent* ReplicatedInventory);
+	UFUNCTION(Client, Reliable)
+	void Client_AddInventoryForPickUp(const UMInventoryComponent* ReplicatedInventory);
 
-	void RemoveInventoryForPickUp(const UMInventoryComponent* ReplicatedInventory);
+	UFUNCTION(Client, Reliable)
+	void Client_RemoveInventoryForPickUp(const FMUid InventoryOwnerUid);
 
-	void UpdatePickUpBar() const;
+	UFUNCTION(Client, Reliable)
+	void Client_UpdatePickUpBar() const;
 
 	void UpdateInventoryWidget() const;
 

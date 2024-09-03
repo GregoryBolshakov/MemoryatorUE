@@ -13,6 +13,8 @@
 
 AMPickableActor::AMPickableActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+	SetReplicates(true);
+	NetPriority = 100.f;
 }
 
 void AMPickableActor::PostInitializeComponents()
@@ -34,63 +36,52 @@ void AMPickableActor::PostInitializeComponents()
 
 void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	Super::NotifyActorBeginOverlap(OtherActor);
-
-	if (InventoryComponent->GetItemCopies().IsEmpty())
-		return;
-
-	if (const auto pWorld = GetWorld())
+	FTimerHandle delayTimer; // This is mostly called on BeginPlay and not all data is replicated by this moment. We need a slight delay
+	GetWorld()->GetTimerManager().SetTimer(delayTimer, [this, OtherActor]
 	{
-		if (const auto pPlayerPawn = UGameplayStatics::GetPlayerPawn(pWorld, 0);
-			pPlayerPawn && pPlayerPawn == OtherActor)
+		Super::NotifyActorBeginOverlap(OtherActor);
+
+		ForceNetUpdate();
+
+		if (!HasAuthority())
+			return;
+
+		if (InventoryComponent->GetItemCopies().IsEmpty())
+			return;
+
+		if (const auto* MCharacter = Cast<AMCharacter>(OtherActor))
 		{
-			auto* MPlayerController = Cast<AMPlayerController>(pPlayerPawn->GetController());
-			//AMGameMode::GetDropManager(this)->AddInventory(InventoryComponent, MPlayerController);
-			MPlayerController->GetInventoryControllerComponent()->AddInventoryForPickUp(InventoryComponent);
+			if (const auto MPlayerController = Cast<AMPlayerController>(MCharacter->GetController()))
+			{
+				MPlayerController->GetInventoryControllerComponent()->Client_AddInventoryForPickUp(InventoryComponent);
+			}
 		}
-	}
+	}, 0.1f, false);
 }
 
 void AMPickableActor::NotifyActorEndOverlap(AActor* OtherActor)
 {
 	Super::NotifyActorEndOverlap(OtherActor);
 
-	if (const auto pWorld = GetWorld())
+	if (!HasAuthority())
+		return;
+
+	if (const auto* MCharacter = Cast<AMCharacter>(OtherActor))
 	{
-		if (const auto pPlayerPawn = UGameplayStatics::GetPlayerPawn(pWorld, 0);
-			pPlayerPawn && pPlayerPawn == OtherActor)
+		if (const auto MPlayerController = Cast<AMPlayerController>(MCharacter->GetController()))
 		{
-			auto* MPlayerController = Cast<AMPlayerController>(pPlayerPawn->GetController());
-			MPlayerController->GetInventoryControllerComponent()->RemoveInventoryForPickUp(InventoryComponent);
+			MPlayerController->GetInventoryControllerComponent()->Client_RemoveInventoryForPickUp(Uid);
 		}
 	}
 }
 
-FTimerHandle CollisionTimerHandle;
 void AMPickableActor::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// NotifyActorBeginOverlap doesn't trigger when actor just spawned
-	GetWorld()->GetTimerManager().SetTimer(CollisionTimerHandle, [this]
-	{
-		if (const auto pWorld = GetWorld())
-		{
-			if (const auto pPlayerPawn = UGameplayStatics::GetPlayerPawn(pWorld, 0))
-			{
-				if (IsOverlappingActor(pPlayerPawn))
-				{
-					NotifyActorBeginOverlap(pPlayerPawn);
-				}
-			}
-		}
-	}, 0.1f, false); // Who knows why collisions need some time after actor's BeginPlay to be set up
 }
 
 void AMPickableActor::OnItemChanged(int NewItemID, int NewQuantity)
 {
-	auto* MPlayerController = Cast<AMPlayerController>(UGameplayStatics::GetPlayerController(GetWorld(), 0));
-
 	if (InventoryComponent->GetItemCopies().IsEmpty() && bDisappearIfEmptyInventory)
 	{
 		PickedUpCompletelyDelegate.Broadcast(GetClass());

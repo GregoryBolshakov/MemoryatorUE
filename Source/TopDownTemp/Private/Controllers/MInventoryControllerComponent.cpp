@@ -5,6 +5,7 @@
 #include "Controllers/MPlayerController.h"
 #include "Framework/MGameMode.h"
 #include "Net/UnrealNetwork.h"
+#include "StationaryActors/MActor.h"
 #include "UI/MCommunicationWidget.h"
 #include "UI/MInventoryWidget.h"
 #include "UI/MPickUpBarWidget.h"
@@ -107,7 +108,7 @@ void UMInventoryControllerComponent::Server_TrySwapDraggedWithSpecificSlot_Imple
 	check(false);
 }
 
-void UMInventoryControllerComponent::AddInventoryForPickUp(const UMInventoryComponent* ReplicatedInventory)
+void UMInventoryControllerComponent::Client_AddInventoryForPickUp_Implementation(const UMInventoryComponent* ReplicatedInventory)
 {
 	if (ReplicatedInventory->GetSlotsConst().IsEmpty() || !GetWorld() || !GetWorld()->GetFirstPlayerController())
 		return;
@@ -125,7 +126,6 @@ void UMInventoryControllerComponent::AddInventoryForPickUp(const UMInventoryComp
 			check(PickUpBarWidget);
 			PickUpBarWidget->AddToPlayerScreen();
 		}
-		
 	}
 
 	InventoriesToRepresent.Add(ReplicatedInventory);
@@ -133,9 +133,26 @@ void UMInventoryControllerComponent::AddInventoryForPickUp(const UMInventoryComp
 	PickUpBarWidget->CreateSlots(InventoriesToRepresent);
 }
 
-void UMInventoryControllerComponent::RemoveInventoryForPickUp(const UMInventoryComponent* ReplicatedInventory)
+void UMInventoryControllerComponent::Client_RemoveInventoryForPickUp_Implementation(const FMUid InventoryOwnerUid)
 {
-	InventoriesToRepresent.Remove(ReplicatedInventory);
+	// We can't send the pointer to the inventory like we do above, because the caller (e.g. AMPickableActor::NotifyActorEndOverlap)
+	// is usually being destroyed and will be NULL by the time we hit this RPC on a client.
+	for (const auto* Inventory : InventoriesToRepresent)
+	{
+		if (const auto* Owner = Cast<AMActor>(Inventory->GetOwner()))
+		{
+			if (Owner->GetUid() == InventoryOwnerUid)
+			{
+				InventoriesToRepresent.Remove(Inventory);
+				break;
+			}
+		}
+		if (Cast<AMCharacter>(Inventory->GetOwner()))
+		{
+			check(false); // Current design doesn't imply that characters are a "Drop"
+			return;
+		}
+	}
 
 	if (!PickUpBarWidget)
 	{
@@ -153,7 +170,7 @@ void UMInventoryControllerComponent::RemoveInventoryForPickUp(const UMInventoryC
 	}
 }
 
-void UMInventoryControllerComponent::UpdatePickUpBar() const
+void UMInventoryControllerComponent::Client_UpdatePickUpBar_Implementation() const
 {
 	if (!InventoriesToRepresent.IsEmpty() && PickUpBarWidget)
 	{
