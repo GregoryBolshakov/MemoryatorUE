@@ -119,6 +119,10 @@ public:
 	UFUNCTION()
 	FItem DragItemFromSpecificSlot(int SlotNumberInArray, int Quantity);
 
+	/** Server only. Static function, not associated with any inventory */
+	UFUNCTION()
+	static void DropItemOnTheGround(FItem& Item, const FVector& Location, const UObject* ContextObject);
+
 	// The function is needed because we need to be sure there are enough items before pulling items out of different slots in TakeItem
 	/** Check if there exist enough quantity of items with the given ID */
 	bool DoesContainEnough(FItem ItemToCheck);

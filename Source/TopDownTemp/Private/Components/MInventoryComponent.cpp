@@ -345,10 +345,7 @@ void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 		return;
 
 	// Item doesn't fit in the inventory, drop it on the ground
-	if (const auto DropManager = AMGameMode::GetDropManager(this))
-	{
-		DropManager->SpawnPickableItem(GetOwner(), ItemLeft);
-	}
+	DropItemOnTheGround(ItemLeft, GetOwner()->GetActorLocation(), this);
 }
 
 void UMInventoryComponent::StoreDraggedToAnySlot(FItem& DraggedItem)
@@ -424,13 +421,7 @@ void UMInventoryComponent::StoreDraggedToAnySlot(FItem& DraggedItem)
 		return;
 
 	// Item doesn't fit in the inventory, drop it on the ground
-	if (auto* MPlayerController = Cast<AMPlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
-	{
-		if (auto* InventoryController = MPlayerController->GetInventoryControllerComponent())
-		{
-			InventoryController->Server_TryDropDraggedOnTheGround();
-		}
-	}
+	DropItemOnTheGround(DraggedItem, GetOwner()->GetActorLocation(), this);
 }
 
 void UMInventoryComponent::StoreDraggedToSpecificSlot(int SlotNumberInArray, FItem& DraggedItem)
@@ -514,6 +505,15 @@ FItem UMInventoryComponent::DragItemFromSpecificSlot(int SlotNumberInArray, int 
 
 	check(QuantityToTake != 0);
 	return {Slots[SlotNumberInArray].Item.ID, QuantityToTake};
+}
+
+void UMInventoryComponent::DropItemOnTheGround(FItem& Item, const FVector& Location, const UObject* ContextObject)
+{
+	if (const auto DropManager = AMGameMode::GetDropManager(ContextObject))
+	{
+		DropManager->SpawnPickableItem(Location, Item);
+		Item = {0, 0};
+	}
 }
 
 /*void UMInventoryComponent::Client_OnTakeItemFromSpecificSlot_Implementation(const FItem& ItemToStore)

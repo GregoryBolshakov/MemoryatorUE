@@ -28,7 +28,7 @@ public:
 
 	/** Spawns a AMPickableActor near the Owner with one item in the inventory */
 	UFUNCTION(BlueprintCallable)
-	void SpawnPickableItem(const AActor* Owner, const FItem& Item);
+	void SpawnPickableItem(const FVector& Location, const FItem& Item);
 
 	UFUNCTION()
 	void GiveBundleToPlayer(const FBundle& Bundle);

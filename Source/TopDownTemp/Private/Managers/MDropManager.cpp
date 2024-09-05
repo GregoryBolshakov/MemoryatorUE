@@ -63,7 +63,7 @@ void UMDropManager::RemoveInventory(UMInventoryComponent* Inventory, AMPlayerCon
 	}
 }
 
-void UMDropManager::SpawnPickableItem(const AActor* Owner, const FItem& Item) //TODO: Support multiple players, currently using only the first local one
+void UMDropManager::SpawnPickableItem(const FVector& Location, const FItem& Item) //TODO: Support multiple players, currently using only the first local one
 {
 	check(Item.Quantity != 0);
 	const auto pWorld = GetWorld();
@@ -72,8 +72,6 @@ void UMDropManager::SpawnPickableItem(const AActor* Owner, const FItem& Item) //
 
 	if (const auto WorldGenerator = AMGameMode::GetWorldGenerator(this))
 	{
-		const auto OwnerLocation = Owner->GetActorLocation();
-
 		FOnActorSpawned OnActorSpawned;
 		OnActorSpawned.AddLambda([Item](AActor* Actor)
 		{
@@ -86,7 +84,7 @@ void UMDropManager::SpawnPickableItem(const AActor* Owner, const FItem& Item) //
 				Slot.OnSlotChangedDelegate.AddDynamic(PickableActor, &AMPickableActor::OnItemChanged);
 			}
 		});
-		WorldGenerator->SpawnActorInRadius<AMPickableActor>(AMPickableItemBPClass, OwnerLocation, FRotator::ZeroRotator, {}, 25.f, 0.f, OnActorSpawned);
+		WorldGenerator->SpawnActorInRadius<AMPickableActor>(AMPickableItemBPClass, Location, FRotator::ZeroRotator, {}, 25.f, 0.f, OnActorSpawned);
 	}
 }
 
