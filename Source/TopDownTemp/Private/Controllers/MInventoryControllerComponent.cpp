@@ -27,11 +27,12 @@ UMInventoryComponent* GetRequestedInventory(AActor* Actor, EInventoryType Invent
 	return Inventory;
 }
 
-void UMInventoryControllerComponent::Server_TryDropDraggedOnTheGround_Implementation(const EInventoryType InventoryType)
+void UMInventoryControllerComponent::Server_TryDropDraggedOnTheGround_Implementation()
 {
-	if (auto* MyInventory = GetMyInventory(InventoryType))
+	if (const auto DropManager = AMGameMode::GetDropManager(this))
 	{
-		MyInventory->DropDraggedOnTheGround(DraggedItem);
+		DropManager->SpawnPickableItem(Cast<AController>(GetOwner())->GetPawn(), DraggedItem);
+		DraggedItem = {0, 0};
 	}
 }
 
@@ -39,11 +40,8 @@ void UMInventoryControllerComponent::Server_TryStoreDraggedToAnySlot_Implementat
 {
 	if (!IsUidValid(InventoryOwnerActorUid)) // Drop dragged on the ground if the owner isn't set
 	{
-		if (auto* MyInventory = GetMyInventory(InventoryType))
-		{
-			MyInventory->DropDraggedOnTheGround(DraggedItem);
-			return;
-		}
+		Server_TryDropDraggedOnTheGround();
+		return;
 	}
 	if (auto* InventoryOwnerMetadata = AMGameMode::GetMetadataManager(this)->Find(InventoryOwnerActorUid))
 	{
@@ -63,11 +61,8 @@ void UMInventoryControllerComponent::Server_TryStoreDraggedToSpecificSlot_Implem
 
 	if (!IsUidValid(InventoryOwnerActorUid)) // Drop dragged on the ground if the owner isn't set
 	{
-		if (auto* MyInventory = GetMyInventory(InventoryType))
-		{
-			MyInventory->DropDraggedOnTheGround(DraggedItem);
-			return;
-		}
+		Server_TryDropDraggedOnTheGround();
+		return;
 	}
 	if (auto* InventoryOwnerMetadata = AMGameMode::GetMetadataManager(this)->Find(InventoryOwnerActorUid))
 	{

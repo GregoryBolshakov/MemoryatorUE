@@ -6,6 +6,7 @@
 #include "MPickUpBarWidget.generated.h"
 
 class UWrapBox;
+class UMInventorySlotWidget;
 
 UCLASS()
 class TOPDOWNTEMP_API UMPickUpBarWidget : public UUserWidget
@@ -28,6 +29,4 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, Category=MPickUpBarWidget)
 	UWrapBox* pItemSlotsWrapBox;
-
-
 };

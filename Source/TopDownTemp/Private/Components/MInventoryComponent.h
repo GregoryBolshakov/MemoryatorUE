@@ -109,10 +109,6 @@ public:
 
 	/** Server only. Is called by local player controller via Server RPC */
 	UFUNCTION()
-	void DropDraggedOnTheGround(FItem& DraggedItem); // TODO: Make it DropManager's function instead.
-
-	/** Server only. Is called by local player controller via Server RPC */
-	UFUNCTION()
 	void StoreDraggedToAnySlot(FItem& DraggedItem);
 
 	/** Server only. Is called by local player controller via Server RPC */

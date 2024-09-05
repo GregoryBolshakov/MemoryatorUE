@@ -37,5 +37,5 @@ protected:
 	virtual void NotifyActorEndOverlap(AActor* OtherActor) override;
 
 	UPROPERTY(EditDefaultsOnly, Category = AMPickableItem)
-	bool bDisappearIfEmptyInventory;
+	bool bDisappearIfEmptyInventory = true;
 };

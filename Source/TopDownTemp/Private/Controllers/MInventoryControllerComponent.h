@@ -32,7 +32,7 @@ class UMInventoryControllerComponent : public UActorComponent
 
 public:
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_TryDropDraggedOnTheGround(const EInventoryType InventoryType);
+	void Server_TryDropDraggedOnTheGround();
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void Server_TryStoreDraggedToAnySlot(FMUid InventoryOwnerActorUid, const EInventoryType InventoryType);

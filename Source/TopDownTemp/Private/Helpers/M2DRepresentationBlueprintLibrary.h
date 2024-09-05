@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Components/MInventoryComponent.h"
 #include "M2DRepresentationBlueprintLibrary.generated.h"
 
 UCLASS()
@@ -21,6 +22,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category=M2DRepresentation)
 	static FRotator GetRotationTowardPoint(const FVector& OriginPoint, const FVector& DestinationPoint);
+
+	// TODO: Move to a separate function library
+	UFUNCTION(BlueprintPure, Category=MInventory)
+	static EInventoryType SelectEInventoryType(EInventoryType A, EInventoryType B, bool bSelectA)
+	{
+		return bSelectA ? A : B;
+	}
 };
 
 inline float UM2DRepresentationBlueprintLibrary::GetCameraDeflectionAngle(const UObject* WorldContextObject,

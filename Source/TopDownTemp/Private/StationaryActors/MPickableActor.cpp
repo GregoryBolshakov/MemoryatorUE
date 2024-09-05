@@ -13,8 +13,6 @@
 
 AMPickableActor::AMPickableActor(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	SetReplicates(true);
-	NetPriority = 100.f;
 }
 
 void AMPickableActor::PostInitializeComponents()
@@ -36,7 +34,13 @@ void AMPickableActor::PostInitializeComponents()
 
 void AMPickableActor::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	FTimerHandle delayTimer; // This is mostly called on BeginPlay and not all data is replicated by this moment. We need a slight delay
+	Super::NotifyActorBeginOverlap(OtherActor);
+
+	if (!HasAuthority())
+		return;
+
+	// TODO: Test if with poor internet and/or high CPU load. That timer may be not enough.
+	FTimerHandle delayTimer; // This is mostly called on BeginPlay and not all data is replicated to clients by this moment. We need a slight delay
 	GetWorld()->GetTimerManager().SetTimer(delayTimer, [this, OtherActor]
 	{
 		Super::NotifyActorBeginOverlap(OtherActor);
@@ -75,9 +79,26 @@ void AMPickableActor::NotifyActorEndOverlap(AActor* OtherActor)
 	}
 }
 
+
 void AMPickableActor::BeginPlay()
 {
 	Super::BeginPlay();
+
+	FTimerHandle CollisionTimerHandle;
+	// NotifyActorBeginOverlap doesn't trigger when actor just spawned
+	GetWorld()->GetTimerManager().SetTimer(CollisionTimerHandle, [this]
+	{
+		if (const auto pWorld = GetWorld())
+		{
+			if (const auto pPlayerPawn = UGameplayStatics::GetPlayerPawn(pWorld, 0))
+			{
+				if (IsOverlappingActor(pPlayerPawn))
+				{
+					NotifyActorBeginOverlap(pPlayerPawn);
+				}
+			}
+		}
+	}, 0.1f, false); // Who knows why collisions need some time after actor's BeginPlay to be set up*/
 }
 
 void AMPickableActor::OnItemChanged(int NewItemID, int NewQuantity)

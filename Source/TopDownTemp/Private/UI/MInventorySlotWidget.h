@@ -22,6 +22,8 @@ public:
 
 	void SetNumberInArray(int IN_NumberInArray) { NumberInArray = IN_NumberInArray; }
 
+	const UMInventoryComponent* GetOwnerInventory() const { return OwnerInventory; }
+
 	UFUNCTION(BlueprintCallable, Category=UMInventorySlotWidget)
 	void SetOwnerInventory(const UMInventoryComponent* IN_OwnerInventory) { OwnerInventory = IN_OwnerInventory; }
 

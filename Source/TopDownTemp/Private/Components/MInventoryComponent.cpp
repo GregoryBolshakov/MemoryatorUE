@@ -351,16 +351,6 @@ void UMInventoryComponent::StoreItem(const FItem& ItemToStore)
 	}
 }
 
-// TODO: Make it DropManager's function instead.
-void UMInventoryComponent::DropDraggedOnTheGround(FItem& DraggedItem)
-{
-	if (const auto DropManager = AMGameMode::GetDropManager(this))
-	{
-		DropManager->SpawnPickableItem(GetOwner(), DraggedItem);
-		DraggedItem = {0, 0};
-	}
-}
-
 void UMInventoryComponent::StoreDraggedToAnySlot(FItem& DraggedItem)
 {
 	const int PrevQuantity = DraggedItem.Quantity;
@@ -434,7 +424,13 @@ void UMInventoryComponent::StoreDraggedToAnySlot(FItem& DraggedItem)
 		return;
 
 	// Item doesn't fit in the inventory, drop it on the ground
-	DropDraggedOnTheGround(DraggedItem);
+	if (auto* MPlayerController = Cast<AMPlayerController>(UGameplayStatics::GetPlayerController(this, 0)))
+	{
+		if (auto* InventoryController = MPlayerController->GetInventoryControllerComponent())
+		{
+			InventoryController->Server_TryDropDraggedOnTheGround();
+		}
+	}
 }
 
 void UMInventoryComponent::StoreDraggedToSpecificSlot(int SlotNumberInArray, FItem& DraggedItem)
