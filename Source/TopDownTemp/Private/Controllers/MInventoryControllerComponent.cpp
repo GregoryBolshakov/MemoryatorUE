@@ -119,9 +119,11 @@ void UMInventoryControllerComponent::Client_AddInventoryForPickUp_Implementation
 		}
 	}
 
-	InventoriesToRepresent.Add(ReplicatedInventory);
-
-	PickUpBarWidget->CreateSlots(InventoriesToRepresent);
+	if (!InventoriesToRepresent.Contains(ReplicatedInventory))
+	{
+		InventoriesToRepresent.Add(ReplicatedInventory);
+		PickUpBarWidget->CreateSlots(InventoriesToRepresent);
+	}
 }
 
 void UMInventoryControllerComponent::Client_RemoveInventoryForPickUp_Implementation(const FMUid InventoryOwnerUid)

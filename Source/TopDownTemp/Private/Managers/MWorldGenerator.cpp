@@ -1100,9 +1100,6 @@ AActor* AMWorldGenerator::SpawnActorInRadiusRecursive(UClass* Class, const FVect
 	if (!pWorld)
 		return nullptr;
 
-	FVector LocationFixedZ = Location;
-	LocationFixedZ.Z = ToSpawnHeight;
-
 	const auto DefaultBounds = GetDefaultBounds(Class, pWorld);
 	const auto BoundsRadius = FMath::Max(DefaultBounds.BoxExtent.X, DefaultBounds.BoxExtent.Y);
 
@@ -1116,11 +1113,15 @@ AActor* AMWorldGenerator::SpawnActorInRadiusRecursive(UClass* Class, const FVect
 	// Spawn actor only once to save performance. Use it for any spatial checks
 	FActorSpawnParameters AlwaysSpawnParameters = SpawnParameters;
 	AlwaysSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	auto EmptyLocation = FVector(0.f, 0.f, 5000.f); // Location free of other objects. We must ensure we never trigger overlap start/end events while we try on position
 	if (!IsValid(ActorBeingSpawned))
 	{
-		ActorBeingSpawned = SpawnActor<AActor>(Class, LocationFixedZ, Rotation, AlwaysSpawnParameters, true, OnSpawnActorStarted);
+		ActorBeingSpawned = SpawnActor<AActor>(Class, EmptyLocation, Rotation, AlwaysSpawnParameters, true, OnSpawnActorStarted);
 	}
 	check(ActorBeingSpawned);
+
+	FVector LocationFixedZ = Location;
+	LocationFixedZ.Z = ToSpawnHeight;
 
 	for (int AngleIndex = 0; AngleIndex < TriesNumber; ++AngleIndex)
 	{
@@ -1141,9 +1142,10 @@ AActor* AMWorldGenerator::SpawnActorInRadiusRecursive(UClass* Class, const FVect
 		}
 	}
 
-	if (ToSpawnRadius >= 1000.f) // dummy check
+	if (ToSpawnRadius >= 1000.f) // dummy check, should never happen
 	{
 		check(false);
+		// TODO: Destroy the actor, right now it lives until the next sweep
 		return nullptr;
 	}
 

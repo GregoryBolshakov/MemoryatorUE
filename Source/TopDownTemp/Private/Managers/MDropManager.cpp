@@ -63,7 +63,7 @@ void UMDropManager::RemoveInventory(UMInventoryComponent* Inventory, AMPlayerCon
 	}
 }
 
-void UMDropManager::SpawnPickableItem(const FVector& Location, const FItem& Item) //TODO: Support multiple players, currently using only the first local one
+void UMDropManager::SpawnPickableItem(const FVector& Location, const FItem& Item)
 {
 	check(Item.Quantity != 0);
 	const auto pWorld = GetWorld();
