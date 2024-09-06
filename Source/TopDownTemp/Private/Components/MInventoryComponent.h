@@ -24,6 +24,14 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSlotChanged, int, NewItemID, int
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTakeItemFromSpecificSlot, const FItem&, ItemToStore);
 DECLARE_MULTICAST_DELEGATE(FOnAnySlotChanged);
 
+UENUM()
+enum class ESlotFlags : uint8 {
+	None = 0x00,
+	Locked = 0x01, // Not used so far
+	Secret = 0x02, // E.g. when trading with a mob, you can see their inventory, but not know the exact items.
+	PreviewOnly = 0x04 // Items are not allowed to interact with.
+};
+
 USTRUCT(BlueprintType)
 struct FSlot
 {
@@ -34,13 +42,6 @@ struct FSlot
 
 	/** Server only */
 	FOnSlotChanged OnSlotChangedDelegate;
-
-	enum class ESlotFlags : uint8 {
-		None = 0x00,
-		Locked = 0x01, // Not used so far
-		Secret = 0x02, // E.g. when trading with a mob, you can see their inventory, but not know the exact items.
-		PreviewOnly = 0x04 // Items are not allowed to interact with.
-	};
 
 	void SetFlag(ESlotFlags flag) {
 		Flags = static_cast<ESlotFlags>(static_cast<uint8>(Flags) | static_cast<uint8>(flag));
@@ -55,6 +56,7 @@ struct FSlot
 	}
 
 private:
+	UPROPERTY()
 	ESlotFlags Flags = ESlotFlags::None;
 };
 
@@ -138,7 +140,7 @@ public:
 
 	void Empty();
 
-	void SetFlagToAllSlots(FSlot::ESlotFlags Flag);
+	void SetFlagToAllSlots(ESlotFlags Flag);
 
 	FOnAnySlotChanged OnAnySlotChangedDelegate;
 

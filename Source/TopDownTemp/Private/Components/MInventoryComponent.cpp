@@ -516,11 +516,6 @@ void UMInventoryComponent::DropItemOnTheGround(FItem& Item, const FVector& Locat
 	}
 }
 
-/*void UMInventoryComponent::Client_OnTakeItemFromSpecificSlot_Implementation(const FItem& ItemToStore)
-{
-	OnTakeItemFromSpecificSlotDelegate.Broadcast(ItemToStore);
-}*/
-
 bool UMInventoryComponent::DoesContainEnough(FItem ItemToCheck)
 {
 	if (ItemToCheck.Quantity == 0) {check(false); return true;}
@@ -623,7 +618,7 @@ void UMInventoryComponent::Empty()
 	}
 }
 
-void UMInventoryComponent::SetFlagToAllSlots(FSlot::ESlotFlags Flag)
+void UMInventoryComponent::SetFlagToAllSlots(ESlotFlags Flag)
 {
 	for (auto& Slot : Slots)
 	{

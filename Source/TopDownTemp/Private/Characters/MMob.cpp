@@ -51,7 +51,7 @@ void AMMob::GenerateStartingInventory()
 				InventoryComponent->Initialize(StartingInventory.Num(), StartingInventory);
 			}
 		}
-		InventoryComponent->SetFlagToAllSlots(FSlot::ESlotFlags::Secret);
-		InventoryComponent->SetFlagToAllSlots(FSlot::ESlotFlags::Locked);
+		InventoryComponent->SetFlagToAllSlots(ESlotFlags::Secret);
+		InventoryComponent->SetFlagToAllSlots(ESlotFlags::Locked);
 	}
 }

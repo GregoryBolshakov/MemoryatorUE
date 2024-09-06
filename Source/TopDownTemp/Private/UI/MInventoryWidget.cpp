@@ -50,7 +50,7 @@ void UMInventoryWidget::CreateItemSlotWidgets(UUserWidget* pOwner, const UMInven
 	{
 		const auto& Slot = pInventoryComponent->GetSlotsConst()[Index];
 
-		if (Slot.CheckFlag(FSlot::ESlotFlags::Secret) && Slot.Item.Quantity == 0)
+		if (Slot.CheckFlag(ESlotFlags::Secret) && Slot.Item.Quantity == 0)
 		{
 			continue; // Don't create a widget for a secret slot if it's empty
 		}
@@ -64,9 +64,9 @@ void UMInventoryWidget::CreateItemSlotWidgets(UUserWidget* pOwner, const UMInven
 		SlotWidget->SetNumberInArray(Index);
 		SlotWidget->SetOwnerInventory(pInventoryComponent);
 		SlotWidget->SetStoredItem(Slot.Item);
-		SlotWidget->SetIsLocked(Slot.CheckFlag(FSlot::ESlotFlags::Locked));
-		SlotWidget->SetIsSecret(Slot.CheckFlag(FSlot::ESlotFlags::Secret));
-		SlotWidget->SetIsPreviewOnly(Slot.CheckFlag(FSlot::ESlotFlags::PreviewOnly));
+		SlotWidget->SetIsLocked(Slot.CheckFlag(ESlotFlags::Locked));
+		SlotWidget->SetIsSecret(Slot.CheckFlag(ESlotFlags::Secret));
+		SlotWidget->SetIsPreviewOnly(Slot.CheckFlag(ESlotFlags::PreviewOnly));
 		if (pInventoryComponent->GetOwner()->HasAuthority())
 		{
 			if (auto* InventoryComponentMutable = const_cast<UMInventoryComponent*>(pInventoryComponent))
@@ -81,7 +81,7 @@ void UMInventoryWidget::CreateItemSlotWidgets(UUserWidget* pOwner, const UMInven
 		const auto QuantityTextWidget = Cast<URichTextBlock>(SlotWidget->GetWidgetFromName(TEXT("QuantityTextBlock")));
 		if (IconWidget && QuantityTextWidget) // Icon and QuantityText widgets exist
 		{
-			if (!Slot.CheckFlag(FSlot::ESlotFlags::Secret))
+			if (!Slot.CheckFlag(ESlotFlags::Secret))
 			{
 				if (Slot.Item.Quantity > 0 && Slot.Item.ID < ItemsData.Num() && Slot.Item.ID > 0)
 				{

@@ -119,7 +119,7 @@ void UMCommunicationComponent::GenerateInventoryToReward(const UMInventoryCompon
 				if (CounterOfferItems != OfferItemCopies) // TODO: IMPORTANT! Implement randomize in MaxPriceCombination to avoid this case
 				{
 					InventoryToReward->Initialize(CounterOfferItems.Num(), CounterOfferItems); // TODO: Not initialize, but append. There might be some free reward for quest
-					InventoryToReward->SetFlagToAllSlots(FSlot::ESlotFlags::PreviewOnly);
+					InventoryToReward->SetFlagToAllSlots(ESlotFlags::PreviewOnly);
 				}
 			}
 		}
