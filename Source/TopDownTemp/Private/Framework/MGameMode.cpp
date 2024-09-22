@@ -47,6 +47,8 @@ void AMGameMode::BeginPlay()
 		ConnectionQueue.Dequeue(PlayerController);
 		WorldGenerator->ProcessConnectingPlayer(PlayerController); // Process deferred connections since all systems are ready
 	}
+
+	CommunicationManager->ConnectToPythonServer();
 }
 
 void AMGameMode::InitializeManagers()

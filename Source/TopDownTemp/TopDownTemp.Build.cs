@@ -27,6 +27,8 @@ public class TopDownTemp : ModuleRules
 				"Steamworks",
 				"UMG",
 				"XRBase",
+				"Sockets",
+				"Networking",
 			});
 		PrivateDependencyModuleNames.AddRange(new string[]
 		{
