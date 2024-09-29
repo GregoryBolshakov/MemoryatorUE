@@ -13,6 +13,7 @@ public class TopDownTemp : ModuleRules
 				"AIModule",
 				"Core",
 				"CoreUObject",
+				"Json",
 				"Engine",
 				"HeadMountedDisplay",
 				"NavigationSystem",

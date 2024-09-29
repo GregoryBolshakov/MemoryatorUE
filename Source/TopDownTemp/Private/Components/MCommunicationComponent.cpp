@@ -63,6 +63,7 @@ void UMCommunicationComponent::Server_TalkToCharacter_Implementation(AMCharacter
 	});
 
 	InventoryController->Client_CreateCommunicationWidget();
+	AMGameMode::GetCommunicationManager(this)->SendMessagesToServer(IN_InterlocutorCharacter);
 }
 
 void UMCommunicationComponent::Server_StopTalking_Implementation()

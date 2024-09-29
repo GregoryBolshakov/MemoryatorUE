@@ -6,6 +6,7 @@
 class UMInventoryComponent;
 class AMCharacter;
 class UMCommunicationWidget;
+class FSocket;
 
 UCLASS(Blueprintable, BlueprintType)
 class AMCommunicationManager : public AActor
@@ -15,8 +16,12 @@ class AMCommunicationManager : public AActor
 public:
 	void ConnectToPythonServer();
 
+	bool IsConnected() const { return Socket != nullptr && Connected; }
+
+	void SendMessagesToServer(const AMCharacter* Character);
+
 protected:
-	void ReadDataFromSocket(class FSocket* Socket);
+	void ReadDataFromSocket();
 
 	/** When messages stack up, remove all previous ones. For example:
 	 * Ah, those<end>
@@ -25,6 +30,17 @@ protected:
 	 * Should be treated simply as "Ah, those sound lovely indeed!<end>" */
 	static void CutPreviousMessages(FString& Message);
 
+	/**
+	 * 
+	 * @param Character who will be saying the generated response
+	 * @return json struct to send to the server
+	 */
+	FString GenerateMessagesJson(const AMCharacter* Character);
+
 	virtual void BeginPlay() override;
+
+	FSocket* Socket;
+
+	bool Connected = false;
 };
 

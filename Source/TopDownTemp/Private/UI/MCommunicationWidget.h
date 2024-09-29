@@ -4,6 +4,8 @@
 #include "Blueprint/UserWidget.h"
 #include "MCommunicationWidget.generated.h"
 
+class UTextBlock;
+class URichTextBlock;
 class UButton;
 class AMPickableActor;
 class UWrapBox;
@@ -44,4 +46,7 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, Category=MInventoryWidgetSettings)
 	UButton* pTakeAllButton;
+
+	UPROPERTY(BlueprintReadWrite)
+	URichTextBlock* pSpeechTextBlock;
 };
