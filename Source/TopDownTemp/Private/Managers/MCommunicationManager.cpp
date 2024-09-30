@@ -50,15 +50,23 @@ void AMCommunicationManager::ConnectToPythonServer()
 	}
 }
 
-void AMCommunicationManager::ReadDataFromSocket()
+void AMCommunicationManager::DisconnectFromPythonServer() const
+{
+	FString CloseCommand = TEXT("{\"command\": \"close\"}");
+	check(SendJsonMessage(CloseCommand));
+	Socket->Close();
+	ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(Socket);
+}
+
+void AMCommunicationManager::ReadDataFromSocket() const
 {
 	// Endless loop for reading from socket
-	while (Socket->Wait(ESocketWaitConditions::WaitForRead, FTimespan::FromSeconds(1000.f)))
+	while (Socket->Wait(ESocketWaitConditions::WaitForRead, FTimespan::FromDays(1000.f)))
 	{
 		int32 bytesRead = 0;
 		uint8 data[1024];
 
-		if (Socket->Recv(data, sizeof(data), bytesRead))
+		if (Socket && Socket->Recv(data, sizeof(data), bytesRead))
 		{
 			if (bytesRead > 0)
 			{
@@ -74,9 +82,8 @@ void AMCommunicationManager::ReadDataFromSocket()
 		}
 	}
 
-	// Clean up
-	Socket->Close();
-	ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(Socket);
+	// Wait time ended, likely will never happen
+	DisconnectFromPythonServer();
 }
 
 void AMCommunicationManager::CutPreviousMessages(FString& Message)
@@ -145,11 +152,16 @@ FString AMCommunicationManager::GenerateMessagesJson(const AMCharacter* Characte
 	return OutputString;
 }
 
-void AMCommunicationManager::SendMessagesToServer(const AMCharacter* Character)
+bool AMCommunicationManager::SendJsonMessage(const FString& JsonMessage) const
 {
-	FString MessagesJson = GenerateMessagesJson(Character);
+	if (!Socket)
+	{
+		check(false);
+		return false;
+	}
 
-	FTCHARToUTF8 Converter(*MessagesJson);
+	// Convert the message to UTF-8 format
+	FTCHARToUTF8 Converter(*JsonMessage);
 	int32 DataSize = Converter.Length();
 	const uint8* DataPtr = reinterpret_cast<const uint8*>(Converter.Get());
 
@@ -159,9 +171,13 @@ void AMCommunicationManager::SendMessagesToServer(const AMCharacter* Character)
 	// Send the NetworkDataSize (4 bytes)
 	int32 BytesSent = 0;
 	bool bSuccess = Socket->Send(reinterpret_cast<const uint8*>(&NetworkDataSize), sizeof(int32), BytesSent);
-	check(bSuccess && BytesSent == sizeof(int32))
+	if (!bSuccess || BytesSent != sizeof(int32))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to send data size."));
+		return false;
+	}
 
-	// Send the data
+	// Send the actual data
 	int32 TotalBytesSent = 0;
 	while (TotalBytesSent < DataSize)
 	{
@@ -170,19 +186,30 @@ void AMCommunicationManager::SendMessagesToServer(const AMCharacter* Character)
 		bSuccess = Socket->Send(DataPtr + TotalBytesSent, BytesToSend, BytesThisSend);
 		if (!bSuccess || BytesThisSend <= 0)
 		{
-			check(false);
-			break;
+			UE_LOG(LogTemp, Error, TEXT("Failed to send message."));
+			return false;
 		}
 		TotalBytesSent += BytesThisSend;
 	}
 
-	if (bSuccess)
+	return true;
+}
+
+void AMCommunicationManager::SendMessagesToServer(const AMCharacter* Character)
+{
+	FString MessagesJson = GenerateMessagesJson(Character);
+
+	if (SendJsonMessage(MessagesJson))
 	{
 		// Start reading data in a separate thread
 		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]
 		{
 			ReadDataFromSocket();
 		});
+	}
+	else
+	{
+		check(false);
 	}
 }
 
@@ -191,4 +218,12 @@ void AMCommunicationManager::BeginPlay()
 	Super::BeginPlay();
 
 	FGenericTeamId::SetAttitudeSolver(CustomTeamAttitudeSolver);
+
+	ConnectToPythonServer();
+}
+
+void AMCommunicationManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	DisconnectFromPythonServer();
+	Super::EndPlay(EndPlayReason);
 }

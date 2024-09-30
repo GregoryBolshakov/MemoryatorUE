@@ -15,13 +15,17 @@ class AMCommunicationManager : public AActor
 
 public:
 	void ConnectToPythonServer();
+	void DisconnectFromPythonServer() const;
 
 	bool IsConnected() const { return Socket != nullptr && Connected; }
 
+	bool SendJsonMessage(const FString& JsonMessage) const;
+
+	//TODO: Rename to something more specific to LLM generation
 	void SendMessagesToServer(const AMCharacter* Character);
 
 protected:
-	void ReadDataFromSocket();
+	void ReadDataFromSocket() const;
 
 	/** When messages stack up, remove all previous ones. For example:
 	 * Ah, those<end>
@@ -38,6 +42,8 @@ protected:
 	FString GenerateMessagesJson(const AMCharacter* Character);
 
 	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	FSocket* Socket;
 
