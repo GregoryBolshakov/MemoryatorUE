@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Misc/SpinLock.h"
 #include "MCommunicationManager.generated.h"
 
 class UMInventoryComponent;
@@ -15,17 +16,15 @@ class AMCommunicationManager : public AActor
 
 public:
 	void ConnectToPythonServer();
-	void DisconnectFromPythonServer() const;
+	void DisconnectFromPythonServer();
 
-	bool IsConnected() const { return Socket != nullptr && Connected; }
-
-	bool SendJsonMessage(const FString& JsonMessage) const;
+	bool SendJsonMessage(const FString& JsonMessage);
 
 	//TODO: Rename to something more specific to LLM generation
 	void SendMessagesToServer(const AMCharacter* Character);
 
 protected:
-	void ReadDataFromSocket() const;
+	void ReadDataFromSocket();
 
 	/** When messages stack up, remove all previous ones. For example:
 	 * Ah, those<end>
@@ -48,5 +47,8 @@ protected:
 	FSocket* Socket;
 
 	bool Connected = false;
+
+private:
+	UE::FSpinLock SocketLock;
 };
 

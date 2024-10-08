@@ -7,6 +7,7 @@
 #include "Interfaces/IPv4/IPv4Address.h"
 #include "Characters/MCharacter.h"
 #include "GenericTeamAgentInterface.h"
+#include "Helpers/MScopeLock.h"
 #include "Misc/ByteSwap.h"
 
 namespace
@@ -40,33 +41,67 @@ void AMCommunicationManager::ConnectToPythonServer()
 	Addr->SetIp(IP.Value);
 	Addr->SetPort(Port);
 
-	Socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("PythonSocket"), false);
-
-	Connected = Socket->Connect(*Addr);
-	if (!Connected)
 	{
-		// Handle connection failure
-		UE_LOG(LogTemp, Error, TEXT("Failed to connect to Python server"));
+		FMScopeSpinLock Lock(&SocketLock);
+		Socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->CreateSocket(NAME_Stream, TEXT("PythonSocket"), false);
+		Connected = Socket->Connect(*Addr);
+		if (Connected)
+		{
+			// Start reading data in a separate thread
+			AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]
+			{
+				ReadDataFromSocket();
+			});
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("Failed to connect to Python server"));
+		}
 	}
 }
 
-void AMCommunicationManager::DisconnectFromPythonServer() const
+void AMCommunicationManager::DisconnectFromPythonServer()
 {
 	FString CloseCommand = TEXT("{\"command\": \"close\"}");
 	check(SendJsonMessage(CloseCommand));
-	Socket->Close();
-	ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(Socket);
+	{
+		FMScopeSpinLock Lock(&SocketLock);
+		Socket->Close();
+		ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->DestroySocket(Socket);
+	}
 }
 
-void AMCommunicationManager::ReadDataFromSocket() const
+void BusyWait(FTimespan Duration)
 {
-	// Endless loop for reading from socket
-	while (Socket->Wait(ESocketWaitConditions::WaitForRead, FTimespan::FromDays(1000.f)))
+	const double StartTime = FPlatformTime::Seconds();
+	const double EndTime = StartTime + Duration.GetTotalSeconds();
+
+	while (FPlatformTime::Seconds() < EndTime)
 	{
+		// Busy-wait: no thread sleep or yield here.
+		FPlatformMisc::MemoryBarrier(); // Optional, helps prevent compiler optimizations.
+	}
+}
+
+void AMCommunicationManager::ReadDataFromSocket()
+{
+	auto test = 1;
+	// Endless loop for reading from socket
+	while (true)
+	{
+		FMScopeSpinLock Lock(&SocketLock);
+		BusyWait(FTimespan::FromMilliseconds(100));
+		if (!Socket || Socket->GetConnectionState() != ESocketConnectionState::SCS_Connected)
+		{
+			break;
+		}
+		if (!Socket->Wait(ESocketWaitConditions::WaitForRead, FTimespan::FromMilliseconds(100)))
+		{
+			continue; // No data to read, continue waiting
+		}
 		int32 bytesRead = 0;
 		uint8 data[1024];
-
-		if (Socket && Socket->Recv(data, sizeof(data), bytesRead))
+		if (Socket->Recv(data, sizeof(data), bytesRead))
 		{
 			if (bytesRead > 0)
 			{
@@ -81,9 +116,6 @@ void AMCommunicationManager::ReadDataFromSocket() const
 			break;
 		}
 	}
-
-	// Wait time ended, likely will never happen
-	DisconnectFromPythonServer();
 }
 
 void AMCommunicationManager::CutPreviousMessages(FString& Message)
@@ -117,7 +149,7 @@ FString AMCommunicationManager::GenerateMessagesJson(const AMCharacter* Characte
 	// Create the messages json array
 	TArray<TSharedPtr<FJsonValue>> MessagesArray;
 
-	TSharedPtr<FJsonObject> Message1 = MakeShareable(new FJsonObject);
+	/*TSharedPtr<FJsonObject> Message1 = MakeShareable(new FJsonObject);
 	Message1->SetStringField(TEXT("role"), TEXT("system"));
 	Message1->SetStringField(TEXT("content"), TEXT("You are a decision maker model for an NPC character in an RPG game. Your personality is a peasant man. You sell flowers. User is a single player in this game. All user input comes from the player. Your attitude toward him is mediocre. You don't necessarily have to do as he says, you have your own judgement."));
 	MessagesArray.Add(MakeShareable(new FJsonValueObject(Message1)));
@@ -130,7 +162,12 @@ FString AMCommunicationManager::GenerateMessagesJson(const AMCharacter* Characte
 	TSharedPtr<FJsonObject> Message3 = MakeShareable(new FJsonObject);
 	Message3->SetStringField(TEXT("role"), TEXT("system"));
 	Message3->SetStringField(TEXT("content"), TEXT("You must choose one: Come closer; Ignore him; Insult him. Say nothing else but your choice."));
-	MessagesArray.Add(MakeShareable(new FJsonValueObject(Message3)));
+	MessagesArray.Add(MakeShareable(new FJsonValueObject(Message3)));*/
+
+	TSharedPtr<FJsonObject> Message = MakeShareable(new FJsonObject);
+	Message->SetStringField(TEXT("role"), TEXT("system"));
+	Message->SetStringField(TEXT("content"), TEXT("Say only \"Hi!\""));
+	MessagesArray.Add(MakeShareable(new FJsonValueObject(Message)));
 
 	// Create characterUid json object
 	TSharedPtr<FJsonObject> CharacterUid = MakeShareable(new FJsonObject);
@@ -152,14 +189,8 @@ FString AMCommunicationManager::GenerateMessagesJson(const AMCharacter* Characte
 	return OutputString;
 }
 
-bool AMCommunicationManager::SendJsonMessage(const FString& JsonMessage) const
+bool AMCommunicationManager::SendJsonMessage(const FString& JsonMessage)
 {
-	if (!Socket)
-	{
-		check(false);
-		return false;
-	}
-
 	// Convert the message to UTF-8 format
 	FTCHARToUTF8 Converter(*JsonMessage);
 	int32 DataSize = Converter.Length();
@@ -169,27 +200,35 @@ bool AMCommunicationManager::SendJsonMessage(const FString& JsonMessage) const
 	uint32 NetworkDataSize = NETWORK_ORDER32(DataSize);
 
 	// Send the NetworkDataSize (4 bytes)
-	int32 BytesSent = 0;
-	bool bSuccess = Socket->Send(reinterpret_cast<const uint8*>(&NetworkDataSize), sizeof(int32), BytesSent);
-	if (!bSuccess || BytesSent != sizeof(int32))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to send data size."));
-		return false;
-	}
-
-	// Send the actual data
-	int32 TotalBytesSent = 0;
-	while (TotalBytesSent < DataSize)
-	{
-		int32 BytesToSend = DataSize - TotalBytesSent;
-		int32 BytesThisSend = 0;
-		bSuccess = Socket->Send(DataPtr + TotalBytesSent, BytesToSend, BytesThisSend);
-		if (!bSuccess || BytesThisSend <= 0)
+		int32 BytesSent = 0;
+		FMScopeSpinLock Lock(&SocketLock);
+		if (!Socket)
 		{
-			UE_LOG(LogTemp, Error, TEXT("Failed to send message."));
+			check(false);
 			return false;
 		}
-		TotalBytesSent += BytesThisSend;
+		bool bSuccess = Socket->Send(reinterpret_cast<const uint8*>(&NetworkDataSize), sizeof(int32), BytesSent);
+		if (!bSuccess || BytesSent != sizeof(int32))
+		{
+			UE_LOG(LogTemp, Error, TEXT("Failed to send data size."));
+			return false;
+		}
+
+		// Send the actual data
+		int32 TotalBytesSent = 0;
+		while (TotalBytesSent < DataSize)
+		{
+			int32 BytesToSend = DataSize - TotalBytesSent;
+			int32 BytesThisSend = 0;
+			bSuccess = Socket->Send(DataPtr + TotalBytesSent, BytesToSend, BytesThisSend);
+			if (!bSuccess || BytesThisSend <= 0)
+			{
+				UE_LOG(LogTemp, Error, TEXT("Failed to send message."));
+				return false;
+			}
+			TotalBytesSent += BytesThisSend;
+		}
 	}
 
 	return true;
@@ -199,18 +238,7 @@ void AMCommunicationManager::SendMessagesToServer(const AMCharacter* Character)
 {
 	FString MessagesJson = GenerateMessagesJson(Character);
 
-	if (SendJsonMessage(MessagesJson))
-	{
-		// Start reading data in a separate thread
-		AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]
-		{
-			ReadDataFromSocket();
-		});
-	}
-	else
-	{
-		check(false);
-	}
+	check(SendJsonMessage(MessagesJson));
 }
 
 void AMCommunicationManager::BeginPlay()
