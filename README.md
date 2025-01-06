@@ -1,11 +1,24 @@
-This is an indie open-world RPG game developed by my sister and me.
-It's created using Unreal Engine 5. 
-  
+This is a multiplayer game inspired by Minecraft and Don't Starve created using Unreal Engine 5.
 
-The world is endless and auto-generated. It has 3 different biomes. I instantiate most HISMs via a PCG graph. The game has a system of roads and settlements.
 
-![Untitled video - Made with Clipchamp (1)](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/be1c17e4-b6e3-4b71-bce2-5030f47b3b94)
-![BiomesGeneration](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/877e6992-0e83-46fc-aa02-de3fa8636ea7)
+The world is infinite and procedurally generated. It has 3 different biomes. Repeated objects like trees and grass are effectively rendered in a single call. The game has a system of roads and settlements.
+
+![WorldExplore](https://github.com/user-attachments/assets/b8c6c534-af24-4205-837e-2019ba2fb7f0)
+![ChunkSystem](https://github.com/user-attachments/assets/0dc94780-fb81-4d95-848e-90c4a113c7e8)
+
+
+You can speak and trade with any mob, for example, villagers. The communication is based on OpenAI API. Responses are streamed back in portions to speed it up.
+This mechanic is currently in a WIP state. The plan is not only use LLM for text responses, but for behavior tree management. I store the context between each pair of characters that affect the decision making (NPC may immediately attack you, or give some gifts, etc.). As a context, each NPC stores 10 of the most important events that happened between them and you (and other NPCs).
+
+Events can be either ```communicative```: a deal, an insult, a compliment, intelligence, a lie;
+or ```active```: a fight, damage to property, a favor
+
+
+
+![TradeAndCommunication](https://github.com/user-attachments/assets/017728df-0813-4bca-8cde-c699a56cf132)
+
+
+This logic can be used not only for trades but also for quests, rewards, or stealing (similar to Fallout/Skyrim games). Improving your communication skills grants you better knowledge of the mob's items. Currently, they are completely hidden and represented by question marks. Mobs utilize the "knapsack" algorithm to determine the best counter-offer, but they have their own price coefficients for each item, which may vary depending on their attitude towards you or their disposition.
 
 
 The game has mechanics for fighting, crafting and researching, as well as capturing animals. There is some variety of creatures (both peaceful
