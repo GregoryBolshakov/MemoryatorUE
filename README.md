@@ -1,7 +1,7 @@
 This is a multiplayer game inspired by Minecraft and Don't Starve created using Unreal Engine 5.
 
 
-The world is infinite and procedurally generated. It has 3 different biomes. Repeated objects like trees and grass are effectively rendered in a single call. The game has a system of roads and settlements.
+The world is infinite and procedurally generated. It has 3 different biomes. Repeated objects like trees and grass are effectively rendered in a single draw call. The game has a system of roads and settlements.
 
 ![WorldExplore](https://github.com/user-attachments/assets/b8c6c534-af24-4205-837e-2019ba2fb7f0)
 ![ChunkSystem](https://github.com/user-attachments/assets/0dc94780-fb81-4d95-848e-90c4a113c7e8)
@@ -22,13 +22,14 @@ They always offer items they have, you can see them as question marks. Part of a
 ![TradeOnly+HighlightSecrets](https://github.com/user-attachments/assets/339c3c9a-c0b7-46e4-b7e0-9c7bcf0c254f)
 
 
-The game has mechanics for fighting, crafting and researching, as well as capturing animals. There is some variety of creatures (both peaceful
-and hostile), soon there will be more videos with their interaction. If you look closely at the video on the left, you will see how villagers run home when a monster appears
+(Outdated graphics) There are three relationship types: `Neutral`, `Friendly`, and `Hostile`. When you approach a `Hostile` mob, you will automatically start attacking it. Combat is designed to be WoW-like, with the option to use abilities while the basic fight depends on stats and calculations. You can also exploit distances and speeds to gain tactical advantages, as shown in the video.
+
+Not everyone attacks when approached. You can see the villagers running home when they see the monster.
 
 ![Fight1](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/5dc754ad-abbd-4199-8199-ef70181fea99)
 ![Fighting2](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/0eb5efb0-3d9e-430d-b3bf-8970c87873f6)
 
-(Outdated graphics) The fight starts automatically as soon as you get close enough to the enemy. Each creature has its own attack range, attack spread, and attack speed. Each creature in the area (puddle) is hit, allowing multiple targets to be hit at the same time. After being hit you are immune for a short time.
+(Outdated graphics) Each creature has its own attack range, attack spread angle, and attack speed. Each creature in the area (puddle) is hit, allowing multiple targets to be hit at the same time. After being hit you are immune for a short time. The immunity is a part of a bigger `buff system`. It can handle states like `poisoned`, `shielded`, `damage increased`, etc.
 
 ![Memoryator Preview  NetMode_ Standalone  (64-bit_SM5) 2023-05-07 13-10-14 (4)](https://github.com/GregoryBolshakov/GameSources/assets/19948668/d593b705-1611-40fe-ad35-fea88d4d8ae0)
 
