@@ -13,12 +13,13 @@ This mechanic is currently in a WIP state. The plan is not only use LLM for text
 Events can be either ```communicative```: a deal, an insult, a compliment, intelligence, a lie;
 or ```active```: a fight, damage to property, a favor
 
-
-
 ![TradeAndCommunication](https://github.com/user-attachments/assets/017728df-0813-4bca-8cde-c699a56cf132)
 
 
-This logic can be used not only for trades but also for quests, rewards, or stealing (similar to Fallout/Skyrim games). Improving your communication skills grants you better knowledge of the mob's items. Currently, they are completely hidden and represented by question marks. Mobs utilize the "knapsack" algorithm to determine the best counter-offer, but they have their own price coefficients for each item, which may vary depending on their attitude towards you or their disposition.
+The trade is done using knapsack algorithm. NPCs find the best counter-offer, but they have their own price coefficients for each item, which may depend on their attitude to you or other factors.
+They always offer items they have, you can see them as question marks. Part of a mini game is to figure out what they have by offering different items. Some mechanics and skills will allow to see hidden items directly.
+
+![TradeOnly+HighlightSecrets](https://github.com/user-attachments/assets/339c3c9a-c0b7-46e4-b7e0-9c7bcf0c254f)
 
 
 The game has mechanics for fighting, crafting and researching, as well as capturing animals. There is some variety of creatures (both peaceful
