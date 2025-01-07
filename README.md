@@ -23,6 +23,7 @@ They always offer items they have, you can see them as question marks. Part of a
 
 
 (Old graphics) There are three relationship types: `Neutral`, `Friendly`, and `Hostile`. When you approach a `Hostile` mob, you will automatically start attacking it. Combat is designed to be WoW-like, with the option to use abilities while the basic fight depends on stats and calculations. You can also exploit distances and speeds to gain tactical advantages, as shown in the video.
+There is a couple multiplayer bugs for replicated characters pubbles right now.
 
 Not everyone attacks when approached. You can see the villagers running home when they see the monster.
 
@@ -41,25 +42,13 @@ While I could support more shapes than just circles, I do plan to move village g
 ![VillageGeneration2](https://github.com/user-attachments/assets/0589a6c7-6e04-4746-8cd8-31ebba1f6880)
 
 
-(Old graphics) The inventory/drop system is simple, you can stack or split items you have, or those you can reach on the ground, or those in any other storrage, no matter where they are.
+The inventory/drop system is simple, you can stack or split items you have, or those you can reach on the ground, or those in any other storrage, no matter where they are.
+All inventries are server-authorized. I created an Inventory Controller class for players to request putting/taking/throwing away stuff via Server/Client RPCs.
 
-![Memoryator Preview  NetMode_ Standalone  (64-bit_SM5) 2023-05-15 19-57-33](https://github.com/GregoryBolshakov/GameSources/assets/19948668/5302f1f6-0c4b-4076-88cd-8e8864edb112)
-![Memoryator Preview  NetMode_ Standalone  (64-bit_SM5) 2023-05-15 19-57-33 (1)](https://github.com/GregoryBolshakov/GameSources/assets/19948668/93713f82-4de4-4bbc-b0d9-1b937f2d9119)
-
-
-
-
-![VillageGeneration1](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/2d3cdd02-adad-4cc3-bbd7-7bb77c498ea1)
-![VillageGeneration2](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/7e39a0af-2d1c-4b63-bdd0-a4c594355f93)
+![InventoryMultiplayer](https://github.com/user-attachments/assets/a485a993-daa4-4da5-b9f7-3aeb2404c532)
 
 
 (Old graphics) The game uses Nakama server for authentication with platforms, transactions, friends and storing data. But Nakama doesn't implement transactions with Steam, I implemented the pipeline for microtransactions in a separate Go runtime module.
 
-
 ![Memoryator  DebugGame  - Unreal Editor 2023-06-12 19-33-55](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/cb41398f-5f91-4837-927d-1196e043590e)
 
-
-(Old graphics) You can also speak and trade with any mob, for instance, villagers. The communication widget is flexible, providing space for text and item exchange. This logic can be used not only for trades but also for quests, rewards, or stealing (similar to Fallout/Skyrim games). Improving your communication skills grants you better knowledge of the mob's items. Currently, they are completely hidden and represented by question marks. Mobs utilize the "knapsack" algorithm to determine the best counter-offer, but they have their own price coefficients for each item, which may vary depending on their attitude towards you or their disposition.
-![Memoryator Preview  NetMode_ Standalone 0  (64-bit_D3D Shader Model 5) 2023-07-13 19-24-46](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/a8a64860-1cae-435a-b335-6d3eefbdef29)
-
-![Memoryator Preview  NetMode_ Standalone 0  (64-bit_D3D Shader Model 5) 2023-07-13 19-24-46 (1)](https://github.com/GregoryBolshakov/MemoryatorUE/assets/19948668/1597f753-0748-4973-b223-81bb6fc8945e)
