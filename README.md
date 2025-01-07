@@ -23,7 +23,7 @@ They always offer items they have, you can see them as question marks. Part of a
 
 
 (Old graphics) There are three relationship types: `Neutral`, `Friendly`, and `Hostile`. When you approach a `Hostile` mob, you will automatically start attacking it. Combat is designed to be WoW-like, with the option to use abilities while the basic fight depends on stats and calculations. You can also exploit distances and speeds to gain tactical advantages, as shown in the video.
-There is a couple multiplayer bugs for replicated characters pubbles right now.
+There is a couple multiplayer bugs for replicated characters puddles right now.
 
 Not everyone attacks when approached. You can see the villagers running home when they see the monster.
 
